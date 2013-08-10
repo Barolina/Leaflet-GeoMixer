@@ -1,6 +1,29 @@
 // Плагин векторного слоя
 L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 {
+	gmxSetVisibility: function (func) {
+		var options = this.options;
+		options.gmx.chkVisibility = func;
+		this._reset();
+		this._update();
+	}
+	,
+	gmxSetDateInterval: function (beginDate, endDate) {
+		var options = this.options;
+		options.gmx.beginDate = beginDate;
+		options.gmx.endDate = endDate;
+		if(options.gmx.attr.cntItems > 1000) {
+			for (var key in options.gmx.attr['tilesNeedLoad']) {
+				delete options.gmx.attr['tilesAll'][key]['data'];
+				delete options.gmx.attr['tilesAll'][key]['inLoad'];
+			}
+			options.gmx.attr.cntItems = 0;
+		}
+		delete options.gmx.attr.tilesNeedLoad;
+		this._reset();
+		this._update();
+	}
+	,
 	_initContainer: function () {
 		L.TileLayer.Canvas.prototype._initContainer.call(this);
 		var myLayer = this;
@@ -66,21 +89,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 							var ph = layer['content'];
 							options.gmx.properties = ph['properties'];
 							options.gmx.geometry = ph['geometry'];
-							var attr = gmxAPIutils.prepareLayerBounds(ph);
-							if(ph['properties']['IsRasterCatalog']) {
-								attr['rasterBGfunc'] = function(x, y, z, idr) {
-									var qURL = 'http://' + options.gmx.hostName
-										+'/TileSender.ashx?ModeKey=tile'
-										+'&x=' + x
-										+'&y=' + y
-										+'&z=' + z
-										+'&idr=' + idr
-										+'&MapName=' + options.gmx.mapName
-										+'&LayerName=' + options.gmx.layerName
-										+'&key=' + encodeURIComponent(options.gmx.sessionKey);
-									return qURL;
-								};
-							}
+							var attr = gmxAPIutils.prepareLayerBounds(ph, options.gmx);
 							options.gmx.attr = attr;
 							myLayer._update();
 							return;
@@ -185,26 +194,33 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var res = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate);
 			gmx.attr.tilesNeedLoadCounts = res.tilesNeedLoadCounts;
 			gmx.attr.tilesNeedLoad = res.tilesNeedLoad;
-			gmx.attr.tilesLoadCallbacks = {};
-			gmx.attr.cntItems = 0;
-			//console.log('getNeedTiles: ' , gmx);
 		}
 		this.options.gmx._tilesToLoad++;
-		
-		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-		var cnt = gmxAPIutils.loadTile(gmx, gmxTilePoint, function(ph) {
-			var gmxTileKey = ph.gmxTileKey;
-			//delete gmx.attr.tilesNeedLoad[gmxTileKey];
-			if(!gmx.attr['tilesAll'][gmxTileKey]['data']) {
-				var cntItems = gmxAPIutils.parseTile(gmx, ph);
-				gmx.attr.cntItems += cntItems;
+		if(!gmx.attr.needRedraw) gmx.attr.needRedraw = [];
+		gmx.attr.needRedraw.push(tilePoint);
+		var redraw = function() {
+			for (var i = 0, len = gmx.attr.needRedraw.length; i < len; i++) {
+				myLayer.gmxDrawTile(gmx.attr.needRedraw[i], zoom);
 			}
-			if(ph.cnt === 0) {
-				myLayer.gmxDrawTile(tilePoint, zoom);
-				//console.log('loadTile: ' , gmxTileKey, cntItems, ph.cnt);
-			}
-		});
-		if(cnt === 0) myLayer.gmxDrawTile(tilePoint, zoom);
+			gmx.attr.needRedraw = [];
+		}
+		var gmxTilePoint = this.gmxGetTileNum(tilePoint, zoom);
+		(function() {
+			var tp = tilePoint;
+			var gtp = gmxTilePoint;
+//console.log('tp ', tp);
+			var cnt = gmxAPIutils.loadTile(gmx, gtp, tp, function(ph) {
+				var gmxTileKey = ph.gmxTileKey;
+				if(!gmx.attr['tilesAll'][gmxTileKey]['data']) {
+					gmx.attr.cntItems += gmxAPIutils.parseTile(gmx, ph);
+				}
+				var tilePointArr = gmx.attr['tilesAll'][gmxTileKey]['fromTilePoints'];
+				for (var i = 0, len = tilePointArr.length; i < len; i++) {
+					myLayer.gmxDrawTile(tilePointArr[i], zoom);
+				}
+			});
+			if(cnt === 0) myLayer.gmxDrawTile(tp, zoom);
+		})();
 //console.log('loadTile cnt: ', cnt , gmxTilePoint.gmxTileID);
 	}
 	,
@@ -226,15 +242,21 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		var gmxTilePoint = this.gmxGetTileNum(tilePoint, zoom);
 		if(!gmxTilePoint['rasters']) gmxTilePoint['rasters'] = {};
 		if(!gmxTilePoint['items']) gmxTilePoint['items'] = [];
-		var arr = gmxAPIutils.getTileKeysIntersects(gmxTilePoint, gmx.attr['tilesAll']);
-//console.log('nnnnnnn ', arr.length, gmxTilePoint.gmxTileID );
-		for (var i = 0, len = arr.length; i < len; i++) {
-			var key = arr[i];
+		for (var key in gmx.attr['tilesNeedLoad']) {
 			var pt = gmx.attr['tilesAll'][key];
+			if(!gmxAPIutils.isTileKeysIntersects(gmxTilePoint, pt['gmxTilePoint'])) continue;
 			var data = pt['data'] || [];
 			if(data.length === 0) continue;
 			for (var j = 0, len1 = data.length; j < len1; j++) {
 				var it = data[j];
+				var item = gmx.attr['items'][it.id];
+				if(gmx.chkVisibility && !gmx.chkVisibility(item)) {
+					continue;
+				}
+				if(gmx.attr['layerType'] === 'VectorTemporal') {
+					var unixTimeStamp = item['propHiden']['unixTimeStamp'];
+					if(unixTimeStamp < gmx.attr['ut1'] || unixTimeStamp > gmx.attr['ut2']) continue;
+				}
 				if(!it['bounds']) gmxAPIutils.itemBounds(it);
 				if(!gmxTilePoint['bounds'].intersects(it['bounds'])) continue;
 				if(!it['hideLines']) gmxAPIutils.chkHiddenPoints({'gmx':gmx, 'gmxTileKey':key});
@@ -398,16 +420,6 @@ var gmxAPIutils = {
 		var xhr = gmxAPIutils.getXmlHttp();
 		xhr.withCredentials = true;
 		xhr.open((ph['type'] ? ph['type'] : 'GET'), ph['url'], true);
-		//if(ph['type'] === 'POST') xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-		/*var arr = [];
-		if(ph['params']) {
-			for(var key in ph['params']) {
-				arr.push(key + '=' + ph['params'][key]);
-			}
-		}
-		xhr.send((arr.length ? arr.join('&') : null));
-		*/
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
 				//self.log('xhr.status ' + xhr.status);
@@ -547,8 +559,8 @@ var gmxAPIutils = {
 		return 'rgba('+r+', '+g+', '+b+', '+a+')';
 	}
 	,
-	'prepareLayerBounds': function(layer) {					// построение списка тайлов
-		var res = {'tilesAll':{}, 'items':{}, 'tileCounts':0};
+	'prepareLayerBounds': function(layer, gmx) {					// построение списка тайлов
+		var res = {'tilesAll':{}, 'items':{}, 'tileCounts':0, 'cntItems':0};
 		var prop = layer.properties;
 		var geom = layer.geometry;
 		var type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
@@ -599,11 +611,11 @@ var gmxAPIutils = {
 			for (var i = 0, len = arr.length; i < len; i++)
 			{
 				var arr1 = arr[i];
-				var z = Number(arr1.pop())
-					,y = Number(arr1.pop())
-					,x = Number(arr1.pop())
-					,s = Number(arr1.pop())
-					,d = Number(arr1.pop())
+				var z = Number(arr1[4])
+					,y = Number(arr1[3])
+					,x = Number(arr1[2])
+					,s = Number(arr1[1])
+					,d = Number(arr1[0])
 					,v = Number(vers[i])
 				;
 				addRes(z, x, y, v, s, d);
@@ -633,6 +645,20 @@ var gmxAPIutils = {
 		res['layerType'] = type;						// VectorTemporal Vector
 		res['identityField'] = prop['identityField'];	// ogc_fid
 		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
+		if(prop['IsRasterCatalog']) {
+			res['rasterBGfunc'] = function(x, y, z, idr) {
+				var qURL = 'http://' + gmx.hostName
+					+'/TileSender.ashx?ModeKey=tile'
+					+'&x=' + x
+					+'&y=' + y
+					+'&z=' + z
+					+'&idr=' + idr
+					+'&MapName=' + gmx.mapName
+					+'&LayerName=' + gmx.layerName
+					+'&key=' + encodeURIComponent(gmx.sessionKey);
+				return qURL;
+			};
+		}
 		return res;
 	}
 	,
@@ -740,50 +766,44 @@ var gmxAPIutils = {
 		return out;
 	}
 	,
-	'loadTile': function(ph, gmxTilePoint, callback) {	// загрузить тайлы по отображаемому gmxTilePoint
+	'loadTile': function(ph, gmxTilePoint, tilePoint, callback) {	// загрузить тайлы по отображаемому gmxTilePoint
 		var prefix = '';
 		var cnt = 0;
-		var arr = gmxAPIutils.getTileKeysIntersects(gmxTilePoint, ph.attr['tilesAll']);
-		for (var i = 0, len = arr.length; i < len; i++) {
-			var key = arr[i];
-			if(!ph.attr['tilesLoadCallbacks'][key]) ph.attr['tilesLoadCallbacks'][key] = [];
-			ph.attr['tilesLoadCallbacks'][key].push(callback);
-			if(key in ph.attr['tilesNeedLoad']) {
-				var it = ph.attr['tilesAll'][key];
-				var tp = it['gmxTilePoint'];
-				if(gmxAPIutils.isTileKeysIntersects(gmxTilePoint, tp)) {
-					delete ph.attr['tilesNeedLoad'][key];
-					
-					if(!prefix) {
-						prefix = ph['tileSenderPrefix'] + '&ModeKey=tile&r=t';
-						prefix += "&MapName=" + ph['mapName'];
-						prefix += "&LayerName=" + ph['layerName'];
-					}
-					var url = prefix + "&z=" + tp['z'];
-					url += "&x=" + tp['x'];
-					url += "&y=" + tp['y'];
-					url += "&v=" + tp['v'];
-					if(tp['d'] !== -1) url += "&Level=" + tp['d'] + "&Span=" + tp['s'];
-					cnt++;
-					(function() {
-						var gmxTileKey = key;
-						var attr = ph.attr;
-						gmxAPIutils.request({
-							'url': url
-							,'callback': function(st) {
-								cnt--;
-								var res = JSON.parse(st);
-								var arr = attr['tilesLoadCallbacks'][gmxTileKey];
-								for (var i = 0, len = arr.length; i < len; i++) {
-									arr[i]({'cnt': cnt, 'gmxTileKey': gmxTileKey, 'data': res});
-								}
-								delete attr['tilesLoadCallbacks'][gmxTileKey];
-								//callback({'cnt': cnt, 'gmxTileKey': gmxTileKey, 'data': JSON.parse(st)});
-								//console.log('drawTileID: ' , data);
-							}
-						});
-					})();
+		
+		for (var key in ph.attr['tilesNeedLoad']) {
+			var it = ph.attr['tilesAll'][key];
+			var tp = it['gmxTilePoint'];
+			if(!gmxAPIutils.isTileKeysIntersects(gmxTilePoint, tp)) continue;
+
+			if(!it['fromTilePoints']) it['fromTilePoints'] = [];
+			it['fromTilePoints'].push(tilePoint);
+			if(!it['inLoad']) {
+				it['inLoad'] = true;
+				if(!prefix) {
+					prefix = ph['tileSenderPrefix'] + '&ModeKey=tile&r=t';
+					prefix += "&MapName=" + ph['mapName'];
+					prefix += "&LayerName=" + ph['layerName'];
 				}
+				var url = prefix + "&z=" + tp['z'];
+				url += "&x=" + tp['x'];
+				url += "&y=" + tp['y'];
+				url += "&v=" + tp['v'];
+				if(tp['d'] !== -1) url += "&Level=" + tp['d'] + "&Span=" + tp['s'];
+				cnt++;
+				(function() {
+					var gmxTileKey = key;
+					var tp1 = tilePoint;
+					var attr = ph.attr;
+					var func = callback;
+					gmxAPIutils.request({
+						'url': url
+						,'callback': function(st) {
+							cnt--;
+							var res = JSON.parse(st);
+							func({'cnt': cnt, 'gmxTileKey': gmxTileKey, 'data': res});
+						}
+					});
+				})();
 			}
 		}
 		return cnt;
@@ -819,8 +839,8 @@ var gmxAPIutils = {
 				items[id] = item;
 			}
 			item['propHiden']['fromTiles'][gmxTileKey] = true;
-			if(prop.TemporalColumnName) {
-				var zn = prop[prop.TemporalColumnName] || '';
+			if(layerProp.TemporalColumnName) {
+				var zn = prop[layerProp.TemporalColumnName] || '';
 				zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
 				var vDate = new Date(zn);
 				var offset = vDate.getTimezoneOffset();
@@ -928,7 +948,6 @@ var gmxAPIutils = {
 			if(bgImage) {
 				var pattern = ctx.createPattern(bgImage, "no-repeat");
 				ctx.fillStyle = pattern;
-				//delete it['bgImage'];
 			}
 			ctx.beginPath();
 			//ctx.globalAlpha = 0;

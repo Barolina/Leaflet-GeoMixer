@@ -16,9 +16,17 @@ html, body {
 	<!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
 </head>
 <body>
+	<div>
+		<button id="button1">Prev day</button>
+		<button id="button2">Next day</button>
+		<button id="button3">Day</button>
+		<button id="button4">Night</button>
+		<button id="button5">All</button>
+	</div>
+
 	<div id="map" style="width: 100%; height: 100%"></div>
  
-	<script src="http://leafletjs.com/dist/leaflet-src.js"></script>-->
+	<script src="http://leafletjs.com/dist/leaflet-src.js"></script>
 	<!--	<script src="leaflet-src.js"></script>-->
 	<script src="../dist/gmxVectorLayer.js"></script>
 	<script>
@@ -55,6 +63,30 @@ html, body {
 			,'endDate': ddt2
 		});
 		map.addLayer(gmxLayer);
+		document.getElementById("button1").onclick = function()
+		{
+			ddt1 = new Date(ddt1.getTime() - oneDay);	// UTC начальная дата
+			ddt2 = new Date(ddt2.getTime() - oneDay);	// UTC
+			gmxLayer.gmxSetDateInterval(ddt1, ddt2);
+		}
+		document.getElementById("button2").onclick = function()
+		{
+			ddt1 = new Date(ddt1.getTime() + oneDay);	// UTC начальная дата
+			ddt2 = new Date(ddt2.getTime() + oneDay);	// UTC
+			gmxLayer.gmxSetDateInterval(ddt1, ddt2);
+		}
+		document.getElementById("button3").onclick = function()
+		{
+			gmxLayer.gmxSetVisibility(function(item) { return (item.properties.IsDay === 'True' ? true : false); });
+		}
+		document.getElementById("button4").onclick = function()
+		{
+			gmxLayer.gmxSetVisibility(function(item) { return (item.properties.IsDay === 'True' ? false : true); });
+		}
+		document.getElementById("button5").onclick = function()
+		{
+			gmxLayer.gmxSetVisibility(null);
+		}
 /*
 		map.addLayer(new L.TileLayer.gmxVectorLayer({
 			'hostName': 'maps.kosmosnimki.ru'
