@@ -22,8 +22,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		delete options.gmx.attr.tilesNeedLoad;
 		this._reset();
 		this._update();
-	}
-	,
+	},
+    addTo: function (map) {
+		map.addLayer(this);
+		return this;
+	},	
 	_initContainer: function () {
 		L.TileLayer.Canvas.prototype._initContainer.call(this);
 		var myLayer = this;
