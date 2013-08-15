@@ -1,5 +1,9 @@
 var deps = [
+    "Deferred.js",
     "gmxAPIutils.js",
+    
+    "SessionManager.js",
+    
     "gmxVectorLayer.js"
 ];
 

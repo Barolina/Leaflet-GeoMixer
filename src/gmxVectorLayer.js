@@ -45,7 +45,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		
 		if(!('gmx' in options)) {
 			options.gmx = {
-				'hostName': options.hostName
+				'hostName': options.hostName || 'maps.kosmosnimki.ru'
 				,'apikeyRequestHost': options.apikeyRequestHost || options.hostName
 				,'apiKey': options.apiKey
 				,'mapName': options.mapName
@@ -101,43 +101,18 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				}
 			}
 			var setSessionKey = function(st) {
-				options.gmx.sessionKey = pt['sessionKey'] = st;
 				options.gmx.tileSenderPrefix = "http://" + options.gmx.hostName + "/" + 
 					"TileSender.ashx?WrapStyle=None" + 
-					"&key=" + encodeURIComponent(options.gmx.sessionKey)
-				;
+					"&key=" + encodeURIComponent(st);
 			}
 			
 			var pt = L.gmx['hosts'][options.gmx.hostName];
 			if(!pt) pt = L.gmx['hosts'][options.gmx.hostName] = {'maps': {}};
-			if(!pt['sessionKey']) {
-				if(!pt['sessionCallbacks']) {
-					pt['sessionCallbacks'] = [];
-					gmxAPIutils.getSessionKey(
-						{
-							'url': "http://" + options.gmx.apikeyRequestHost + "/ApiKey.ashx?WrapStyle=None&Key=" + options.gmx.apiKey
-						}, function(ph) {
-							if(ph && ph['Status'] === 'ok') {
-								for (var i = 0, len = pt['sessionCallbacks'].length; i < len; i++) {
-									pt['sessionCallbacks'][i](ph['Result']['Key']);
-								}
-								delete pt['sessionCallbacks'];
-							}
-						}
-					);
-				}
-				pt['sessionCallbacks'].push(function(key) {
-					setSessionKey(key);
-					getMap(function(ph) {
-						if(ph.error || !ph.children) {
-							console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
-						} else {
-							getLayer(ph.children);
-						}
-					});
-				});
-			} else {
-				if(!pt['maps'][options.gmx.mapName]) {
+            
+            gmxSessionManager.getSessionKey(options.gmx.apikeyRequestHost, options.gmx.apiKey).done(function(key) {
+                console.log('aaa', key);
+                setSessionKey(key);
+                if(!pt['maps'][options.gmx.mapName]) {
 					getMap(function(ph) {
 						if(ph.error || !ph.children) {
 							console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
@@ -148,7 +123,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				} else {
 					getLayer(pt['maps'][options.gmx.mapName]['res'].children);
 				}
-			}
+            })
 		}
 		prpZoomData(myLayer._map._zoom);
 		//console.log('_initContainer: ', options.gmx.shiftY);

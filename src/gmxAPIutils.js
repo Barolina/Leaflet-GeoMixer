@@ -1,5 +1,5 @@
 var gmxAPIutils = {
-	'cloneLevel': 10				// уровень клонирования обьектов
+	/*'cloneLevel': 10				// уровень клонирования обьектов
 	,
 	'clone': function (o, level)
 	{
@@ -24,7 +24,7 @@ var gmxAPIutils = {
 		}
 		return c;
 	}
-	,
+	,*/
 	'getXmlHttp': function() {
 		var xmlhttp;
 		try {
@@ -380,6 +380,17 @@ var gmxAPIutils = {
 		if(y2 + pz <= tk1.y) return false;
 		return true;
 	}
+
+/* оптимизированная версия
+    'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам 2 тайлов
+        if (tk1.z < tk2.z) {
+            var t = tk1; tk1 = tk2; tk2 = t;
+        }
+        
+        var dz = tk1.z - tk2.z
+        return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
+	}
+*/  
 	,
 	'getTileKeysIntersects': function(gmxTilePoint, tilesAll) {	// получить список тайлов сервера пересекающих gmxTilePoint
 		var out = [];
@@ -672,28 +683,28 @@ var gmxAPIutils = {
 		,'emptyImageUrl': 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
 		,
 		'removeItemsByZoom': function(zoom)	{	// остановить и удалить из очереди запросы по zoom
-			for (var key in gmxAPIutils.imageLoader.itemsCache)
+			for (var key in this.itemsCache)
 			{
-				var q = gmxAPIutils.imageLoader.itemsCache[key][0];
+				var q = this.itemsCache[key][0];
 				if('zoom' in q && q['zoom'] != zoom && q['loaderObj']) {
-					q['loaderObj'].src = gmxAPIutils.imageLoader.emptyImageUrl;
+					q['loaderObj'].src = this.emptyImageUrl;
 				}
 			}
 			var arr = [];
-			for (var i = 0, len = gmxAPIutils.imageLoader.items.length; i < len; i++)
+			for (var i = 0, len = this.items.length; i < len; i++)
 			{
-				var q = gmxAPIutils.imageLoader.items[i];
+				var q = this.items[i];
 				if(!q['zoom'] || q['zoom'] === zoom) {
 					arr.push(q);
 				}
 			}
-			gmxAPIutils.imageLoader.items = arr;
-			return gmxAPIutils.imageLoader.items.length;
+			this.items = arr;
+			return this.items.length;
 		}
 		,
 		'callCacheItems': function(item) {		// загрузка item завершена
-			if(gmxAPIutils.imageLoader.itemsCache[item.src]) {
-				var arr = gmxAPIutils.imageLoader.itemsCache[item.src];
+			if(this.itemsCache[item.src]) {
+				var arr = this.itemsCache[item.src];
 				var first = arr[0];
 				for (var i = 0, len = arr.length; i < len; i++)
 				{
@@ -706,75 +717,79 @@ var gmxAPIutils = {
 						if(it.callback) it.callback(first.svgPattern, true);
 					}
 				}
-				delete gmxAPIutils.imageLoader.itemsCache[item.src];
+				delete this.itemsCache[item.src];
 			}
-			gmxAPIutils.imageLoader.nextLoad();
+			this.nextLoad();
 		}
 		,
 		'nextLoad': function() {			// загрузка следующего
-			if(gmxAPIutils.imageLoader.curCount > gmxAPIutils.imageLoader.maxCount) return;
-			if(gmxAPIutils.imageLoader.items.length < 1) {
-				gmxAPIutils.imageLoader.curCount = 0;
-				if(gmxAPIutils.imageLoader.timer) {
-					clearInterval(gmxAPIutils.imageLoader.timer);
-					gmxAPIutils.imageLoader.timer = null;
+			if(this.curCount > this.maxCount) return;
+			if(this.items.length < 1) {
+				this.curCount = 0;
+				if(this.timer) {
+					clearInterval(this.timer);
+					this.timer = null;
 				}
 				return false;
 			}
-			var item = gmxAPIutils.imageLoader.items.shift();
+			var item = this.items.shift();
 
-			if(gmxAPIutils.imageLoader.itemsCache[item.src]) {
-				var pitem = gmxAPIutils.imageLoader.itemsCache[item.src][0];
+			if(this.itemsCache[item.src]) {
+				var pitem = this.itemsCache[item.src][0];
 				if(pitem.isError) {
 					if(item.onerror) item.onerror(null);
 				} else if(pitem.imageObj) {
 					if(item.callback) item.callback(pitem.imageObj);
 				} else {
-					gmxAPIutils.imageLoader.itemsCache[item.src].push(item);
+					this.itemsCache[item.src].push(item);
 				}
 			} else {
-				gmxAPIutils.imageLoader.itemsCache[item.src] = [item];
-				gmxAPIutils.imageLoader.setImage(item);
+				this.itemsCache[item.src] = [item];
+				this.setImage(item);
 			}
 		}
 		,
 		'setImage': function(item) {			// загрузка image
-			var imageObj = new Image();
+            var _this = this,
+                imageObj = new Image();
 			item['loaderObj'] = imageObj;
 			if(item['crossOrigin']) imageObj.crossOrigin = item['crossOrigin'];
 			imageObj.onload = function() {
-				gmxAPIutils.imageLoader.curCount--;
+				_this.curCount--;
 				item.imageObj = imageObj;
 				delete item['loaderObj'];
-				gmxAPIutils.imageLoader.callCacheItems(item);
+				_this.callCacheItems(item);
 			};
 			imageObj.onerror = function() {
-				gmxAPIutils.imageLoader.curCount--;
+				_this.curCount--;
 				item.isError = true;
-				gmxAPIutils.imageLoader.callCacheItems(item);
+				_this.callCacheItems(item);
 			};
-			gmxAPIutils.imageLoader.curCount++;
+			this.curCount++;
 			imageObj.src = item.src;
 		}
 		,
 		'chkTimer': function() {			// установка таймера
-			if(!gmxAPIutils.imageLoader.timer) {
-				gmxAPIutils.imageLoader.timer = setInterval(gmxAPIutils.imageLoader.nextLoad, 50);
+            var _this = this;
+			if(!this.timer) {
+				this.timer = setInterval(function() {
+                    _this.nextLoad();
+                }, 50);
 			}
 		}
 		,
 		'push': function(item)	{			// добавить запрос в конец очереди
-			gmxAPIutils.imageLoader.items.push(item);
-			gmxAPIutils.imageLoader.chkTimer();
-			return gmxAPIutils.imageLoader.items.length;
+			this.items.push(item);
+			this.chkTimer();
+			return this.items.length;
 		}
 		,'unshift': function(item)	{		// добавить запрос в начало очереди
-			gmxAPIutils.imageLoader.items.unshift(item);
-			gmxAPIutils.imageLoader.chkTimer();
-			return gmxAPIutils.imageLoader.items.length;
+			this.items.unshift(item);
+			this.chkTimer();
+			return this.items.length;
 		}
 		,'getCounts': function()	{		// получить размер очереди + колич.выполняющихся запросов
-			return gmxAPIutils.imageLoader.items.length + (gmxAPIutils.imageLoader.curCount > 0 ? gmxAPIutils.imageLoader.curCount : 0);
+			return this.items.length + (this.curCount > 0 ? this.curCount : 0);
 		}
 	}
 	,'r_major': 6378137.000
