@@ -39,3 +39,11 @@ exports.build = function () {
     fs.writeFileSync(path, newCompressed);
     console.log('\tSaved to ' + path);
 };
+
+exports.buildDev = function () {
+    console.log('\Create development version of leaflet-geomixer-src.js');
+    var deps = fs.readFileSync('build/deps.js', 'utf8'),
+        includeWidget = fs.readFileSync('build/include-src.js', 'utf8');
+        
+    fs.writeFileSync('dist/leaflet-geomixer-src.js', deps + includeWidget);
+}
