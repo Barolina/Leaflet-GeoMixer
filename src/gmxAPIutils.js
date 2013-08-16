@@ -64,45 +64,6 @@ var gmxAPIutils = {
 	  }
 	}
 	,
-	'getSessionKey': function(ph, callback)	{		// Получение ключа сессии
-		gmxAPIutils.request({
-			'url': ph['url']
-			,'callback': function(st) {
-				callback(JSON.parse(st));
-			}
-		});
-	}
-	,
-	'getMapPropreties': function(ph, callback)	{		// Получение описания карты
-		gmxAPIutils.request({
-			'url': ph['tileSenderPrefix'] + "&MapName=" + ph['mapName'] + '&ModeKey=map'
-			,'callback': function(st) {
-				callback(JSON.parse(st));
-			}
-		});
-	}
-	,
-	'getLayerPropreties': function(ph, callback)	{		// Получение описания слоя из описания карты
-		var layerName = ph['layerName'];
-		gmxAPIutils.getMapPropreties(ph, function(json) {
-			if(json && json['Status'] === 'ok') {
-				var arr = json['Result'].children;
-				for(var i=0, len=arr.length; i<len; i++) {
-					var layer = arr[i];
-					if(layer['type'] === 'layer') {
-						if(layerName === layer['content']['properties']['name']) {
-							callback(layer['content']);
-							return;
-						}
-					}
-				}
-				callback({'error': 'layer not found'});
-			} else {
-				callback({'error': 'map not found'});
-			}
-		});
-	}
-	,
 	'getTileSize': function(zoom)	{		// Вычисление размеров тайла по zoom
 		var pz = Math.pow(2, zoom);
 		var mInPixel =  pz/156543.033928041;

@@ -64,27 +64,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				myLayer._update();
 			});
 			
-			var getMap = function(callback) {
-				var pt = L.gmx['hosts'][options.gmx.hostName]['maps'][options.gmx.mapName];
-				if(!pt) pt = L.gmx['hosts'][options.gmx.hostName]['maps'][options.gmx.mapName] = {};
-				if(!pt['mapCallbacks']) {
-					pt['mapCallbacks'] = [];
-					gmxAPIutils.getMapPropreties(options.gmx, function(json) {
-						var res = {'error': 'map not found'};
-						if(json && json['Status'] === 'ok' && json['Result']) {
-							res = pt['res'] = json['Result'];
-						}
-						for (var i = 0, len = pt['mapCallbacks'].length; i < len; i++) {
-							pt['mapCallbacks'][i](res);
-						}
-						delete pt['mapCallbacks'];
-					});
-				}
-				pt['mapCallbacks'].push(function(res) {
-					callback(res);
-				});
-			}
-			var getLayer = function(arr, callback) {
+			var getLayer = function(arr) {
 				for(var i=0, len=arr.length; i<len; i++) {
 					var layer = arr[i];
 					if(layer['type'] === 'layer') {
@@ -109,21 +89,15 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var pt = L.gmx['hosts'][options.gmx.hostName];
 			if(!pt) pt = L.gmx['hosts'][options.gmx.hostName] = {'maps': {}};
             
-            gmxSessionManager.getSessionKey(options.gmx.apikeyRequestHost, options.gmx.apiKey).done(function(key) {
-                console.log('aaa', key);
-                setSessionKey(key);
-                if(!pt['maps'][options.gmx.mapName]) {
-					getMap(function(ph) {
-						if(ph.error || !ph.children) {
-							console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
-						} else {
-							getLayer(ph.children);
-						}
-					});
-				} else {
-					getLayer(pt['maps'][options.gmx.mapName]['res'].children);
-				}
-            })
+            gmxMapManager.getMap(options.gmx.apikeyRequestHost, options.gmx.apiKey, options.gmx.mapName).done(
+                function(ph) {
+                    setSessionKey(gmxSessionManager.getSessionKey(options.gmx.apikeyRequestHost)); //should be already received
+                    getLayer(ph.children);
+                },
+                function(ph) {
+                    console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
+                }
+            );
 		}
 		prpZoomData(myLayer._map._zoom);
 		//console.log('_initContainer: ', options.gmx.shiftY);
