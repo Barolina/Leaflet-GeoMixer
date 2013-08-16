@@ -1,6 +1,83 @@
 // Плагин векторного слоя
 L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 {
+    initialize: function(options) {
+        options = L.setOptions(this, options);
+        
+        options.gmx = {
+            'hostName': options.hostName || 'maps.kosmosnimki.ru'
+            ,'apikeyRequestHost': options.apikeyRequestHost || options.hostName
+            ,'apiKey': options.apiKey
+            ,'mapName': options.mapName
+            ,'layerName': options.layerName
+            ,'beginDate': options.beginDate
+            ,'endDate': options.endDate
+            ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
+        };
+        
+        var myLayer = this;
+        
+        var getLayer = function(arr) {
+            for(var i=0, len=arr.length; i<len; i++) {
+                var layer = arr[i];
+                if(layer['type'] === 'layer') {
+                    if(options.gmx.layerName === layer.content.properties.name) {
+                        var ph = layer['content'];
+                        options.gmx.properties = ph['properties'];
+                        options.gmx.geometry = ph['geometry'];
+                        var attr = gmxAPIutils.prepareLayerBounds(ph, options.gmx);
+                        options.gmx.attr = attr;
+                        myLayer._update();
+                        return;
+                    }
+                }
+            }
+        }
+        
+        var setSessionKey = function(st) {
+            options.gmx.tileSenderPrefix = "http://" + options.gmx.hostName + "/" + 
+                "TileSender.ashx?WrapStyle=None" + 
+                "&key=" + encodeURIComponent(st);
+        }
+        
+        //TODO: move to onAdd()?
+        gmxMapManager.getMap(options.gmx.apikeyRequestHost, options.gmx.apiKey, options.gmx.mapName).done(
+            function(ph) {
+                setSessionKey(gmxSessionManager.getSessionKey(options.gmx.apikeyRequestHost)); //should be already received
+                getLayer(ph.children);
+            },
+            function(ph) {
+                console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
+            }
+        );
+    },
+    
+    _prpZoomData: function(zoom) {
+        var gmx = this.options.gmx;
+        gmx.tileSize = gmxAPIutils.getTileSize(zoom);
+        gmx.mInPixel = 256 / gmx.tileSize;
+        gmx._tilesToLoad = 0;
+        // Получение сдвига OSM
+        var pos = map.getCenter();
+        var p1 = map.project(new L.LatLng(gmxAPIutils.from_merc_y(gmxAPIutils.y_ex(pos.lat)), pos.lng), map._zoom);
+        var point = map.project(pos);
+        gmx.shiftY = point.y - p1.y;
+    },
+    
+    onAdd: function(map) {
+        L.TileLayer.Canvas.prototype.onAdd.call(this, map);
+                
+        map.on('zoomstart', function(e) {
+            this.options.gmx['zoomstart'] = true;
+        });
+        
+        map.on('zoomend', function(e) {
+            this.options.gmx['zoomstart'] = false;
+            this._prpZoomData(map._zoom);
+            this._update();
+        }, this);
+    },
+    
 	gmxSetVisibility: function (func) {
 		var options = this.options;
 		options.gmx.chkVisibility = func;
@@ -23,88 +100,18 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		this._reset();
 		this._update();
 	},
+    
     addTo: function (map) {
 		map.addLayer(this);
 		return this;
-	},	
+	},
+    
 	_initContainer: function () {
 		L.TileLayer.Canvas.prototype._initContainer.call(this);
-		var myLayer = this;
-		var options = this.options;
-		if(!('gmx' in L)) L.gmx = {'hosts':{}};
-		var prpZoomData = function(zoom) {
-			options.gmx.tileSize = gmxAPIutils.getTileSize(zoom);
-			options.gmx.mInPixel = 256 / options.gmx.tileSize;
-			options.gmx._tilesToLoad = 0;
-			// Получение сдвига OSM
-			var pos = myLayer._map.getCenter();
-			var p1 = myLayer._map.project(new L.LatLng(gmxAPIutils.from_merc_y(gmxAPIutils.y_ex(pos.lat)), pos.lng), myLayer._map._zoom);
-			var point = myLayer._map.project(pos);
-			options.gmx.shiftY = point.y - p1.y;
-		}
-		
-		if(!('gmx' in options)) {
-			options.gmx = {
-				'hostName': options.hostName || 'maps.kosmosnimki.ru'
-				,'apikeyRequestHost': options.apikeyRequestHost || options.hostName
-				,'apiKey': options.apiKey
-				,'mapName': options.mapName
-				,'layerName': options.layerName
-				,'beginDate': options.beginDate
-				,'endDate': options.endDate
-				,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
-			};
-
-			this._map.on('zoomstart', function(e) {
-				options.gmx['zoomstart'] = true;
-			});
-			this._map.on('zoomend', function(e) {
-				options.gmx['zoomstart'] = false;
-				prpZoomData(myLayer._map._zoom);
-				myLayer._update();
-			});
-			
-			var getLayer = function(arr) {
-				for(var i=0, len=arr.length; i<len; i++) {
-					var layer = arr[i];
-					if(layer['type'] === 'layer') {
-						if(options.gmx.layerName === layer['content']['properties']['name']) {
-							var ph = layer['content'];
-							options.gmx.properties = ph['properties'];
-							options.gmx.geometry = ph['geometry'];
-							var attr = gmxAPIutils.prepareLayerBounds(ph, options.gmx);
-							options.gmx.attr = attr;
-							myLayer._update();
-							return;
-						}
-					}
-				}
-			}
-			var setSessionKey = function(st) {
-				options.gmx.tileSenderPrefix = "http://" + options.gmx.hostName + "/" + 
-					"TileSender.ashx?WrapStyle=None" + 
-					"&key=" + encodeURIComponent(st);
-			}
-			
-			var pt = L.gmx['hosts'][options.gmx.hostName];
-			if(!pt) pt = L.gmx['hosts'][options.gmx.hostName] = {'maps': {}};
-            
-            gmxMapManager.getMap(options.gmx.apikeyRequestHost, options.gmx.apiKey, options.gmx.mapName).done(
-                function(ph) {
-                    setSessionKey(gmxSessionManager.getSessionKey(options.gmx.apikeyRequestHost)); //should be already received
-                    getLayer(ph.children);
-                },
-                function(ph) {
-                    console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
-                }
-            );
-		}
-		prpZoomData(myLayer._map._zoom);
-		//console.log('_initContainer: ', options.gmx.shiftY);
+		this._prpZoomData(this._map._zoom);
 	}
 	,
 	_update: function () {
-		//if (!this._map) { return; }
 		if(this.options.gmx['zoomstart']) return;
 
 		var bounds = this._map.getPixelBounds(),
@@ -117,7 +124,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			return;
 		}
 
-		var shiftY = (this.options.gmx.shiftY ? this.options.gmx.shiftY : 0);		// Сдвиг к OSM
+		var shiftY = this.options.gmx.shiftY || 0;		// Сдвиг к OSM
 		bounds.min.y += shiftY;
 		bounds.max.y += shiftY;
 
