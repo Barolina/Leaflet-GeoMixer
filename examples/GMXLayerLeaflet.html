@@ -47,7 +47,15 @@
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
 
-		var gmxLayer = new L.TileLayer.gmxVectorLayer({
+		//regions
+        new L.TileLayer.gmxVectorLayer({
+            hostName: 'maps.kosmosnimki.ru',
+            apiKey: 'U92596WMIH',
+            mapName: 'AZR6A',
+            layerName: '2FD848A8E6E54850876AF95BFECF98E5'
+		}).addTo(map);
+        
+        var gmxLayer = new L.TileLayer.gmxVectorLayer({
 			hostName: 'maps.kosmosnimki.ru',
             apiKey: 'U92596WMIH',
             mapName: 'AZR6A',
