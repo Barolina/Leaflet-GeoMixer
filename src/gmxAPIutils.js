@@ -64,13 +64,9 @@ var gmxAPIutils = {
 	  }
 	}
 	,
-	'getTileSize': function(zoom)	{		// Вычисление размеров тайла по zoom
-		var pz = Math.pow(2, zoom);
-		var mInPixel =  pz/156543.033928041;
-		return 256 / mInPixel;
-	}
+    tileSizes: [] // Размеры тайла по zoom
 	,
-	getTileNumFromLeaflet: function (tilePoint, zoom) {
+    getTileNumFromLeaflet: function (tilePoint, zoom) {
 		var pz = Math.pow(2, zoom);
 		var tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0);
 		var ty = tilePoint.y % pz + (tilePoint.y < 0 ? pz : 0);
@@ -83,6 +79,7 @@ var gmxAPIutils = {
 		return gmxTilePoint;
 	}
 	,
+    //TODO: use L.Bounds? test performance?
 	'bounds': function(arr) {							// получить bounds массива точек
 		var res = {
 			min: {
@@ -135,8 +132,7 @@ var gmxAPIutils = {
 		} else if(type === 'MULTIPOINT') {
 			addToArr(coords);
 		}
-		item.bounds = gmxAPIutils.bounds(arr);
-		arr = null;
+		return gmxAPIutils.bounds(arr);
 	}
 	,'dec2rgba': function(i, a)	{				// convert decimal to rgb
 		var r = (i >> 16) & 255;
@@ -180,7 +176,7 @@ var gmxAPIutils = {
 
 		var addRes = function(z, x, y, v, s, d) {
 			var gmxTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
-			var tileSize = gmxAPIutils.getTileSize(z);
+			var tileSize = gmxAPIutils.tileSizes[z];
 			var minx = x * tileSize, miny = y * tileSize;
 			res['tilesAll'][gmxTileKey] = {
 				'gmxTileKey': gmxTileKey
@@ -387,20 +383,16 @@ var gmxAPIutils = {
 				url += "&v=" + tp['v'];
 				if(tp['d'] !== -1) url += "&Level=" + tp['d'] + "&Span=" + tp['s'];
 				cnt++;
-				(function() {
-					var gmxTileKey = key;
-					var tp1 = tilePoint;
-					var attr = ph.attr;
-					var func = callback;
+				(function(gmxTileKey) {
 					gmxAPIutils.request({
 						'url': url
 						,'callback': function(st) {
 							cnt--;
 							var res = JSON.parse(st);
-							func({'cnt': cnt, 'gmxTileKey': gmxTileKey, 'data': res});
+							callback({'cnt': cnt, 'gmxTileKey': gmxTileKey, 'data': res});
 						}
 					});
-				})();
+				})(key);
 			}
 		}
 		return cnt;
@@ -801,3 +793,10 @@ var gmxAPIutils = {
 		return (rad/Math.PI) * 180.0;
 	}
 }
+
+!function() {
+    //calculate tile sizes
+    for (var z = 0; z < 30; z++) {
+        gmxAPIutils.tileSizes[z] = 40075016.685578496 / Math.pow(2, z);
+    }
+}()
