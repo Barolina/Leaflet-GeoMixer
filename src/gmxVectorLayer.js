@@ -179,71 +179,22 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		var gmx = this._gmx;
 		gmx._tilesToLoad--;
 		if(gmx['zoomstart']) return;
-		var showRaster = 
-			'rasterBGfunc' in gmx.attr
-			&&
-			(
-				zoom >= gmx['properties']['RCMinZoomForRasters'] || gmx['properties']['quicklook']
-			);
-		
-		var gmxTilePoint = this.gmxGetTileNum(tilePoint, zoom);
-		if(!gmxTilePoint['rasters']) gmxTilePoint['rasters'] = {};
-		if(!gmxTilePoint['items']) gmxTilePoint['items'] = [];
-		for (var key in gmx.attr['tilesNeedLoad']) {
-			var tile = gmx.attr['tilesAll'][key].tile;
-			if (!tile.isIntersects(gmxTilePoint)) continue;
-			var data = tile.data || [];
-			for (var j = 0, len1 = data.length; j < len1; j++) {
-				var it = data[j];
-				var item = gmx.attr['items'][it.id];
-				if(gmx.chkVisibility && !gmx.chkVisibility(item)) {
-					continue;
-				}
-				if(gmx.attr['layerType'] === 'VectorTemporal') {
-					var unixTimeStamp = item['propHiden']['unixTimeStamp'];
-					if(unixTimeStamp < gmx.attr['ut1'] || unixTimeStamp > gmx.attr['ut2']) continue;
-				}
-                
-				if(!it.bounds) {
-                    it.bounds = gmxAPIutils.itemBounds(it);
-                }
-                
-				if(!gmxTilePoint['bounds'].intersects(it['bounds'])) continue;
-				tile.calcHiddenPoints();
-				gmxTilePoint['items'].push(it);
-			}
-		}
-		if(showRaster) {
-			var myLayer = this;
-			gmxAPIutils.getTileRasters({
-				'gmx': gmx
-				,'gmxTilePoint': gmxTilePoint
-				,'zoom': zoom
-			}, function(pt) {
-				var res = myLayer.gmxPaintTile(pt['gmxTilePoint'], tilePoint);
-			});
-		} else {
-			var res = this.gmxPaintTile(gmxTilePoint, tilePoint);
-		}
-	}
-	,
-	gmxPaintTile: function (gmxTilePoint, tilePoint) {
-		var gmx = this._gmx;
-		var style = gmx.attr['styles'][0];
-		return gmxAPIutils.paintTile({
-			'gmx': gmx
-			,'gmxTilePoint': gmxTilePoint
-			,'layer': this
-			,'tilePoint': tilePoint
-		}, style);
+            
+        var domTile = this.gmxGetCanvasTile(tilePoint),
+            ctx = domTile.getContext('2d'),
+            style = gmx.attr.styles[0],
+            screenTile = new gmxScreenVectorTile(gmx, tilePoint, zoom);
+            
+        screenTile.drawTile(ctx, style);
 	}
 	,
 	gmxGetCanvasTile: function (tilePoint) {
 		var tKey = tilePoint.x + ':' + tilePoint.y;
-		//console.log('gmxGetCanvasTile: ', tKey);
-		for(var key in this._tiles) {
-			if(key == tKey) return this._tiles[key];
-		}
+		
+        if (tKey in this._tiles) {
+            return this._tiles[tKey];
+        }
+        
 		var tile = this._getTile();
 		tile.id = tKey;
 		tile._layer = this;
@@ -269,7 +220,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			,'x': tx % pz - pz/2
 			,'y': pz/2 - 1 - ty % pz
 		};
-		gmxTilePoint['gmxTileID'] = zoom + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y
 		
 		var mercTileSize = this._gmx.tileSize;
 		var p = [gmxTilePoint.x * mercTileSize, gmxTilePoint.y * mercTileSize];

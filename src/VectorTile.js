@@ -1,4 +1,4 @@
-//Single vector tile
+//Single vector tile, received from GeoMixer server
 var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
     var urlPrefix = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + "&MapName=" + gmx.mapName + "&LayerName=" + gmx.layerName,
         loadDef = null,
@@ -32,18 +32,11 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
         return loadDef;
     }
     
-    this.getBounds = function() {
-        if (!bounds) {
-            var tileSize = gmxAPIutils.tileSizes[z];
-			var minx = x * tileSize, miny = y * tileSize;
-			bounds = gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
-        }
-        return bounds;
-    }
-    
     this.clear = function() {
         this.isEmpty = true;
-        this.data = loadDef = bounds = null;
+        this.data = null;
+        isCalcHiddenPoints = false;
+        loadDef = null;
     }
     
     this.isIntersects = function(gmxTilePoint) {
@@ -51,19 +44,19 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
     }
     
     this.calcHiddenPoints = function() {
-        if (!this.data || !isCalcHiddenPoints) {
+        if (!this.data || isCalcHiddenPoints) {
             return;
         }
         
         isCalcHiddenPoints = true;
         
-		var tileBounds = this.getBounds();
-		var d = (tileBounds.max.x - tileBounds.min.x)/10000;
+		var bounds = this.bounds;
+		var d = (bounds.max.x - bounds.min.x)/10000;
 		var tbDelta = {									// границы тайла для определения onEdge отрезков
-			'minX': tileBounds.min.x + d
-			,'maxX': tileBounds.max.x - d
-			,'minY': tileBounds.min.y + d
-			,'maxY': tileBounds.max.y - d
+			'minX': bounds.min.x + d
+			,'maxX': bounds.max.x - d
+			,'minY': bounds.min.y + d
+			,'maxY': bounds.max.y - d
 		};
 		var chkOnEdge = function(p1, p2, ext) {				// отрезок на границе
 			if ((p1[0] < ext.minX && p2[0] < ext.minX) || (p1[0] > ext.maxX && p2[0] > ext.maxX)) return true;
@@ -104,6 +97,7 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
 		}
     }
     
+    this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = null;
     this.x = x;
     this.y = y;

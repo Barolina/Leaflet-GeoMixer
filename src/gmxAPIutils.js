@@ -49,7 +49,6 @@ var gmxAPIutils = {
 			,'x': tx % pz - pz/2
 			,'y': pz/2 - 1 - ty % pz
 		};
-		gmxTilePoint['gmxTileID'] = zoom + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y
 		return gmxTilePoint;
 	}
 	,
@@ -288,22 +287,9 @@ var gmxAPIutils = {
 		}
 		if(!res) res = {};
 		res['tilesNeedLoad'] = tilesNeedLoad;
-		//res['tilesNeedLoadCounts'] = cnt;
 		return res;
 	}
 	,
-	'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам 2 тайлов
-		var pz = Math.pow(2, tk1.z - tk2.z);
-		var x2 = Math.floor(tk2.x * pz);
-		if(x2 - 1 >= tk1.x) return false;
-		if(x2 + pz <= tk1.x) return false;
-		var y2 = Math.floor(tk2.y * pz);
-		if(y2 - 1 >= tk1.y) return false;
-		if(y2 + pz <= tk1.y) return false;
-		return true;
-	}
-
-/* оптимизированная версия
     'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам 2 тайлов
         if (tk1.z < tk2.z) {
             var t = tk1; tk1 = tk2; tk2 = t;
@@ -312,13 +298,12 @@ var gmxAPIutils = {
         var dz = tk1.z - tk2.z
         return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
 	}
-*/  
 	,
-	'loadTile': function(ph, gmxTilePoint, tilePoint, callback) {	// загрузить тайлы по отображаемому gmxTilePoint
+	'loadTile': function(gmx, gmxTilePoint, tilePoint, callback) {	// загрузить тайлы по отображаемому gmxTilePoint
 		var cnt = 0;
 		
-		for (var key in ph.attr['tilesNeedLoad']) (function(key) {
-			var it = ph.attr['tilesAll'][key],
+		for (var key in gmx.attr['tilesNeedLoad']) (function(key) {
+			var it = gmx.attr['tilesAll'][key],
                 tile = it.tile;
                 
 			if (!tile.isIntersects(gmxTilePoint)) return;
@@ -467,51 +452,7 @@ var gmxAPIutils = {
 			})();
 		}
 	}
-	,
-	'paintTile': function(attr, style) {			// Отрисовка 1 тайла
-		var gmxTilePoint = attr.gmxTilePoint;
-		var items = gmxTilePoint['items'];
-		if(!gmxTilePoint['rasters']) gmxTilePoint['rasters'] = {};
-		var dattr = {
-			'gmx': attr['gmx']
-			,'style': style
-			,'tpx': 256 * gmxTilePoint['x']
-			,'tpy': 256 *(1 + gmxTilePoint['y'])
-		};
-		
-		var items = gmxTilePoint['items'].sort(attr['gmx'].sortItems);
-		
-		for (var i = 0, len = items.length; i < len; i++) {
-			var it = items[i];
-			var idr = it['id'];
-			if(!attr.ctx) {
-				var tile = attr.layer.gmxGetCanvasTile(attr.tilePoint);
-				attr.ctx = tile.getContext('2d');
-			}
-			dattr['ctx'] = attr.ctx;
-			if(gmxTilePoint['rasters'][idr]) dattr['bgImage'] = gmxTilePoint['rasters'][idr];
-
-			var geom = it['geometry'];
-			if(geom['type'].indexOf('POLYGON') !== -1) {	// Отрисовка геометрии полигона
-				var coords = geom['coordinates'];
-				for (var j = 0, len1 = coords.length; j < len1; j++) {
-					var coords1 = coords[j];
-					dattr['hiddenLines'] = it['hiddenLines'][j];
-					if(geom['type'].indexOf('MULTI') !== -1) {
-						for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-							dattr['coords'] = coords1[j1];
-							gmxAPIutils.polygonToCanvas(dattr);
-						}
-					} else {
-						dattr['coords'] = coords1;
-						gmxAPIutils.polygonToCanvas(dattr);
-					}
-				}
-			}
-		}
-	}
 	,'r_major': 6378137.000
-	//,'r_minor': 6356752.3142
 	,'y_ex': function(lat)	{				// Вычисление y_ex 
 		if (lat > 89.5)		lat = 89.5;
 		if (lat < -89.5) 	lat = -89.5;
@@ -519,44 +460,21 @@ var gmxAPIutils = {
 		var ts = Math.tan(0.5*((Math.PI*0.5) - phi));
 		var y = -gmxAPIutils.r_major * Math.log(ts);
 		return y;
-	}
-	,
-	/*from_merc_y: function(y)
-	{
-		var temp = gmxAPIutils.r_minor / gmxAPIutils.r_major;
-		var es = 1.0 - (temp * temp);
-		var eccent = Math.sqrt(es);
-		var ts = Math.exp(-y/gmxAPIutils.r_major);
-		var HALFPI = 1.5707963267948966;
-
-		var eccnth, Phi, con, dphi;
-		eccnth = 0.5 * eccent;
-
-		Phi = HALFPI - 2.0 * Math.atan(ts);
-
-		var N_ITER = 15;
-		var TOL = 1e-7;
-		var i = N_ITER;
-		dphi = 0.1;
-		while ((Math.abs(dphi)>TOL)&&(--i>0))
-		{
-			con = eccent * Math.sin (Phi);
-			dphi = HALFPI - 2.0 * Math.atan(ts * Math.pow((1.0 - con)/(1.0 + con), eccnth)) - Phi;
-			Phi += dphi;
-		}
-
-		return this.deg_decimal(Phi);
-	}*/
+	}	
 	,
 	deg_rad: function(ang)
 	{
 		return ang * (Math.PI/180.0);
-	}
-	/*,
-	deg_decimal: function(rad)
-	{
-		return (rad/Math.PI) * 180.0;
-	}*/
+	},
+    
+    //x, y, z - GeoMixer tile coordinates
+    getTileBounds: function(x, y, z) {
+        var tileSize = gmxAPIutils.tileSizes[z],
+            minx = x * tileSize, 
+            miny = y * tileSize;
+            
+        return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
+    }
 }
 
 !function() {
