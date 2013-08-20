@@ -1,6 +1,8 @@
 var deps = [
     "Deferred.js",
     "ImageLoader.js",
+    
+    "VectorTile.js",
     "gmxAPIutils.js",
     "SessionManager.js",
     "MapManager.js",

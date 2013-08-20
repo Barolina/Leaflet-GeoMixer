@@ -3,7 +3,8 @@ var gmxDeferred = function() {
         rejectCallbacks = [],
         isFulfilled = false,
         isResolved = false,
-        fulfilledData;
+        fulfilledData,
+        onceAdded = false;
         
     var _fulfill = function(data, resolved) {
         if (isFulfilled) {
@@ -36,6 +37,13 @@ var gmxDeferred = function() {
         } else {
             resolveCallback && resolveCallbacks.push(resolveCallback);
             rejectCallback && rejectCallbacks.push(rejectCallback);
+        }
+    }
+    
+    this.once = function(onceResolveCallback) {
+        if (!onceAdded) {
+            onceAdded = true;
+            this.done(onceResolveCallback);
         }
     }
     

@@ -4,10 +4,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     initialize: function(options) {
         options = L.setOptions(this, options);
         
-        options.gmx = {
+        this._gmx = {
             'hostName': options.hostName || 'maps.kosmosnimki.ru'
-            ,'apikeyRequestHost': options.apikeyRequestHost || options.hostName
-            ,'apiKey': options.apiKey
             ,'mapName': options.mapName
             ,'layerName': options.layerName
             ,'beginDate': options.beginDate
@@ -15,18 +13,19 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
         };
         
+        var apikeyRequestHost = options.apikeyRequestHost || this._gmx.hostName;
         var myLayer = this;
         
         var getLayer = function(arr) {
             for(var i=0, len=arr.length; i<len; i++) {
                 var layer = arr[i];
                 if(layer['type'] === 'layer') {
-                    if(options.gmx.layerName === layer.content.properties.name) {
+                    if(myLayer._gmx.layerName === layer.content.properties.name) {
                         var ph = layer['content'];
-                        options.gmx.properties = ph['properties'];
-                        options.gmx.geometry = ph['geometry'];
-                        var attr = gmxAPIutils.prepareLayerBounds(ph, options.gmx);
-                        options.gmx.attr = attr;
+                        myLayer._gmx.properties = ph['properties'];
+                        myLayer._gmx.geometry = ph['geometry'];
+                        var attr = gmxAPIutils.prepareLayerBounds(ph, myLayer._gmx);
+                        myLayer._gmx.attr = attr;
                         myLayer._update();
                         return;
                     }
@@ -34,33 +33,34 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             }
         }
         
-        var setSessionKey = function(st) {
-            options.gmx.tileSenderPrefix = "http://" + options.gmx.hostName + "/" + 
+        var setSessionKey = function(sk) {
+            myLayer._gmx.tileSenderPrefix = "http://" + myLayer._gmx.hostName + "/" + 
                 "TileSender.ashx?WrapStyle=None" + 
-                "&key=" + encodeURIComponent(st);
+                "&key=" + encodeURIComponent(sk);
         }
         
         //TODO: move to onAdd()?
-        gmxMapManager.getMap(options.gmx.apikeyRequestHost, options.gmx.apiKey, options.gmx.mapName).done(
+        gmxMapManager.getMap(apikeyRequestHost, options.apiKey, this._gmx.mapName).done(
             function(ph) {
-                setSessionKey(gmxSessionManager.getSessionKey(options.gmx.apikeyRequestHost)); //should be already received
+                setSessionKey(gmxSessionManager.getSessionKey(apikeyRequestHost)); //should be already received
                 getLayer(ph.children);
             },
             function(ph) {
-                console.log('Error: ' + options.gmx.mapName + ' - ' + ph.error);
+                console.log('Error: ' + myLayer._gmx.mapName + ' - ' + ph.error);
             }
         );
     },
     
     _prpZoomData: function(zoom) {
-        var gmx = this.options.gmx,
+        var gmx = this._gmx,
             map = this._map;
         gmx.tileSize = gmxAPIutils.tileSizes[zoom];
         gmx.mInPixel = 256 / gmx.tileSize;
         gmx._tilesToLoad = 0;
         // Получение сдвига OSM
         var pos = map.getCenter();
-        var p1 = map.project(new L.LatLng(gmxAPIutils.from_merc_y(gmxAPIutils.y_ex(pos.lat)), pos.lng), map._zoom);
+        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
+        var p1 = map.project(new L.LatLng(lat, pos.lng), map._zoom);
         var point = map.project(pos);
         gmx.shiftY = point.y - p1.y;
         //console.log(gmx.shiftY);
@@ -70,35 +70,34 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
                 
         map.on('zoomstart', function(e) {
-            this.options.gmx['zoomstart'] = true;
+            this._gmx['zoomstart'] = true;
         }, this);
         
         map.on('zoomend', function(e) {
-            this.options.gmx['zoomstart'] = false;
+            this._gmx['zoomstart'] = false;
             this._prpZoomData(map._zoom);
             this._update();
         }, this);
     },
     
 	gmxSetVisibility: function (func) {
-		var options = this.options;
-		options.gmx.chkVisibility = func;
+		this._gmx.chkVisibility = func;
 		this._reset();
 		this._update();
 	}
 	,
 	gmxSetDateInterval: function (beginDate, endDate) {
+        var gmx = this._gmx;
 		var options = this.options;
-		options.gmx.beginDate = beginDate;
-		options.gmx.endDate = endDate;
-		if(options.gmx.attr.cntItems > 1000) {
-			for (var key in options.gmx.attr['tilesNeedLoad']) {
-				delete options.gmx.attr['tilesAll'][key]['data'];
-				delete options.gmx.attr['tilesAll'][key]['inLoad'];
+		gmx.beginDate = beginDate;
+		gmx.endDate = endDate;
+		if(gmx.attr.itemCount > 1000) {
+			for (var key in gmx.attr['tilesNeedLoad']) {
+                gmx.attr['tilesAll'][key].tile.clear();
 			}
-			options.gmx.attr.cntItems = 0;
+			gmx.attr.itemCount = 0;
 		}
-		delete options.gmx.attr.tilesNeedLoad;
+		delete gmx.attr.tilesNeedLoad;
 		this._reset();
 		this._update();
 	},
@@ -114,7 +113,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_update: function () {
-		if(this.options.gmx['zoomstart']) return;
+		if(this._gmx['zoomstart']) return;
 
 		var bounds = this._map.getPixelBounds(),
 		    zoom = this._map.getZoom(),
@@ -126,7 +125,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			return;
 		}
 
-		var shiftY = this.options.gmx.shiftY || 0;		// Сдвиг к OSM
+		var shiftY = this._gmx.shiftY || 0;		// Сдвиг к OSM
 		bounds.min.y += shiftY;
 		bounds.max.y += shiftY;
 
@@ -149,14 +148,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	,
 	_addTile: function (tilePoint, container) {
 		var myLayer = this, zoom = myLayer._map._zoom;
-		var gmx = this.options.gmx;
+		var gmx = this._gmx;
 		if(!gmx.attr) return;
 		if(!gmx.attr.tilesNeedLoad) {
 			var res = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate);
-			gmx.attr.tilesNeedLoadCounts = res.tilesNeedLoadCounts;
 			gmx.attr.tilesNeedLoad = res.tilesNeedLoad;
 		}
-		this.options.gmx._tilesToLoad++;
+		gmx._tilesToLoad++;
 		if(!gmx.attr.needRedraw) gmx.attr.needRedraw = [];
 		gmx.attr.needRedraw.push(tilePoint);
 		var redraw = function() {
@@ -166,24 +164,19 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			gmx.attr.needRedraw = [];
 		}
 		var gmxTilePoint = this.gmxGetTileNum(tilePoint, zoom);
-        var tp = tilePoint;
-        var gtp = gmxTilePoint;
-        var cnt = gmxAPIutils.loadTile(gmx, gtp, tp, function(ph) {
-            var gmxTileKey = ph.gmxTileKey;
-            if(!gmx.attr['tilesAll'][gmxTileKey]['data']) {
-                gmx.attr.cntItems += gmxAPIutils.parseTile(gmx, ph);
-            }
+        var cnt = gmxAPIutils.loadTile(gmx, gmxTilePoint, tilePoint, function(tile) {
+            var gmxTileKey = tile.gmxTileKey;
+            gmx.attr.itemCount += gmxAPIutils.updateItemsFromTile(gmx, tile);
             var tilePointArr = gmx.attr['tilesAll'][gmxTileKey]['fromTilePoints'];
             for (var i = 0, len = tilePointArr.length; i < len; i++) {
                 myLayer.gmxDrawTile(tilePointArr[i], zoom);
             }
         });
-        if(cnt === 0) myLayer.gmxDrawTile(tp, zoom);
+        if(cnt === 0) myLayer.gmxDrawTile(tilePoint, zoom);
 	}
 	,
 	gmxDrawTile: function (tilePoint, zoom) {
-		var options = this.options;
-		var gmx = options.gmx;
+		var gmx = this._gmx;
 		gmx._tilesToLoad--;
 		if(gmx['zoomstart']) return;
 		var showRaster = 
@@ -197,10 +190,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		if(!gmxTilePoint['rasters']) gmxTilePoint['rasters'] = {};
 		if(!gmxTilePoint['items']) gmxTilePoint['items'] = [];
 		for (var key in gmx.attr['tilesNeedLoad']) {
-			var pt = gmx.attr['tilesAll'][key];
-			if(!gmxAPIutils.isTileKeysIntersects(gmxTilePoint, pt['gmxTilePoint'])) continue;
-			var data = pt['data'] || [];
-			if(data.length === 0) continue;
+			var tile = gmx.attr['tilesAll'][key].tile;
+			if (!tile.isIntersects(gmxTilePoint)) continue;
+			var data = tile.data || [];
 			for (var j = 0, len1 = data.length; j < len1; j++) {
 				var it = data[j];
 				var item = gmx.attr['items'][it.id];
@@ -217,19 +209,18 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 }
                 
 				if(!gmxTilePoint['bounds'].intersects(it['bounds'])) continue;
-				if(!it['hideLines']) gmxAPIutils.chkHiddenPoints({'gmx':gmx, 'gmxTileKey':key});
+				tile.calcHiddenPoints();
 				gmxTilePoint['items'].push(it);
 			}
 		}
-		//console.log('_tilesToLoad: ', gmx._tilesToLoad);
 		if(showRaster) {
-			var layer = this;
+			var myLayer = this;
 			gmxAPIutils.getTileRasters({
 				'gmx': gmx
 				,'gmxTilePoint': gmxTilePoint
 				,'zoom': zoom
 			}, function(pt) {
-				var res = layer.gmxPaintTile(pt['gmxTilePoint'], tilePoint);
+				var res = myLayer.gmxPaintTile(pt['gmxTilePoint'], tilePoint);
 			});
 		} else {
 			var res = this.gmxPaintTile(gmxTilePoint, tilePoint);
@@ -237,8 +228,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	gmxPaintTile: function (gmxTilePoint, tilePoint) {
-		var options = this.options;
-		var gmx = options.gmx;
+		var gmx = this._gmx;
 		var style = gmx.attr['styles'][0];
 		return gmxAPIutils.paintTile({
 			'gmx': gmx
@@ -263,7 +253,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		this._tileContainer.appendChild(tile);
 
 		var tilePos = this._getTilePos(tilePoint);
-		var shiftY = (this.options.gmx.shiftY ? this.options.gmx.shiftY : 0);		// Сдвиг к OSM
+		var shiftY = (this._gmx.shiftY ? this._gmx.shiftY : 0);		// Сдвиг к OSM
 		if(shiftY !== 0) tilePos.y -= shiftY;
 		L.DomUtil.setPosition(tile, tilePos, L.Browser.chrome || L.Browser.android23);
 		this.tileDrawn(tile);
@@ -281,7 +271,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		};
 		gmxTilePoint['gmxTileID'] = zoom + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y
 		
-		var mercTileSize = this.options.gmx.tileSize;
+		var mercTileSize = this._gmx.tileSize;
 		var p = [gmxTilePoint.x * mercTileSize, gmxTilePoint.y * mercTileSize];
 		var arr = [p, [p[0] + mercTileSize, p[1] + mercTileSize]];
 		gmxTilePoint['bounds'] = gmxAPIutils.bounds(arr);
@@ -308,7 +298,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_tileLoaded: function () {
-		if (this.options.gmx._tilesToLoad < 1) {
+		if (this._gmx._tilesToLoad < 1) {
 			this.fire('load');
 
 			if (this._animated) {
