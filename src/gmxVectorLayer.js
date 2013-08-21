@@ -19,16 +19,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var getLayer = function(arr) {
             for(var i=0, len=arr.length; i<len; i++) {
                 var layer = arr[i];
-                if(layer['type'] === 'layer') {
-                    if(myLayer._gmx.layerName === layer.content.properties.name) {
-                        var ph = layer['content'];
-                        myLayer._gmx.properties = ph['properties'];
-                        myLayer._gmx.geometry = ph['geometry'];
-                        var attr = gmxAPIutils.prepareLayerBounds(ph, myLayer._gmx);
-                        myLayer._gmx.attr = attr;
-                        myLayer._update();
-                        return;
-                    }
+                if(layer.type === 'layer' && myLayer._gmx.layerName === layer.content.properties.name) {
+                    var ph = layer['content'];
+                    myLayer._gmx.properties = ph['properties'];
+                    myLayer._gmx.geometry = ph['geometry'];
+                    myLayer._gmx.attr = myLayer.initLayerData(ph);
+                    myLayer._update();
+                    return;
                 }
             }
         }
@@ -147,15 +144,18 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_addTile: function (tilePoint, container) {
-		var myLayer = this, zoom = myLayer._map._zoom;
-		var gmx = this._gmx;
-		if(!gmx.attr) return;
-		if(!gmx.attr.tilesNeedLoad) {
+		var myLayer = this, 
+            zoom = myLayer._map._zoom,
+            gmx = this._gmx;
+            
+		if (!gmx.attr) return;
+        
+		if (!gmx.attr.tilesNeedLoad) {
 			var res = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate);
 			gmx.attr.tilesNeedLoad = res.tilesNeedLoad;
 		}
 		gmx._tilesToLoad++;
-		if(!gmx.attr.needRedraw) gmx.attr.needRedraw = [];
+		if (!gmx.attr.needRedraw) gmx.attr.needRedraw = [];
 		gmx.attr.needRedraw.push(tilePoint);
 		var redraw = function() {
 			for (var i = 0, len = gmx.attr.needRedraw.length; i < len; i++) {
@@ -163,7 +163,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			}
 			gmx.attr.needRedraw = [];
 		}
-		var gmxTilePoint = this.gmxGetTileNum(tilePoint, zoom);
+		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var cnt = gmxAPIutils.loadTile(gmx, gmxTilePoint, tilePoint, function(tile) {
             var gmxTileKey = tile.gmxTileKey;
             gmx.attr.itemCount += gmxAPIutils.updateItemsFromTile(gmx, tile);
@@ -204,28 +204,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		this._tileContainer.appendChild(tile);
 
 		var tilePos = this._getTilePos(tilePoint);
-		var shiftY = (this._gmx.shiftY ? this._gmx.shiftY : 0);		// Сдвиг к OSM
-		if(shiftY !== 0) tilePos.y -= shiftY;
+		var shiftY = this._gmx.shiftY || 0;		// Сдвиг к OSM
+		tilePos.y -= shiftY;
 		L.DomUtil.setPosition(tile, tilePos, L.Browser.chrome || L.Browser.android23);
 		this.tileDrawn(tile);
 		return this._tiles[tKey];
-	}
-	,
-	gmxGetTileNum: function (tilePoint, zoom) {
-		var pz = Math.pow(2, zoom);
-		var tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0);
-		var ty = tilePoint.y % pz + (tilePoint.y < 0 ? pz : 0);
-		var gmxTilePoint = {
-			'z': zoom
-			,'x': tx % pz - pz/2
-			,'y': pz/2 - 1 - ty % pz
-		};
-		
-		var mercTileSize = this._gmx.tileSize;
-		var p = [gmxTilePoint.x * mercTileSize, gmxTilePoint.y * mercTileSize];
-		var arr = [p, [p[0] + mercTileSize, p[1] + mercTileSize]];
-		gmxTilePoint['bounds'] = gmxAPIutils.bounds(arr);
-		return gmxTilePoint;
 	}
 	,
 	_getLoadedTilesPercentage: function (container) {
@@ -266,5 +249,99 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	,
 	tileDrawn: function (tile) {
 		this._tileOnLoad(tile);
+	},
+    initLayerData: function(layerDescription) {					// построение списка тайлов
+        var gmx = this._gmx,
+            res = {'tilesAll':{}, 'items':{}, 'tileCount':0, 'itemCount':0},
+            prop = layerDescription.properties,
+            geom = layerDescription.geometry,
+            type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
+
+		var defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'};
+		var styles = [];
+		if(prop.styles) {
+			for (var i = 0, len = prop['styles'].length; i < len; i++)
+			{
+				var it = prop['styles'][i];
+				var pt = {};
+				var renderStyle = it['RenderStyle'];
+				if(renderStyle['outline']) {
+					var outline = renderStyle['outline'];
+					pt['lineWidth'] = outline.thickness || 0;
+					var color = outline.color || 255;
+					var opacity = ('opacity' in outline ? outline['opacity']/100 : 1);
+					pt['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+				}
+				if(renderStyle['fill']) {
+					var fill = renderStyle.fill;
+					var color = fill.color || 255;
+					var opacity = ('opacity' in fill ? fill['opacity']/100 : 1);
+					pt['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+				}
+				styles.push(pt);
+			}
+		} else {
+            styles.push(defaultStyle);
+        }
+		res.styles = styles;
+
+		var addRes = function(z, x, y, v, s, d) {
+            var tile = new gmxVectorTile(gmx, x, y, z, v, s, d);
+			res.tilesAll[tile.gmxTileKey] = {tile: tile};
+		}
+		var cnt;
+		var arr = prop['tiles'] || [];
+		var vers = prop['tilesVers'] || [];
+		if(type === 'VectorTemporal') {
+			arr = prop['TemporalTiles'];
+			vers = prop['TemporalVers'];
+			for (var i = 0, len = arr.length; i < len; i++)
+			{
+				var arr1 = arr[i];
+				var z = Number(arr1[4])
+					,y = Number(arr1[3])
+					,x = Number(arr1[2])
+					,s = Number(arr1[1])
+					,d = Number(arr1[0])
+					,v = Number(vers[i])
+				;
+				addRes(z, x, y, v, s, d);
+			}
+            cnt = arr.length;
+			res['TemporalColumnName'] = prop['TemporalColumnName'];
+			res['TemporalPeriods'] = prop['TemporalPeriods'];
+			
+			var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
+			var arr = ZeroDateString.split('.');
+			var zn = new Date(					// Начальная дата
+				(arr.length > 2 ? arr[2] : 2008),
+				(arr.length > 1 ? arr[1] - 1 : 0),
+				(arr.length > 0 ? arr[0] : 1)
+				);
+			res['ZeroDate'] = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
+			res['ZeroUT'] = res['ZeroDate'].getTime() / 1000;
+		} else if(type === 'Vector') {
+			for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
+				addRes(Number(arr[i+2]), Number(arr[i]), Number(arr[i+1]), Number(vers[cnt]), -1, -1);
+			}
+		}
+		res['tileCount'] = cnt;
+		res['layerType'] = type;						// VectorTemporal Vector
+		res['identityField'] = prop['identityField'];	// ogc_fid
+		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
+		if(prop['IsRasterCatalog']) {
+			res['rasterBGfunc'] = function(x, y, z, idr) {
+				return 'http://' + gmx.hostName
+					+'/TileSender.ashx?ModeKey=tile'
+					+'&x=' + x
+					+'&y=' + y
+					+'&z=' + z
+					+'&idr=' + idr
+					+'&MapName=' + gmx.mapName
+					+'&LayerName=' + gmx.layerName
+					+'&key=' + encodeURIComponent(gmx.sessionKey);
+			};
+		}
+		return res;
 	}
 });

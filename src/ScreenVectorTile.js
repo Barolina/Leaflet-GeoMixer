@@ -1,21 +1,11 @@
 //Single tile on screen with vector data
 var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
-    var getGmxTilePoint = function(tilePoint, zoom) {
-        var pz = Math.pow(2, zoom);
-		var tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0);
-		var ty = tilePoint.y % pz + (tilePoint.y < 0 ? pz : 0);
-		return {
-			z: zoom,
-			x: tx % pz - pz/2,
-			y: pz/2 - 1 - ty % pz
-		};
-    }
     
     var showRaster = 'rasterBGfunc' in gmx.attr &&
         (zoom >= gmx.properties.RCMinZoomForRasters || gmx.properties.quicklook);
 
     var rasters = {},
-        gmxTilePoint = getGmxTilePoint(tilePoint, zoom),
+        gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
         bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
     
     //get all items from global item collection, that should be rendered in this tile

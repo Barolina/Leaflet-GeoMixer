@@ -1,33 +1,29 @@
 //Single vector tile, received from GeoMixer server
 var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
-    var urlPrefix = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + "&MapName=" + gmx.mapName + "&LayerName=" + gmx.layerName,
+    var url = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + 
+              "&MapName=" + gmx.mapName + 
+              "&LayerName=" + gmx.layerName + 
+              "&z=" + z +
+              "&x=" + x +
+              "&y=" + y +
+              "&v=" + v +
+              (d !== -1 ? "&Level=" + d + "&Span=" + s : ""),
         loadDef = null,
-        bounds = null,
         isCalcHiddenPoints = false,
         _this = this;
     
     this.load = function() {
-        if (loadDef) {
-            return loadDef;
+        if (!loadDef) {
+            loadDef = new gmxDeferred();
+            this.isEmpty = false;
+            gmxAPIutils.request({
+                'url': url
+                ,'callback': function(st) {
+                    _this.data = JSON.parse(st);
+                    loadDef.resolve(_this.data);
+                }
+            });
         }
-        
-        this.isEmpty = false;
-        loadDef = new gmxDeferred();
-        
-        var url = urlPrefix + "&z=" + z;
-        url += "&x=" + x;
-        url += "&y=" + y;
-        url += "&v=" + v;
-        if(d !== -1) {
-            url += "&Level=" + d + "&Span=" + s;
-        }
-        gmxAPIutils.request({
-            'url': url
-            ,'callback': function(st) {
-                _this.data = JSON.parse(st);
-                loadDef.resolve(_this.data);
-            }
-        });
         
         return loadDef;
     }

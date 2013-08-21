@@ -114,101 +114,6 @@ var gmxAPIutils = {
 		return 'rgba('+r+', '+g+', '+b+', '+a+')';
 	}
 	,
-	'prepareLayerBounds': function(layer, gmx) {					// построение списка тайлов
-		var res = {'tilesAll':{}, 'items':{}, 'tileCount':0, 'itemCount':0};
-		var prop = layer.properties;
-		var geom = layer.geometry;
-		var type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
-
-		var defaultStyle = {'lineWidth': 1, 'strokeStyle': 'rgba(0, 0, 255, 1)'};
-		var styles = [];
-		if(prop['styles']) {
-			for (var i = 0, len = prop['styles'].length; i < len; i++)
-			{
-				var it = prop['styles'][i];
-				var pt = {};
-				var renderStyle = it['RenderStyle'];
-				if(renderStyle['outline']) {
-					var outline = renderStyle['outline'];
-					pt['lineWidth'] = outline.thickness || 0;
-					var color = outline.color || 255;
-					var opacity = ('opacity' in outline ? outline['opacity']/100 : 1);
-					pt['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
-				}
-				if(renderStyle['fill']) {
-					var fill = renderStyle.fill;
-					var color = fill.color || 255;
-					var opacity = ('opacity' in fill ? fill['opacity']/100 : 1);
-					pt['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
-				}
-				styles.push(pt);
-			}
-		} else {
-            styles.push(defaultStyle);
-        }
-		res['styles'] = styles;
-
-		var addRes = function(z, x, y, v, s, d) {
-            var tile = new gmxVectorTile(gmx, x, y, z, v, s, d);
-			res.tilesAll[tile.gmxTileKey] = {tile: tile};
-		}
-		var cnt;
-		var arr = prop['tiles'] || [];
-		var vers = prop['tilesVers'] || [];
-		if(type === 'VectorTemporal') {
-			arr = prop['TemporalTiles'];
-			vers = prop['TemporalVers'];
-			for (var i = 0, len = arr.length; i < len; i++)
-			{
-				var arr1 = arr[i];
-				var z = Number(arr1[4])
-					,y = Number(arr1[3])
-					,x = Number(arr1[2])
-					,s = Number(arr1[1])
-					,d = Number(arr1[0])
-					,v = Number(vers[i])
-				;
-				addRes(z, x, y, v, s, d);
-			}
-            cnt = arr.length;
-			res['TemporalColumnName'] = prop['TemporalColumnName'];
-			res['TemporalPeriods'] = prop['TemporalPeriods'];
-			
-			var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
-			var arr = ZeroDateString.split('.');
-			var zn = new Date(					// Начальная дата
-				(arr.length > 2 ? arr[2] : 2008),
-				(arr.length > 1 ? arr[1] - 1 : 0),
-				(arr.length > 0 ? arr[0] : 1)
-				);
-			res['ZeroDate'] = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
-			res['ZeroUT'] = res['ZeroDate'].getTime() / 1000;
-		} else if(type === 'Vector') {
-			for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-				addRes(Number(arr[i+2]), Number(arr[i]), Number(arr[i+1]), Number(vers[cnt]), -1, -1);
-			}
-		}
-		res['tileCount'] = cnt;
-		res['layerType'] = type;						// VectorTemporal Vector
-		res['identityField'] = prop['identityField'];	// ogc_fid
-		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
-		if(prop['IsRasterCatalog']) {
-			res['rasterBGfunc'] = function(x, y, z, idr) {
-				var qURL = 'http://' + gmx.hostName
-					+'/TileSender.ashx?ModeKey=tile'
-					+'&x=' + x
-					+'&y=' + y
-					+'&z=' + z
-					+'&idr=' + idr
-					+'&MapName=' + gmx.mapName
-					+'&LayerName=' + gmx.layerName
-					+'&key=' + encodeURIComponent(gmx.sessionKey);
-				return qURL;
-			};
-		}
-		return res;
-	}
-	,
 	'oneDay': 60*60*24			// один день
 	,
 	'getTilesByPeriods': function(ph, ut1, ut2, res) {	// получить список тайлов по разбивке и периоду
@@ -290,7 +195,7 @@ var gmxAPIutils = {
 		return res;
 	}
 	,
-    'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам 2 тайлов
+    'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам двух тайлов
         if (tk1.z < tk2.z) {
             var t = tk1; tk1 = tk2; tk2 = t;
         }
@@ -428,7 +333,7 @@ var gmxAPIutils = {
 		var needLoadRasters = 0;
 		var chkReadyRasters = function() {
 			needLoadRasters--;
-			if(needLoadRasters < 1) {
+			if(needLoadRasters === 0) {
 				callback(attr, needLoadRasters);
 			}
 		}
