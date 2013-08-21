@@ -47,22 +47,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             }
         );
     },
-    
-    _prpZoomData: function(zoom) {
-        var gmx = this._gmx,
-            map = this._map;
-        gmx.tileSize = gmxAPIutils.tileSizes[zoom];
-        gmx.mInPixel = 256 / gmx.tileSize;
-        gmx._tilesToLoad = 0;
-        // Получение сдвига OSM
-        var pos = map.getCenter();
-        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
-        var p1 = map.project(new L.LatLng(lat, pos.lng), map._zoom);
-        var point = map.project(pos);
-        gmx.shiftY = point.y - p1.y;
-        //console.log(gmx.shiftY);
-    },
-    
+        
     onAdd: function(map) {
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
                 
@@ -76,14 +61,14 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             this._update();
         }, this);
     },
-    
-	gmxSetVisibility: function (func) {
+    //public interface
+	setFilter: function (func) {
 		this._gmx.chkVisibility = func;
 		this._reset();
 		this._update();
 	}
 	,
-	gmxSetDateInterval: function (beginDate, endDate) {
+	setDateInterval: function (beginDate, endDate) {
         var gmx = this._gmx;
 		var options = this.options;
 		gmx.beginDate = beginDate;
@@ -103,6 +88,21 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		map.addLayer(this);
 		return this;
 	},
+    
+    _prpZoomData: function(zoom) {
+        var gmx = this._gmx,
+            map = this._map;
+        gmx.tileSize = gmxAPIutils.tileSizes[zoom];
+        gmx.mInPixel = 256 / gmx.tileSize;
+        gmx._tilesToLoad = 0;
+        // Получение сдвига OSM
+        var pos = map.getCenter();
+        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
+        var p1 = map.project(new L.LatLng(lat, pos.lng), map._zoom);
+        var point = map.project(pos);
+        gmx.shiftY = point.y - p1.y;
+        //console.log(gmx.shiftY);
+    },
     
 	_initContainer: function () {
 		L.TileLayer.Canvas.prototype._initContainer.call(this);

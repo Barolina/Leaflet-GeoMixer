@@ -68,29 +68,29 @@
 		document.getElementById("prev").onclick = function() {
 			ddt1 = new Date(ddt1.getTime() - oneDay);
 			ddt2 = new Date(ddt2.getTime() - oneDay);
-			gmxLayer.gmxSetDateInterval(ddt1, ddt2);
+			gmxLayer.setDateInterval(ddt1, ddt2);
 		}
         
 		document.getElementById("next").onclick = function() {
 			ddt1 = new Date(ddt1.getTime() + oneDay);
 			ddt2 = new Date(ddt2.getTime() + oneDay);
-			gmxLayer.gmxSetDateInterval(ddt1, ddt2);
+			gmxLayer.setDateInterval(ddt1, ddt2);
 		}
         
 		document.getElementById("dayFilter").onclick = function() {
-			gmxLayer.gmxSetVisibility(function(item) {
+			gmxLayer.setFilter(function(item) {
                 return item.properties.IsDay === 'True';
             });
 		}
         
 		document.getElementById("nightFilter").onclick = function() {
-			gmxLayer.gmxSetVisibility(function(item) {
+			gmxLayer.setFilter(function(item) {
                 return item.properties.IsDay !== 'True';
             });
 		}
         
 		document.getElementById("noneFilter").onclick = function() {
-			gmxLayer.gmxSetVisibility(null);
+			gmxLayer.setFilter(null);
 		}
         
 	</script>
