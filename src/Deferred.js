@@ -1,4 +1,4 @@
-var gmxDeferred = function() {
+﻿var gmxDeferred = function() {
     var resolveCallbacks = [],
         rejectCallbacks = [],
         isFulfilled = false,

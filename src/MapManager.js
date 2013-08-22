@@ -1,4 +1,4 @@
-/** Asynchronously request information about map given server host and map name
+﻿/** Asynchronously request information about map given server host and map name
 */
 var gmxMapManager = {
     getMap: function(serverHost, apiKey, mapName) {

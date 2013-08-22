@@ -1,4 +1,4 @@
-var gmxAPIutils = {
+﻿var gmxAPIutils = {
 	'getXmlHttp': function() {
 		var xmlhttp;
 		try {

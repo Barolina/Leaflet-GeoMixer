@@ -1,4 +1,4 @@
-(function() {
+﻿(function() {
 	var scripts = deps;
 
 	function getSrcUrl() {

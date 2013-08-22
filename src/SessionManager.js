@@ -1,4 +1,4 @@
-/** Asynchronously request session keys from GeoMixer servers (given apiKey and server host)
+﻿/** Asynchronously request session keys from GeoMixer servers (given apiKey and server host)
 */
 var gmxSessionManager = {
     requestSessionKey: function(serverHost, apiKey) {

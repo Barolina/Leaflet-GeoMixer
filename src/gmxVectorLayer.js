@@ -1,4 +1,4 @@
-// Плагин векторного слоя
+﻿// Плагин векторного слоя
 L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 {
     initialize: function(options) {

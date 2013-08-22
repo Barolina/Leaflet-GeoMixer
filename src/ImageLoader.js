@@ -1,13 +1,13 @@
-var gmxImageLoader = {
-    'maxCount': 32						// ìàêñ.êîë. çàïðîñîâ
-    ,'curCount': 0						// íîìåð òåêóùåãî çàïðîñà
-    ,'timer': null						// òàéìåð
-    ,'items': []						// ìàññèâ òåêóùèõ çàïðîñîâ
-    ,'itemsHash': {}						// Õýø ïî image.src
-    ,'itemsCache': {}					// Êýø çàãðóæåííûõ image ïî image.src
+ï»¿var gmxImageLoader = {
+    'maxCount': 32						// Ð¼Ð°ÐºÑ.ÐºÐ¾Ð». Ð·Ð°Ð¿Ñ€Ð¾ÑÐ¾Ð²
+    ,'curCount': 0						// Ð½Ð¾Ð¼ÐµÑ€ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾ Ð·Ð°Ð¿Ñ€Ð¾ÑÐ°
+    ,'timer': null						// Ñ‚Ð°Ð¹Ð¼ÐµÑ€
+    ,'items': []						// Ð¼Ð°ÑÑÐ¸Ð² Ñ‚ÐµÐºÑƒÑ‰Ð¸Ñ… Ð·Ð°Ð¿Ñ€Ð¾ÑÐ¾Ð²
+    ,'itemsHash': {}						// Ð¥ÑÑˆ Ð¿Ð¾ image.src
+    ,'itemsCache': {}					// ÐšÑÑˆ Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½Ð½Ñ‹Ñ… image Ð¿Ð¾ image.src
     ,'emptyImageUrl': 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
     ,
-    'removeItemsByZoom': function(zoom)	{	// îñòàíîâèòü è óäàëèòü èç î÷åðåäè çàïðîñû ïî zoom
+    'removeItemsByZoom': function(zoom)	{	// Ð¾ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¸ ÑƒÐ´Ð°Ð»Ð¸Ñ‚ÑŒ Ð¸Ð· Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸ Ð·Ð°Ð¿Ñ€Ð¾ÑÑ‹ Ð¿Ð¾ zoom
         for (var key in this.itemsCache)
         {
             var q = this.itemsCache[key][0];
@@ -27,7 +27,7 @@ var gmxImageLoader = {
         return this.items.length;
     }
     ,
-    'callCacheItems': function(item) {		// çàãðóçêà item çàâåðøåíà
+    'callCacheItems': function(item) {		// Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° item Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð°
         if(this.itemsCache[item.src]) {
             var arr = this.itemsCache[item.src];
             var first = arr[0];
@@ -47,7 +47,7 @@ var gmxImageLoader = {
         this.nextLoad();
     }
     ,
-    'nextLoad': function() {			// çàãðóçêà ñëåäóþùåãî
+    'nextLoad': function() {			// Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° ÑÐ»ÐµÐ´ÑƒÑŽÑ‰ÐµÐ³Ð¾
         if(this.curCount > this.maxCount) return;
         if(this.items.length < 1) {
             this.curCount = 0;
@@ -74,7 +74,7 @@ var gmxImageLoader = {
         }
     }
     ,
-    'setImage': function(item) {			// çàãðóçêà image
+    'setImage': function(item) {			// Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° image
         var _this = this,
             imageObj = new Image();
         item['loaderObj'] = imageObj;
@@ -94,7 +94,7 @@ var gmxImageLoader = {
         imageObj.src = item.src;
     }
     ,
-    'chkTimer': function() {			// óñòàíîâêà òàéìåðà
+    'chkTimer': function() {			// ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° Ñ‚Ð°Ð¹Ð¼ÐµÑ€Ð°
         var _this = this;
         if(!this.timer) {
             this.timer = setInterval(function() {
@@ -103,17 +103,17 @@ var gmxImageLoader = {
         }
     }
     ,
-    'push': function(item)	{			// äîáàâèòü çàïðîñ â êîíåö î÷åðåäè
+    'push': function(item)	{			// Ð´Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ð·Ð°Ð¿Ñ€Ð¾Ñ Ð² ÐºÐ¾Ð½ÐµÑ† Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸
         this.items.push(item);
         this.chkTimer();
         return this.items.length;
     }
-    ,'unshift': function(item)	{		// äîáàâèòü çàïðîñ â íà÷àëî î÷åðåäè
+    ,'unshift': function(item)	{		// Ð´Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ð·Ð°Ð¿Ñ€Ð¾Ñ Ð² Ð½Ð°Ñ‡Ð°Ð»Ð¾ Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸
         this.items.unshift(item);
         this.chkTimer();
         return this.items.length;
     }
-    ,'getCounts': function()	{		// ïîëó÷èòü ðàçìåð î÷åðåäè + êîëè÷.âûïîëíÿþùèõñÿ çàïðîñîâ
+    ,'getCounts': function()	{		// Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ñ€Ð°Ð·Ð¼ÐµÑ€ Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸ + ÐºÐ¾Ð»Ð¸Ñ‡.Ð²Ñ‹Ð¿Ð¾Ð»Ð½ÑÑŽÑ‰Ð¸Ñ…ÑÑ Ð·Ð°Ð¿Ñ€Ð¾ÑÐ¾Ð²
         return this.items.length + (this.curCount > 0 ? this.curCount : 0);
     }
 }

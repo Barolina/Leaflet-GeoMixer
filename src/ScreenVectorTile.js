@@ -1,4 +1,4 @@
-//Single tile on screen with vector data
+п»ї//Single tile on screen with vector data
 var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
     
     var showRaster = 'rasterBGfunc' in gmx.attr &&
@@ -46,7 +46,7 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
     }
     
     //load all missing rasters for items we are going to render
-    var getTileRasters = function(items) {	// Получить растры КР для тайла
+    var getTileRasters = function(items) {	// РџРѕР»СѓС‡РёС‚СЊ СЂР°СЃС‚СЂС‹ РљР  РґР»СЏ С‚Р°Р№Р»Р°
         var def = new gmxDeferred();
 		var needLoadRasters = 0;
 		var chkReadyRasters = function() {
@@ -98,7 +98,7 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
                 }
 
                 var geom = it.geometry;
-                if (geom.type.indexOf('POLYGON') !== -1) {	// Отрисовка геометрии полигона
+                if (geom.type.indexOf('POLYGON') !== -1) {	// РћС‚СЂРёСЃРѕРІРєР° РіРµРѕРјРµС‚СЂРёРё РїРѕР»РёРіРѕРЅР°
                     var coords = geom.coordinates;
                     for (var j = 0, len1 = coords.length; j < len1; j++) {
                         var coords1 = coords[j];

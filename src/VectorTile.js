@@ -1,4 +1,4 @@
-//Single vector tile, received from GeoMixer server
+п»ї//Single vector tile, received from GeoMixer server
 var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
     var url = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + 
               "&MapName=" + gmx.mapName + 
@@ -50,18 +50,18 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
         
 		var bounds = this.bounds;
 		var d = (bounds.max.x - bounds.min.x)/10000;
-		var tbDelta = {									// границы тайла для определения onEdge отрезков
+		var tbDelta = {									// РіСЂР°РЅРёС†С‹ С‚Р°Р№Р»Р° РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ onEdge РѕС‚СЂРµР·РєРѕРІ
 			'minX': bounds.min.x + d
 			,'maxX': bounds.max.x - d
 			,'minY': bounds.min.y + d
 			,'maxY': bounds.max.y - d
 		};
-		var chkOnEdge = function(p1, p2, ext) {				// отрезок на границе
+		var chkOnEdge = function(p1, p2, ext) {				// РѕС‚СЂРµР·РѕРє РЅР° РіСЂР°РЅРёС†Рµ
 			if ((p1[0] < ext.minX && p2[0] < ext.minX) || (p1[0] > ext.maxX && p2[0] > ext.maxX)) return true;
 			if ((p1[1] < ext.minY && p2[1] < ext.minY) || (p1[1] > ext.maxY && p2[1] > ext.maxY)) return true;
 			return false;
 		}
-		var getHidden = function(coords, tb) {			// массив точек на границах тайлов
+		var getHidden = function(coords, tb) {			// РјР°СЃСЃРёРІ С‚РѕС‡РµРє РЅР° РіСЂР°РЅРёС†Р°С… С‚Р°Р№Р»РѕРІ
 			var hideLines = [];
 			var prev = null;
 			for (var i = 0, len = coords.length; i < len; i++) {
@@ -77,7 +77,7 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
 			var it = this.data[i];
 			var geom = it['geometry'];
 			if(geom['type'].indexOf('POLYGON') !== -1) {
-				var hideLines = [];								// индексы точек лежащих на границе тайла
+				var hideLines = [];								// РёРЅРґРµРєСЃС‹ С‚РѕС‡РµРє Р»РµР¶Р°С‰РёС… РЅР° РіСЂР°РЅРёС†Рµ С‚Р°Р№Р»Р°
 				var coords = geom['coordinates'];
 				var cnt = 0;
 				for (var j = 0, len1 = coords.length; j < len1; j++) {
