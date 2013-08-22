@@ -20,7 +20,7 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
                 'url': url
                 ,'callback': function(st) {
                     _this.data = JSON.parse(st);
-                    this.state = 'loaded';
+                    _this.state = 'loaded';
                     loadDef.resolve(_this.data);
                 }
             });

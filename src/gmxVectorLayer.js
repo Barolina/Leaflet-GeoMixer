@@ -24,6 +24,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                     myLayer._gmx.properties = ph['properties'];
                     myLayer._gmx.geometry = ph['geometry'];
                     myLayer._gmx.attr = myLayer.initLayerData(ph);
+                    myLayer._gmx.vectorTilesManager = new gmxVectorTilesManager(myLayer._gmx, ph);
                     myLayer._update();
                     return;
                 }
@@ -66,7 +67,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		this._gmx.chkVisibility = func;
 		//this._reset();
         
-        this._updateDrawnTiles();
+        this._updateDrawnTiles(false);
 		this._update();
 	}
 	,
@@ -81,10 +82,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			}
 			gmx.attr.itemCount = 0;
 		}
-		delete gmx.attr.tilesNeedLoad;
-		
-        //this._updateDrawnTiles();
-        this._reset();
+		gmx.attr.tilesNeedLoad = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate).tilesNeedLoad;
+        
+        this._updateDrawnTiles(true);
+        //this._reset();
 		this._update();
 	},
     
@@ -93,13 +94,22 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		return this;
 	},
     
-    _updateDrawnTiles: function() {
+    _updateDrawnTiles: function(reloadTiles) {
         for (var key in this._tiles) {
             var kArr = key.split(':'),
                 x = parseInt(kArr[0], 10),
-                y = parseInt(kArr[1], 10);
+                y = parseInt(kArr[1], 10),
+                tilePoint = L.point(x, y),
+                gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, this._map._zoom);
                 
-            this.gmxDrawTile(L.point(x, y), this._map._zoom);
+            var cntToLoad = 0;
+            if (reloadTiles) {
+                this._gmx.vectorTilesManager.loadTiles(gmxTilePoint);
+                cntToLoad = this._gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint);
+            }
+            if (cntToLoad === 0) {
+                this.gmxDrawTile(tilePoint, this._map._zoom);
+            }
         }
     },
     
@@ -159,7 +169,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	,
 	_addTile: function (tilePoint, container) {
 		var myLayer = this, 
-            zoom = myLayer._map._zoom,
+            zoom = this._map._zoom,
             gmx = this._gmx;
             
 		if (!gmx.attr) return;
@@ -168,22 +178,21 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var res = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate);
 			gmx.attr.tilesNeedLoad = res.tilesNeedLoad;
 		}
-		gmx._tilesToLoad++;
+        
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-        var cnt = gmxAPIutils.loadTile(gmx, gmxTilePoint, tilePoint, function(tile) {
-            var gmxTileKey = tile.gmxTileKey;
-            gmx.attr.itemCount += gmxAPIutils.updateItemsFromTile(gmx, tile);
-            var tilePointArr = gmx.attr['tilesAll'][gmxTileKey]['fromTilePoints'];
-            for (var i = 0, len = tilePointArr.length; i < len; i++) {
-                myLayer.gmxDrawTile(tilePointArr[i], zoom);
-            }
+        gmx.vectorTilesManager.on(gmxTilePoint, function() {
+            myLayer.gmxDrawTile(tilePoint, zoom);
         });
-        if (cnt === 0) myLayer.gmxDrawTile(tilePoint, zoom);
+        
+        gmx.vectorTilesManager.loadTiles(gmxTilePoint);
+        if (gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint) === 0) {
+            this.gmxDrawTile(tilePoint, zoom);
+        }
 	}
 	,
 	gmxDrawTile: function (tilePoint, zoom) {
 		var gmx = this._gmx;
-		gmx._tilesToLoad--;
+		//gmx._tilesToLoad--;
 		if(gmx['zoomstart']) return;
         
         var domTile = this.gmxGetCanvasTile(tilePoint),

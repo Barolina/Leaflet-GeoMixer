@@ -12,7 +12,8 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
     var getTileItems = function() {
         var items = [];
         for (var key in gmx.attr.tilesNeedLoad) {
-			var tile = gmx.attr.tilesAll[key].tile;
+			//var tile = gmx.attr.tilesAll[key].tile;
+            var tile = gmx.vectorTilesManager.getTile(key);
 			if (!tile.isIntersects(gmxTilePoint)) {
                 continue;
             }

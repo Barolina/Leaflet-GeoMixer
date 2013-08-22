@@ -204,28 +204,6 @@
         return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
 	}
 	,
-	'loadTile': function(gmx, gmxTilePoint, tilePoint, callback) {	// загрузить тайлы по отображаемому gmxTilePoint
-		var cnt = 0;
-		
-		for (var key in gmx.attr['tilesNeedLoad']) (function(key) {
-			var it = gmx.attr['tilesAll'][key],
-                tile = it.tile;
-                
-			if (!tile.isIntersects(gmxTilePoint)) return;
-
-			if (!it['fromTilePoints']) it['fromTilePoints'] = [];
-			it['fromTilePoints'].push(tilePoint);
-            
-            if (tile.state === 'notLoaded') {
-                cnt++;
-                tile.load().once(function() {
-                    callback(tile);
-                })
-            }
-		})(key);
-		return cnt;
-	}
-	,
 	'updateItemsFromTile': function(gmx, tile) { // парсинг загруженного тайла
 		var gmxTileKey = tile.gmxTileKey;
 		var items = gmx.attr.items;

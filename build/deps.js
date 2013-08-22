@@ -4,6 +4,7 @@
 
     "ScreenVectorTile.js",
     "VectorTile.js",
+    "VectorTilesManager.js",
     "gmxAPIutils.js",
     "SessionManager.js",
     "MapManager.js",
