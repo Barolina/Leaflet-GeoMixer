@@ -64,7 +64,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     //public interface
 	setFilter: function (func) {
 		this._gmx.chkVisibility = func;
-		this._reset();
+		//this._reset();
+        
+        this._updateDrawnTiles();
 		this._update();
 	}
 	,
@@ -80,7 +82,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			gmx.attr.itemCount = 0;
 		}
 		delete gmx.attr.tilesNeedLoad;
-		this._reset();
+		
+        //this._updateDrawnTiles();
+        this._reset();
 		this._update();
 	},
     
@@ -88,6 +92,16 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		map.addLayer(this);
 		return this;
 	},
+    
+    _updateDrawnTiles: function() {
+        for (var key in this._tiles) {
+            var kArr = key.split(':'),
+                x = parseInt(kArr[0], 10),
+                y = parseInt(kArr[1], 10);
+                
+            this.gmxDrawTile(L.point(x, y), this._map._zoom);
+        }
+    },
     
     _prpZoomData: function(zoom) {
         var gmx = this._gmx,
@@ -110,7 +124,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_update: function () {
-		if(this._gmx['zoomstart']) return;
+		if(this._gmx['zoomstart']) return; //TODO: buggy restriction?
 
 		var bounds = this._map.getPixelBounds(),
 		    zoom = this._map.getZoom(),
@@ -155,14 +169,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			gmx.attr.tilesNeedLoad = res.tilesNeedLoad;
 		}
 		gmx._tilesToLoad++;
-		if (!gmx.attr.needRedraw) gmx.attr.needRedraw = [];
-		gmx.attr.needRedraw.push(tilePoint);
-		var redraw = function() {
-			for (var i = 0, len = gmx.attr.needRedraw.length; i < len; i++) {
-				myLayer.gmxDrawTile(gmx.attr.needRedraw[i], zoom);
-			}
-			gmx.attr.needRedraw = [];
-		}
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var cnt = gmxAPIutils.loadTile(gmx, gmxTilePoint, tilePoint, function(tile) {
             var gmxTileKey = tile.gmxTileKey;
@@ -172,14 +178,14 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 myLayer.gmxDrawTile(tilePointArr[i], zoom);
             }
         });
-        if(cnt === 0) myLayer.gmxDrawTile(tilePoint, zoom);
+        if (cnt === 0) myLayer.gmxDrawTile(tilePoint, zoom);
 	}
 	,
 	gmxDrawTile: function (tilePoint, zoom) {
 		var gmx = this._gmx;
 		gmx._tilesToLoad--;
 		if(gmx['zoomstart']) return;
-            
+        
         var domTile = this.gmxGetCanvasTile(tilePoint),
             ctx = domTile.getContext('2d'),
             style = gmx.attr.styles[0],

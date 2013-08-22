@@ -15,11 +15,12 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
     this.load = function() {
         if (!loadDef) {
             loadDef = new gmxDeferred();
-            this.isEmpty = false;
+            this.state = 'loading';
             gmxAPIutils.request({
                 'url': url
                 ,'callback': function(st) {
                     _this.data = JSON.parse(st);
+                    this.state = 'loaded';
                     loadDef.resolve(_this.data);
                 }
             });
@@ -29,8 +30,9 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
     }
     
     this.clear = function() {
-        this.isEmpty = true;
+        this.state = 'notLoaded';
         this.data = null;
+        
         isCalcHiddenPoints = false;
         loadDef = null;
     }
@@ -102,5 +104,5 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
     this.gmxTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
-    this.isEmpty = true;
+    this.state = 'notLoaded'; //notLoaded, loading, loaded
 }

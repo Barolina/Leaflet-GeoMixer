@@ -50,7 +50,6 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
         var def = new gmxDeferred();
 		var needLoadRasters = 0;
 		var chkReadyRasters = function() {
-			needLoadRasters--;
 			if(needLoadRasters < 1) {
 				def.resolve();
 			}
@@ -62,14 +61,17 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
             gmxImageLoader.push({
                 'callback' : function(img) {
                     rasters[idr] = img;
+                    needLoadRasters--;
                     chkReadyRasters();
                 }
                 ,'onerror' : function() {
+                    needLoadRasters--;
                     chkReadyRasters();
                 }
                 ,'src': gmx.attr['rasterBGfunc'](gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
             });
 		})
+        chkReadyRasters();
         return def;
 	}
 
@@ -86,6 +88,7 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
         items = items.sort(gmx.sortItems);
         
         var doDraw = function() {
+            ctx.clearRect(0, 0, 256, 256);
             for (var i = 0, len = items.length; i < len; i++) {
                 var it = items[i],
                     idr = it.id;

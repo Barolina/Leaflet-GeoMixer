@@ -216,7 +216,7 @@ var gmxAPIutils = {
 			if (!it['fromTilePoints']) it['fromTilePoints'] = [];
 			it['fromTilePoints'].push(tilePoint);
             
-            if (tile.isEmpty) {
+            if (tile.state === 'notLoaded') {
                 cnt++;
                 tile.load().once(function() {
                     callback(tile);
@@ -276,7 +276,7 @@ var gmxAPIutils = {
 		var ctx = attr['ctx'];
 		var style = attr['style'];
 		for (var key in style) ctx[key] = style[key];
-
+        
 		var mInPixel = gmx['mInPixel'];
 		var tpx = attr['tpx'];
 		var tpy = attr['tpy'];
