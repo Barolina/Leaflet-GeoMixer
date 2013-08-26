@@ -1,17 +1,17 @@
 # GeoMixer-Leaflet Plugin Documentation
 
+
 ## GeoMixer Data Structure
 
 The main entity in GeoMixer in **layer**. Each layer has several properties including `ID` and `type`.
-Layer IDs are unique inside one server. The main vector types are **vector** and **raster**.
+Layer IDs are unique inside one server. The main layer types are **vector** and **raster**.
 
 Each vector layer consists of geometry items. Item has `type`, `geometry` and `properties`.
 
 
 ## Class L.TileLayer.gmxVectorLayer
 
-
-`gmxVectorLayer` class provides interface of drawing GeoMixer vector layers on Leaflet map. 
+`gmxVectorLayer` class provides interface for drawing GeoMixer vector layers on Leaflet map.
 APIKey, host ID and layer ID should by provided to load and display layer.
 
 Instantiation syntax:
