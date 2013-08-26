@@ -15,8 +15,8 @@ exports.build = function () {
 	console.log('Concatenating ' + deps.length + ' files...');
 
 	var copy = fs.readFileSync('src/copyright.js', 'utf8'),
-	    intro = '(function (window, document, undefined) {\n',
-	    outro = '}(window, document));',
+	    intro = '(function () {\n"use strict";\n',
+	    outro = '}());',
 	    newSrc = copy + intro + combineFiles(deps) + outro,
 	    pathPart = 'dist/leaflet-geomixer',
 	    srcPath = pathPart + '-src.js';

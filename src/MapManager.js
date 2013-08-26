@@ -12,7 +12,7 @@ var gmxMapManager = {
                 gmxAPIutils.request({
                     url: "http://" + serverHost + "/TileSender.ashx?WrapStyle=None&key=" + encodeURIComponent(sessionKey) + "&MapName=" + mapName + '&ModeKey=map',
                     callback: function(st) {
-                        json = JSON.parse(st);
+                        var json = JSON.parse(st);
                         if (json && json.Status === 'ok' && json.Result) {
                             def.resolve(json.Result);
                         } else {

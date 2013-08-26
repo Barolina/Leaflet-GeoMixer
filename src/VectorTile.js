@@ -79,7 +79,6 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
 			if(geom['type'].indexOf('POLYGON') !== -1) {
 				var hideLines = [];								// индексы точек лежащих на границе тайла
 				var coords = geom['coordinates'];
-				var cnt = 0;
 				for (var j = 0, len1 = coords.length; j < len1; j++) {
 					var coords1 = coords[j];
 					if(geom['type'].indexOf('MULTI') !== -1) {

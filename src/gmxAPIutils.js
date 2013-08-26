@@ -217,7 +217,6 @@
 			var geom = it['geometry'];
 			
 			var id = it['id'] || prop[identityField];
-			var propHiden = null;
 			var item = items[id];
 			if(item) {
 				if(item['type'].indexOf('MULTI') == -1) item['type'] = 'MULTI' + item['type'];
@@ -264,7 +263,7 @@
 			return [px1, py1];
 		}
 		var arr = [];
-		var lastX = null, lastY = null, prev = null, cntHide = 0;
+		var lastX = null, lastY = null, cntHide = 0;
 		if(style.strokeStyle) {
 			ctx.beginPath();
 			for (var i = 0, len = coords.length; i < len; i++) {

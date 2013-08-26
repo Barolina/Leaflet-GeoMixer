@@ -52,11 +52,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     onAdd: function(map) {
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
                 
-        map.on('zoomstart', function(e) {
+        map.on('zoomstart', function() {
             this._gmx['zoomstart'] = true;
         }, this);
         
-        map.on('zoomend', function(e) {
+        map.on('zoomend', function() {
             this._gmx['zoomstart'] = false;
             this._prpZoomData(map._zoom);
             this._update();
@@ -73,7 +73,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	,
 	setDateInterval: function (beginDate, endDate) {
         var gmx = this._gmx;
-		var options = this.options;
 		gmx.beginDate = beginDate;
 		gmx.endDate = endDate;
 		if(gmx.attr.itemCount > 1000) {
@@ -167,7 +166,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		}
 	}
 	,
-	_addTile: function (tilePoint, container) {
+	_addTile: function (tilePoint) {
 		var myLayer = this, 
             zoom = this._map._zoom,
             gmx = this._gmx;
@@ -269,7 +268,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             res = {'tilesAll':{}, 'items':{}, 'tileCount':0, 'itemCount':0},
             prop = layerDescription.properties,
-            geom = layerDescription.geometry,
             type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
 
 		var defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'};
