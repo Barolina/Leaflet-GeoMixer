@@ -9,10 +9,16 @@ function combineFiles(files) {
 	}
 	return content;
 }
+function chkDistPath() {
+	if(!fs.existsSync('dist')) { 
+		fs.mkdirSync('dist');
+	}
+}
 
 exports.build = function () {
 
 	console.log('Concatenating ' + deps.length + ' files...');
+	chkDistPath();
 
 	var copy = fs.readFileSync('src/copyright.js', 'utf8'),
 	    intro = '(function () {\n"use strict";\n',
@@ -23,27 +29,28 @@ exports.build = function () {
 
 	console.log('\tUncompressed size: ' + newSrc.length + ' bytes');
 
-    fs.writeFileSync(srcPath, newSrc);
-    console.log('\tSaved to ' + srcPath);
+	fs.writeFileSync(srcPath, newSrc);
+	console.log('\tSaved to ' + srcPath);
 
 	console.log('Compressing...');
 
 	var path = pathPart + '.js',
-	    newCompressed = copy + UglifyJS.minify(newSrc, {
-	        warnings: true,
-	        fromString: true
-	    }).code;
+		newCompressed = copy + UglifyJS.minify(newSrc, {
+			warnings: true,
+			fromString: true
+		}).code;
 
 	console.log('\tCompressed size: ' + newCompressed.length + ' bytes');
-
-    fs.writeFileSync(path, newCompressed);
-    console.log('\tSaved to ' + path);
+	fs.writeFileSync(path, newCompressed);
+	console.log('\tSaved to ' + path);
 };
 
 exports.buildDev = function () {
     console.log('\Create development version of leaflet-geomixer-src.js');
     var deps = fs.readFileSync('build/deps.js', 'utf8'),
         includeWidget = fs.readFileSync('build/include-src.js', 'utf8');
-        
-    fs.writeFileSync('dist/leaflet-geomixer-src.js', deps + includeWidget);
+
+	chkDistPath();
+
+	fs.writeFileSync('dist/leaflet-geomixer-src.js', deps + includeWidget);
 }

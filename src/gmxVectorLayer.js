@@ -32,6 +32,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         }
         
         var setSessionKey = function(sk) {
+			myLayer._gmx.sessionKey = sk;
             myLayer._gmx.tileSenderPrefix = "http://" + myLayer._gmx.hostName + "/" + 
                 "TileSender.ashx?WrapStyle=None" + 
                 "&key=" + encodeURIComponent(sk);
