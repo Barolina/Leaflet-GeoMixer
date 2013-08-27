@@ -4,6 +4,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     initialize: function(options) {
         options = L.setOptions(this, options);
         
+        this._drawQueue = [];
+        
         this._gmx = {
             'hostName': options.hostName || 'maps.kosmosnimki.ru'
             ,'mapName': options.mapName
@@ -94,6 +96,26 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		return this;
 	},
     
+    _drawTileAsync: function (tilePoint, zoom) {
+        var queue = this._drawQueue,
+            isEmpty = queue.length === 0,
+            _this = this;
+            
+        var drawNextTile = function() {
+            if (!queue.length) {
+                return;
+            }
+            
+            var bbox = queue.shift();
+            _this.gmxDrawTile(bbox.tp, bbox.z);
+            
+            setTimeout(drawNextTile, 0);
+        }
+            
+        queue.push({tp: tilePoint, z: zoom});
+        isEmpty && setTimeout(drawNextTile, 0);
+    },
+    
     _updateDrawnTiles: function(reloadTiles) {
         for (var key in this._tiles) {
             var kArr = key.split(':'),
@@ -108,7 +130,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 cntToLoad = this._gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint);
             }
             if (cntToLoad === 0) {
-                this.gmxDrawTile(tilePoint, this._map._zoom);
+                this._drawTileAsync(tilePoint, this._map._zoom);
             }
         }
     },
@@ -181,12 +203,12 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         gmx.vectorTilesManager.on(gmxTilePoint, function() {
-            myLayer.gmxDrawTile(tilePoint, zoom);
+            myLayer._drawTileAsync(tilePoint, zoom);
         });
         
         gmx.vectorTilesManager.loadTiles(gmxTilePoint);
         if (gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint) === 0) {
-            this.gmxDrawTile(tilePoint, zoom);
+            this._drawTileAsync(tilePoint, zoom);
         }
 	}
 	,
