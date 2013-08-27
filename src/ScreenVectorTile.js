@@ -39,7 +39,7 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
                     continue;
                 }
                 
-				tile.calcHiddenPoints();
+				if(item.type === 'POLYGON' || item.type === 'MULTIPOLYGON') tile.calcHiddenPoints();
 				items.push(it);
 			}
 		}
@@ -99,12 +99,12 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
                 }
 
                 var geom = it.geometry;
-                if (geom.type.indexOf('POLYGON') !== -1) {	// Отрисовка геометрии полигона
+                if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     var coords = geom.coordinates;
                     for (var j = 0, len1 = coords.length; j < len1; j++) {
                         var coords1 = coords[j];
                         dattr.hiddenLines = it.hiddenLines[j];
-                        if(geom.type.indexOf('MULTI') !== -1) {
+                        if(geom.type === 'MULTIPOLYGON') {
                             for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                 dattr.coords = coords1[j1];
                                 gmxAPIutils.polygonToCanvas(dattr);
@@ -113,6 +113,28 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
                             dattr.coords = coords1;
                             gmxAPIutils.polygonToCanvas(dattr);
                         }
+                    }
+                } else if (geom.type === 'LINESTRING' || geom.type === 'MULTILINESTRING') {	// Отрисовка геометрии линий
+                    var coords = geom.coordinates;
+                    if(geom.type === 'MULTILINESTRING') {
+                        for (var j = 0, len1 = coords.length; j < len1; j++) {
+                            dattr.coords = coords[j];
+                            gmxAPIutils.lineToCanvas(dattr);
+                        }
+					} else {
+						dattr.coords = coords;
+						gmxAPIutils.lineToCanvas(dattr);
+                    }
+                } else if (geom.type === 'POINT' || geom.type === 'MULTIPOINT') {	// Отрисовка геометрии точек
+                    var coords = geom.coordinates;
+                    if(geom.type === 'MULTIPOINT') {
+                        for (var j = 0, len1 = coords.length; j < len1; j++) {
+                            dattr.coords = coords[j];
+                            gmxAPIutils.pointToCanvas(dattr);
+                        }
+					} else {
+						dattr.coords = coords;
+						gmxAPIutils.pointToCanvas(dattr);
                     }
                 }
             }

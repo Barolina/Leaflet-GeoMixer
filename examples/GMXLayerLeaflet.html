@@ -35,8 +35,8 @@
 	<script src="../dist/leaflet-geomixer-src.js"></script>
 	<script>
 
-		var map = L.map('map').setView([55.18, 44], 4);
-        
+		var map = L.map('map').setView([62.880844, 27.048339], 5);
+
 		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
@@ -47,6 +47,22 @@
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
 
+		//points
+        new L.TileLayer.gmxVectorLayer({
+            hostName: 'maps.kosmosnimki.ru',
+            apiKey: 'U92596WMIH',
+            mapName: 'UIRCQ',
+            layerName: '49B93B20C0E144AEACE5A6BE599BBAFA'
+		}).addTo(map);
+
+		//lines чуть выше Астрахани
+        new L.TileLayer.gmxVectorLayer({
+            hostName: 'maps.kosmosnimki.ru',
+            apiKey: 'U92596WMIH',
+            mapName: 'UIRCQ',
+            layerName: '09E930F32F0F4736AD7D74B7D04B57C4'
+		}).addTo(map);
+/*
 		//regions
         new L.TileLayer.gmxVectorLayer({
             hostName: 'maps.kosmosnimki.ru',
@@ -54,7 +70,7 @@
             mapName: 'AZR6A',
             layerName: '2FD848A8E6E54850876AF95BFECF98E5'
 		}).addTo(map);
-        
+
         var gmxLayer = new L.TileLayer.gmxVectorLayer({
 			hostName: 'maps.kosmosnimki.ru',
             apiKey: 'U92596WMIH',
@@ -63,7 +79,7 @@
             beginDate: ddt1,
             endDate: ddt2
 		}).addTo(map);
-        
+       
         //controls
 		document.getElementById("prev").onclick = function() {
 			ddt1 = new Date(ddt1.getTime() - oneDay);
@@ -92,7 +108,7 @@
 		document.getElementById("noneFilter").onclick = function() {
 			gmxLayer.setFilter(null);
 		}
-        
+ */        
 	</script>
 </body>
 </html>

@@ -98,6 +98,12 @@
 		}
 		if(type === 'POINT') {
 			arr.push(coords);
+		} else if(type === 'MULTIPOINT') {
+			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i]);
+		} else if(type === 'LINESTRING') {
+			addToArr(coords);
+		} else if(type === 'MULTILINESTRING') {
+			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i]);
 		} else if(type === 'POLYGON') {
 			addToArr(coords[0]);			// дырки пропускаем
 		} else if(type === 'MULTIPOLYGON') {
@@ -245,6 +251,73 @@
 		return data.length;
 	}
 	,
+	'pointToCanvas': function(attr) {				// Точку в canvas
+		var gmx = attr['gmx'];
+		var coords = attr['coords'];
+		var ctx = attr['ctx'];
+		var style = attr['style'];
+		for (var key in style) ctx[key] = style[key];
+
+		var mInPixel = gmx['mInPixel'];
+		var tpx = attr['tpx'];
+		var tpy = attr['tpy'];
+		// получить координату в px
+		var px1 = coords[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
+		var py1 = tpy - coords[1] * mInPixel;	py1 = (0.5 + py1) << 0;
+		var sx = attr['sx'] || style['sx'] || 4;
+		var sy = attr['sy'] || style['sy'] || 4;
+		if(style.strokeStyle) {
+			ctx.beginPath();
+			if(style['circle']) {
+				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
+			} else {
+				ctx.strokeRect(px1, py1, 2*sx, 2*sy);
+			}
+			ctx.stroke();
+		}
+		if(style['fillStyle']) {
+			ctx.beginPath();
+			if(style['circle']) {
+				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
+			} else {
+				ctx.fillRect(px1, py1, 2*sx, 2*sy);
+			}
+			ctx.fill();
+		}
+	}
+	,
+	'lineToCanvas': function(attr) {				// Линии в canvas
+		var gmx = attr['gmx'];
+		var coords = attr['coords'];
+		var ctx = attr['ctx'];
+		var style = attr['style'];
+		for (var key in style) ctx[key] = style[key];
+
+		var mInPixel = gmx['mInPixel'];
+		var tpx = attr['tpx'];
+		var tpy = attr['tpy'];
+		var toPixels = function(p) {				// получить координату в px
+			var px1 = p[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
+			var py1 = tpy - p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
+			return [px1, py1];
+		}
+		var arr = [];
+		var lastX = null, lastY = null;
+		if(style.strokeStyle) {
+			ctx.beginPath();
+			for (var i = 0, len = coords.length; i < len; i++) {
+				var p1 = toPixels(coords[i]);
+				if(lastX !== p1[0] || lastY !== p1[1]) {
+					if(i == 0)	ctx.moveTo(p1[0], p1[1]);
+					else 		ctx.lineTo(p1[0], p1[1]);
+					lastX = p1[0], lastY = p1[1];
+					if(ctx.fillStyle) arr.push(p1);
+				}
+			}
+			ctx.stroke();
+		}
+	}
+	,
 	'polygonToCanvas': function(attr) {				// Полигон в canvas
 		var gmx = attr['gmx'];
 		var coords = attr['coords'];
@@ -253,7 +326,7 @@
 		var ctx = attr['ctx'];
 		var style = attr['style'];
 		for (var key in style) ctx[key] = style[key];
-        
+
 		var mInPixel = gmx['mInPixel'];
 		var tpx = attr['tpx'];
 		var tpy = attr['tpy'];

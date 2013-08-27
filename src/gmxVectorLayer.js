@@ -308,6 +308,16 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 					var opacity = ('opacity' in outline ? outline['opacity']/100 : 1);
 					pt['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
 				}
+				if(renderStyle['marker']) {
+					var marker = renderStyle.marker;
+					if(prop['GeometryType'] === 'point') {
+						if(marker['size']) {
+							pt['sx'] = pt['sy'] = marker['size'];
+						} else {
+							pt['circle'] = 4;
+						}
+					}
+				}
 				if(renderStyle['fill']) {
 					var fill = renderStyle.fill;
 					var color = fill.color || 255;
