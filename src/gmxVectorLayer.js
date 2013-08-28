@@ -18,17 +18,20 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var apikeyRequestHost = options.apikeyRequestHost || this._gmx.hostName;
         var myLayer = this;
         
-        var getLayer = function(arr) {
+        var getLayer = function(arr, flag) {
+			if(flag) return true;
             for(var i=0, len=arr.length; i<len; i++) {
                 var layer = arr[i];
-                if(layer.type === 'layer' && myLayer._gmx.layerName === layer.content.properties.name) {
+                if(layer.type === 'group') {
+					getLayer(layer.content.children);
+				} else if(layer.type === 'layer' && myLayer._gmx.layerName === layer.content.properties.name) {
                     var ph = layer['content'];
                     myLayer._gmx.properties = ph['properties'];
                     myLayer._gmx.geometry = ph['geometry'];
                     myLayer._gmx.attr = myLayer.initLayerData(ph);
                     myLayer._gmx.vectorTilesManager = new gmxVectorTilesManager(myLayer._gmx, ph);
                     myLayer._update();
-                    return;
+                    return true;
                 }
             }
         }
@@ -62,7 +65,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         map.on('zoomend', function() {
             this._gmx['zoomstart'] = false;
             this._prpZoomData(map._zoom);
-            this._update();
         }, this);
     },
     //public interface
