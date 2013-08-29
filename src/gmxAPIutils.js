@@ -210,47 +210,6 @@
         return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
 	}
 	,
-	'updateItemsFromTile': function(gmx, tile) { // парсинг загруженного тайла
-		var gmxTileKey = tile.gmxTileKey;
-		var items = gmx.attr.items;
-		var layerProp = gmx.properties;
-		var identityField = layerProp.identityField || 'ogc_fid';
-		var data = tile.data;
-		for (var i = 0, len = data.length; i < len; i++) {
-			var it = data[i];
-			var prop = it['properties'];
-			delete it['properties'];
-			var geom = it['geometry'];
-			
-			var id = it['id'] || prop[identityField];
-			var item = items[id];
-			if(item) {
-				if(item['type'].indexOf('MULTI') == -1) item['type'] = 'MULTI' + item['type'];
-			} else {
-				item = {
-					'id': id
-					,'type': geom.type
-					,'properties': prop
-					,'propHiden': {
-						'fromTiles': {}
-					}
-				};
-				items[id] = item;
-			}
-			item['propHiden']['fromTiles'][gmxTileKey] = true;
-			if(layerProp.TemporalColumnName) {
-				var zn = prop[layerProp.TemporalColumnName] || '';
-				zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
-				var vDate = new Date(zn);
-				var offset = vDate.getTimezoneOffset();
-				var dt = Math.floor(vDate.getTime() / 1000  - offset*60);
-				item['propHiden']['unixTimeStamp'] = dt;
-			}
-		}
-		
-		return data.length;
-	}
-	,
 	'pointToCanvas': function(attr) {				// Точку в canvas
 		var gmx = attr['gmx'];
 		var coords = attr['coords'];
@@ -374,37 +333,6 @@
 			//ctx.globalAlpha = 1;
 			ctx.fill();
 			//ctx.clip();
-		}
-	}
-	,
-	'getTileRasters': function(attr, callback) {	// Получить растры КР для тайла
-		var gmx = attr.gmx;
-		var gmxTilePoint = attr['gmxTilePoint'];
-		var needLoadRasters = 0;
-		var chkReadyRasters = function() {
-			needLoadRasters--;
-			if(needLoadRasters === 0) {
-				callback(attr, needLoadRasters);
-			}
-		}
-		for (var i = 0, len = gmxTilePoint['items'].length; i < len; i++) {
-			var it = gmxTilePoint['items'][i];
-			if(!gmxTilePoint['rasters']) gmxTilePoint['rasters'] = {};
-			needLoadRasters++;
-			(function() {
-				var idr = it.id;
-				var rasters = gmxTilePoint['rasters'];
-				gmxImageLoader.push({
-					'callback' : function(img) {
-						rasters[idr] = img;
-						chkReadyRasters();
-					}
-					,'onerror' : function() {
-						chkReadyRasters();
-					}
-					,'src': gmx.attr['rasterBGfunc'](gmxTilePoint['x'], gmxTilePoint['y'], attr['zoom'], idr)
-				});
-			})();
 		}
 	}
 	,'r_major': 6378137.000

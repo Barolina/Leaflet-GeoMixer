@@ -31,7 +31,7 @@
 
 	<div id="map" style="width: 100%; height: 100%"></div>
  
-	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet-src.js"></script>
 	<script src="../dist/leaflet-geomixer-src.js"></script>
 	<script>
 
@@ -48,7 +48,7 @@
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
 
 		//points
-        new L.TileLayer.gmxVectorLayer({
+        /*new L.TileLayer.gmxVectorLayer({
             hostName: 'maps.kosmosnimki.ru',
             apiKey: 'U92596WMIH',
             mapName: 'UIRCQ',
@@ -61,15 +61,15 @@
             apiKey: 'U92596WMIH',
             mapName: 'UIRCQ',
             layerName: '09E930F32F0F4736AD7D74B7D04B57C4'
-		}).addTo(map);
-/*
+		}).addTo(map);*/
+
 		//regions
-        new L.TileLayer.gmxVectorLayer({
+        /*new L.TileLayer.gmxVectorLayer({
             hostName: 'maps.kosmosnimki.ru',
             apiKey: 'U92596WMIH',
             mapName: 'AZR6A',
             layerName: '2FD848A8E6E54850876AF95BFECF98E5'
-		}).addTo(map);
+		}).addTo(map);*/
 
         var gmxLayer = new L.TileLayer.gmxVectorLayer({
 			hostName: 'maps.kosmosnimki.ru',
@@ -108,7 +108,7 @@
 		document.getElementById("noneFilter").onclick = function() {
 			gmxLayer.setFilter(null);
 		}
- */        
+ 
 	</script>
 </body>
 </html>

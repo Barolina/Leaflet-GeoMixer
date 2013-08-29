@@ -12,7 +12,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             ,'layerName': options.layerName
             ,'beginDate': options.beginDate
             ,'endDate': options.endDate
-            ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
+            ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); },
+            tileSubscriptions: []
         };
         
         var apikeyRequestHost = options.apikeyRequestHost || this._gmx.hostName;
@@ -53,6 +54,23 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 console.log('Error: ' + myLayer._gmx.mapName + ' - ' + ph.error);
             }
         );
+        
+        this.on('tileunload', function(e) {
+            var tile = e.tile,
+                tp = tile._tilePoint,
+                gtp = gmxAPIutils.getTileNumFromLeaflet(tp, tile._zoom);
+            
+            var gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y;
+            this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[gmxkey]);
+            delete this._gmx.tileSubscriptions[gmxkey];
+            
+            for (var k = this._drawQueue.length-1; k >= 0; k--) {
+                var elem = this._drawQueue[k];
+                if (elem.tp.x == tp.x && elem.tp.y == tp.y && elem.z == tile._zoom) {
+                    this._drawQueue.splice(k, k+1);
+                }
+            }
+        })
     },
         
     onAdd: function(map) {
@@ -69,10 +87,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     },
     //public interface
 	setFilter: function (func) {
-		this._gmx.chkVisibility = func;
-		//this._reset();
-        
-        this._updateDrawnTiles(false);
+        this._gmx.vectorTilesManager.setFilter('userFilter', func);
 		this._update();
 	}
 	,
@@ -80,16 +95,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx;
 		gmx.beginDate = beginDate;
 		gmx.endDate = endDate;
-		if(gmx.attr.itemCount > 1000) {
-			for (var key in gmx.attr['tilesNeedLoad']) {
-                gmx.attr['tilesAll'][key].tile.clear();
-			}
-			gmx.attr.itemCount = 0;
-		}
-		gmx.attr.tilesNeedLoad = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate).tilesNeedLoad;
-        
-        this._updateDrawnTiles(true);
-        //this._reset();
+        gmx.vectorTilesManager.setDateInterval(beginDate, endDate);
 		this._update();
 	},
     
@@ -192,31 +198,22 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_addTile: function (tilePoint) {
-		var myLayer = this, 
+		var myLayer = this,
             zoom = this._map._zoom,
             gmx = this._gmx;
             
 		if (!gmx.attr) return;
-        
-		if (!gmx.attr.tilesNeedLoad) {
-			var res = gmxAPIutils.getNeedTiles(gmx.attr, gmx.beginDate, gmx.endDate);
-			gmx.attr.tilesNeedLoad = res.tilesNeedLoad;
-		}
-        
+
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-        gmx.vectorTilesManager.on(gmxTilePoint, function() {
-            myLayer._drawTileAsync(tilePoint, zoom);
-        });
-        
-        gmx.vectorTilesManager.loadTiles(gmxTilePoint);
-        if (gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint) === 0) {
-            this._drawTileAsync(tilePoint, zoom);
+        var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+        if (!gmx.tileSubscriptions[key]) {
+            gmx.tileSubscriptions[key] = gmx.vectorTilesManager.on(gmxTilePoint, function() {
+                myLayer._drawTileAsync(tilePoint, zoom);
+            });
         }
-	}
-	,
+	},
 	gmxDrawTile: function (tilePoint, zoom) {
 		var gmx = this._gmx;
-		//gmx._tilesToLoad--;
 		if(gmx['zoomstart']) return;
         
         var domTile = this.gmxGetCanvasTile(tilePoint),
@@ -236,6 +233,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         
 		var tile = this._getTile();
 		tile.id = tKey;
+        tile._zoom = this._map._zoom;
 		tile._layer = this;
 		tile._tileComplete = true;
 		tile._tilePoint = tilePoint;

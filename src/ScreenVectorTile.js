@@ -8,44 +8,6 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
         bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
     
-    //get all items from global item collection, that should be rendered in this tile
-    var getTileItems = function() {
-        var items = [];
-        for (var key in gmx.attr.tilesNeedLoad) {
-			//var tile = gmx.attr.tilesAll[key].tile;
-            var tile = gmx.vectorTilesManager.getTile(key);
-			if (!tile.isIntersects(gmxTilePoint)) {
-                continue;
-            }
-			var data = tile.data || [];
-			for (var j = 0, len1 = data.length; j < len1; j++) {
-				var it = data[j];
-				var item = gmx.attr.items[it.id];
-				if(gmx.chkVisibility && !gmx.chkVisibility(item)) {
-					continue;
-				}
-				if(gmx.attr.layerType === 'VectorTemporal') {
-					var unixTimeStamp = item.propHiden.unixTimeStamp;
-					if(unixTimeStamp < gmx.attr.ut1 || unixTimeStamp > gmx.attr.ut2) {
-                        continue;
-                    }
-				}
-                
-				if(!it.bounds) {
-                    it.bounds = gmxAPIutils.itemBounds(it);
-                }
-                
-				if (!bounds.intersects(it.bounds)) {
-                    continue;
-                }
-                
-				if(item.type === 'POLYGON' || item.type === 'MULTIPOLYGON') tile.calcHiddenPoints();
-				items.push(it);
-			}
-		}
-        return items;
-    }
-    
     //load all missing rasters for items we are going to render
     var getTileRasters = function(items) {	// Получить растры КР для тайла
         var def = new gmxDeferred();
@@ -69,7 +31,7 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
                     needLoadRasters--;
                     chkReadyRasters();
                 }
-                ,'src': gmx.attr['rasterBGfunc'](gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+                ,'src': gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
             });
 		})
         chkReadyRasters();
@@ -77,7 +39,7 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
 	}
 
     this.drawTile = function(ctx, style) {
-        var items = getTileItems(), //call each time because of possible items updates
+        var items = gmx.vectorTilesManager.getItems(gmxTilePoint), //call each time because of possible items updates
             dattr = {
                 gmx: gmx,
                 style: style,
