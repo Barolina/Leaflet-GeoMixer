@@ -93,8 +93,11 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
 		return isIntersects;
     }
 
-    this.getItems = function(gmxTilePoint) {
-        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, (gmx.attr.GeometryType === 'point' ? 1 : 0));
+    this.getItems = function(gmxTilePoint, style) {
+        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
+        var sx = style['sx'] / gmx['mInPixel'];
+        var sy = style['sy'] / gmx['mInPixel'];
+
         var resItems = [];
         for (var key in activeTileKeys) {
             
@@ -122,7 +125,7 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
                     it.bounds = gmxAPIutils.itemBounds(it);
                 }
                 
-				if (!bounds.intersects(it.bounds)) {
+				if (!bounds.intersects(it.bounds, sx, sy)) {
                     continue;
                 }
                 
@@ -191,7 +194,7 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
         for (var key in activeTileKeys) (function(tile) {
         
 			if (!tile.isIntersects(gmxTilePoint)) return;
-            
+           
             if (tile.state === 'notLoaded') {
                 tile.load().done(function() {
                     gmx.attr.itemCount += _updateItemsFromTile(tile)//gmxAPIutils.updateItemsFromTile(gmx, tile);

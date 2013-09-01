@@ -1,6 +1,7 @@
 ﻿//Single tile on screen with vector data
-var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
+var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     
+	var gmx = layer._gmx;
     var showRaster = 'rasterBGfunc' in gmx.attr &&
         (zoom >= gmx.properties.RCMinZoomForRasters || gmx.properties.quicklook);
 
@@ -38,17 +39,21 @@ var gmxScreenVectorTile = function(gmx, tilePoint, zoom) {
         return def;
 	}
 
-    this.drawTile = function(ctx, style) {
-        var items = gmx.vectorTilesManager.getItems(gmxTilePoint), //call each time because of possible items updates
-            dattr = {
+    this.drawTile = function(style) {
+        var items = gmx.vectorTilesManager.getItems(gmxTilePoint, style); //call each time because of possible items updates
+        if(items.length === 0) return;  
+
+        items = items.sort(gmx.sortItems);
+		var tile = layer.gmxGetCanvasTile(tilePoint);
+		tile.id = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+        var ctx = tile.getContext('2d');
+        var dattr = {
                 gmx: gmx,
                 style: style,
                 tpx: 256 * gmxTilePoint.x,
                 tpy: 256 *(1 + gmxTilePoint.y),
                 ctx: ctx
             };
-            
-        items = items.sort(gmx.sortItems);
         
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);

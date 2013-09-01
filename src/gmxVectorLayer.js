@@ -216,12 +216,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		var gmx = this._gmx;
 		if(gmx['zoomstart']) return;
         
-        var domTile = this.gmxGetCanvasTile(tilePoint),
-            ctx = domTile.getContext('2d'),
-            style = gmx.attr.styles[0],
-            screenTile = new gmxScreenVectorTile(gmx, tilePoint, zoom);
+        var style = gmx.attr.styles[0],
+            screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
             
-        screenTile.drawTile(ctx, style);
+        screenTile.drawTile(style);
 	}
 	,
 	gmxGetCanvasTile: function (tilePoint) {
@@ -314,7 +312,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 						if(marker['size']) {
 							pt['sx'] = pt['sy'] = marker['size'];
 						} else {
-							pt['circle'] = 4;
+							pt['sx'] = pt['sy'] = pt['circle'] = 4;
 						}
 					}
 				}

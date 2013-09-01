@@ -76,12 +76,14 @@
 				}
                 return this;
 			},
-			intersects: function (bounds) { // (Bounds) -> Boolean
+			intersects: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
 				var min = this.min,
 					max = this.max,
+					dx = dx ? dx : 0,
+					dy = dy ? dy : 0,
 					min2 = bounds.min,
 					max2 = bounds.max;
-				return max2.x >= min.x && min2.x <= max.x && max2.y >= min.y && min2.y <= max.y;
+				return max2.x + dx >= min.x && min2.x - dx <= max.x && max2.y + dy >= min.y && min2.y - dy <= max.y;
 			}
 		};
         
@@ -351,16 +353,12 @@
 	},
     
     //x, y, z - GeoMixer tile coordinates
-	//delta - around tiles count
-    getTileBounds: function(x, y, z, delta) {
+    getTileBounds: function(x, y, z) {
         var tileSize = gmxAPIutils.tileSizes[z],
-            n = (delta ? delta : 0), 
-            minx = (x - n) * tileSize, 
-            miny = (y - n) * tileSize;
-            maxx = (x + n + 1) * tileSize, 
-            maxy = (y + n + 1) * tileSize;
-            
-        return gmxAPIutils.bounds([[minx, miny], [maxx, maxy]]);
+            minx = x * tileSize, 
+            miny = y * tileSize;
+
+        return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
     }
 }
 
