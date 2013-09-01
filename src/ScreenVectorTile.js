@@ -2,6 +2,7 @@
 var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     
 	var gmx = layer._gmx;
+	var tKey = tilePoint.x + ':' + tilePoint.y;
     var showRaster = 'rasterBGfunc' in gmx.attr &&
         (zoom >= gmx.properties.RCMinZoomForRasters || gmx.properties.quicklook);
 
@@ -41,11 +42,15 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
     this.drawTile = function(style) {
         var items = gmx.vectorTilesManager.getItems(gmxTilePoint, style); //call each time because of possible items updates
-        if(items.length === 0) return;  
+        if(items.length === 0) {
+			if (tKey in layer._tiles) {
+				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
+			}
+			return;
+		}
 
         items = items.sort(gmx.sortItems);
 		var tile = layer.gmxGetCanvasTile(tilePoint);
-		tile.id = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
         var ctx = tile.getContext('2d');
         var dattr = {
                 gmx: gmx,

@@ -124,25 +124,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         isEmpty && setTimeout(drawNextTile, 0);
     },
     
-    _updateDrawnTiles: function(reloadTiles) {
-        for (var key in this._tiles) {
-            var kArr = key.split(':'),
-                x = parseInt(kArr[0], 10),
-                y = parseInt(kArr[1], 10),
-                tilePoint = L.point(x, y),
-                gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, this._map._zoom);
-                
-            var cntToLoad = 0;
-            if (reloadTiles) {
-                this._gmx.vectorTilesManager.loadTiles(gmxTilePoint);
-                cntToLoad = this._gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint);
-            }
-            if (cntToLoad === 0) {
-                this._drawTileAsync(tilePoint, this._map._zoom);
-            }
-        }
-    },
-    
     _prpZoomData: function(zoom) {
         var gmx = this._gmx,
             map = this._map;
