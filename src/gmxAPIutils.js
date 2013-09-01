@@ -351,12 +351,16 @@
 	},
     
     //x, y, z - GeoMixer tile coordinates
-    getTileBounds: function(x, y, z) {
+	//delta - around tiles count
+    getTileBounds: function(x, y, z, delta) {
         var tileSize = gmxAPIutils.tileSizes[z],
-            minx = x * tileSize, 
-            miny = y * tileSize;
+            n = (delta ? delta : 0), 
+            minx = (x - n) * tileSize, 
+            miny = (y - n) * tileSize;
+            maxx = (x + n + 1) * tileSize, 
+            maxy = (y + n + 1) * tileSize;
             
-        return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
+        return gmxAPIutils.bounds([[minx, miny], [maxx, maxy]]);
     }
 }
 

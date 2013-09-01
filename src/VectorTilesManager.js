@@ -75,18 +75,32 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
             subscriptions[subscrID].callback();
         }
     }
-    
+
+	// TODO: надо научить tileInfo.tile.isIntersects проверке пересечения с тайлами вокруг заданного
+    var _isIntersects = function(tileInfo, gmxTilePoint) {
+        var isIntersects = tileInfo.tile.isIntersects(gmxTilePoint);
+		if(!isIntersects && gmx.attr.GeometryType === 'point') {
+			var x = gmxTilePoint.x, y = gmxTilePoint.y, z = gmxTilePoint.z;
+			isIntersects = tileInfo.tile.isIntersects({'x':x-1, 'y':y, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x+1, 'y':y, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x, 'y':y-1, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x, 'y':y+1, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x-1, 'y':y-1, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x+1, 'y':y-1, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x-1, 'y':y+1, 'z':z});
+			if(!isIntersects) isIntersects = tileInfo.tile.isIntersects({'x':x+1, 'y':y+1, 'z':z});
+		}
+		return isIntersects;
+    }
+
     this.getItems = function(gmxTilePoint) {
-        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
+        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, (gmx.attr.GeometryType === 'point' ? 1 : 0));
         var resItems = [];
         for (var key in activeTileKeys) {
             
             var tileInfo = tiles[key];
-			
-            if (!tileInfo.tile.isIntersects(gmxTilePoint)) {
-                continue;
-            }
-            
+			if (!_isIntersects(tileInfo, gmxTilePoint)) continue;
+               
 			var data = tileInfo.tile.data || [];
 			for (var j = 0, len1 = data.length; j < len1; j++) {
                 
@@ -122,7 +136,7 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
         
         return resItems;
     }
-    
+
     var _updateItemsFromTile = function(tile) {
         var gmxTileKey = tile.gmxTileKey;
 		var layerProp = gmx.properties;
