@@ -8,6 +8,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
     var rasters = {},
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
+		gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y,
         bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
     
     //load all missing rasters for items we are going to render
@@ -46,11 +47,14 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			if (tKey in layer._tiles) {
 				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
 			}
+			gmx.vectorTilesManager.off(gmx.tileSubscriptions[gmxTileKey]);
+			delete gmx.tileSubscriptions[gmxTileKey];
 			return;
 		}
 
         items = items.sort(gmx.sortItems);
 		var tile = layer.gmxGetCanvasTile(tilePoint);
+		tile.id = gmxTileKey;
         var ctx = tile.getContext('2d');
         var dattr = {
                 gmx: gmx,

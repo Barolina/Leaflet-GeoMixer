@@ -95,9 +95,8 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
 
     this.getItems = function(gmxTilePoint, style) {
         var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        var sx = style['sx'] / gmx['mInPixel'];
-        var sy = style['sy'] / gmx['mInPixel'];
-
+        var sx = 2 * style['sx'] / gmx['mInPixel'];
+        var sy = 2 * style['sy'] / gmx['mInPixel'];
         var resItems = [];
         for (var key in activeTileKeys) {
             
@@ -136,7 +135,6 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
 				resItems.push(it);
 			}
 		}
-        
         return resItems;
     }
 

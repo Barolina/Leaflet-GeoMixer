@@ -60,7 +60,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 tp = tile._tilePoint,
                 gtp = gmxAPIutils.getTileNumFromLeaflet(tp, tile._zoom);
             
-            var gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y;
+			var gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y;
             this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[gmxkey]);
             delete this._gmx.tileSubscriptions[gmxkey];
             
@@ -128,7 +128,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             map = this._map;
         gmx.tileSize = gmxAPIutils.tileSizes[zoom];
-        gmx.mInPixel = 256 / gmx.tileSize;
+        gmx.mInPixel = 256 / gmx.tileSize;	// 0.9966471893352525
         gmx._tilesToLoad = 0;
         // Получение сдвига OSM
         var pos = map.getCenter();
@@ -293,7 +293,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 						if(marker['size']) {
 							pt['sx'] = pt['sy'] = marker['size'];
 						} else {
-							pt['sx'] = pt['sy'] = pt['circle'] = 4;
+							pt['circle'] = 4;
+							pt['sx'] = pt['sy'] = 2 * pt['circle'];
 						}
 					}
 				}
