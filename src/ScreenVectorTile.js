@@ -4,7 +4,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 	var gmx = layer._gmx;
 	var tKey = tilePoint.x + ':' + tilePoint.y;
     var showRaster = 'rasterBGfunc' in gmx.attr &&
-        (zoom >= gmx.properties.RCMinZoomForRasters || gmx.properties.quicklook);
+        (zoom >= gmx.attr.minZoomRasters);
 
     var rasters = {},
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
@@ -20,13 +20,31 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 				def.resolve();
 			}
 		}
-        items.forEach(function(it) {
-            var idr = it.id;
+        items.forEach(function(geo) {
+            var idr = geo.id;
             if (idr in rasters) return;
 			needLoadRasters++;
+            var url = '';
+            var item = null;
+			if(gmx.attr['Quicklook']) {
+				item = gmx.vectorTilesManager.getItem(idr);
+				url = gmx.attr.rasterBGfunc(item);
+			} else {
+				url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+			}
+
             gmxImageLoader.push({
                 'callback' : function(img) {
-                    rasters[idr] = img;
+					if(gmx.attr['imageProcessingHook']) {
+						rasters[idr] = gmx.attr['imageProcessingHook']({
+							'image': img,
+							'geoItem': geo,
+							'item': item,
+							'gmxTilePoint': gmxTilePoint
+						});
+					} else {
+						rasters[idr] = img;
+					}
                     needLoadRasters--;
                     chkReadyRasters();
                 }
@@ -34,7 +52,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     needLoadRasters--;
                     chkReadyRasters();
                 }
-                ,'src': gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+                ,'src': url
             });
 		})
         chkReadyRasters();

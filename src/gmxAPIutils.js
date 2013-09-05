@@ -360,6 +360,71 @@
 
         return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
     }
+	,
+	forEachPoint: function(coords, callback)
+	{
+		if (!coords || coords.length == 0) return [];
+		if (!coords[0].length)
+		{
+			if (coords.length == 2)
+				return callback(coords);
+			else
+			{
+				var ret = [];
+				for (var i = 0; i < coords.length/2; i++)
+					ret.push(callback([coords[i*2], coords[i*2 + 1]]));
+				return ret;
+			}
+		}
+		else
+		{
+			var ret = [];
+			for (var i = 0; i < coords.length; i++) {
+				if(typeof(coords[i]) != 'string') ret.push(this.forEachPoint(coords[i], callback));
+			}
+			return ret;
+		}
+	}
+	,
+
+	getQuicklookPoints: function(coord)	{		// получить 4 точки привязки снимка
+		var d1 = Number.MAX_VALUE;
+		var d2 = Number.MAX_VALUE;
+		var d3 = Number.MAX_VALUE;
+		var d4 = Number.MAX_VALUE;
+		var x1, y1, x2, y2, x3, y3, x4, y4;
+		this.forEachPoint(coord, function(p)
+		{
+			var x = p[0];
+			var y = p[1];
+			if ((x - y) < d1)
+			{
+				d1 = x - y;
+				x1 = p[0];
+				y1 = p[1];
+			}
+			if ((-x - y) < d2)
+			{
+				d2 = -x - y;
+				x2 = p[0];
+				y2 = p[1];
+			}
+			if ((-x + y) < d3)
+			{
+				d3 = -x + y;
+				x3 = p[0];
+				y3 = p[1];
+			}
+			if ((x + y) < d4)
+			{
+				d4 = x + y;
+				x4 = p[0];
+				y4 = p[1];
+			}
+		});
+		return {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'x3': x3, 'y3': y3, 'x4': x4, 'y4': y4};
+	}
+	
 }
 
 !function() {

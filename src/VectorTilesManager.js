@@ -226,6 +226,9 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
     this.getTile = function(tileKey) {
         return tiles[tileKey];
     }
+    this.getItem = function(id) {
+        return items[id];
+    }
     
     if (isTemporalLayer) {
         this.setFilter('TemporalFilter', function(item) {
