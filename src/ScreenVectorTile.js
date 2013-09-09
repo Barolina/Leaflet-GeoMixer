@@ -22,44 +22,48 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         items.forEach(function(geo) {
             var idr = geo.id;
             if (idr in rasters) return;
-			needLoadRasters++;
             var url = '';
             var itemImageProcessingHook = null;
             var item = gmx.vectorTilesManager.getItem(idr);
-			if(item.properties['urlBG']) {
+			if(gmx.attr['IsRasterCatalog']) {
+				if(!item.properties['GMX_RasterCatalogID'] && item.properties['sceneid']) {
+					url = 'http://search.kosmosnimki.ru/QuickLookImage.ashx?id=' + item.properties['sceneid'];
+					itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
+				} else {		// RasterCatalog
+					url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+				}
+			} else if(item.properties['urlBG']) {
 				url = item.properties['urlBG'];
 				itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
 			} else if(gmx.attr['Quicklook']) {
 				url = gmx.attr.rasterBGfunc(item);
 				itemImageProcessingHook = gmx.attr['imageProcessingHook'];
-			} else if(!item.properties['GMX_RasterCatalogID'] && item.properties['sceneid']) {
-				url = 'http://search.kosmosnimki.ru/QuickLookImage.ashx?id=' + item.properties['sceneid'];
-				itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
-			} else {		// RasterCatalog
-				url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
 			}
+			if(url) {
+				needLoadRasters++;
 
-            gmxImageLoader.push({
-                'callback' : function(img) {
-					if(itemImageProcessingHook) {
-						rasters[idr] = itemImageProcessingHook({
-							'image': img,
-							'geoItem': geo,
-							'item': item,
-							'gmxTilePoint': gmxTilePoint
-						});
-					} else {
-						rasters[idr] = img;
+				gmxImageLoader.push({
+					'callback' : function(img) {
+						if(itemImageProcessingHook) {
+							rasters[idr] = itemImageProcessingHook({
+								'image': img,
+								'geoItem': geo,
+								'item': item,
+								'gmxTilePoint': gmxTilePoint
+							});
+						} else {
+							rasters[idr] = img;
+						}
+						needLoadRasters--;
+						chkReadyRasters();
 					}
-                    needLoadRasters--;
-                    chkReadyRasters();
-                }
-                ,'onerror' : function() {
-                    needLoadRasters--;
-                    chkReadyRasters();
-                }
-                ,'src': url
-            });
+					,'onerror' : function() {
+						needLoadRasters--;
+						chkReadyRasters();
+					}
+					,'src': url
+				});
+			}
 		})
         chkReadyRasters();
         return def;

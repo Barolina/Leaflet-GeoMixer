@@ -363,7 +363,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var gmxTilePoint = hash.gmxTilePoint;
 			var img = hash.image;
 //var item = hash.item;
-
+//Алгоритм натяжения:
+//- вычислит 4 угла (текущий алгоритм)
+//- посчитать длины сторон
+//- если соотношение самой длинной и самой короткой больше, чем 2, тогда северный отрезок из двух коротких - это верхний край квиклука
+//- если соотношение меньше, чем 2, то самая северная вершина - это левый верхний угол изображения
 			var coord = geoItem.geometry.coordinates;
 			var points = gmxAPIutils.getQuicklookPoints(coord);
 			var mInPixel = gmx.mInPixel;
@@ -385,12 +389,15 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var ww = Math.round(boundsP.max.x - boundsP.min.x);
 			var hh = Math.round(boundsP.max.y - boundsP.min.y);
 			var chPoints = function(arr) {
-					var out = [];
+				var out = [];
 				var dist = [];
 				var px = arr[3][0];
 				var py = arr[3][1];
+				var maxYnum = 0;
+				var maxY = -Number.MAX_VALUE;
 				for(var i=0, len=arr.length; i<len; i++) {
 					var px1 = arr[i][0], py1 = arr[i][1];
+					if(px1 > maxY) maxYnum = i;
 					var sx = px1 - px, sy = py1 - py;
 					dist.push({'d2': Math.sqrt(sx * sx + sy * sy), 'i': i});
 					px = px1, py = py1;
@@ -401,13 +408,20 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				var min = Math.min(dist[0], dist[1], dist[2], dist[3]);
 				var mn = dist[3]['d2'] / dist[0]['d2'];
 				out = arr;
-				if(mn > 1.5) {
+//console.log('alg : ', hash.item.properties.sceneid, mn, maxYnum, (arr[dist[0]['i']][1] > arr[dist[1]['i']][1] ? true : false), arr);
+				if(mn > 2) {
 					var inum = dist[1]['i'];
 					if(arr[dist[0]['i']][1] > arr[dist[1]['i']][1]) {
 						out = [arr[0], arr[1], arr[2], arr[3]];
 					} else {
-						out = [arr[1], arr[2], arr[3], arr[0]];
-						//out = [arr[2], arr[3], arr[0], arr[1]];
+						out = [];
+						out.push(arr[maxYnum++]);
+						if(maxYnum > 3) maxYnum = 0;
+						out.push(arr[maxYnum++]);
+						if(maxYnum > 3) maxYnum = 0;
+						out.push(arr[maxYnum++]);
+						if(maxYnum > 3) maxYnum = 0;
+						out.push(arr[maxYnum]);
 					}
 				}
 				return out;
@@ -428,6 +442,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		};
 		
 		if(prop['IsRasterCatalog']) {
+			res['IsRasterCatalog'] = prop['IsRasterCatalog'];
 			res['rasterBGfunc'] = function(x, y, z, idr) {
 				return 'http://' + gmx.hostName
 					+'/TileSender.ashx?ModeKey=tile'
