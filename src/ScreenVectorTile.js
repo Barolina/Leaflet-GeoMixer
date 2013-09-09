@@ -8,8 +8,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
     var rasters = {},
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
-		gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y,
-        bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
+		gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
     
     //load all missing rasters for items we are going to render
     var getTileRasters = function(items) {	// Получить растры КР для тайла
@@ -25,18 +24,25 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             if (idr in rasters) return;
 			needLoadRasters++;
             var url = '';
-            var item = null;
-			if(gmx.attr['Quicklook']) {
-				item = gmx.vectorTilesManager.getItem(idr);
+            var itemImageProcessingHook = null;
+            var item = gmx.vectorTilesManager.getItem(idr);
+			if(item.properties['urlBG']) {
+				url = item.properties['urlBG'];
+				itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
+			} else if(gmx.attr['Quicklook']) {
 				url = gmx.attr.rasterBGfunc(item);
-			} else {
+				itemImageProcessingHook = gmx.attr['imageProcessingHook'];
+			} else if(!item.properties['GMX_RasterCatalogID'] && item.properties['sceneid']) {
+				url = 'http://search.kosmosnimki.ru/QuickLookImage.ashx?id=' + item.properties['sceneid'];
+				itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
+			} else {		// RasterCatalog
 				url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
 			}
 
             gmxImageLoader.push({
                 'callback' : function(img) {
-					if(gmx.attr['imageProcessingHook']) {
-						rasters[idr] = gmx.attr['imageProcessingHook']({
+					if(itemImageProcessingHook) {
+						rasters[idr] = itemImageProcessingHook({
 							'image': img,
 							'geoItem': geo,
 							'item': item,

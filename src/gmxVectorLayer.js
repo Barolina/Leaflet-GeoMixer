@@ -269,7 +269,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	},
     initLayerData: function(layerDescription) {					// построение списка тайлов
         var gmx = this._gmx,
-            map = this._map,
             res = {'tilesAll':{}, 'items':{}, 'tileCount':0, 'itemCount':0},
             prop = layerDescription.properties,
             type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
@@ -359,6 +358,75 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
 		res['minZoomRasters'] = prop['RCMinZoomForRasters'] || 8;		// мин. zoom для растров
 		
+		var imageTransform = function(hash) {
+			var geoItem = hash.geoItem;
+			var gmxTilePoint = hash.gmxTilePoint;
+			var img = hash.image;
+//var item = hash.item;
+
+			var coord = geoItem.geometry.coordinates;
+			var points = gmxAPIutils.getQuicklookPoints(coord);
+			var mInPixel = gmx.mInPixel;
+			var begx = mInPixel * geoItem.bounds.min.x;
+			var begy = mInPixel * geoItem.bounds.max.y;
+			var dx = begx - 256 * gmxTilePoint.x;
+			var dy = 256 - begy + 256 * gmxTilePoint.y;
+
+			var x1 = mInPixel * points['x1'], y1 = mInPixel * points['y1'];
+			var x2 = mInPixel * points['x2'], y2 = mInPixel * points['y2'];
+			var x3 = mInPixel * points['x3'], y3 = mInPixel * points['y3'];
+			var x4 = mInPixel * points['x4'], y4 = mInPixel * points['y4'];
+
+			var	boundsP = gmxAPIutils.bounds([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]);
+			x1 -= boundsP.min.x; y1 = boundsP.max.y - y1;
+			x2 -= boundsP.min.x; y2 = boundsP.max.y - y2;
+			x3 -= boundsP.min.x; y3 = boundsP.max.y - y3;
+			x4 -= boundsP.min.x; y4 = boundsP.max.y - y4;
+			var ww = Math.round(boundsP.max.x - boundsP.min.x);
+			var hh = Math.round(boundsP.max.y - boundsP.min.y);
+			var chPoints = function(arr) {
+					var out = [];
+				var dist = [];
+				var px = arr[3][0];
+				var py = arr[3][1];
+				for(var i=0, len=arr.length; i<len; i++) {
+					var px1 = arr[i][0], py1 = arr[i][1];
+					var sx = px1 - px, sy = py1 - py;
+					dist.push({'d2': Math.sqrt(sx * sx + sy * sy), 'i': i});
+					px = px1, py = py1;
+				}
+				dist = dist.sort(function(a, b) {
+					return a['d2'] - b['d2'];
+				});
+				var min = Math.min(dist[0], dist[1], dist[2], dist[3]);
+				var mn = dist[3]['d2'] / dist[0]['d2'];
+				out = arr;
+				if(mn > 1.5) {
+					var inum = dist[1]['i'];
+					if(arr[dist[0]['i']][1] > arr[dist[1]['i']][1]) {
+						out = [arr[0], arr[1], arr[2], arr[3]];
+					} else {
+						out = [arr[1], arr[2], arr[3], arr[0]];
+						//out = [arr[2], arr[3], arr[0], arr[1]];
+					}
+				}
+				return out;
+			}
+			var shiftPoints = chPoints([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]);
+			
+			var pt = gmx.ProjectiveImage.getCanvas({
+				'imageObj': img
+				,'points': shiftPoints
+				,'wView': ww
+				,'hView': hh
+				,'deltaX': dx
+				,'deltaY': dy
+				//,'patchSize': 64
+				//,'limit': 4
+			});
+			return pt['canvas'];
+		};
+		
 		if(prop['IsRasterCatalog']) {
 			res['rasterBGfunc'] = function(x, y, z, idr) {
 				return 'http://' + gmx.hostName
@@ -371,6 +439,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 					+'&LayerName=' + gmx.layerName
 					+'&key=' + encodeURIComponent(gmx.sessionKey);
 			};
+			res['imageQuicklookProcessingHook'] = imageTransform;
 		} else if(prop['Quicklook']) {
 			var template = res['Quicklook'] = prop['Quicklook'];
 			res['rasterBGfunc'] = function(item) {
@@ -384,49 +453,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				}
 				return url;
 			};
-			res['imageProcessingHook'] = function(hash) {
-				var item = hash.item;
-				var geoItem = hash.geoItem;
-				var gmxTilePoint = hash.gmxTilePoint;
-				var img = hash.image;
-
-				var coord = geoItem.geometry.coordinates;
-				var points = gmxAPIutils.getQuicklookPoints(coord);
-
-				var mInPixel = gmx.mInPixel;
-				var begx = mInPixel * geoItem.bounds.min.x;
-				var begy = mInPixel * geoItem.bounds.max.y;
-				var dx = begx - 256 * gmxTilePoint.x;
-				var dy = 256 - begy + 256 * gmxTilePoint.y;
-
-				var x1 = mInPixel * points['x1'], y1 = mInPixel * points['y1'];
-				var x2 = mInPixel * points['x2'], y2 = mInPixel * points['y2'];
-				var x3 = mInPixel * points['x3'], y3 = mInPixel * points['y3'];
-				var x4 = mInPixel * points['x4'], y4 = mInPixel * points['y4'];
-
-				var	boundsP = gmxAPIutils.bounds([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]);
-				x1 -= boundsP.min.x; y1 -= boundsP.min.y;
-				x2 -= boundsP.min.x; y2 -= boundsP.min.y;
-				x3 -= boundsP.min.x; y3 -= boundsP.min.y;
-				x4 -= boundsP.min.x; y4 -= boundsP.min.y;
-				var ww = Math.round(boundsP.max.x - boundsP.min.x);
-				var hh = Math.round(boundsP.max.y - boundsP.min.y);
-				var pt = gmx.ProjectiveImage.getCanvas({
-					'imageObj': img
-					,'points': [[x4, y4], [x3, y3], [x1, y1], [x2, y2]]
-					,'wView': ww
-					,'hView': hh
-					,'deltaX': 0
-					,'deltaY': 0
-					,'patchSize': 1
-					,'limit': 2
-				});
-				var out = document.createElement('canvas');
-				out.width = out.height = 256;
-				var ptx = out.getContext('2d');
-				ptx.drawImage(pt['canvas'], dx, dy);
-				return out;
-			};
+			res['imageProcessingHook'] = imageTransform;
 		}
 		return res;
 	}

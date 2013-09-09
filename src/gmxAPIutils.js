@@ -325,6 +325,7 @@
 				ctx.fillStyle = pattern;
 			}
 			ctx.beginPath();
+			//ctx.fillRect(0, 0, 256, 256);
 			//ctx.globalAlpha = 0;
 			for (var i = 0, len = arr.length; i < len; i++) {
 				var p1 = arr[i];
