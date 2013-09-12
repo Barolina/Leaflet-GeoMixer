@@ -93,10 +93,13 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
 		return isIntersects;
     }
 
-    this.getItems = function(gmxTilePoint, style) {
+    this.getItems = function(gmxTilePoint, styleManager) {
         var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        var sx = 2 * style['sx'] / gmx['mInPixel'];
-        var sy = 2 * style['sy'] / gmx['mInPixel'];
+        var styleSize = styleManager.getStyleSize();
+        // var sx = 2 * style['sx'] / gmx['mInPixel'];
+        // var sy = 2 * style['sy'] / gmx['mInPixel'];
+        var sx = 2 * styleSize.sx / gmx['mInPixel'];
+        var sy = 2 * styleSize.sy / gmx['mInPixel'];
         var resItems = [];
         for (var key in activeTileKeys) {
             

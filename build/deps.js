@@ -2,6 +2,7 @@
     "Deferred.js",
     "ImageLoader.js",
     "ProjectiveImage.js",
+    "StyleManager.js",
     "ScreenVectorTile.js",
     "VectorTile.js",
     "VectorTilesManager.js",

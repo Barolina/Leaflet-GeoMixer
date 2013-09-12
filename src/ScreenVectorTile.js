@@ -69,8 +69,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         return def;
 	}
 
-    this.drawTile = function(style) {
-        var items = gmx.vectorTilesManager.getItems(gmxTilePoint, style); //call each time because of possible items updates
+    this.drawTile = function(styleManager) {
+        var items = gmx.vectorTilesManager.getItems(gmxTilePoint, styleManager); //call each time because of possible items updates
         if(items.length === 0) {
 			if (tKey in layer._tiles) {
 				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
@@ -86,7 +86,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         var ctx = tile.getContext('2d');
         var dattr = {
                 gmx: gmx,
-                style: style,
                 tpx: 256 * gmxTilePoint.x,
                 tpy: 256 *(1 + gmxTilePoint.y),
                 ctx: ctx
@@ -97,7 +96,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             for (var i = 0, len = items.length; i < len; i++) {
                 var it = items[i],
                     idr = it.id;
-                    
+
+                dattr.style = styleManager.getObjStyle(it, gmxTilePoint.z);
+
                 if (rasters[idr]) {
                     dattr.bgImage = rasters[idr];
                 }

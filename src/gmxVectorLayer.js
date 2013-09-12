@@ -198,10 +198,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		var gmx = this._gmx;
 		if(gmx['zoomstart']) return;
         
-        var style = gmx.attr.styles[0],
-            screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
+        var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
             
-        screenTile.drawTile(style);
+        screenTile.drawTile(gmx.attr.styleManager);
 	}
 	,
 	gmxGetCanvasTile: function (tilePoint) {
@@ -273,44 +272,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             prop = layerDescription.properties,
             type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
 
-		var defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'};
-		var styles = [];
-		if(prop.styles) {
-			for (var i = 0, len = prop['styles'].length; i < len; i++)
-			{
-				var it = prop['styles'][i];
-				var pt = {};
-				var renderStyle = it['RenderStyle'];
-				if(renderStyle['outline']) {
-					var outline = renderStyle['outline'];
-					pt['lineWidth'] = outline.thickness || 0;
-					var color = outline.color || 255;
-					var opacity = ('opacity' in outline ? outline['opacity']/100 : 1);
-					pt['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
-				}
-				if(renderStyle['marker']) {
-					var marker = renderStyle.marker;
-					if(prop['GeometryType'] === 'point') {
-						if(marker['size']) {
-							pt['sx'] = pt['sy'] = marker['size'];
-						} else {
-							pt['circle'] = 4;
-							pt['sx'] = pt['sy'] = 2 * pt['circle'];
-						}
-					}
-				}
-				if(renderStyle['fill']) {
-					var fill = renderStyle.fill;
-					var color = fill.color || 255;
-					var opacity = ('opacity' in fill ? fill['opacity']/100 : 1);
-					pt['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
-				}
-				styles.push(pt);
-			}
-		} else {
-            styles.push(defaultStyle);
-        }
-		res.styles = styles;
+        res.styleManager = new gmxStyleManager(prop.styles, prop.GeometryType);
 
 		var addRes = function(z, x, y, v, s, d) {
             var tile = new gmxVectorTile(gmx, x, y, z, v, s, d);
