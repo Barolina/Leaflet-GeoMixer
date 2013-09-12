@@ -68,6 +68,7 @@
 				if (x > this.max.x) this.max.x = x;
 				if (y < this.min.y) this.min.y = y;
 				if (y > this.max.y) this.max.y = y;
+                return this;
 			},
 			extendArray: function(arr) {
                 if (!arr) { return this };
@@ -76,6 +77,14 @@
 				}
                 return this;
 			},
+            addBuffer: function(dxmin, dymin, dxmax, dymax) {
+                this.min.x -= dxmin;
+                this.min.y -= dymin;
+                this.max.x += dxmax;
+                this.max.y += dymax;
+                return this;
+            },
+            //TODO: do we still need dx, dy?
 			intersects: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
 				var min = this.min,
 					max = this.max,
