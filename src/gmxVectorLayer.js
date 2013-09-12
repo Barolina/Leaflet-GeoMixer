@@ -146,7 +146,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_update: function () {
-		if(this._gmx['zoomstart']) return; //TODO: buggy restriction?
+		if (!this._map || this._gmx.zoomstart) return;
 
 		var bounds = this._map.getPixelBounds(),
 		    zoom = this._map.getZoom(),
