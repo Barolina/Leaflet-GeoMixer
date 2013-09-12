@@ -46,7 +46,7 @@
             now = Date.now(),
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
-
+            
 		//points
         /*new L.TileLayer.gmxVectorLayer({
             hostName: 'maps.kosmosnimki.ru',
@@ -64,12 +64,12 @@
 		}).addTo(map);*/
 
 		//regions
-        /*new L.TileLayer.gmxVectorLayer({
+        var regionsLayer = new L.TileLayer.gmxVectorLayer({
             hostName: 'maps.kosmosnimki.ru',
             apiKey: 'U92596WMIH',
             mapName: 'AZR6A',
             layerName: '2FD848A8E6E54850876AF95BFECF98E5'
-		}).addTo(map);*/
+		})
 
         var gmxLayer = new L.TileLayer.gmxVectorLayer({
 			hostName: 'maps.kosmosnimki.ru',
@@ -87,7 +87,13 @@
             layerName: 'C13B4D9706F7491EBC6DC70DFFA988C0',
             beginDate: ddt1,
             endDate: ddt2
-		}).addTo(map);
+		});
+        
+        L.control.layers({}, {
+            MODIS: gmxLayer,
+            Hotspots: hotspotLayer,
+            Regions: regionsLayer
+        }, {collapsed: false}).addTo(map);
         
         //controls
 		document.getElementById("prev").onclick = function() {
