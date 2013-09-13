@@ -73,19 +73,29 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             }
         })
     },
+    
+    _zoomStart: function() {
+        this._gmx['zoomstart'] = true;
+    },
+    
+    _zoomEnd: function() {
+        this._gmx['zoomstart'] = false;
+        this._prpZoomData(map._zoom);
+    },
         
     onAdd: function(map) {
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
                 
-        map.on('zoomstart', function() {
-            this._gmx['zoomstart'] = true;
-        }, this);
-        
-        map.on('zoomend', function() {
-            this._gmx['zoomstart'] = false;
-            this._prpZoomData(map._zoom);
-        }, this);
+        map.on('zoomstart', this._zoomStart, this);
+        map.on('zoomend', this._zoomEnd, this);
     },
+    
+    onRemove: function(map) {
+        L.TileLayer.Canvas.prototype.onRemove.call(this, map);
+        map.off('zoomstart', this._zoomStart, this);
+        map.off('zoomend', this._zoomEnd, this);
+    },
+    
     //public interface
 	setFilter: function (func) {
         this._gmx.vectorTilesManager.setFilter('userFilter', func);
