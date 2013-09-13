@@ -75,7 +75,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 	var setCanvasStyle = function(ctx, style) {				// Установка canvas стилей
 		for (var i = 0; i < styleCanvasKeysLen; i++)
 		{
-			var name = styleCanvasKeys['styleCanvasKeys'];
+			var name = styleCanvasKeys[i];
 			if(name in style && style[name] !== lastStyles[name]) ctx[name] = lastStyles[name] = style[name];
 		}
 	}

@@ -23,7 +23,6 @@
 			,'onMouseClick': !item['DisableBalloonOnClick']
 			,'BalloonEnable': item['BalloonEnable']
 		};
-		//if(callback) currCallback = callback;
 		if('RenderStyle' in item) {
 			var st = item.RenderStyle;
 			pt['label'] = false;
@@ -157,6 +156,9 @@
 							]);
 						}
 					}
+                    if('fillColor' in pt) {
+                        pt['fillStyle'] = gmxAPIutils.dec2rgba(pt['fillColor'], pt['fillOpacity']/100);
+                    }
 				}
 				pt['stroke'] = false;
 				if(typeof(st['outline']) === 'object') {				//	Есть стиль контура

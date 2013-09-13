@@ -242,7 +242,7 @@
 			if(style['circle']) {
 				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
 			} else {
-				ctx.strokeRect(px1, py1, 2*sx, 2*sy);
+				ctx.strokeRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
 			}
 			ctx.stroke();
 		}
@@ -251,7 +251,7 @@
 			if(style['circle']) {
 				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
 			} else {
-				ctx.fillRect(px1, py1, 2*sx, 2*sy);
+				ctx.fillRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
 			}
 			ctx.fill();
 		}
