@@ -104,8 +104,7 @@
                     }
                 }
                 
-                if (isFiltered) {continue;};
-                
+                if (isFiltered) {continue;}
                 
 				if(!it.bounds) {
                     it.bounds = gmxAPIutils.itemBounds(it);

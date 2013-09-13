@@ -3,9 +3,8 @@
         needLoadIcons = 0,
         styles = [],
         imagesSize = {},
+        defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'},
         me = this;
-
-    var defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'};
 
     this.def = new gmxDeferred()
     var initStyles = function() {
@@ -19,12 +18,19 @@
     var parseItem = function(item) {			// перевод Style Scanex->leaflet
 		var pt = {
 			'common': true					// true, false - true - если стиль не зависит от properties обьекта
+			,'parseFunc': []
 			,'MinZoom': item['MinZoom']
 			,'MaxZoom': item['MaxZoom']
+			,'Filter': item['Filter'] || null
 			,'onMouseOver': !item['DisableBalloonOnMouseMove']
 			,'onMouseClick': !item['DisableBalloonOnClick']
 			,'BalloonEnable': item['BalloonEnable']
 		};
+		if('Filter' in item) {
+            var ph = gmxParsers.parseSQL(item['Filter']);
+            if(ph) pt['FilterFunction'] = ph;
+        }
+
 		if('RenderStyle' in item) {
 			var st = item.RenderStyle;
 			pt['label'] = false;
@@ -169,10 +175,14 @@
 					var ph = st['outline'];
 					pt['lineWidth'] = ph.thickness || 0;
 					if('dashes' in ph) pt['dashArray'] = ph['dashes'];
-					var color = ph.color || 255;
-					var opacity = ('opacity' in ph ? ph['opacity']/100 : 1);
-					pt['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
-					
+                    if('opacity' in ph && typeof(ph['opacity']) === 'string') {
+                        pt['opacityFunction'] = gmxParsers.parseExpression(ph['opacity']);
+                        pt['common'] = false;
+                    } else {
+                        var color = ph.color || 255;
+                        var opacity = ('opacity' in ph ? ph['opacity']/100 : 1);
+                        pt['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+                    }
 				}
 			}
 			if('rotate' in pt && typeof(pt['rotate']) === 'string') {
@@ -229,7 +239,7 @@
 				imagesSize[url] = pt;
 				needLoadIcons--;
 				chkReadyIcons();
-				//gmxAPI.addDebugWarnings({'url': url, 'func': 'getImageSize', 'Error': 'image not found'});
+				console.log({'url': url, 'func': 'getImageSize', 'Error': 'image not found'});
 			}
 		};
 		if(('color' in pt && pt['color'] != utils.DEFAULT_REPLACEMENT_COLOR)
@@ -240,15 +250,48 @@
 
     initStyles();
 
+    gmx.vectorTilesManager.setFilter('sqlFilter', function(item) {
+		for (var i = 0, len = styles.length; i < len; i++) {
+			var st = styles[i];
+			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
+			if ('FilterFunction' in st && !st['FilterFunction'](item.properties)) continue;
+			return true;
+		}
+        return false;
+    });
+
+    this.ItemStyleParser = function(item, pt) {
+		var out = {},
+            prop = item.properties,
+            color = 255, opacity = 1;
+
+        out['sx'] = pt['sx'];
+        out['sy'] = pt['sy'];
+        out['stroke'] = pt['stroke'];
+		if(out['stroke']) {
+            color = ('colorFunction' in pt ? pt['colorFunction'](prop) : pt['color'] || 255);
+            opacity = ('opacityFunction' in pt ? pt['opacityFunction'](prop)/100 : pt['opacity'] || 1);
+            out['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+            out['lineWidth'] = pt['lineWidth'] || 1;
+        }
+
+        out['fill'] = pt['fill'];
+		if(out['fill']) {
+            color = ('fillColorFunction' in pt ? pt['fillColorFunction'](prop) : pt['fillColor'] || 255);
+            opacity = ('fillOpacityFunction' in pt ? pt['fillOpacityFunction'](prop)/100 : pt['fillOpacity'] || 1);
+            out['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+        }
+        return out;
+    }
+
     this.getObjStyle = function(idr) {
-		var item = (idr ? gmx.vectorTilesManager.getItem(idr) : null);
 		for (var i = 0, len = styles.length; i < len; i++) {
 			var st = styles[i];
 			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
 			if (st['common']) return st;
-			var st = styles[i];
+            return this.ItemStyleParser(gmx.vectorTilesManager.getItem(idr), st);
 		}
-        return {};
+        return defaultStyle;
     }
 
     //obj can be "null" - estimete style size for arbitrary object
