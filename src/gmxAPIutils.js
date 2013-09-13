@@ -223,6 +223,50 @@
         return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
 	}
 	,
+	parseXML: function(str)
+	{
+		var xmlDoc;
+		try
+		{
+			if (window.DOMParser)
+			{
+				parser = new DOMParser();
+				xmlDoc = parser.parseFromString(str,"text/xml");
+			}
+			else // Internet Explorer
+			{
+				xmlDoc = new ActiveXObject("MSXML2.DOMDocument.3.0");
+				xmlDoc.validateOnParse = false;
+				xmlDoc.async = false;
+				xmlDoc.loadXML(str);
+			}
+		}
+		catch(e)
+		{
+			console.log({'func': 'parseXML', 'str': str, 'event': e, 'alert': e});
+		}
+		
+		return xmlDoc;
+	}
+    ,
+    'rotatePoints': function(arr, angle, scale, center) {			// rotate - массива точек
+        var out = [];
+        angle *= Math.PI / 180.0
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
+        if(!scale) scale = 1;
+        for (var i = 0; i < arr.length; i++)
+        {
+            var x = scale * arr[i].x - center.x;
+            var y = scale * arr[i].y - center.y;
+            out.push({
+                'x': cos * x - sin * y + center.x
+                ,'y': sin * x + cos * y + center.y
+            });
+        }
+        return out;
+    }
+	,
 	'pointToCanvas': function(attr) {				// Точку в canvas
 		var gmx = attr['gmx'];
 		var coords = attr['coords'];
@@ -237,7 +281,41 @@
 		var py1 = tpy - coords[1] * mInPixel;	py1 = (0.5 + py1) << 0;
 		var sx = attr['sx'] || style['sx'] || 4;
 		var sy = attr['sy'] || style['sy'] || 4;
-		if(style.strokeStyle) {
+
+		if(style['marker']) {
+			if(style['image']) {
+				if('opacity' in style) ctx.globalAlpha = style['opacity'];
+				ctx.drawImage(style['image'], px1 - sx, py1 - sy, 2 * sx, 2 * sy);
+				if('opacity' in style) ctx.globalAlpha = 1;
+			} else if(style['polygons']) {
+				var rotateRes = style['rotate'] || 0;
+				if(rotateRes && typeof(rotateRes) == 'string') {
+					rotateRes = (style['rotateFunction'] ? style['rotateFunction'](prop) : 0);
+				}
+				style['rotateRes'] = rotateRes || 0;
+
+				for (var i = 0; i < style['polygons'].length; i++)
+				{
+					var p = style['polygons'][i];
+					ctx.save();
+					ctx.lineWidth = p['stroke-width'] || 0;
+					ctx.fillStyle = p['fill_rgba'] || 'rgba(0, 0, 255, 1)';
+					
+					ctx.beginPath();
+					var arr = gmxAPIutils.rotatePoints(p['points'], style['rotateRes'], style['scale'], {'x': sx, 'y': sy});
+					for (var j = 0; j < arr.length; j++)
+					{
+						var t = arr[j];
+						if(j == 0)
+							ctx.moveTo(px1 + t['x'], py1 + t['y']);
+						else
+							ctx.lineTo(px1 + t['x'], py1 + t['y']);
+					}
+					ctx.fill();
+					ctx.restore();
+				}
+			}
+		} else if(style.strokeStyle) {
 			ctx.beginPath();
 			if(style['circle']) {
 				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
@@ -246,9 +324,32 @@
 			}
 			ctx.stroke();
 		}
-		if(style['fillStyle']) {
+		if(style['fill']) {
 			ctx.beginPath();
 			if(style['circle']) {
+                if(style['radialGradient']) {
+                    var rgr = style['radialGradient'];
+                    var r1 = (rgr['r1Function'] ? rgr['r1Function'](prop) : rgr['r1']);
+                    var r2 = (rgr['r2Function'] ? rgr['r2Function'](prop) : rgr['r2']);
+                    var x1 = (rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1']);
+                    var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
+                    var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
+                    var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
+                    px1 = coords[0] * mInPixel - tpx - 1; 	    px1 = (0.5 + px1) << 0;
+                    py1 = tpy - coords[1] * mInPixel - 1;		py1 = (0.5 + py1) << 0;
+
+                    var radgrad = ctx.createRadialGradient(px1+x1, py1+y1, r1, px1+x2, py1+y2,r2);  
+                    for (var i = 0; i < style['radialGradient']['addColorStop'].length; i++)
+                    {
+                        var arr = style['radialGradient']['addColorStop'][i];
+                        var arrFunc = style['radialGradient']['addColorStopFunctions'][i];
+                        var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr[0]);
+                        var p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr[2]));
+                        var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr[1], p2/100);
+                        radgrad.addColorStop(p0, p1);
+                    }
+                    ctx.fillStyle = radgrad;
+                }
 				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
 			} else {
 				ctx.fillRect(px1 - sx, py1 - sy, 2*sx, 2*sy);

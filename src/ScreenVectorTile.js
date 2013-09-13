@@ -69,7 +69,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         return def;
 	}
 
-	var styleCanvasKeys = ['strokeStyle', 'fillStyle']	// Ключи стилей в canvas
+	var styleCanvasKeys = ['strokeStyle', 'fillStyle', 'lineWidth']	// Ключи стилей в canvas
 	var styleCanvasKeysLen = styleCanvasKeys.length;
 	var lastStyles = {};
 	var setCanvasStyle = function(ctx, style) {				// Установка canvas стилей

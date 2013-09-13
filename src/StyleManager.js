@@ -1,10 +1,12 @@
 ﻿var gmxStyleManager = function(gmx) {
-    var MAX_STYLE_SIZE = 256;
+    var MAX_STYLE_SIZE = 256,
+        needLoadIcons = 0,
+        styles = [],
+        imagesSize = {},
+        me = this;
 
     var defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'};
-    var styles = [];
 
-    var me = this;
     this.def = new gmxDeferred()
     var initStyles = function() {
         var props = gmx.properties,
@@ -51,7 +53,7 @@
 				pt['marker'] = true;
 				var ph = st['marker'];
 				if('color' in ph) pt['color'] = ph['color'];
-				pt['opacity'] = ('opacity' in ph ? ph['opacity'] : 100);
+				pt['opacity'] = ('opacity' in ph ? ph['opacity']/100 : 1);
 				if('size' in ph) pt['size'] = ph['size'];
 				if('scale' in ph) pt['scale'] = ph['scale'];
 				if('minScale' in ph) pt['minScale'] = ph['minScale'];
@@ -72,7 +74,7 @@
 					pt['fill'] = true;
 					var ph = st['fill'];
 					if('color' in ph) pt['fillColor'] = ph['color'];
-					pt['fillOpacity'] = ('opacity' in ph ? ph['opacity'] : 100);
+					pt['fillOpacity'] = ('opacity' in ph ? ph['opacity']/100 : 1);
 					if('pattern' in ph) {
 						var pattern = ph['pattern'];
 						delete pattern['_res'];
@@ -125,6 +127,7 @@
 								,(typeof(arr[2]) === 'string' ? gmxParsers.parseExpression(arr[2]) : null)
 							]);
 						}
+                        pt['size'] = pt['circle'] = Math.max(pt['radialGradient']['r1'], pt['radialGradient']['r2']);
 					} else if(typeof(ph['linearGradient']) === 'object') {
 						pt['linearGradient'] = ph['linearGradient'];
 						//	x1,y1 — координаты начальной точки
@@ -157,18 +160,13 @@
 						}
 					}
                     if('fillColor' in pt) {
-                        pt['fillStyle'] = gmxAPIutils.dec2rgba(pt['fillColor'], pt['fillOpacity']/100);
+                        pt['fillStyle'] = gmxAPIutils.dec2rgba(pt['fillColor'], pt['fillOpacity']);
                     }
 				}
 				pt['stroke'] = false;
 				if(typeof(st['outline']) === 'object') {				//	Есть стиль контура
 					pt['stroke'] = true;
 					var ph = st['outline'];
-					/*if('color' in ph) pt['color'] = ph['color'];
-					pt['opacity'] = ('opacity' in ph ? ph['opacity'] : 100);
-					if('thickness' in ph) pt['weight'] = ph['thickness'];
-					if('dashes' in ph) pt['dashArray'] = ph['dashes'];
-					*/
 					pt['lineWidth'] = ph.thickness || 0;
 					if('dashes' in ph) pt['dashArray'] = ph['dashes'];
 					var color = ph.color || 255;

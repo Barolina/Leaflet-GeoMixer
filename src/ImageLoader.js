@@ -6,6 +6,43 @@
     ,'itemsHash': {}						// Хэш по image.src
     ,'itemsCache': {}					// Кэш загруженных image по image.src
     ,'emptyImageUrl': 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+    ,'parseSVG': function(item, str)	{		// парсинг SVG файла
+		var out = {};
+		var xml = gmxAPIutils.parseXML(str);
+		
+		var svg = xml.getElementsByTagName("svg");
+		out['width'] = parseFloat(svg[0].getAttribute("width"));
+		out['height'] = parseFloat(svg[0].getAttribute("height"));
+		
+		var polygons = svg[0].getElementsByTagName("polygon");
+		var poly = [];
+		for (var i = 0; i < polygons.length; i++)
+		{
+			var pt = {};
+			var it = polygons[i];
+			var hexString = it.getAttribute("fill"); hexString = hexString.replace(/^#/, '');
+			pt['fill'] = parseInt(hexString, 16);
+			pt['fill_rgba'] = gmxAPIutils.dec2rgba(pt['fill'], 1);
+			
+			pt['stroke-width'] = parseFloat(it.getAttribute("stroke-width"));
+			var points = it.getAttribute("points");
+			if(points) {
+				var arr = [];
+				var pp = points.split(' ');
+				for (var j = 0; j < pp.length; j++)
+				{
+					var t = pp[j];
+					var xy = t.split(',');
+					arr.push({'x': parseFloat(xy[0]), 'y': parseFloat(xy[1])});
+				}
+				if(arr.length) arr.push(arr[0]);
+			}
+			pt['points'] = arr;
+			poly.push(pt);
+		}
+		out['polygons'] = poly;
+		return out;
+	}
     ,
     'removeItemsByZoom': function(zoom)	{	// остановить и удалить из очереди запросы по zoom
         for (var key in this.itemsCache)
@@ -75,8 +112,18 @@
     }
     ,
     'setImage': function(item) {			// загрузка image
-        var _this = this,
-            imageObj = new Image();
+        var _this = this;
+		if(item['src'].match(/\.svg$/)) {
+            gmxAPIutils.request({
+                url: item['src'],
+                callback: function(ph) {
+                    item.svgPattern = _this.parseSVG(item, ph);
+                    _this.callCacheItems(item);
+                }
+            });
+			return;
+		}
+        var imageObj = new Image();
         item['loaderObj'] = imageObj;
         if(item['crossOrigin']) imageObj.crossOrigin = item['crossOrigin'];
         imageObj.onload = function() {
