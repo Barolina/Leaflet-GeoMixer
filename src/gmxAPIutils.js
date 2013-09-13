@@ -1,17 +1,19 @@
 ﻿var gmxAPIutils = {
 	'getXmlHttp': function() {
 		var xmlhttp;
-		try {
-			xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-		} catch (e) {
-			try {
-				xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-			} catch (E) {
-				xmlhttp = false;
-			}
-		}
-		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+		if (typeof XMLHttpRequest!='undefined') {
 			xmlhttp = new XMLHttpRequest();
+		}
+		if (!xmlhttp) {
+            try {
+                xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+            } catch (e) {
+                try {
+                    xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                } catch (E) {
+                    xmlhttp = false;
+                }
+            }
 		}
 		return xmlhttp;
 	}
@@ -226,7 +228,6 @@
 		var coords = attr['coords'];
 		var ctx = attr['ctx'];
 		var style = attr['style'];
-		for (var key in style) ctx[key] = style[key];
 
 		var mInPixel = gmx['mInPixel'];
 		var tpx = attr['tpx'];
@@ -261,7 +262,6 @@
 		var coords = attr['coords'];
 		var ctx = attr['ctx'];
 		var style = attr['style'];
-		for (var key in style) ctx[key] = style[key];
 
 		var mInPixel = gmx['mInPixel'];
 		var tpx = attr['tpx'];
@@ -295,7 +295,6 @@
 		var bgImage = attr['bgImage'];
 		var ctx = attr['ctx'];
 		var style = attr['style'];
-		for (var key in style) ctx[key] = style[key];
 
 		var mInPixel = gmx['mInPixel'];
 		var tpx = attr['tpx'];

@@ -31,6 +31,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                     myLayer._gmx.geometry = ph['geometry'];
                     myLayer._gmx.attr = myLayer.initLayerData(ph);
                     myLayer._gmx.vectorTilesManager = new gmxVectorTilesManager(myLayer._gmx, ph);
+                    myLayer._gmx.styleManager = new gmxStyleManager(myLayer._gmx);
                     myLayer._gmx.ProjectiveImage = new ProjectiveImage();
                     myLayer._update();
                     return true;
@@ -141,10 +142,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         gmx.tileSize = gmxAPIutils.tileSizes[zoom];
         gmx.mInPixel = 256 / gmx.tileSize;	// 0.9966471893352525
         gmx._tilesToLoad = 0;
+        gmx.currentZoom = map._zoom;
         // Получение сдвига OSM
         var pos = map.getCenter();
         var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
-        var p1 = map.project(new L.LatLng(lat, pos.lng), map._zoom);
+        var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
         var point = map.project(pos);
         gmx.shiftY = point.y - p1.y;
         //console.log(gmx.shiftY);
@@ -207,10 +209,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	gmxDrawTile: function (tilePoint, zoom) {
 		var gmx = this._gmx;
 		if(gmx['zoomstart']) return;
-        
+
         var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
             
-        screenTile.drawTile(gmx.attr.styleManager);
+        var len = screenTile.drawTile();
+var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
+var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+console.log('alg : ', len, zoom, key, tilePoint);
 	}
 	,
 	gmxGetCanvasTile: function (tilePoint) {
@@ -281,8 +286,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             res = {'tilesAll':{}, 'items':{}, 'tileCount':0, 'itemCount':0},
             prop = layerDescription.properties,
             type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
-
-        res.styleManager = new gmxStyleManager(prop.styles, prop.GeometryType);
 
 		var addRes = function(z, x, y, v, s, d) {
             var tile = new gmxVectorTile(gmx, x, y, z, v, s, d);

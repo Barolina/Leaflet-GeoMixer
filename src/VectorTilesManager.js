@@ -75,11 +75,11 @@
         }
     }
 
-    this.getItems = function(gmxTilePoint, styleManager) {
+    this.getItems = function(gmxTilePoint) {
         var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        var styleSize = styleManager.getStyleSize(null, gmxTilePoint.z);
-        var sx = 2 * styleSize.sx / gmx['mInPixel'];
-        var sy = 2 * styleSize.sy / gmx['mInPixel'];
+        var size = gmx.styleManager.getStyleSize();
+        var sx = 2 * size / gmx['mInPixel'];
+        var sy = 2 * size / gmx['mInPixel'];
         var resItems = [];
         
         bounds.addBuffer(sx, sy, sx, sy);
@@ -176,9 +176,9 @@
     }
     
     this.loadTiles = function(gmxTilePoint) {
-        var styleSize = gmx.attr.styleManager.getStyleSize(null, gmxTilePoint.z);
-        var sx = 2 * styleSize.sx / gmx['mInPixel'];
-        var sy = 2 * styleSize.sy / gmx['mInPixel'];
+        var size = gmx.styleManager.getStyleSize();
+        var sx = 2 * size / gmx['mInPixel'];
+        var sy = 2 * size / gmx['mInPixel'];
         var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
         bounds.addBuffer(sx, sy, sx, sy);
         

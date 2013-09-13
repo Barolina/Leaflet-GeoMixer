@@ -69,15 +69,27 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         return def;
 	}
 
-    this.drawTile = function(styleManager) {
-        var items = gmx.vectorTilesManager.getItems(gmxTilePoint, styleManager); //call each time because of possible items updates
-        if(items.length === 0) {
+	var styleCanvasKeys = ['strokeStyle', 'fillStyle']	// Ключи стилей в canvas
+	var styleCanvasKeysLen = styleCanvasKeys.length;
+	var lastStyles = {};
+	var setCanvasStyle = function(ctx, style) {				// Установка canvas стилей
+		for (var i = 0; i < styleCanvasKeysLen; i++)
+		{
+			var name = styleCanvasKeys['styleCanvasKeys'];
+			if(name in style && style[name] !== lastStyles[name]) ctx[name] = lastStyles[name] = style[name];
+		}
+	}
+
+    this.drawTile = function() {
+        var items = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom); //call each time because of possible items updates
+        var itemsLength = items.length;
+        if(itemsLength === 0) {
 			if (tKey in layer._tiles) {
 				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
 			}
 			gmx.vectorTilesManager.off(gmx.tileSubscriptions[gmxTileKey]);
 			delete gmx.tileSubscriptions[gmxTileKey];
-			return;
+			return 0;
 		}
 
         items = items.sort(gmx.sortItems);
@@ -93,11 +105,12 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
-            for (var i = 0, len = items.length; i < len; i++) {
+            for (var i = 0; i < itemsLength; i++) {
                 var it = items[i],
                     idr = it.id;
 
-                dattr.style = styleManager.getObjStyle(it, gmxTilePoint.z);
+                dattr.style = gmx.styleManager.getObjStyle(idr); //call each time because of possible style can depends from item properties
+				setCanvasStyle(ctx, dattr.style);
 
                 if (rasters[idr]) {
                     dattr.bgImage = rasters[idr];
@@ -150,5 +163,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         } else {
             doDraw();
         }
+		return itemsLength;
     }
 }

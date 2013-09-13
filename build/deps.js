@@ -1,4 +1,5 @@
 ﻿var deps = [
+    "Parsers.js", 
     "Deferred.js",
     "ImageLoader.js",
     "ProjectiveImage.js",
