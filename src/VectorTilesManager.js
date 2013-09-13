@@ -1,5 +1,4 @@
-﻿//Single vector tile, received from GeoMixer server
-var gmxVectorTilesManager = function(gmx, layerDescription) {
+﻿var gmxVectorTilesManager = function(gmx, layerDescription) {
     var subscriptions = {},
         freeSubscrID = 0,
         tiles = {},
@@ -177,13 +176,19 @@ var gmxVectorTilesManager = function(gmx, layerDescription) {
     }
     
     this.loadTiles = function(gmxTilePoint) {
+        var styleSize = gmx.attr.styleManager.getStyleSize(null, gmxTilePoint.z);
+        var sx = 2 * styleSize.sx / gmx['mInPixel'];
+        var sy = 2 * styleSize.sy / gmx['mInPixel'];
+        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
+        bounds.addBuffer(sx, sy, sx, sy);
+        
         for (var key in activeTileKeys) (function(tile) {
         
-			if (!tile.isIntersects(gmxTilePoint)) return;
+            if (!bounds.intersects(tile.bounds)) return;
            
             if (tile.state === 'notLoaded') {
                 tile.load().done(function() {
-                    gmx.attr.itemCount += _updateItemsFromTile(tile)//gmxAPIutils.updateItemsFromTile(gmx, tile);
+                    gmx.attr.itemCount += _updateItemsFromTile(tile);
                     for (var key in subscriptions) {
                         if (tile.isIntersects(subscriptions[key].tilePoint)) {
                             subscriptions[key].callback();
