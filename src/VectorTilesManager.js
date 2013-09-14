@@ -75,18 +75,18 @@
         }
     }
 
-    this.getItems = function(gmxTilePoint) {
+    this.getItems = function(gmxTilePoint, zoom) {
         var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        var size = gmx.styleManager.getStyleSize();
-        var sx = 2 * size / gmx['mInPixel'];
-        var sy = 2 * size / gmx['mInPixel'];
+        var size = gmx.styleManager.getMaxStyleSize(zoom);
+
+        var maxSize = 2 * size / gmx['mInPixel'];
+        bounds.addBuffer(maxSize, maxSize, maxSize, maxSize);
+        
         var resItems = [];
-        
-        bounds.addBuffer(sx, sy, sx, sy);
-        
         for (var key in activeTileKeys) {
             var tile = tiles[key].tile;
             if (!bounds.intersects(tile.bounds)) {
+                // отсекаем тайлы за границами screenTile+макс.размер из массива стилей(без учета обьектов)
                 continue;
             }
                
@@ -109,8 +109,9 @@
 				if(!it.bounds) {
                     it.bounds = gmxAPIutils.itemBounds(it);
                 }
-                
+
 				if (!bounds.intersects(it.bounds)) {
+                    // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
                     continue;
                 }
                 
@@ -175,11 +176,11 @@
     }
     
     this.loadTiles = function(gmxTilePoint) {
-        var size = gmx.styleManager.getStyleSize();
-        var sx = 2 * size / gmx['mInPixel'];
-        var sy = 2 * size / gmx['mInPixel'];
         var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        bounds.addBuffer(sx, sy, sx, sy);
+        var size = gmx.styleManager.getMaxStyleSize();
+
+        var maxSize = 2 * size / gmx['mInPixel'];
+        bounds.addBuffer(maxSize, maxSize, maxSize, maxSize);
         
         for (var key in activeTileKeys) (function(tile) {
         

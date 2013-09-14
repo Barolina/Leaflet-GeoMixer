@@ -15,24 +15,24 @@
 			styles.push(parseItem(arr[i]));
 		}
     }
-    var parseItem = function(item) {			// перевод Style Scanex->leaflet
-		var pt = {
+    var parseItem = function(style) {			// перевод Style Scanex->leaflet
+        var pt = {
 			'common': true					// true, false - true - если стиль не зависит от properties обьекта
 			,'parseFunc': []
-			,'MinZoom': item['MinZoom']
-			,'MaxZoom': item['MaxZoom']
-			,'Filter': item['Filter'] || null
-			,'onMouseOver': !item['DisableBalloonOnMouseMove']
-			,'onMouseClick': !item['DisableBalloonOnClick']
-			,'BalloonEnable': item['BalloonEnable']
+			,'MinZoom': style['MinZoom']
+			,'MaxZoom': style['MaxZoom']
+			,'Filter': style['Filter'] || null
+			,'onMouseOver': !style['DisableBalloonOnMouseMove']
+			,'onMouseClick': !style['DisableBalloonOnClick']
+			,'BalloonEnable': style['BalloonEnable']
 		};
-		if('Filter' in item) {
-            var ph = gmxParsers.parseSQL(item['Filter']);
+		if('Filter' in style) {
+            var ph = gmxParsers.parseSQL(style['Filter']);
             if(ph) pt['FilterFunction'] = ph;
         }
 
-		if('RenderStyle' in item) {
-			var st = item.RenderStyle;
+		if('RenderStyle' in style) {
+			var st = style.RenderStyle;
 			pt['label'] = false;
 			if(typeof(st['label']) === 'object') {											//	Есть стиль label
 				pt['label'] = {};
@@ -250,16 +250,6 @@
 
     initStyles();
 
-    gmx.vectorTilesManager.setFilter('sqlFilter', function(item) {
-		for (var i = 0, len = styles.length; i < len; i++) {
-			var st = styles[i];
-			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-			if ('FilterFunction' in st && !st['FilterFunction'](item.properties)) continue;
-			return true;
-		}
-        return false;
-    });
-
     this.ItemStyleParser = function(item, pt) {
 		var out = {},
             prop = item.properties,
@@ -284,27 +274,37 @@
         return out;
     }
 
-    this.getObjStyle = function(idr) {
+    var chkStyleFilter = function(item) {
 		for (var i = 0, len = styles.length; i < len; i++) {
 			var st = styles[i];
 			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-			if (st['common']) return st;
-            return this.ItemStyleParser(gmx.vectorTilesManager.getItem(idr), st);
+			if ('FilterFunction' in st && !st['FilterFunction'](item.properties)) continue;
+			item.propHiden.currentFilter = i;
+            return true;
 		}
-        return defaultStyle;
+        return false;
     }
 
-    //obj can be "null" - estimete style size for arbitrary object
-    this.getStyleSize = function(idr) {
-		var maxSize = MAX_STYLE_SIZE;
+    gmx.vectorTilesManager.setFilter('styleFilter', chkStyleFilter);
+ 
+    // только для item прошедших через chkStyleFilter
+    this.getObjStyle = function(item) {
+		var style = styles[item.propHiden.currentFilter];
+        return this.ItemStyleParser(item, style);
+    }
+
+    // estimete style size for arbitrary object
+    this.getMaxStyleSize = function(zoom) {
+		if (!zoom) zoom = gmx.currentZoom;
+		var maxSize = 0;
 		for (var i = 0, len = styles.length; i < len; i++) {
-			var st = styles[i];
-			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-			if (!st['common']) {
+			var style = styles[i];
+			if (zoom > style.MaxZoom || zoom < style.MinZoom) continue;
+			if (!style['common']) {
 				maxSize = MAX_STYLE_SIZE;
 				break;
 			}
-			maxSize = Math.max(maxSize, 2 * st.sx, 2 * st.sy);
+			maxSize = Math.max(maxSize, 2 * style.sx, 2 * style.sy);
 		}
 		return maxSize;
     }

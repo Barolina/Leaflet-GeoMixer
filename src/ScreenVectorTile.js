@@ -11,7 +11,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 		gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
     
     //load all missing rasters for items we are going to render
-    var getTileRasters = function(items) {	// Получить растры КР для тайла
+    var getTileRasters = function(geoItems) {	// Получить растры КР для тайла
         var def = new gmxDeferred();
 		var needLoadRasters = 0;
 		var chkReadyRasters = function() {
@@ -19,7 +19,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 				def.resolve();
 			}
 		}
-        items.forEach(function(geo) {
+        geoItems.forEach(function(geo) {
             var idr = geo.id;
             if (idr in rasters) return;
             var url = '';
@@ -81,8 +81,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 	}
 
     this.drawTile = function() {
-        var items = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom); //call each time because of possible items updates
-        var itemsLength = items.length;
+        var geoItems = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom); //call each time because of possible items updates
+        var itemsLength = geoItems.length;
         if(itemsLength === 0) {
 			if (tKey in layer._tiles) {
 				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
@@ -92,7 +92,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			return 0;
 		}
 
-        items = items.sort(gmx.sortItems);
+        geoItems = geoItems.sort(gmx.sortItems);
 		var tile = layer.gmxGetCanvasTile(tilePoint);
 		tile.id = gmxTileKey;
         var ctx = tile.getContext('2d');
@@ -106,22 +106,22 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
             for (var i = 0; i < itemsLength; i++) {
-                var it = items[i],
-                    idr = it.id;
+                var geoItem = geoItems[i],
+                    idr = geoItem.id;
 
-                dattr.style = gmx.styleManager.getObjStyle(idr); //call each time because of possible style can depends from item properties
+                dattr.style = gmx.styleManager.getObjStyle(gmx.vectorTilesManager.getItem(idr)); //call each time because of possible style can depends from item properties
 				setCanvasStyle(ctx, dattr.style);
 
                 if (rasters[idr]) {
                     dattr.bgImage = rasters[idr];
                 }
 
-                var geom = it.geometry;
+                var geom = geoItem.geometry;
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     var coords = geom.coordinates;
                     for (var j = 0, len1 = coords.length; j < len1; j++) {
                         var coords1 = coords[j];
-                        dattr.hiddenLines = it.hiddenLines[j];
+                        dattr.hiddenLines = geoItem.hiddenLines[j];
                         if(geom.type === 'MULTIPOLYGON') {
                             for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                 dattr.coords = coords1[j1];
@@ -159,7 +159,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         }
         
         if (showRaster) {
-            getTileRasters(items).done(doDraw); //first load all raster images, then render all of them at once
+            getTileRasters(geoItems).done(doDraw); //first load all raster images, then render all of them at once
         } else {
             doDraw();
         }
