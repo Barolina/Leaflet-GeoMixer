@@ -6,25 +6,29 @@
         defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'},
         me = this;
 
-    this.def = new gmxDeferred()
+    this.deferred = new gmxDeferred()
     var initStyles = function() {
         var props = gmx.properties,
             arr = props.styles;
-            
+
 		for (var i = 0, len = arr.length; i < len; i++) {
-			styles.push(parseItem(arr[i]));
+			styles.push(parseItem(gmx.styles[i] || arr[i]));
 		}
-    }
+ 
+		for (var j = i, len = gmx.styles.length; j < len; j++) {
+			styles.push(parseItem(gmx.styles[j]));
+		}
+   }
+
     var parseItem = function(style) {			// перевод Style Scanex->leaflet
         var pt = {
 			'common': true					// true, false - true - если стиль не зависит от properties обьекта
-			,'parseFunc': []
 			,'MinZoom': style['MinZoom']
 			,'MaxZoom': style['MaxZoom']
 			,'Filter': style['Filter'] || null
 			,'onMouseOver': !style['DisableBalloonOnMouseMove']
 			,'onMouseClick': !style['DisableBalloonOnClick']
-			,'BalloonEnable': style['BalloonEnable']
+			,'BalloonEnable': style['BalloonEnable'] || false
 		};
 		if('Filter' in style) {
             var ph = gmxParsers.parseSQL(style['Filter']);
@@ -34,7 +38,7 @@
 		if('RenderStyle' in style) {
 			var st = style.RenderStyle;
 			pt['label'] = false;
-			if(typeof(st['label']) === 'object') {											//	Есть стиль label
+			if(typeof(st['label']) === 'object') {					//	Есть стиль label
 				pt['label'] = {};
 				var ph = st['label'];
 				if('color' in ph) pt['label']['color'] = ph['color'];
@@ -202,7 +206,12 @@
 				pt['common'] = false;
 			}
 			if('size' in pt) {
-				pt['sx'] = pt['sy'] = pt['size'];
+                if(typeof(pt['size']) === 'string') {
+                    pt['sizeFunction'] = gmxParsers.parseExpression(pt['size']);
+                    pt['common'] = false;
+                } else {
+                    pt['sx'] = pt['sy'] = pt['size'];
+                }
 			}
 			
 		}
@@ -212,8 +221,7 @@
 		var url = pt['iconUrl'];
 		var chkReadyIcons = function() {
 			if(needLoadIcons < 1) {
-				me.def.resolve();
-				me.state = 'ready';
+				me.deferred.resolve();
 			}
 		}
 
@@ -247,9 +255,14 @@
 		) ph['crossOrigin'] = 'anonymous';
 		gmxImageLoader.unshift(ph);
 	}
-
-    initStyles();
-
+    
+/*
+    this.setStyle = function(st, num) {
+		var tt = Number(num);
+		var tt = Number(num);
+        //if(num !== && num < styles.length
+    }
+*/
     this.ItemStyleParser = function(item, pt) {
 		var out = {},
             prop = item.properties,
@@ -257,16 +270,27 @@
 
         out['sx'] = pt['sx'];
         out['sy'] = pt['sy'];
-        out['stroke'] = pt['stroke'];
-		if(out['stroke']) {
+		if(pt['marker']) {
+            out['marker'] = pt['marker'];
+            if(pt['image']) out['image'] = pt['image'];
+        }
+
+		if(pt['size']) {
+            out['size'] = ('sizeFunction' in pt ? pt['sizeFunction'](prop) : pt['size']);
+            out['sx'] = out['size'];
+            out['sy'] = out['size'];
+        }
+
+		if(pt['stroke']) {
+            out['stroke'] = pt['stroke'];
             color = ('colorFunction' in pt ? pt['colorFunction'](prop) : pt['color'] || 255);
             opacity = ('opacityFunction' in pt ? pt['opacityFunction'](prop)/100 : pt['opacity'] || 1);
             out['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
             out['lineWidth'] = pt['lineWidth'] || 1;
         }
 
-        out['fill'] = pt['fill'];
-		if(out['fill']) {
+		if(pt['fill']) {
+            out['fill'] = pt['fill'];
             color = ('fillColorFunction' in pt ? pt['fillColorFunction'](prop) : pt['fillColor'] || 255);
             opacity = ('fillOpacityFunction' in pt ? pt['fillOpacityFunction'](prop)/100 : pt['fillOpacity'] || 1);
             out['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
@@ -300,16 +324,15 @@
 		for (var i = 0, len = styles.length; i < len; i++) {
 			var style = styles[i];
 			if (zoom > style.MaxZoom || zoom < style.MinZoom) continue;
-			if (!style['common']) {
+			if (!style['common'] || needLoadIcons) {
 				maxSize = MAX_STYLE_SIZE;
 				break;
 			}
-            if ('sx' in style && 'sy' in style) {
-                maxSize = Math.max(maxSize, 2 * style.sx, 2 * style.sy);
-            }
+			maxSize = Math.max(maxSize, 2 * style.sx, 2 * style.sy);
 		}
 		return maxSize;
     }
 
-    this.state = 'notReady'; //ready
+    initStyles();
+    if(needLoadIcons < 1) this.deferred.resolve();
 }

@@ -73,6 +73,22 @@
             layerName: '3CF53D01EE9E4C5EA38F72A82866EFAD',
             beginDate: ddt1,
             endDate: ddt2
+           ,
+            styles: [
+                null
+                ,
+                 {
+                    'MinZoom': 6
+                    ,'MaxZoom': 8
+                    ,'Filter': '"ogc_fid" = 2 or "ogc_fid" = 3'
+                    ,'RenderStyle': {
+                        'marker': {
+                            'image': '1.png'
+                            ,'size': '[p1]/20'
+                        }
+                    }
+                }
+           ]
 		}).addTo(map);
 
 		//regions

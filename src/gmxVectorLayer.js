@@ -13,8 +13,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             ,'layerName': options.layerName
             ,'beginDate': options.beginDate
             ,'endDate': options.endDate
-            ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); },
-            tileSubscriptions: []
+            ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
+            ,'styles': options.styles || []
+            ,tileSubscriptions: []
         };
         
         var apikeyRequestHost = options.apikeyRequestHost || this._gmx.hostName;
@@ -39,14 +40,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 }
             }
         }
-        
+
         var setSessionKey = function(sk) {
 			myLayer._gmx.sessionKey = sk;
             myLayer._gmx.tileSenderPrefix = "http://" + myLayer._gmx.hostName + "/" + 
                 "TileSender.ashx?WrapStyle=None" + 
                 "&key=" + encodeURIComponent(sk);
         }
-        
         //TODO: move to onAdd()?
         gmxMapManager.getMap(apikeyRequestHost, options.apiKey, this._gmx.mapName).done(
             function(ph) {
@@ -57,7 +57,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 console.log('Error: ' + myLayer._gmx.mapName + ' - ' + ph.error);
             }
         );
-        
+
         this.on('tileunload', function(e) {
             var tile = e.tile,
                 tp = tile._tilePoint,
@@ -76,7 +76,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             delete this._drawQueueHash[gmxkey];
         })
     },
-    
+/*        
+    setStyle: function(st, num) {
+        return this._gmx.styleManager(st, num);
+    },
+*/
     _zoomStart: function() {
         this._gmx['zoomstart'] = true;
     },
@@ -205,7 +209,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		var myLayer = this,
             zoom = this._map._zoom,
             gmx = this._gmx;
-            
+
 		if (!gmx.attr) return;
 
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
@@ -221,11 +225,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		if(gmx['zoomstart']) return;
 
         var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
-            
-        var len = screenTile.drawTile();
-// var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-// var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
-// console.log('alg : ', len, zoom, key, tilePoint);
+        this._gmx.styleManager.deferred.done(function () {
+            gmx._tilesToLoad--;
+            screenTile.drawTile();
+        });
 	}
 	,
 	gmxGetCanvasTile: function (tilePoint) {
@@ -272,7 +275,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_tileLoaded: function () {
-		if (this._gmx._tilesToLoad < 1) {
+        if (this._gmx._tilesToLoad < 1) {
 			this.fire('load');
 
 			if (this._animated) {

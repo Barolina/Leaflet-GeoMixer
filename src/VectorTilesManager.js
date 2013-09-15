@@ -7,17 +7,17 @@
         isTemporalLayer = layerDescription.properties.Temporal,
         filters = {},
         items = {},
-        maxStyleSize = null;
+        maxStyleSize = 0;
         
     var getStyleBounds = function(gmxTilePoint) {
-        if (maxStyleSize === null) {
+        if (maxStyleSize === 0) {
             maxStyleSize = gmx.styleManager.getMaxStyleSize();
         }
         
         var mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
     }
-        
+    
     var initTileList = function() {
         var props = layerDescription.properties,
             arr, vers;
@@ -69,7 +69,7 @@
     }
     
     this.setFilter = function(filterName, filterFunc) {
-
+        
         filters[filterName] = filterFunc;
         
         for (var subscrID in subscriptions) {
@@ -173,10 +173,10 @@
         }
         return count;
     }
-    
+
     this.loadTiles = function(gmxTilePoint) {
         var bounds = getStyleBounds(gmxTilePoint);
-        
+
         for (var key in activeTileKeys) (function(tile) {
         
             if (!bounds.intersects(tile.bounds)) return;
@@ -219,7 +219,6 @@
     this.getTile = function(tileKey) {
         return tiles[tileKey];
     }
-    
     this.getItem = function(id) {
         return items[id];
     }
