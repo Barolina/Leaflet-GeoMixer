@@ -5,6 +5,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         options = L.setOptions(this, options);
         
         this._drawQueue = [];
+        this._drawQueueHash = {};
         
         this._gmx = {
             'hostName': options.hostName || 'maps.kosmosnimki.ru'
@@ -68,10 +69,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             
             for (var k = this._drawQueue.length-1; k >= 0; k--) {
                 var elem = this._drawQueue[k];
-                if (elem.tp.x == tp.x && elem.tp.y == tp.y && elem.z == tile._zoom) {
+                if (elem.gmxkey === gmxkey) {
                     this._drawQueue.splice(k, k+1);
                 }
             }
+            delete this._drawQueueHash[gmxkey];
         })
     },
     
@@ -119,7 +121,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     _drawTileAsync: function (tilePoint, zoom) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
-            _this = this;
+            gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
+            gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y,
+            _this = this
+            
+        if ( gmxkey in this._drawQueueHash ) {
+            return;
+        }
             
         var drawNextTile = function() {
             if (!queue.length) {
@@ -127,12 +135,14 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             }
             
             var bbox = queue.shift();
+            delete _this._drawQueueHash[bbox.gmxkey];
             _this.gmxDrawTile(bbox.tp, bbox.z);
             
             setTimeout(drawNextTile, 0);
         }
             
-        queue.push({tp: tilePoint, z: zoom});
+        queue.push({tp: tilePoint, z: zoom, gmxkey: gmxkey});
+        this._drawQueueHash[gmxkey] = true;
         isEmpty && setTimeout(drawNextTile, 0);
     },
     

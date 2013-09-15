@@ -304,7 +304,9 @@
 				maxSize = MAX_STYLE_SIZE;
 				break;
 			}
-			maxSize = Math.max(maxSize, 2 * style.sx, 2 * style.sy);
+            if ('sx' in style && 'sy' in style) {
+                maxSize = Math.max(maxSize, 2 * style.sx, 2 * style.sy);
+            }
 		}
 		return maxSize;
     }

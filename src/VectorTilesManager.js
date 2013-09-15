@@ -36,14 +36,14 @@
                     v = Number(vers[i]),
                     tile = new gmxVectorTile(gmx, x, y, z, v, s, d);
                     
-                tiles[tile.gmxTileKey] = {tile: tile, filterActual: {}};
+                tiles[tile.gmxTileKey] = {tile: tile};
             }
         } else {
             arr = props.tiles;
             vers = props.tilesVers;
             for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
                 var tile = new gmxVectorTile(gmx, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
-                tiles[tile.gmxTileKey] = {tile: tile, filterActual: {}};
+                tiles[tile.gmxTileKey] = {tile: tile};
                 activeTileKeys[tile.gmxTileKey] = true;
             }
         }
@@ -55,10 +55,6 @@
         if (!isTemporalLayer || (newBeginDate == beginDate && newBeginDate == endDate)) { return; };
         
         activeTileKeys = gmxAPIutils.getNeedTiles(gmx.attr, newBeginDate, newEndDate).tilesNeedLoad;
-        
-        for (var tileKey in tiles) {
-            tiles[tileKey].filterActual['TemporalFilter'] = false;
-        }
         
         for (var subscrID in subscriptions) {
             var tp = subscriptions[subscrID].tilePoint;
@@ -73,11 +69,7 @@
     }
     
     this.setFilter = function(filterName, filterFunc) {
-        
-        for (var tileKey in tiles) {
-            tiles[tileKey].filterActual[filterName] = false;
-        }
-        
+
         filters[filterName] = filterFunc;
         
         for (var subscrID in subscriptions) {
