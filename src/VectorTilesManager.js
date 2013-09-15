@@ -6,7 +6,17 @@
         beginDate, endDate,
         isTemporalLayer = layerDescription.properties.Temporal,
         filters = {},
-        items = {};
+        items = {},
+        maxStyleSize = null;
+        
+    var getStyleBounds = function(gmxTilePoint) {
+        if (maxStyleSize === null) {
+            maxStyleSize = gmx.styleManager.getMaxStyleSize();
+        }
+        
+        var mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
+        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
+    }
         
     var initTileList = function() {
         var props = layerDescription.properties,
@@ -33,7 +43,7 @@
             vers = props.tilesVers;
             for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
                 var tile = new gmxVectorTile(gmx, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
-                tiles[tile.gmxTileKey] = {tile: tile};
+                tiles[tile.gmxTileKey] = {tile: tile, filterActual: {}};
                 activeTileKeys[tile.gmxTileKey] = true;
             }
         }
@@ -75,12 +85,8 @@
         }
     }
 
-    this.getItems = function(gmxTilePoint, zoom) {
-        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        var size = gmx.styleManager.getMaxStyleSize(zoom);
-
-        var maxSize = 2 * size / gmx['mInPixel'];
-        bounds.addBuffer(maxSize, maxSize, maxSize, maxSize);
+    this.getItems = function(gmxTilePoint) {
+        var bounds = getStyleBounds(gmxTilePoint);
         
         var resItems = [];
         for (var key in activeTileKeys) {
@@ -166,9 +172,10 @@
 
     this.getNotLoadedTileCount = function(gmxTilePoint) {
         var count = 0;
+        var bounds = getStyleBounds(gmxTilePoint);
         for (var key in activeTileKeys) {
             var tile = tiles[key].tile;
-            if (tile.isIntersects(gmxTilePoint) && tile.state !== 'loaded') {
+            if (tile.state !== 'loaded' && bounds.intersects(tile.bounds)) {
                 count++;
             }
         }
@@ -176,11 +183,7 @@
     }
     
     this.loadTiles = function(gmxTilePoint) {
-        var bounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
-        var size = gmx.styleManager.getMaxStyleSize();
-
-        var maxSize = 2 * size / gmx['mInPixel'];
-        bounds.addBuffer(maxSize, maxSize, maxSize, maxSize);
+        var bounds = getStyleBounds(gmxTilePoint);
         
         for (var key in activeTileKeys) (function(tile) {
         
@@ -190,7 +193,8 @@
                 tile.load().done(function() {
                     gmx.attr.itemCount += _updateItemsFromTile(tile);
                     for (var key in subscriptions) {
-                        if (tile.isIntersects(subscriptions[key].tilePoint)) {
+                        if (tile.bounds.intersects(subscriptions[key].styleBounds)) {
+                        // if (tile.isIntersects(subscriptions[key].tilePoint)) {
                             subscriptions[key].callback();
                         }
                     }
@@ -201,7 +205,11 @@
     
     this.on = function(gmxTilePoint, callback) {
         var id = 's'+(freeSubscrID++);
-        subscriptions[id] = {tilePoint: gmxTilePoint, callback: callback};
+        subscriptions[id] = {
+            tilePoint: gmxTilePoint, 
+            callback: callback, 
+            styleBounds: getStyleBounds(gmxTilePoint)
+        };
         
         this.loadTiles(gmxTilePoint);
         
@@ -219,6 +227,7 @@
     this.getTile = function(tileKey) {
         return tiles[tileKey];
     }
+    
     this.getItem = function(id) {
         return items[id];
     }

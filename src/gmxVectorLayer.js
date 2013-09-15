@@ -213,9 +213,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
             
         var len = screenTile.drawTile();
-var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
-console.log('alg : ', len, zoom, key, tilePoint);
+// var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
+// var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+// console.log('alg : ', len, zoom, key, tilePoint);
 	}
 	,
 	gmxGetCanvasTile: function (tilePoint) {

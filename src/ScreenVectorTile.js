@@ -87,8 +87,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			if (tKey in layer._tiles) {
 				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
 			}
-			gmx.vectorTilesManager.off(gmx.tileSubscriptions[gmxTileKey]);
-			delete gmx.tileSubscriptions[gmxTileKey];
+			//gmx.vectorTilesManager.off(gmx.tileSubscriptions[gmxTileKey]);
+			//delete gmx.tileSubscriptions[gmxTileKey];
 			return 0;
 		}
 
