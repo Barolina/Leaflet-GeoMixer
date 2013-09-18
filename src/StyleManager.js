@@ -263,9 +263,10 @@
         //if(num !== && num < styles.length
     }
 */
-    this.ItemStyleParser = function(item, pt) {
+    var ItemStyleParser = function(item, pt) {
 		var out = {},
             prop = item.properties,
+            propHiden = item.propHiden,
             color = 255, opacity = 1;
 
         out['sx'] = pt['sx'];
@@ -295,6 +296,7 @@
             opacity = ('fillOpacityFunction' in pt ? pt['fillOpacityFunction'](prop)/100 : pt['fillOpacity'] || 1);
             out['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
         }
+		propHiden.parsedStyleKeys = out;
         return out;
     }
 
@@ -303,7 +305,11 @@
 			var st = styles[i];
 			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
 			if ('FilterFunction' in st && !st['FilterFunction'](item.properties)) continue;
-			item.propHiden.currentFilter = i;
+			if(item.propHiden.currentFilter !== i) {
+                ItemStyleParser(item, st);
+            }
+
+            item.propHiden.currentFilter = i;
             return true;
 		}
         return false;
@@ -314,7 +320,8 @@
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
 		var style = styles[item.propHiden.currentFilter];
-        return this.ItemStyleParser(item, style);
+        ItemStyleParser(item, style);
+        return style;
     }
 
     // estimete style size for arbitrary object

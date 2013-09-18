@@ -101,8 +101,8 @@
 		return res.extendArray(arr);
 	}
 	,
-	'itemBounds': function(item) {							// получить bounds векторного обьекта
-		var geo = item['geometry'];
+	'geoItemBounds': function(geoItem) {					// получить bounds векторного обьекта
+		var geo = geoItem['geometry'];
 		var type = geo['type'];
 		var coords = geo['coordinates'];
 		var arr = [];
@@ -266,6 +266,115 @@
         }
         return out;
     }
+    , 
+    'getPatternIcon': function(item, style) {			// получить bitmap стиля pattern
+        if(!style['pattern']) return null;
+        var pattern = style['pattern'];
+        var prop = (item ? item['properties'] : {});
+
+        var notFunc = true;
+        var step = (pattern.step > 0 ? pattern.step : 0);		// шаг между линиями
+        if (pattern.patternStepFunction != null && prop != null) {
+            step = pattern.patternStepFunction(prop);
+            notFunc = false;
+        }
+        if (step > patternDefaults['max_step']) step = patternDefaults['max_step'];
+        else if (step < patternDefaults['min_step']) step = patternDefaults['min_step'];
+        
+        var size = (pattern.width > 0 ? pattern.width : 8);		// толщина линий
+        if (pattern.patternWidthFunction != null && prop != null) {
+            size = pattern.patternWidthFunction(prop);
+            notFunc = false;
+        }
+        if (size > patternDefaults['max_width']) size = patternDefaults['max_width'];
+        else if (size < patternDefaults['min_width']) size = patternDefaults['min_width'];
+
+        var op = style['fillOpacity'];
+        if (style['opacityFunction'] != null && prop != null) {
+            op = style['opacityFunction'](prop) / 100;
+            notFunc = false;
+        }
+        
+        var arr = (pattern.colors != null ? pattern.colors : []);
+        var count = arr.length;
+        var resColors = []
+        var rgb = [0xff0000, 0x00ff00, 0x0000ff];
+        for (var i = 0; i < arr.length; i++) {
+            var col = arr[i];
+            if(pattern['patternColorsFunction'][i] != null) {
+                col =  (prop != null ? pattern['patternColorsFunction'][i](prop): rgb[i%3]);
+                notFunc = false;
+            }
+            resColors.push(col);
+        }
+
+        var delta = size + step;
+        var allSize = delta * count;
+        var center = 0,	radius = 0,	rad = 0; 
+
+        var hh = allSize;				// высота битмапа
+        var ww = allSize;				// ширина битмапа
+        var type = pattern.style; 
+        var flagRotate = false; 
+        if (type == 'diagonal1' || type == 'diagonal2' || type == 'cross' || type == 'cross1') {
+            flagRotate = true;
+        } else if (type == 'circle') {
+            ww = hh = 2 * delta;
+            center = Math.floor(ww / 2);	// центр круга
+            radius = Math.floor(size / 2);	// радиус
+            rad = 2 * Math.PI / count;		// угол в рад.
+        }
+        if (ww * hh > patternDefaults['max_width']) {
+            //gmxAPI.addDebugWarnings({'func': 'getPatternIcon', 'Error': 'MAX_PATTERN_SIZE', 'alert': 'Bitmap from pattern is too big'});
+            //return null;
+        }
+
+        var canvas = document.createElement('canvas');
+        canvas.width = ww; canvas.height = hh;
+        var ptx = canvas.getContext('2d');
+        ptx.clearRect(0, 0, canvas.width , canvas.height);
+        if (type === 'diagonal2' || type === 'vertical') {
+            ptx.translate(ww, 0);
+            ptx.rotate(Math.PI/2);
+        }
+
+        for (var i = 0; i < count; i++) {
+            ptx.beginPath();
+            var col = resColors[i];
+            var fillStyle = gmxAPIutils.dec2rgba(col, 1);
+            fillStyle = fillStyle.replace(/1\)/, op + ')');
+            ptx.fillStyle = fillStyle;
+
+            if (flagRotate) {
+                var x1 = i * delta; var xx1 = x1 + size;
+                ptx.moveTo(x1, 0); ptx.lineTo(xx1, 0); ptx.lineTo(0, xx1); ptx.lineTo(0, x1); ptx.lineTo(x1, 0);
+
+                x1 += allSize; xx1 = x1 + size;
+                ptx.moveTo(x1, 0); ptx.lineTo(xx1, 0); ptx.lineTo(0, xx1); ptx.lineTo(0, x1); ptx.lineTo(x1, 0);
+                if (type === 'cross' || type === 'cross1') {
+                    x1 = i * delta; xx1 = x1 + size;
+                    ptx.moveTo(ww, x1); ptx.lineTo(ww, xx1); ptx.lineTo(ww - xx1, 0); ptx.lineTo(ww - x1, 0); ptx.lineTo(ww, x1);
+
+                    x1 += allSize; xx1 = x1 + size;
+                    ptx.moveTo(ww, x1); ptx.lineTo(ww, xx1); ptx.lineTo(ww - xx1, 0); ptx.lineTo(ww - x1, 0); ptx.lineTo(ww, x1);
+                }
+            } else if (type == 'circle') {
+                ptx.arc(center, center, size, i*rad, (i+1)*rad);
+                ptx.lineTo(center, center);
+            } else {
+                ptx.fillRect(0, i * delta, ww, size);
+            }
+            ptx.closePath();
+            ptx.fill();
+        }
+        var imgData = ptx.getImageData(0, 0, ww, hh);
+        var canvas1 = document.createElement('canvas');
+        canvas1.width = ww
+        canvas1.height = hh;
+        var ptx1 = canvas1.getContext('2d');
+        ptx1.drawImage(canvas, 0, 0, ww, hh);
+        return { 'notFunc': notFunc, 'canvas': canvas1 };
+    }
 	,
 	'pointToCanvas': function(attr) {				// Точку в canvas
 		var gmx = attr['gmx'];
@@ -428,11 +537,56 @@
 			arr = coords;
 		}
 
-		if(style.fillStyle || bgImage) {
+        if(style['marker']) {
+            if(style['image']) {
+                var point = getPoint();
+                var x = attr['x'];
+                var y = 256 + attr['y'];
+ /*
+                if(style['imageWidth']) out['sx'] = style['imageWidth']/2;
+                if(style['imageHeight']) out['sy'] = style['imageHeight']/2;
+                var px1 = point.x * mInPixel - x - out['sx']; 		px1 = (0.5 + px1) << 0;
+                var py1 = y - point.y * mInPixel - out['sy'];		py1 = (0.5 + py1) << 0;
+                ctx.drawImage(style['image'], px1, py1);
+*/
+            }
+        //} else if(style.fillStyle || bgImage) {
+        } else if(style.fill || bgImage) {
 			if(bgImage) {
 				var pattern = ctx.createPattern(bgImage, "no-repeat");
 				ctx.fillStyle = pattern;
-			}
+			} if(style['pattern']) {
+/*
+                var canvasPattern = attr['canvasPattern'] || null;
+                if(!canvasPattern) {
+                    var pt = gmxAPIutils.getPatternIcon(out, style);
+                    canvasPattern = (pt ? pt['canvas'] : null);
+                }
+                if(canvasPattern) {
+                    var pattern = ctx.createPattern(canvasPattern, "repeat");
+                    ctx.fillStyle = pattern;
+                }
+*/
+            } else if(style['linearGradient']) {
+                var rgr = style['linearGradient'];
+                var x1 = (rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1']);
+                var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
+                var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
+                var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
+                var lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
+                for (var i = 0; i < style['linearGradient']['addColorStop'].length; i++)
+                {
+                    var arr = style['linearGradient']['addColorStop'][i];
+                    var arrFunc = style['linearGradient']['addColorStopFunctions'][i];
+                    var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr[0]);
+                    var p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr[2]));
+                    var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr[1], p2/100);
+                    lineargrad.addColorStop(p0, p1);
+                }
+                ctx.fillStyle = lineargrad; 
+                //ctx.fillRect(0, 0, 255, 255);
+            }
+            
 			ctx.beginPath();
 			//ctx.fillRect(0, 0, 256, 256);
 			//ctx.globalAlpha = 0;

@@ -13,7 +13,6 @@
         if (maxStyleSize === 0) {
             maxStyleSize = gmx.styleManager.getMaxStyleSize();
         }
-        
         var mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
     }
@@ -105,7 +104,9 @@
                 if (isFiltered) {continue;}
                 
 				if(!it.bounds) {
-                    it.bounds = gmxAPIutils.itemBounds(it);
+                    it.bounds = gmxAPIutils.geoItemBounds(it);
+                    var arr = [[it.bounds.min.x, it.bounds.min.y], [it.bounds.max.x, it.bounds.max.y]];
+                    item['bounds'] = (item['bounds'] ? item['bounds'].extendArray(arr) : gmxAPIutils.bounds(arr));
                 }
 
 				if (!bounds.intersects(it.bounds)) {

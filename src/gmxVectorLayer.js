@@ -62,7 +62,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             var tile = e.tile,
                 tp = tile._tilePoint,
                 gtp = gmxAPIutils.getTileNumFromLeaflet(tp, tile._zoom);
-            
+
 			var gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y;
             this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[gmxkey]);
             delete this._gmx.tileSubscriptions[gmxkey];
@@ -145,7 +145,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             setTimeout(drawNextTile, 0);
         }
             
-        queue.push({tp: tilePoint, z: zoom, gmxkey: gmxkey});
+        queue.push({gtp: gtp, tp: tilePoint, z: zoom, gmxkey: gmxkey});
         this._drawQueueHash[gmxkey] = true;
         isEmpty && setTimeout(drawNextTile, 0);
     },
@@ -198,6 +198,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 
 		    tileBounds = new L.Bounds(nwTilePoint, seTilePoint);
 
+        //console.log(this._tiles);
 		this._addTilesFromCenterOut(tileBounds);
 
 		if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
@@ -206,6 +207,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_addTile: function (tilePoint) {
+        //console.log('addTile', tilePoint);
 		var myLayer = this,
             zoom = this._map._zoom,
             gmx = this._gmx;
@@ -214,20 +216,30 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+        //console.log('subscriptions', gmx.tileSubscriptions);
         if (!gmx.tileSubscriptions[key]) {
+            gmx._tilesToLoad++;
+            //console.log('subscription', zoom, tilePoint);
             gmx.tileSubscriptions[key] = gmx.vectorTilesManager.on(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom);
             });
-        }
+        }// else {
+            //this._tileLoaded();
+        // }
 	},
 	gmxDrawTile: function (tilePoint, zoom) {
-		var gmx = this._gmx;
+		var gmx = this._gmx,
+            _this = this;
 		if(gmx['zoomstart']) return;
 
         var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
         this._gmx.styleManager.deferred.done(function () {
-            gmx._tilesToLoad--;
             screenTile.drawTile();
+            var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
+            if (gmx.vectorTilesManager.getNotLoadedTileCount(gtp) === 0) {
+                gmx._tilesToLoad--;
+                _this._tileLoaded();
+            }
         });
 	}
 	,
@@ -275,7 +287,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_tileLoaded: function () {
-        if (this._gmx._tilesToLoad < 1) {
+        //console.log('_tileLoaded', this._gmx._tilesToLoad);
+        if (this._gmx._tilesToLoad === 0) {
 			this.fire('load');
 
 			if (this._animated) {
