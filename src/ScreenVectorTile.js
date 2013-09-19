@@ -82,8 +82,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			var valKey = parsedStyleKeys[key] || style[key];
 			if(key in style && valKey !== lastStyles[key]) {
                 ctx[key] = lastStyles[key] = valKey;
-            }
 		}
+	}
 	}
 
     this.drawTile = function() {
@@ -132,20 +132,20 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
 						gmxAPIutils.pointToCanvas(dattr);
                     } else {
-                        var coords = geom.coordinates;
-                        for (var j = 0, len1 = coords.length; j < len1; j++) {
-                            var coords1 = coords[j];
-                            dattr.hiddenLines = geoItem.hiddenLines[j];
-                            if(geom.type === 'MULTIPOLYGON') {
-                                for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-                                    dattr.coords = coords1[j1];
-                                    gmxAPIutils.polygonToCanvas(dattr);
-                                }
-                            } else {
-                                dattr.coords = coords1;
+                    var coords = geom.coordinates;
+                    for (var j = 0, len1 = coords.length; j < len1; j++) {
+                        var coords1 = coords[j];
+                        dattr.hiddenLines = geoItem.hiddenLines[j];
+                        if(geom.type === 'MULTIPOLYGON') {
+                            for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
+                                dattr.coords = coords1[j1];
                                 gmxAPIutils.polygonToCanvas(dattr);
                             }
+                        } else {
+                            dattr.coords = coords1;
+                            gmxAPIutils.polygonToCanvas(dattr);
                         }
+                    }
                     }
                 } else if (geom.type === 'LINESTRING' || geom.type === 'MULTILINESTRING') {	// Отрисовка геометрии линий
                     var coords = geom.coordinates;
@@ -159,7 +159,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 						gmxAPIutils.lineToCanvas(dattr);
                     }
                 } else if (geom.type === 'POINT' || geom.type === 'MULTIPOINT') {	// Отрисовка геометрии точек
-                    var coords =  geom.coordinates;
+                    var coords = geom.coordinates;
                     if(geom.type === 'MULTIPOINT') {
                         for (var j = 0, len1 = coords.length; j < len1; j++) {
                             dattr.coords = coords[j];

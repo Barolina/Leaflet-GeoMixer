@@ -135,49 +135,118 @@
 	,
 	'oneDay': 60*60*24			// один день
 	,
-	'getTilesByPeriods': function(ph, ut1, ut2, res) {	// получить список тайлов по разбивке и периоду
-		if(!res) res = {};
-		var deltaUT = ut2 - ut1;
-		var days = deltaUT / gmxAPIutils.oneDay;
-		var deltaArr = ph['TemporalPeriods'];
-		var maxDelta = deltaArr[0];
-		for(var i = deltaArr.length - 1; i >= 0; i--) {
-			maxDelta = deltaArr[i];
-			if(days >= maxDelta) break;
-		}
-		var mn = gmxAPIutils.oneDay * maxDelta;
-		var zn1 = (ut1 - ph['ZeroUT'])/mn;
-		var zn2 = (ut2 - ph['ZeroUT'])/mn;
-		if(parseInt(zn1) < zn1) {
-			/*if(maxDelta > 1) {
-				zn1 = parseInt(zn1) + 1;
-				var ut11 = ph['ZeroUT'] + zn1 * mn;
-				gmxAPIutils.getTilesByPeriods(ph, ph['ut1'], ut11, res);
-			} else {*/
-				zn1 = parseInt(zn1);
-			//}
-		}
-		if(parseInt(zn2) < zn2) {
-			/*if(maxDelta > 1) {
-				zn2 = parseInt(zn2);
-				var ut21 = ph['ZeroUT'] + zn2 * mn;
-				gmxAPIutils.getTilesByPeriods(ph, ut21, ph['ut2'], res);
-			} else {*/
-				zn2 = parseInt(zn2) + 1;
-			//}
-		}
-		if(!res[maxDelta]) res[maxDelta] = [];
-		res[maxDelta].push([zn1, zn2,
-			new Date(1000 * (ph['ZeroUT'] + mn *zn1) ),
-			new Date(1000 * (ph['ZeroUT'] + mn *zn2) ),
-			new Date(1000 * (ph['ZeroUT'] + mn *zn1 + 256*gmxAPIutils.oneDay) ),
-			new Date(1000 * (ph['ZeroUT'] + mn *zn2 + 256*gmxAPIutils.oneDay) )
-			]);
-		//res[maxDelta].push([zn1, zn2]);
-		return res;
-	}
-	,
-	'getNeedTiles': function(ph, dt1, dt2, res) {			// получить список тайлов по временному интервалу
+	// 'getTilesByPeriods': function(ph, ut1, ut2, res) {	// получить список тайлов по разбивке и периоду
+		// if(!res) res = {};
+		// var deltaUT = ut2 - ut1;
+		// var days = deltaUT / gmxAPIutils.oneDay;
+		// var deltaArr = ph['TemporalPeriods'];
+		// var maxDelta = deltaArr[0];
+		// for(var i = deltaArr.length - 1; i >= 0; i--) {
+			// maxDelta = deltaArr[i];
+			// if(days >= maxDelta) break;
+		// }
+		// var mn = gmxAPIutils.oneDay * maxDelta;
+		// var zn1 = (ut1 - ph['ZeroUT'])/mn;
+		// var zn2 = (ut2 - ph['ZeroUT'])/mn;
+		// if(parseInt(zn1) < zn1) {
+			// // if(maxDelta > 1) {
+				// // zn1 = parseInt(zn1) + 1;
+				// // var ut11 = ph['ZeroUT'] + zn1 * mn;
+				// // gmxAPIutils.getTilesByPeriods(ph, ph['ut1'], ut11, res);
+			// // } else {
+				// zn1 = parseInt(zn1);
+			// // }
+		// }
+		// if(parseInt(zn2) < zn2) {
+			// // if(maxDelta > 1) {
+				// // zn2 = parseInt(zn2);
+				// // var ut21 = ph['ZeroUT'] + zn2 * mn;
+				// // gmxAPIutils.getTilesByPeriods(ph, ut21, ph['ut2'], res);
+			// // } else {
+				// zn2 = parseInt(zn2) + 1;
+			// // }
+		// }
+		// if(!res[maxDelta]) res[maxDelta] = [];
+		// res[maxDelta].push([zn1, zn2,
+			// new Date(1000 * (ph['ZeroUT'] + mn *zn1) ),
+			// new Date(1000 * (ph['ZeroUT'] + mn *zn2) ),
+			// new Date(1000 * (ph['ZeroUT'] + mn *zn1 + 256*gmxAPIutils.oneDay) ),
+			// new Date(1000 * (ph['ZeroUT'] + mn *zn2 + 256*gmxAPIutils.oneDay) )
+			// ]);
+		// // res[maxDelta].push([zn1, zn2]);
+		// return res;
+	// },
+	'getNeedTiles': function(ph, t1, t2) {
+        if(ph.layerType !== 'VectorTemporal') {
+            var res = {};
+            for (var t in ph.tilesAll) {
+                res[t] = true;
+            }
+            return res;
+        }
+        
+        var t1Val = t1.valueOf() / 1000,
+            t2Val = t2.valueOf() / 1000;
+        
+        // --------------------
+        var selectTilesForNode = function(node, t1, t2) {
+            if (t1 >= node.t2 || t2 <= node.t1) {
+                return {count: 0, tiles: {}};
+            }
+            
+            if (node.d === 0) {
+                return {
+                    tiles: node.tiles,
+                    count: node.count
+                }
+            }
+            
+            var childrenCount = 0; //number of tiles if we use shorter intervals
+            var childrenRes = [];
+            for (var ds = 0; ds < node.children.length; ds++) {
+                if (node.children[ds]) {
+                    childrenRes[ds] = selectTilesForNode(node.children[ds], Math.max(t1, node.t1), Math.min(t2, node.t2));
+                } else {
+                    childrenRes[ds] = {count: 0, tiles: {}};
+                }
+                childrenCount += childrenRes[ds].count;
+            }
+            
+            if (childrenCount < node.count) {
+                var resTiles = {};
+                for (var ds = 0; ds < childrenRes.length; ds++) {
+                    for (var key in childrenRes[ds].tiles) {
+                        resTiles[key] = childrenRes[ds].tiles[key];
+                    }
+                    // resTiles = resTiles.concat(childrenRes[ds]);
+                }
+                
+                return {
+                    tiles: resTiles,
+                    count: childrenCount
+                }
+            } else {
+                return {
+                    tiles: node.tiles,
+                    count: node.count
+                } 
+            }
+        }
+        
+        var res = {};
+        for (var ds = 0; ds < ph.tileTreeRoots.length; ds++) {
+            if (ph.tileTreeRoots[ds]) {
+                var tiles = selectTilesForNode(ph.tileTreeRoots[ds], t1Val, t2Val).tiles;
+                for (var key in tiles) {
+                    res[key] = tiles[key];
+                }
+            }
+            // res = res.concat();
+        }
+        
+        return res;
+    },
+	/*'getNeedTilesPrev': function(ph, dt1, dt2, res) {			// получить список тайлов по временному интервалу
 		var _needPeriods = null;
 		if(ph['layerType'] === 'VectorTemporal') {
 			var ut1 = Math.floor(dt1.getTime() / 1000);
@@ -213,7 +282,7 @@
 		res['tilesNeedLoad'] = tilesNeedLoad;
 		return res;
 	}
-	,
+	,*/
     'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам двух тайлов
         if (tk1.z < tk2.z) {
             var t = tk1; tk1 = tk2; tk2 = t;

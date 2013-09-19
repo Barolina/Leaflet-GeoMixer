@@ -122,6 +122,145 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		return this;
 	},
     
+    _createTileTree: function(ph) {
+        var tiles = ph.tilesAll,
+             periods = ph.TemporalPeriods,
+             dateZero = ph.ZeroUT,
+             roots = [];
+             
+        var addTile = function (node, tile, key) {
+            var d = node.d;
+            if (tile.d === periods[d]) {
+                node.count++;
+                node.tiles[key] = true;
+                return;
+            }
+            
+            var childrenCount = periods[d] / periods[d-1];
+            
+            if (!('children' in node)) {
+                node.children = new Array(childrenCount);
+            }
+            
+            var sChild = Math.floor(tile.s * tile.d / periods[d-1]);
+            var ds = sChild - node.s*childrenCount;
+            
+            if (!node.children[ds]) {
+                node.children[ds] = {
+                    d: d-1,
+                    s: sChild,
+                    t1: sChild* periods[d-1] * gmxAPIutils.oneDay + dateZero,
+                    t2: (sChild + 1) * periods[d-1] * gmxAPIutils.oneDay + dateZero,
+                    count: 0,
+                    tiles: {}
+                }
+            }
+            
+            addTile(node.children[ds], tile, key);
+        }
+        
+        var smin = Number.MAX_VALUE,
+            dmax = periods.length - 1;
+            
+        for (var key in tiles) {
+            var t = tiles[key].tile;
+            if (t.d === periods[dmax]) {
+                smin = Math.min(smin, t.s);
+            }
+        }
+        
+        var rootNodes = [];
+        
+        for (var key in tiles) {
+            var t = tiles[key].tile,
+                ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
+                cs = ds + smin;
+                
+            rootNodes[ds] = rootNodes[ds] || {
+                d: dmax,
+                s: cs,
+                t1: cs * periods[dmax] * gmxAPIutils.oneDay + dateZero,
+                t2: (cs + 1) * periods[dmax] * gmxAPIutils.oneDay + dateZero,
+                count: 0,
+                tiles: {}
+            }
+            
+            addTile(rootNodes[ds], t, key);
+        }
+        
+        return rootNodes;
+    },
+    
+    /*createTileTree: function(ph) {
+         var tiles = ph.tilesAll,
+             periods = ph.TemporalPeriods,
+             dateZero = ph.ZeroUT;
+        
+        // - s
+        // - d
+        // - tiles
+        // - count
+        // - children
+        var initNode = function(s, d, tiles) {
+            
+            var node = {
+                s: s, 
+                d: d,
+                t1: s * periods[d] * gmxAPIutils.oneDay + dateZero,
+                t2: (s + 1) * periods[d] * gmxAPIutils.oneDay + dateZero,
+                tiles: {},
+                tilesAll: {},
+                count: 0
+            };
+            
+            var days1 = s * periods[d],
+                days2 = (s + 1) * periods[d];
+            
+            for (var key in tiles) {
+                var t = tiles[key].tile,
+                    days = t.s * t.d;
+                if (days < days2 && days >= days1) {
+                    node.tilesAll[key] = tiles[key];
+                }
+                
+                if (t.d === periods[d] && t.s === s) {
+                    node.tiles[key] = true;
+                    node.count++;
+                }
+            }
+            
+            if (!d) return node;
+            
+            var childrenCount = periods[d] / periods[d-1];
+            
+            node.children = new Array(childrenCount);
+            
+            for (var ds = 0; ds < childrenCount; ds++) {
+                node.children[ds] = initNode(s * childrenCount + ds, d-1, node.tilesAll);
+            }
+            return node;
+        }
+        
+        var smin = Number.MAX_VALUE,
+            smax = -Number.MAX_VALUE,
+            dmax = periods.length - 1;
+            
+        for (var key in tiles) {
+            var t = tiles[key].tile;
+            if (t.d === periods[dmax]) {
+                smin = Math.min(smin, t.s);
+                smax = Math.max(smax, t.s);
+            }
+        }
+        
+        var rootNodes = [];
+        for (var s = smin; s <= smax; s++) {
+            rootNodes.push(initNode(s, dmax, tiles));
+        }
+        
+        return rootNodes;
+    },*/
+    
     _drawTileAsync: function (tilePoint, zoom) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
@@ -348,11 +487,17 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				);
 			res['ZeroDate'] = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
 			res['ZeroUT'] = res['ZeroDate'].getTime() / 1000;
+            // var ttt = new Date();
+            res['tileTreeRoots'] = this._createTileTree(res);
+            // console.log(new Date() - ttt);
+            //console.log(res['tileTreeRoots']);
 		} else if(type === 'Vector') {
 			for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
 				addRes(Number(arr[i+2]), Number(arr[i]), Number(arr[i+1]), Number(vers[cnt]), -1, -1);
 			}
 		}
+        
+        
 		res['tileCount'] = cnt;
 		res['layerType'] = type;						// VectorTemporal Vector
 		res['identityField'] = prop['identityField'];	// ogc_fid
