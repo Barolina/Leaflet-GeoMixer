@@ -610,6 +610,10 @@
 		}
 
         if(style.fill) {
+			if(bgImage) {
+				var pattern = ctx.createPattern(bgImage, "no-repeat");
+				ctx.fillStyle = pattern;
+            }
 			ctx.beginPath();
 			//ctx.fillRect(0, 0, 256, 256);
 			//ctx.globalAlpha = 0;
