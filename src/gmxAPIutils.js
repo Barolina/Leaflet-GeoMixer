@@ -338,11 +338,17 @@
     , 
     'getPatternIcon': function(item, style) {			// получить bitmap стиля pattern
         if(!style['pattern']) return null;
-        var pattern = style['pattern'];
-        var prop = (item ? item['properties'] : {});
 
-        var notFunc = true;
-        var step = (pattern.step > 0 ? pattern.step : 0);		// шаг между линиями
+        var notFunc = true,
+            pattern = style['pattern'],
+            prop = (item ? item['properties'] : {}),
+            step = (pattern.step > 0 ? pattern.step : 0),		// шаг между линиями
+            patternDefaults = {					// настройки для pattern стилей
+                'min_width': 1
+                ,'max_width': 1000
+                ,'min_step': 0
+                ,'max_step': 1000
+            };
         if (pattern.patternStepFunction != null && prop != null) {
             step = pattern.patternStepFunction(prop);
             notFunc = false;
@@ -368,7 +374,7 @@
         var count = arr.length;
         var resColors = []
         var rgb = [0xff0000, 0x00ff00, 0x0000ff];
-        for (var i = 0; i < arr.length; i++) {
+        for (var i = 0; i < count; i++) {
             var col = arr[i];
             if(pattern['patternColorsFunction'][i] != null) {
                 col =  (prop != null ? pattern['patternColorsFunction'][i](prop): rgb[i%3]);
@@ -377,14 +383,14 @@
             resColors.push(col);
         }
 
-        var delta = size + step;
-        var allSize = delta * count;
-        var center = 0,	radius = 0,	rad = 0; 
+        var delta = size + step,
+            allSize = delta * count,
+            center = 0,	radius = 0,	rad = 0,
+            hh = allSize,				// высота битмапа
+            ww = allSize,				// ширина битмапа
+            type = pattern.style, 
+            flagRotate = false;
 
-        var hh = allSize;				// высота битмапа
-        var ww = allSize;				// ширина битмапа
-        var type = pattern.style; 
-        var flagRotate = false; 
         if (type == 'diagonal1' || type == 'diagonal2' || type == 'cross' || type == 'cross1') {
             flagRotate = true;
         } else if (type == 'circle') {
@@ -394,12 +400,12 @@
             rad = 2 * Math.PI / count;		// угол в рад.
         }
         if (ww * hh > patternDefaults['max_width']) {
-            //gmxAPI.addDebugWarnings({'func': 'getPatternIcon', 'Error': 'MAX_PATTERN_SIZE', 'alert': 'Bitmap from pattern is too big'});
-            //return null;
+            console.log({'func': 'getPatternIcon', 'Error': 'MAX_PATTERN_SIZE', 'alert': 'Bitmap from pattern is too big'});
+            return null;
         }
 
         var canvas = document.createElement('canvas');
-        canvas.width = ww; canvas.height = hh;
+        canvas.width = ww, canvas.height = hh;
         var ptx = canvas.getContext('2d');
         ptx.clearRect(0, 0, canvas.width , canvas.height);
         if (type === 'diagonal2' || type === 'vertical') {
@@ -436,7 +442,6 @@
             ptx.closePath();
             ptx.fill();
         }
-        var imgData = ptx.getImageData(0, 0, ww, hh);
         var canvas1 = document.createElement('canvas');
         canvas1.width = ww
         canvas1.height = hh;
@@ -513,8 +518,6 @@
                     var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
                     var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
                     var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
-                    px1 = coords[0] * mInPixel - tpx - 1; 	    px1 = (0.5 + px1) << 0;
-                    py1 = tpy - coords[1] * mInPixel - 1;		py1 = (0.5 + py1) << 0;
 
                     var radgrad = ctx.createRadialGradient(px1+x1, py1+y1, r1, px1+x2, py1+y2,r2);  
                     for (var i = 0; i < style['radialGradient']['addColorStop'].length; i++)
@@ -606,56 +609,7 @@
 			arr = coords;
 		}
 
-        if(style['marker']) {
-            if(style['image']) {
-                var point = getPoint();
-                var x = attr['x'];
-                var y = 256 + attr['y'];
- /*
-                if(style['imageWidth']) out['sx'] = style['imageWidth']/2;
-                if(style['imageHeight']) out['sy'] = style['imageHeight']/2;
-                var px1 = point.x * mInPixel - x - out['sx']; 		px1 = (0.5 + px1) << 0;
-                var py1 = y - point.y * mInPixel - out['sy'];		py1 = (0.5 + py1) << 0;
-                ctx.drawImage(style['image'], px1, py1);
-*/
-            }
-        //} else if(style.fillStyle || bgImage) {
-        } else if(style.fill || bgImage) {
-			if(bgImage) {
-				var pattern = ctx.createPattern(bgImage, "no-repeat");
-				ctx.fillStyle = pattern;
-			} if(style['pattern']) {
-/*
-                var canvasPattern = attr['canvasPattern'] || null;
-                if(!canvasPattern) {
-                    var pt = gmxAPIutils.getPatternIcon(out, style);
-                    canvasPattern = (pt ? pt['canvas'] : null);
-                }
-                if(canvasPattern) {
-                    var pattern = ctx.createPattern(canvasPattern, "repeat");
-                    ctx.fillStyle = pattern;
-                }
-*/
-            } else if(style['linearGradient']) {
-                var rgr = style['linearGradient'];
-                var x1 = (rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1']);
-                var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
-                var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
-                var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
-                var lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
-                for (var i = 0; i < style['linearGradient']['addColorStop'].length; i++)
-                {
-                    var arr = style['linearGradient']['addColorStop'][i];
-                    var arrFunc = style['linearGradient']['addColorStopFunctions'][i];
-                    var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr[0]);
-                    var p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr[2]));
-                    var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr[1], p2/100);
-                    lineargrad.addColorStop(p0, p1);
-                }
-                ctx.fillStyle = lineargrad; 
-                //ctx.fillRect(0, 0, 255, 255);
-            }
-            
+        if(style.fill) {
 			ctx.beginPath();
 			//ctx.fillRect(0, 0, 256, 256);
 			//ctx.globalAlpha = 0;

@@ -29,6 +29,8 @@
 			,'onMouseOver': !style['DisableBalloonOnMouseMove']
 			,'onMouseClick': !style['DisableBalloonOnClick']
 			,'BalloonEnable': style['BalloonEnable'] || false
+			,'sx': 0
+			,'sy': 0
 		};
 		if('Filter' in style) {
             var ph = gmxParsers.parseSQL(style['Filter']);
@@ -102,11 +104,16 @@
 							for (var i = 0; i < pattern.colors.length; i++)
 							{
 								var rt = pattern.colors[i];
-								arr.push(typeof(rt) === 'string' ? gmxParsers.parseExpression(rt) : null);
+								if(typeof(rt) === 'string') {
+                                    arr.push(gmxParsers.parseExpression(rt));
+                                    pt['common'] = false;
+                                } else {
+                                    arr.push(null);
+                                }
 							}
 							pattern['patternColorsFunction'] = arr;
-							pt['common'] = false;
 						}
+                        if(pt['common']) pt['canvasPattern'] = gmxAPIutils.getPatternIcon(null, pt);
 					} else if(typeof(ph['radialGradient']) === 'object') {
 						pt['radialGradient'] = ph['radialGradient'];
 						//	x1,y1,r1 — координаты центра и радиус первой окружности;
@@ -292,9 +299,13 @@
 
 		if(pt['fill']) {
             out['fill'] = pt['fill'];
-            color = ('fillColorFunction' in pt ? pt['fillColorFunction'](prop) : pt['fillColor'] || 255);
-            opacity = ('fillOpacityFunction' in pt ? pt['fillOpacityFunction'](prop)/100 : pt['fillOpacity'] || 1);
-            out['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+			if(pt['pattern']) {
+                out['canvasPattern'] = (pt['canvasPattern'] ? pt['canvasPattern'] : gmxAPIutils.getPatternIcon(item, pt));
+            } else {
+                color = ('fillColorFunction' in pt ? pt['fillColorFunction'](prop) : pt['fillColor'] || 255);
+                opacity = ('fillOpacityFunction' in pt ? pt['fillOpacityFunction'](prop)/100 : pt['fillOpacity'] || 1);
+                out['fillStyle'] = gmxAPIutils.dec2rgba(color, opacity);
+            }
         }
 		propHiden.parsedStyleKeys = out;
         return out;

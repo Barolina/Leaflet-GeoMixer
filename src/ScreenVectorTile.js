@@ -82,9 +82,29 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			var valKey = parsedStyleKeys[key] || style[key];
 			if(key in style && valKey !== lastStyles[key]) {
                 ctx[key] = lastStyles[key] = valKey;
-		}
-	}
-	}
+            }
+        }
+        if(parsedStyleKeys['canvasPattern']) {
+            ctx.fillStyle = ctx.createPattern(parsedStyleKeys['canvasPattern']['canvas'], "repeat");
+        } else if(style['linearGradient']) {
+            var rgr = style['linearGradient'];
+            var x1 = (rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1']);
+            var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
+            var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
+            var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
+            var lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
+            for (var i = 0; i < style['linearGradient']['addColorStop'].length; i++)
+            {
+                var arr1 = style['linearGradient']['addColorStop'][i];
+                var arrFunc = style['linearGradient']['addColorStopFunctions'][i];
+                var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]);
+                var p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2]));
+                var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
+                lineargrad.addColorStop(p0, p1);
+            }
+            ctx.fillStyle = lineargrad; 
+        }
+    }
 
     this.drawTile = function() {
         var geoItems = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom); //call each time because of possible items updates
