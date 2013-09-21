@@ -84,6 +84,18 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 ctx[key] = lastStyles[key] = valKey;
             }
         }
+        if(style['dashes']) {
+            var dashes = style['dashes'];
+            var dashOffset = (style['dashOffset'] ? style['dashOffset'] : 0);
+            if ('setLineDash' in ctx) {     //Chrome
+                ctx.setLineDash(dashes);
+                //ctx.lineDashOffset(dashOffset);
+            } else {                        //Firefox
+                ctx.mozDash = dashes;
+                ctx.mozDashOffset = dashOffset;
+            }            
+        }
+
         if(parsedStyleKeys['canvasPattern']) {
             ctx.fillStyle = ctx.createPattern(parsedStyleKeys['canvasPattern']['canvas'], "repeat");
         } else if(style['linearGradient']) {

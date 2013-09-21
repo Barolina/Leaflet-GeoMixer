@@ -185,7 +185,7 @@
 					pt['stroke'] = true;
 					var ph = st['outline'];
 					pt['lineWidth'] = ph.thickness || 0;
-					if('dashes' in ph) pt['dashArray'] = ph['dashes'];
+					if('dashes' in ph) pt['dashes'] = ph['dashes'];
                     if('opacity' in ph && typeof(ph['opacity']) === 'string') {
                         pt['opacityFunction'] = gmxParsers.parseExpression(ph['opacity']);
                         pt['common'] = false;
