@@ -217,7 +217,7 @@
                     pt['sizeFunction'] = gmxParsers.parseExpression(pt['size']);
                     pt['common'] = false;
                 } else {
-                    pt['sx'] = pt['sy'] = pt['size'];
+                    pt['sx'] = pt['sy'] = pt['size'] || 4;
                 }
 			}
 			
@@ -257,9 +257,10 @@
 				console.log({'url': url, 'func': 'getImageSize', 'Error': 'image not found'});
 			}
 		};
-		if(('color' in pt && pt['color'] != utils.DEFAULT_REPLACEMENT_COLOR)
-			|| 'rotate' in pt
-		) ph['crossOrigin'] = 'anonymous';
+		//if(('color' in pt && pt['color'] != utils.DEFAULT_REPLACEMENT_COLOR)
+		//	|| 'rotate' in pt
+		//)
+        ph['crossOrigin'] = 'anonymous';
 		gmxImageLoader.unshift(ph);
 	}
     

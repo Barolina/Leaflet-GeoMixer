@@ -121,8 +121,6 @@
 			addToArr(coords[0]);			// дырки пропускаем
 		} else if(type === 'MULTIPOLYGON') {
 			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i][0]);
-		} else if(type === 'MULTIPOINT') {
-			addToArr(coords);
 		}
 		return gmxAPIutils.bounds(arr);
 	}
@@ -715,7 +713,41 @@
 		});
 		return {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'x3': x3, 'y3': y3, 'x4': x4, 'y4': y4};
 	}
-	
+    ,
+    'isPointInPolygonArr': function(chkPoint, poly)	{			// Проверка точки на принадлежность полигону в виде массива
+        var isIn = false,
+            x = chkPoint[0], 
+            y = chkPoint[1],
+            p1 = poly[0];
+        for (var i = 1, len = poly.length; i < len; i++)
+        {
+            var p2 = poly[i];
+            var xmin = Math.min(p1[0], p2[0]);
+            var xmax = Math.max(p1[0], p2[0]);
+            var ymax = Math.max(p1[1], p2[1]);
+            if (x > xmin && x <= xmax && y <= ymax && p1[0] != p2[0]) {
+                var xinters = (x - p1[0])*(p2[1] - p1[1])/(p2[0] - p1[0]) + p1[1];
+                if (p1[1] == p2[1] || y <= xinters) isIn = !isIn;
+            }
+            p1 = p2;
+        }
+        return isIn;
+    }
+    ,
+    'chkPointInPolyLine': function(chkPoint, lineHeight, coords) {	// Проверка точки(с учетом размеров) на принадлежность линии
+        lineHeight *= lineHeight;
+        
+        var chkPoint = { 'x': chkPoint[0], 'y': chkPoint[1] };
+        var p1 = { 'x': coords[0][0], 'y': coords[0][1] };
+        for (var i = 1, len = coords.length; i < len; i++)
+        {
+            var p2 = { 'x': coords[i][0], 'y': coords[i][1] };
+            var sqDist = L.LineUtil._sqClosestPointOnSegment(chkPoint, p1, p2, true);
+            if(sqDist < lineHeight) return true;
+            p1 = p2;
+        }
+        return false;
+    }
 }
 
 !function() {
