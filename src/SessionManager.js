@@ -6,9 +6,9 @@ var gmxSessionManager = {
         if (!(serverHost in keys)) {
             keys[serverHost] = new gmxDeferred();
             gmxAPIutils.request({
-                url: "http://" + serverHost + "/ApiKey.ashx?WrapStyle=None&Key=" + apiKey,
+                url: "http://" + serverHost + "/ApiKey.ashx?WrapStyle=func&Key=" + apiKey,
                 callback: function(ph) {
-                    ph = JSON.parse(ph);
+                    //ph = JSON.parse(ph);
                     //TODO: check ph.Result.Status
                     if(ph && ph.Status === 'ok') {
                         keys[serverHost].resolve(ph.Result.Key);

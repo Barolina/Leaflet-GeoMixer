@@ -19,7 +19,7 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
             gmxAPIutils.request({
                 'url': url
                 ,'callback': function(st) {
-                    _this.data = JSON.parse(st);
+                    _this.data = st.Result;
                     _this.state = 'loaded';
                     loadDef.resolve(_this.data);
                 }

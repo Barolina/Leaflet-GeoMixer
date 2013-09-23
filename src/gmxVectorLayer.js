@@ -17,7 +17,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             ,'styles': options.styles || []
             ,tileSubscriptions: []
         };
-        
+
         var apikeyRequestHost = options.apikeyRequestHost || this._gmx.hostName;
         var myLayer = this;
         

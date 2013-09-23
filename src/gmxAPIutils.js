@@ -1,4 +1,40 @@
 ﻿var gmxAPIutils = {
+	lastMapId: 0
+	,
+	newMapId: function()
+	{
+		gmxAPIutils.lastMapId += 1;
+		return "random_" + gmxAPIutils.lastMapId;
+	}
+	,
+	uniqueGlobalName: function(thing)
+	{
+		var id = gmxAPIutils.newMapId();
+		window[id] = thing;
+		return id;
+	}
+	,
+	'sendCrossDomainJSONRequest': function(url, callback, callbackParamName, callbackError) {
+        callbackParamName = callbackParamName || 'CallbackName';
+        
+        var script = document.createElement("script");
+        script.setAttribute("charset", "UTF-8");
+        var callbackName = gmxAPIutils.uniqueGlobalName(function(obj)
+        {
+            callback && callback(obj);
+            window[callbackName] = false;
+            document.getElementsByTagName("head").item(0).removeChild(script);
+        });
+        
+        var sepSym = url.indexOf('?') == -1 ? '?' : '&';
+        
+        script.setAttribute("src", url + sepSym + callbackParamName + "=" + callbackName);
+        if(callbackError) script.onerror = function(e) {
+            callbackError(e);
+        };
+        document.getElementsByTagName("head").item(0).appendChild(script);
+    }
+    ,
 	'getXmlHttp': function() {
 		var xmlhttp;
 		if (typeof XMLHttpRequest!='undefined') {
@@ -19,6 +55,13 @@
 	}
 	,
 	'request': function(ph) {	// {'type': 'GET|POST', 'url': 'string', 'callback': 'func'}
+        gmxAPIutils.sendCrossDomainJSONRequest(
+            ph['url']
+            ,ph['callback']
+            ,null
+            ,ph['onError']
+        );
+/*
 	  try {
 		var xhr = gmxAPIutils.getXmlHttp();
 		xhr.withCredentials = true;
@@ -38,6 +81,7 @@
 		if(ph['onError']) ph['onError'](xhr.responseText);
 		return e.description; // turn all errors into empty results
 	  }
+*/
 	}
 	,
     tileSizes: [] // Размеры тайла по zoom

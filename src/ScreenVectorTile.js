@@ -9,7 +9,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var rasters = {},
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
 		gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
-    
+
     //load all missing rasters for items we are going to render
     var getTileRasters = function(geoItems) {	// Получить растры КР для тайла
         var def = new gmxDeferred();
@@ -62,6 +62,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 						chkReadyRasters();
 					}
 					,'src': url
+                    ,'crossOrigin': 'anonymous'
 				});
 			}
 		})
@@ -118,6 +119,78 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         }
     }
 
+    var getObjectsByPoint = function(arr, point) {    // Получить верхний обьект по координатам mouseClick
+        var mInPixel = gmx['mInPixel'];
+        var mercPoint = [point[0] / mInPixel, point[1] / mInPixel];
+        var bounds = gmxAPIutils.bounds([mercPoint]);
+        var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
+            var center = [(mb.min.x + mb.max.x) / 2, (mb.min.y + mb.max.y) / 2];
+            return [
+                [center[0] - dx, center[1] - dy]
+                ,[center[0] - dx, center[1] + dy]
+                ,[center[0] + dx, center[1] + dy]
+                ,[center[0] + dx, center[1] - dy]
+                ,[center[0] - dx, center[1] - dy]
+            ];
+        }
+        
+        for (var i = arr.length - 1; i >= 0; i--) {
+            var geoItem = arr[i],
+                idr = geoItem.id,
+                item = gmx.vectorTilesManager.getItem(idr),
+                parsedStyle = item.propHiden.parsedStyleKeys,
+                lineWidth = parsedStyle.lineWidth || 0,
+                dx = (parsedStyle.sx + lineWidth) / mInPixel,
+                dy = (parsedStyle.sy + lineWidth) / mInPixel;
+            if (!geoItem.bounds.intersects(bounds, dx, dy)) continue;
+
+            var type = geoItem.geometry.type;
+            var coords = geoItem.geometry.coordinates;
+            if(type === 'LINESTRING') {
+                if (!gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) continue;
+            } else if(type === 'MULTILINESTRING') {
+                var flag = false;
+                for (var j = 0, len = coords.length; j < len; j++) {
+                    if (gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords[j])) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag) continue;
+            } else {
+                if(type === 'MULTIPOLYGON') {
+                    if(parsedStyle.marker) {
+                        coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                        if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                    } else {
+                        var flag = false;
+                        for (var j = 0, len = coords.length; j < len; j++) {
+                            if (gmxAPIutils.isPointInPolygonArr(mercPoint, coords[j][0])) {
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if (!flag) continue;
+                    }
+                } else if(type === 'POLYGON') {
+                    coords = (parsedStyle.marker ? getMarkerPolygon(geoItem.bounds, dx, dy) : coords[0]);
+                    if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                } else if(type === 'POINT') {
+                    coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                    if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                }
+            }
+            
+            return { 'id': idr
+                ,'properties': item.properties
+                ,'geometry': geoItem.geometry
+                ,'crs': 'EPSG:3395'
+                ,'latlng': L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
+            };
+		}
+        return null;
+    }
+
     this.drawTile = function() {
         var geoItems = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom); //call each time because of possible items updates
         var itemsLength = geoItems.length;
@@ -136,6 +209,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         geoItems = geoItems.sort(gmx.sortItems);
 		var tile = layer.gmxGetCanvasTile(tilePoint);
 		tile.id = gmxTileKey;
+
         var ctx = tile.getContext('2d');
         var dattr = {
                 gmx: gmx,
@@ -143,6 +217,69 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 tpy: 256 *(1 + gmxTilePoint.y),
                 ctx: ctx
             };
+
+        var chkMousePos = function (e) {
+            var rect = tile.getBoundingClientRect();
+            var pos = {
+              x: e.clientX - rect.left,
+              y: e.clientY - rect.top
+            };
+            var pixel = ctx.getImageData(pos.x, pos.y, 1, 1).data;
+            var empty = (pixel[0] + pixel[1] + pixel[2] + pixel[3] === 0);
+            return (empty ? null : pos);
+        };
+
+        if(layer.hasEventListeners('mousemove') || layer.hasEventListeners('click')) {
+            var lastCursor = null;
+
+            L.DomEvent.addListener(tile, 'mousemove', function (e) {
+                var pos = chkMousePos(e);
+                var cursor = '';    // default
+                if(pos) {
+                    cursor = 'pointer';
+                    layer.fire('mousemove', {'originalEvent': e, 'pixel': pos});
+                }
+                if(lastCursor !== cursor) tile.style.cursor = cursor;
+                lastCursor = cursor;
+            });
+            
+            L.DomEvent.addListener(tile, 'click', function (e) {
+                if(zoom !== gmx.currentZoom) return;
+                L.DomEvent.stopPropagation(e);
+                var pixel = chkMousePos(e);
+                if(!pixel) return;
+                var item = getObjectsByPoint(geoItems, [dattr.tpx + pixel.x, dattr.tpy - pixel.y]);
+                if(item) layer.fire('click', {'originalEvent': e, 'latlng': item.latlng, 'pixel': pixel, 'item': item});
+            });
+/*
+            L.DomEvent.addListener(layer._map._tilePane, 'mousemove', function (e) {
+                if(zoom !== gmx.currentZoom || e.target.id !== tile.id || layer._map._gmxMoveTime > new Date().getTime()) return;
+console.log('cccccc', zoom, layer._map._gmxMoveTime, new Date().getTime());
+                //var p1 = layer._map.containerPointToLayerPoint([e.clientX, e.clientY]);
+                var pos = chkMousePos(e);
+                var cursor = '';    // default
+                if(pos) {
+                    cursor = 'pointer';
+                    layer.fire('mousemove', {'originalEvent': e, 'pixel': pos});
+                    //L.DomEvent.stopPropagation(e);
+                    layer._map._gmxMoveTime = new Date().getTime() + 1000;
+console.log('___', zoom, layer._map._gmxMoveTime);
+                }
+                if(lastCursor !== cursor) tile.style.cursor = cursor;
+                lastCursor = cursor;
+            });
+            
+            L.DomEvent.addListener(layer._map._tilePane, 'click', function (e) {
+                if(zoom !== gmx.currentZoom || e.target.id !== tile.id) return;
+                L.DomEvent.stopPropagation(e);
+                var pixel = chkMousePos(e);
+                //var pixel = chkMousePos({'clientX': p1.x, 'clientY': p1.y});
+                if(!pixel) return;
+                var item = getObjectsByPoint(geoItems, [dattr.tpx + pixel.x, dattr.tpy - pixel.y]);
+                if(item) layer.fire('click', {'originalEvent': e, 'latlng': item.latlng, 'pixel': pixel, 'item': item});
+            });
+*/
+        }
         
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
