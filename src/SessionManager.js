@@ -5,7 +5,7 @@ var gmxSessionManager = {
         var keys = this._keys;
         if (!(serverHost in keys)) {
             keys[serverHost] = new gmxDeferred();
-            gmxAPIutils.request({
+            gmxAPIutils.requestJSONP({
                 url: "http://" + serverHost + "/ApiKey.ashx?WrapStyle=func&Key=" + apiKey,
                 callback: function(ph) {
                     //ph = JSON.parse(ph);

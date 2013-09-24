@@ -9,7 +9,7 @@ var gmxMapManager = {
             maps[serverHost][mapName] = def;
             
             gmxSessionManager.requestSessionKey(serverHost, apiKey).done(function(sessionKey) {
-                gmxAPIutils.request({
+                gmxAPIutils.requestJSONP({
                     url: "http://" + serverHost + "/TileSender.ashx?WrapStyle=func&key=" + encodeURIComponent(sessionKey) + "&MapName=" + mapName + '&ModeKey=map',
                     callback: function(json) {
                         //var json = JSON.parse(st);

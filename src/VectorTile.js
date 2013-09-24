@@ -16,7 +16,7 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
         if (!loadDef) {
             loadDef = new gmxDeferred();
             this.state = 'loading';
-            gmxAPIutils.request({
+            gmxAPIutils.requestJSONP({
                 'url': url
                 ,'callback': function(st) {
                     _this.data = st.Result;

@@ -34,54 +34,9 @@
         };
         document.getElementsByTagName("head").item(0).appendChild(script);
     }
-    ,
-	'getXmlHttp': function() {
-		var xmlhttp;
-		if (typeof XMLHttpRequest!='undefined') {
-			xmlhttp = new XMLHttpRequest();
-		}
-		if (!xmlhttp) {
-            try {
-                xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-            } catch (e) {
-                try {
-                    xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-                } catch (E) {
-                    xmlhttp = false;
-                }
-            }
-		}
-		return xmlhttp;
-	}
 	,
-	'request': function(ph) {	// {'type': 'GET|POST', 'url': 'string', 'callback': 'func'}
-        gmxAPIutils.sendCrossDomainJSONRequest(
-            ph['url']
-            ,ph['callback']
-            ,null
-            ,ph['onError']
-        );
-/*
-	  try {
-		var xhr = gmxAPIutils.getXmlHttp();
-		xhr.withCredentials = true;
-		xhr.open((ph['type'] ? ph['type'] : 'GET'), ph['url'], true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4) {
-				//self.log('xhr.status ' + xhr.status);
-				if(xhr.status == 200) {
-					ph['callback'](xhr.responseText);
-					xhr = null;
-				}
-			}
-		};
-		xhr.send((ph['params'] ? ph['params'] : null));
-		return xhr.status;
-	  } catch (e) {
-		if(ph['onError']) ph['onError'](xhr.responseText);
-		return e.description; // turn all errors into empty results
-	  }
-*/
+	'requestJSONP': function(ph) {
+        gmxAPIutils.sendCrossDomainJSONRequest(ph['url'], ph['callback'], null, ph['onError']);
 	}
 	,
     tileSizes: [] // Размеры тайла по zoom
