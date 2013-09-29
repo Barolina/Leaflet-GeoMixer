@@ -62,9 +62,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             var tile = e.tile,
                 tp = tile._tilePoint,
                 gtp = gmxAPIutils.getTileNumFromLeaflet(tp, tile._zoom);
+                
 
 			var gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y;
-            this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[gmxkey]);
+            this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[gmxkey].id);
             delete this._gmx.tileSubscriptions[gmxkey];
             
             for (var k = this._drawQueue.length-1; k >= 0; k--) {
@@ -307,7 +308,17 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     
 	_initContainer: function () {
 		L.TileLayer.Canvas.prototype._initContainer.call(this);
-		this._prpZoomData(this._map._zoom);
+        
+        var subscriptions = this._gmx.tileSubscriptions,
+            zoom = this._map._zoom;
+		this._prpZoomData(zoom);
+        
+        for (var key in subscriptions) {
+            if (subscriptions[key].gtp.z !== zoom) {
+                this._gmx.vectorTilesManager.off(subscriptions[key].id);
+                delete subscriptions[key];
+            }
+        }
 	}
 	,
 	_update: function () {
@@ -359,9 +370,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         if (!gmx.tileSubscriptions[key]) {
             gmx._tilesToLoad++;
             //console.log('subscription', zoom, tilePoint);
-            gmx.tileSubscriptions[key] = gmx.vectorTilesManager.on(gmxTilePoint, function() {
+            var subscrID = gmx.vectorTilesManager.on(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom);
             });
+            gmx.tileSubscriptions[key] = {id: subscrID, gtp: gmxTilePoint};
         }// else {
             //this._tileLoaded();
         // }
