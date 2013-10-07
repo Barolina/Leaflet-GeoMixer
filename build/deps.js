@@ -10,7 +10,8 @@
     "gmxAPIutils.js",
     "SessionManager.js",
     "MapManager.js",
-    "gmxVectorLayer.js"
+    "gmxVectorLayer.js",
+    "gmxLayerFactory.js"
 ];
 
 if (typeof exports !== 'undefined') {

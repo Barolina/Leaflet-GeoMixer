@@ -35,7 +35,6 @@
 	<script src="../dist/leaflet-geomixer-src.js"></script>
 	<script>
 
-		//var map = L.map('map').setView([62.880844, 27.048339], 5);
 		var map = L.map('map').setView([0, 0], 2);
 
 		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -48,115 +47,64 @@
             now = startDate.getTime(),
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
-            
-		//points
-        /*new L.TileLayer.gmxVectorLayer({
-            hostName: 'maps.kosmosnimki.ru',
-            apiKey: 'U92596WMIH',
-            mapName: 'UIRCQ',
-            layerName: '49B93B20C0E144AEACE5A6BE599BBAFA'
-		}).addTo(map);
-
-		//lines чуть выше Астрахани
-        new L.TileLayer.gmxVectorLayer({
-            hostName: 'maps.kosmosnimki.ru',
-            apiKey: 'U92596WMIH',
-            mapName: 'UIRCQ',
-            layerName: '09E930F32F0F4736AD7D74B7D04B57C4'
-		}).addTo(map);*/
-
-		//testPoint12
-		var testPoint12 = new L.TileLayer.gmxVectorLayer({
-			hostName: 'maps.kosmosnimki.ru',
-            apiKey: 'U92596WMIH',
-            mapName: 'UIRCQ',
-            layerName: '3CF53D01EE9E4C5EA38F72A82866EFAD',
-            beginDate: ddt1,
-            endDate: ddt2
-           ,
-            styles: [
-                null
-                ,
-                 {
-                    'MinZoom': 6
-                    ,'MaxZoom': 8
-                    ,'Filter': '"ogc_fid" = 2 or "ogc_fid" = 3'
-                    ,'RenderStyle': {
-                        'marker': {
-                            'image': '1.png'
-                            ,'size': '[p1]/20'
-                        }
-                    }
-                }
-           ]
-		}).addTo(map);
-
+        
 		//regions
-        var regionsLayer = new L.TileLayer.gmxVectorLayer({
-            hostName: 'maps.kosmosnimki.ru',
-            apiKey: 'U92596WMIH',
-            mapName: 'AZR6A',
-            layerName: '2FD848A8E6E54850876AF95BFECF98E5'
-		})
+        var regionsLayerDef = L.gmx.loadLayer('AZR6A', '2FD848A8E6E54850876AF95BFECF98E5', {
+            apiKey: 'U92596WMIH'
+        });
 
-        var gmxLayer = new L.TileLayer.gmxVectorLayer({
-			hostName: 'maps.kosmosnimki.ru',
+        //
+        var modisLayerDef = L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
             apiKey: 'U92596WMIH',
-            mapName: 'AZR6A',
-            layerName: 'EB271FC4D2AD425A9BAA78ADEA041AB9',
             beginDate: ddt1,
             endDate: ddt2
-		}).addTo(map);
+        });
         
-        var hotspotLayer = new L.TileLayer.gmxVectorLayer({
-			hostName: 'maps.kosmosnimki.ru',
+        var hotspotLayerDef = new L.gmx.loadLayer('AZR6A', 'C13B4D9706F7491EBC6DC70DFFA988C0', {
             apiKey: 'U92596WMIH',
-            mapName: 'AZR6A',
-            layerName: 'C13B4D9706F7491EBC6DC70DFFA988C0',
             beginDate: ddt1,
             endDate: ddt2
-		});
+        })
         
-        L.control.layers({}, {
-            MODIS: gmxLayer,
-            Hotspots: hotspotLayer,
-            TestPoint12: testPoint12,
-            Regions: regionsLayer
-        }, {collapsed: false}).addTo(map);
-        
-        //controls
-		document.getElementById("prev").onclick = function() {
-			ddt1 = new Date(ddt1.getTime() - oneDay);
-			ddt2 = new Date(ddt2.getTime() - oneDay);
-			gmxLayer.setDateInterval(ddt1, ddt2);
-			hotspotLayer.setDateInterval(ddt1, ddt2);
-			testPoint12.setDateInterval(ddt1, ddt2);
-		}
-        
-		document.getElementById("next").onclick = function() {
-			ddt1 = new Date(ddt1.getTime() + oneDay);
-			ddt2 = new Date(ddt2.getTime() + oneDay);
-			gmxLayer.setDateInterval(ddt1, ddt2);
-			hotspotLayer.setDateInterval(ddt1, ddt2);
-			testPoint12.setDateInterval(ddt1, ddt2);
-		}
-        
-		document.getElementById("dayFilter").onclick = function() {
-			gmxLayer.setFilter(function(item) {
-                return item.properties.IsDay === 'True';
-            });
-		}
-        
-		document.getElementById("nightFilter").onclick = function() {
-			gmxLayer.setFilter(function(item) {
-                return item.properties.IsDay !== 'True';
-            });
-		}
-        
-		document.getElementById("noneFilter").onclick = function() {
-			gmxLayer.setFilter(null);
-		}
- 
+        L.gmx.Deferred.all(modisLayerDef, hotspotLayerDef, regionsLayerDef).done(function(modisLayer, hotspotLayer, regionsLayer) {
+            modisLayer.addTo(map);
+            L.control.layers({}, {
+                MODIS: modisLayer,
+                Hotspots: hotspotLayer,
+                Regions: regionsLayer
+            }, {collapsed: false}).addTo(map);
+            
+            //controls
+            document.getElementById("prev").onclick = function() {
+                ddt1 = new Date(ddt1.getTime() - oneDay);
+                ddt2 = new Date(ddt2.getTime() - oneDay);
+                modisLayer.setDateInterval(ddt1, ddt2);
+                hotspotLayer.setDateInterval(ddt1, ddt2);
+            }
+            
+            document.getElementById("next").onclick = function() {
+                ddt1 = new Date(ddt1.getTime() + oneDay);
+                ddt2 = new Date(ddt2.getTime() + oneDay);
+                modisLayer.setDateInterval(ddt1, ddt2);
+                hotspotLayer.setDateInterval(ddt1, ddt2);                
+            }
+            
+            document.getElementById("dayFilter").onclick = function() {
+                modisLayer.setFilter(function(item) {
+                    return item.properties.IsDay === 'True';
+                });
+            }
+            
+            document.getElementById("nightFilter").onclick = function() {
+                modisLayer.setFilter(function(item) {
+                    return item.properties.IsDay !== 'True';
+                });
+            }
+            
+            document.getElementById("noneFilter").onclick = function() {
+                modisLayer.setFilter(null);
+            }
+        })
 	</script>
 </body>
 </html>

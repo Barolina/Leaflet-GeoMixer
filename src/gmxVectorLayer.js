@@ -4,6 +4,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     initialize: function(options) {
         options = L.setOptions(this, options);
         
+        this.initPromise = new gmxDeferred();
+        
         this._drawQueue = [];
         this._drawQueueHash = {};
         
@@ -36,6 +38,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                     myLayer._gmx.styleManager = new gmxStyleManager(myLayer._gmx);
                     myLayer._gmx.ProjectiveImage = new ProjectiveImage();
                     myLayer._update();
+                    
+                    myLayer.initPromise.resolve();
+                    
                     return true;
                 }
             }

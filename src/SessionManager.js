@@ -22,7 +22,7 @@ var gmxSessionManager = {
     },
     //get already received session key
     getSessionKey: function(serverHost) {
-        return this._keys[serverHost] && this._keys[serverHost].getFulfilledData();
+        return this._keys[serverHost] && this._keys[serverHost].getFulfilledData()[0];
     },
     _keys: {} //deferred for each host
 }
