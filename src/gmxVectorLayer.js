@@ -20,49 +20,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             ,tileSubscriptions: []
         };
 
-        var apikeyRequestHost = options.apikeyRequestHost || this._gmx.hostName;
-        var myLayer = this;
-        
-        var getLayer = function(arr, flag) {
-			if(flag) return true;
-            for(var i=0, len=arr.length; i<len; i++) {
-                var layer = arr[i];
-                if(layer.type === 'group') {
-					getLayer(layer.content.children);
-				} else if(layer.type === 'layer' && myLayer._gmx.layerName === layer.content.properties.name) {
-                    var ph = layer['content'];
-                    myLayer._gmx.properties = ph['properties'];
-                    myLayer._gmx.geometry = ph['geometry'];
-                    myLayer._gmx.attr = myLayer.initLayerData(ph);
-                    myLayer._gmx.vectorTilesManager = new gmxVectorTilesManager(myLayer._gmx, ph);
-                    myLayer._gmx.styleManager = new gmxStyleManager(myLayer._gmx);
-                    myLayer._gmx.ProjectiveImage = new ProjectiveImage();
-                    myLayer._update();
-                    
-                    myLayer.initPromise.resolve();
-                    
-                    return true;
-                }
-            }
-        }
-
-        var setSessionKey = function(sk) {
-			myLayer._gmx.sessionKey = sk;
-            myLayer._gmx.tileSenderPrefix = "http://" + myLayer._gmx.hostName + "/" + 
-                "TileSender.ashx?WrapStyle=None" + 
-                "&key=" + encodeURIComponent(sk);
-        }
-        //TODO: move to onAdd()?
-        gmxMapManager.getMap(apikeyRequestHost, options.apiKey, this._gmx.mapName).done(
-            function(ph) {
-                setSessionKey(gmxSessionManager.getSessionKey(apikeyRequestHost)); //should be already received
-                getLayer(ph.children);
-            },
-            function(ph) {
-                console.log('Error: ' + myLayer._gmx.mapName + ' - ' + ph.error);
-            }
-        );
-
         this.on('tileunload', function(e) {
             var tile = e.tile,
                 tp = tile._tilePoint,
@@ -82,11 +39,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             delete this._drawQueueHash[gmxkey];
         })
     },
-/*        
-    setStyle: function(st, num) {
-        return this._gmx.styleManager(st, num);
-    },
-*/
+
     _zoomStart: function() {
         this._gmx['zoomstart'] = true;
     },
@@ -110,6 +63,25 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     },
     
     //public interface
+    initFromDescription: function(ph) {
+        var apikeyRequestHost = this.options.apikeyRequestHost || this._gmx.hostName;
+        var sk = gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
+        this._gmx.sessionKey = sk;
+        this._gmx.tileSenderPrefix = "http://" + this._gmx.hostName + "/" + 
+            "TileSender.ashx?WrapStyle=None" + 
+            "&key=" + encodeURIComponent(sk);
+    
+        this._gmx.properties = ph.properties;
+        this._gmx.geometry = ph.geometry;
+        this._gmx.attr = this.initLayerData(ph);
+        this._gmx.vectorTilesManager = new gmxVectorTilesManager(this._gmx, ph);
+        this._gmx.styleManager = new gmxStyleManager(this._gmx);
+        this._gmx.ProjectiveImage = new ProjectiveImage();
+        this._update();
+                
+        this.initPromise.resolve();
+    },
+    
 	setFilter: function (func) {
         this._gmx.vectorTilesManager.setFilter('userFilter', func);
 		this._update();
@@ -196,76 +168,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         
         return rootNodes;
     },
-    
-    /*createTileTree: function(ph) {
-         var tiles = ph.tilesAll,
-             periods = ph.TemporalPeriods,
-             dateZero = ph.ZeroUT;
-        
-        // - s
-        // - d
-        // - tiles
-        // - count
-        // - children
-        var initNode = function(s, d, tiles) {
-            
-            var node = {
-                s: s, 
-                d: d,
-                t1: s * periods[d] * gmxAPIutils.oneDay + dateZero,
-                t2: (s + 1) * periods[d] * gmxAPIutils.oneDay + dateZero,
-                tiles: {},
-                tilesAll: {},
-                count: 0
-            };
-            
-            var days1 = s * periods[d],
-                days2 = (s + 1) * periods[d];
-            
-            for (var key in tiles) {
-                var t = tiles[key].tile,
-                    days = t.s * t.d;
-                if (days < days2 && days >= days1) {
-                    node.tilesAll[key] = tiles[key];
-                }
-                
-                if (t.d === periods[d] && t.s === s) {
-                    node.tiles[key] = true;
-                    node.count++;
-                }
-            }
-            
-            if (!d) return node;
-            
-            var childrenCount = periods[d] / periods[d-1];
-            
-            node.children = new Array(childrenCount);
-            
-            for (var ds = 0; ds < childrenCount; ds++) {
-                node.children[ds] = initNode(s * childrenCount + ds, d-1, node.tilesAll);
-            }
-            return node;
-        }
-        
-        var smin = Number.MAX_VALUE,
-            smax = -Number.MAX_VALUE,
-            dmax = periods.length - 1;
-            
-        for (var key in tiles) {
-            var t = tiles[key].tile;
-            if (t.d === periods[dmax]) {
-                smin = Math.min(smin, t.s);
-                smax = Math.max(smax, t.s);
-            }
-        }
-        
-        var rootNodes = [];
-        for (var s = smin; s <= smax; s++) {
-            rootNodes.push(initNode(s, dmax, tiles));
-        }
-        
-        return rootNodes;
-    },*/
     
     _drawTileAsync: function (tilePoint, zoom) {
         var queue = this._drawQueue,
