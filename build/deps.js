@@ -11,6 +11,7 @@
     "SessionManager.js",
     "MapManager.js",
     "gmxVectorLayer.js",
+    "gmxRasterLayer.js",
     "gmxLayerFactory.js"
 ];
 

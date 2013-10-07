@@ -22,10 +22,18 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
         function() {
             var ph = gmxMapManager.findLayerInfo(hostName, mapName, layerName);
             
-            var layer = new L.TileLayer.gmxVectorLayer(layerParams);
+            var layer;
+            
+            if (ph.properties.type === 'Vector') {
+                layer = new L.TileLayer.gmxVectorLayer(layerParams);
+            } else {
+                layer = new L.TileLayer.gmxRasterLayer(layerParams);
+            }
+            
             layer.initPromise.done(function() {
                 promise.resolve(layer);
             })
+            
             layer.initFromDescription(ph);
         },
         function(ph) {
