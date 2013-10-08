@@ -37,17 +37,26 @@
 
 		var map = L.map('map').setView([0, 0], 2);
 
-		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-		}).addTo(map);
+		});
 		
 		var startDate = new Date('2013/03/21');
 		var oneDay = 1000*60*60*24,	// milliseconds in one day
             now = startDate.getTime(),
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
-        
+
+
+		//Satellite
+        var SatelliteDef = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'C9458F2DCB754CEEACC54216C7D1EB0A', {
+            apiKey: 'U92596WMIH'
+        });
+		//Hybrid_world
+        var HybridDef = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'FFE60CFA7DAF498381F811C08A5E8CF5', {
+            apiKey: 'U92596WMIH'
+        });
 		//regions
         var regionsLayerDef = L.gmx.loadLayer('AZR6A', '2FD848A8E6E54850876AF95BFECF98E5', {
             apiKey: 'U92596WMIH'
@@ -64,15 +73,21 @@
             apiKey: 'U92596WMIH',
             beginDate: ddt1,
             endDate: ddt2
+            //,unloadInvisibleTiles: true
         })
         
-        L.gmx.Deferred.all(modisLayerDef, hotspotLayerDef, regionsLayerDef).done(function(modisLayer, hotspotLayer, regionsLayer) {
+        L.gmx.Deferred.all(SatelliteDef, HybridDef, modisLayerDef, hotspotLayerDef, regionsLayerDef).done(function(satellite, hybrid, modisLayer, hotspotLayer, regionsLayer) {
             modisLayer.addTo(map);
-            L.control.layers({}, {
+            satellite.addTo(map);
+            L.control.layers({
+                OSM: osm,
+                Satellite: satellite
+            }, {
+                Regions: regionsLayer,
                 MODIS: modisLayer,
                 Hotspots: hotspotLayer,
-                Regions: regionsLayer
-            }, {collapsed: false}).addTo(map);
+                Hybrid: hybrid
+           }, {collapsed: false}).addTo(map);
             
             //controls
             document.getElementById("prev").onclick = function() {

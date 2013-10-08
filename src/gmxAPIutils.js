@@ -53,6 +53,17 @@
 		return gmxTilePoint;
 	}
 	,
+	'getTilePosZoomDelta': function(tilePoint, zoomFrom, zoomTo) {		// получить смещение тайла на меньшем zoom
+		var dz = Math.pow(2, zoomFrom - zoomTo);
+		var size = 256 / dz;
+		return {
+			'size': size
+			,'zDelta': dz
+			,'x': Math.abs(size * (tilePoint.x % dz))
+			,'y': size * (dz - 1 - tilePoint.y % dz)
+		};
+    }
+	,
     //TODO: use L.Bounds? test performance?
 	'bounds': function(arr) {							// получить bounds массива точек
 		var res = {
@@ -625,6 +636,7 @@
 			//ctx.clip();
 		}
 	}
+	,'worldWidthMerc': 20037508
 	,'r_major': 6378137.000
 	,'y_ex': function(lat)	{				// Вычисление y_ex 
 		if (lat > 89.5)		lat = 89.5;
