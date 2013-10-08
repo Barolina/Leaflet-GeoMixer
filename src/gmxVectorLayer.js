@@ -22,21 +22,20 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 
         this.on('tileunload', function(e) {
             var tile = e.tile,
-                tp = tile._tilePoint,
-                gtp = gmxAPIutils.getTileNumFromLeaflet(tp, tile._zoom);
+                tp = tile._tilePoint;
                 
 
-			var gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y;
-            this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[gmxkey].id);
-            delete this._gmx.tileSubscriptions[gmxkey];
+			var key = tile._zoom + '_' + tp.x + '_' + tp.y;
+            this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[key].id);
+            delete this._gmx.tileSubscriptions[key];
             
             for (var k = this._drawQueue.length-1; k >= 0; k--) {
                 var elem = this._drawQueue[k];
-                if (elem.gmxkey === gmxkey) {
+                if (elem.key === key) {
                     this._drawQueue.splice(k, k+1);
                 }
             }
-            delete this._drawQueueHash[gmxkey];
+            delete this._drawQueueHash[key];
         })
     },
 
@@ -173,10 +172,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
             gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
-            gmxkey = gtp.z + '_' + gtp.x + '_' + gtp.y,
+            key = zoom + '_' + tilePoint.x + '_' + tilePoint.y,
             _this = this
             
-        if ( gmxkey in this._drawQueueHash ) {
+        if ( key in this._drawQueueHash ) {
             return;
         }
             
@@ -186,14 +185,14 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             }
             
             var bbox = queue.shift();
-            delete _this._drawQueueHash[bbox.gmxkey];
+            delete _this._drawQueueHash[bbox.key];
             _this.gmxDrawTile(bbox.tp, bbox.z);
             
             setTimeout(drawNextTile, 0);
         }
             
-        queue.push({gtp: gtp, tp: tilePoint, z: zoom, gmxkey: gmxkey});
-        this._drawQueueHash[gmxkey] = true;
+        queue.push({gtp: gtp, tp: tilePoint, z: zoom, key: key});
+        this._drawQueueHash[key] = true;
         isEmpty && setTimeout(drawNextTile, 0);
     },
     
@@ -201,7 +200,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             map = this._map;
         gmx.tileSize = gmxAPIutils.tileSizes[zoom];
-        gmx.mInPixel = 256 / gmx.tileSize;	// 0.9966471893352525
+        gmx.mInPixel = 256 / gmx.tileSize;
         gmx._tilesToLoad = 0;
         gmx.currentZoom = map._zoom;
         // Получение сдвига OSM
@@ -272,7 +271,8 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		if (!gmx.attr) return;
 
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-        var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+        //var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+        var key = zoom + '_' + tilePoint.x + '_' + tilePoint.y;
         //console.log('subscriptions', gmx.tileSubscriptions);
         if (!gmx.tileSubscriptions[key]) {
             gmx._tilesToLoad++;

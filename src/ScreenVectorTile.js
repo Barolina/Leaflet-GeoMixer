@@ -85,9 +85,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 ctx[key] = lastStyles[key] = valKey;
             }
         }
-        if(style['dashes']) {
-            var dashes = style['dashes'];
-            var dashOffset = (style['dashOffset'] ? style['dashOffset'] : 0);
+        if(style.dashes) {
+            var dashes = style.dashes;
+            var dashOffset = style.dashOffset || 0;
             if ('setLineDash' in ctx) {     //Chrome
                 ctx.setLineDash(dashes);
                 //ctx.lineDashOffset(dashOffset);
@@ -101,10 +101,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             ctx.fillStyle = ctx.createPattern(parsedStyleKeys['canvasPattern']['canvas'], "repeat");
         } else if(style['linearGradient']) {
             var rgr = style['linearGradient'];
-            var x1 = (rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1']);
-            var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
-            var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
-            var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
+            var x1 = rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1'];
+            var y1 = rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1'];
+            var x2 = rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2'];
+            var y2 = rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2'];
             var lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
             for (var i = 0; i < style['linearGradient']['addColorStop'].length; i++)
             {
@@ -198,11 +198,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			if (tKey in layer._tiles) {
 				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
 			}
-			// if(gmx.tileSubscriptions[gmxTileKey]) {
-                // gmx.vectorTilesManager.off(gmx.tileSubscriptions[gmxTileKey]);
-                // delete gmx.tileSubscriptions[gmxTileKey];
-            // }
-            // layer._tileLoaded();
 			return 0;
 		}
 

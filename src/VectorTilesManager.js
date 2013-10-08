@@ -52,14 +52,8 @@
     
     this.setDateInterval = function(newBeginDate, newEndDate) {
         if (!isTemporalLayer || (newBeginDate == beginDate && newBeginDate == endDate)) { return; };
-        
-        // var t1 = new Date();
+                
         activeTileKeys = gmxAPIutils.getNeedTiles(gmx.attr, newBeginDate, newEndDate);
-        // var t2 = new Date();
-        // var prevTiles = gmxAPIutils.getNeedTilesPrev(gmx.attr, newBeginDate, newEndDate).tilesNeedLoad;
-        // var t3 = new Date();
-        // console.log('new', t2 - t1, activeTileKeys);
-        // console.log('prev', t3 - t2, prevTiles);
         
         for (var subscrID in subscriptions) {
             var tp = subscriptions[subscrID].tilePoint;
@@ -202,6 +196,9 @@
 		})(tiles[key].tile);
     }
     
+    //'callback' will be called at least once:
+    // - immidiately, if all data for a given bbox is already loaded
+    // - after next chunk of data will be loaded
     this.on = function(gmxTilePoint, callback) {
         var id = 's'+(freeSubscrID++);
         subscriptions[id] = {
