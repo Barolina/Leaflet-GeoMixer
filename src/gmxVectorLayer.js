@@ -26,8 +26,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 
 
 			var key = tile._zoom + '_' + tp.x + '_' + tp.y;
-            this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[key].id);
-            delete this._gmx.tileSubscriptions[key];
+            
+            if (key in this._gmx.tileSubscriptions) {
+                this._gmx.vectorTilesManager.off(this._gmx.tileSubscriptions[key].id);
+                delete this._gmx.tileSubscriptions[key];
+            }
             
             for (var k = this._drawQueue.length-1; k >= 0; k--) {
                 var elem = this._drawQueue[k];
