@@ -138,11 +138,22 @@
 			var id = it['id'] || prop[identityField];
 			var item = items[id];
 			if(item) {
-				if(item['type'].indexOf('MULTI') == -1) item['type'] = 'MULTI' + item['type'];
+				if(item['type'].indexOf('MULTI') == -1) {
+                    item['type'] = 'MULTI' + item['type'];
+                    item['coordinates'] = [item['coordinates']];
+                }
+                var arr = geom.coordinates;
+				if(geom['type'].indexOf('MULTI') == -1) {
+                    arr = [geom.coordinates];
+                    for (var j = 0, len1 = arr.length; j < len1; j++) {
+                        item['coordinates'].push(arr[j]);
+                    }
+                }
 			} else {
 				item = {
 					'id': id
 					,'type': geom.type
+					,'coordinates': geom.coordinates
 					,'properties': prop
 					,'propHiden': {
 						'fromTiles': {}

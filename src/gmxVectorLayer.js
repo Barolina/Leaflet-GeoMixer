@@ -427,20 +427,19 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		res['minZoomRasters'] = prop['RCMinZoomForRasters'] || 8;		// мин. zoom для растров
 		
 		var imageTransform = function(hash) {
-			var geoItem = hash.geoItem;
+            var item = hash.item;
 			var gmxTilePoint = hash.gmxTilePoint;
 			var img = hash.image;
-//var item = hash.item;
 //Алгоритм натяжения:
-//- вычислит 4 угла (текущий алгоритм)
+//- вычислить 4 угла (текущий алгоритм)
 //- посчитать длины сторон
 //- если соотношение самой длинной и самой короткой больше, чем 2, тогда северный отрезок из двух коротких - это верхний край квиклука
 //- если соотношение меньше, чем 2, то самая северная вершина - это левый верхний угол изображения
-			var coord = geoItem.geometry.coordinates;
+            var coord = item.coordinates;
 			var points = gmxAPIutils.getQuicklookPoints(coord);
 			var mInPixel = gmx.mInPixel;
-			var begx = mInPixel * geoItem.bounds.min.x;
-			var begy = mInPixel * geoItem.bounds.max.y;
+			var begx = mInPixel * item.bounds.min.x;
+			var begy = mInPixel * item.bounds.max.y;
 			var dx = begx - 256 * gmxTilePoint.x;
 			var dy = 256 - begy + 256 * gmxTilePoint.y;
 
