@@ -581,7 +581,7 @@
 	'polygonToCanvas': function(attr) {				// Полигон в canvas
 		var gmx = attr['gmx'];
 		var coords = attr['coords'];
-		var hiddenLines = attr['hiddenLines'];
+		var hiddenLines = attr['hiddenLines'] || [];
 		var bgImage = attr['bgImage'];
 		var ctx = attr['ctx'];
 		var style = attr['style'];
@@ -594,47 +594,52 @@
 			var py1 = tpy - p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
 			return [px1, py1];
 		}
-		var arr = [];
 		var lastX = null, lastY = null, cntHide = 0;
-		if(style.strokeStyle) {
-			ctx.beginPath();
-			for (var i = 0, len = coords.length; i < len; i++) {
-				var lineIsOnEdge = false;
-				if(i == hiddenLines[cntHide]) {
-					lineIsOnEdge = true;
-					cntHide++;
-				}
-				var p1 = toPixels(coords[i]);
-				if(lastX !== p1[0] || lastY !== p1[1]) {
-					if(lineIsOnEdge || i == 0)	ctx.moveTo(p1[0], p1[1]);
-					else 						ctx.lineTo(p1[0], p1[1]);
-					lastX = p1[0], lastY = p1[1];
-					if(ctx.fillStyle) arr.push(p1);
-				}
-			}
-			ctx.stroke();
-		} else {
-			arr = coords;
+        ctx.beginPath();
+        for (var i = 0, len = coords.length; i < len; i++) {
+            var lineIsOnEdge = false;
+            if(i == hiddenLines[cntHide]) {
+                lineIsOnEdge = true;
+                cntHide++;
+            }
+            var p1 = toPixels(coords[i]);
+            if(lastX !== p1[0] || lastY !== p1[1]) {
+                if(lineIsOnEdge || i == 0)	ctx.moveTo(p1[0], p1[1]);
+                else 						ctx.lineTo(p1[0], p1[1]);
+                lastX = p1[0], lastY = p1[1];
+            }
+        }
+        ctx.stroke();
+	}
+	,
+	'polygonToCanvasFill': function(attr) {				// Полигон в canvas
+		var gmx = attr['gmx'];
+		var coords = attr['coords'];
+		var hiddenLines = attr['hiddenLines'] || [];
+		var bgImage = attr['bgImage'];
+		var ctx = attr['ctx'];
+		var style = attr['style'];
+
+		var mInPixel = gmx['mInPixel'];
+		var tpx = attr['tpx'];
+		var tpy = attr['tpy'];
+		var toPixels = function(p) {				// получить координату в px
+			var px1 = p[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
+			var py1 = tpy - p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
+			return [px1, py1];
 		}
 
-        if(style.fill) {
-			if(bgImage) {
-				var pattern = ctx.createPattern(bgImage, "no-repeat");
-				ctx.fillStyle = pattern;
-            }
-			ctx.beginPath();
-			//ctx.fillRect(0, 0, 256, 256);
-			//ctx.globalAlpha = 0;
-			for (var i = 0, len = arr.length; i < len; i++) {
-				var p1 = arr[i];
-				if(!style.strokeStyle) p1 = toPixels(p1);
-				if(i == 0)	ctx.moveTo(p1[0], p1[1]);
-				else		ctx.lineTo(p1[0], p1[1]);
-			}
-			//ctx.globalAlpha = 1;
-			ctx.fill();
-			//ctx.clip();
-		}
+        ctx.beginPath();
+        if(bgImage) {
+            var pattern = ctx.createPattern(bgImage, "no-repeat");
+            ctx.fillStyle = pattern;
+        }
+        for (var i = 0, len = coords.length; i < len; i++) {
+            var p1 = toPixels(coords[i]);
+            if(i == 0)	ctx.moveTo(p1[0], p1[1]);
+            else		ctx.lineTo(p1[0], p1[1]);
+        }
+        ctx.fill();
 	}
 	,'worldWidthMerc': 20037508
 	,'r_major': 6378137.000

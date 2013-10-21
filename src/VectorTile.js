@@ -79,15 +79,12 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
 			if(geom['type'].indexOf('POLYGON') !== -1) {
 				var hideLines = [];								// индексы точек лежащих на границе тайла
 				var coords = geom['coordinates'];
+                if(geom['type'] === 'POLYGON') coords = [coords];
 				for (var j = 0, len1 = coords.length; j < len1; j++) {
 					var coords1 = coords[j];
-					if(geom['type'].indexOf('MULTI') !== -1) {
-						for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-							hideLines.push(getHidden(coords1[j1], tbDelta));
-						}
-					} else {
-						hideLines.push(getHidden(coords1, tbDelta));
-					}
+                    for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
+                        hideLines.push(getHidden(coords1[j1], tbDelta));
+                    }
 				}
 				it.hiddenLines = hideLines;
 			}
