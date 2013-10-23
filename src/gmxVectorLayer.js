@@ -23,7 +23,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         this.on('tileunload', function(e) {
             var tile = e.tile,
                 tp = tile._tilePoint;
-                
 
 			var key = tile._zoom + '_' + tp.x + '_' + tp.y;
             
@@ -101,75 +100,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		map.addLayer(this);
 		return this;
 	},
-    
-    _createTileTree: function(ph) {
-        var tiles = ph.tilesAll,
-             periods = ph.TemporalPeriods,
-             dateZero = ph.ZeroUT,
-             roots = [];
-             
-        var addTile = function (node, tile, key) {
-            var d = node.d;
-            if (tile.d === periods[d]) {
-                node.count++;
-                node.tiles[key] = true;
-                return;
-            }
-            
-            var childrenCount = periods[d] / periods[d-1];
-            
-            if (!('children' in node)) {
-                node.children = new Array(childrenCount);
-            }
-            
-            var sChild = Math.floor(tile.s * tile.d / periods[d-1]);
-            var ds = sChild - node.s*childrenCount;
-            
-            if (!node.children[ds]) {
-                node.children[ds] = {
-                    d: d-1,
-                    s: sChild,
-                    t1: sChild* periods[d-1] * gmxAPIutils.oneDay + dateZero,
-                    t2: (sChild + 1) * periods[d-1] * gmxAPIutils.oneDay + dateZero,
-                    count: 0,
-                    tiles: {}
-                }
-            }
-            
-            addTile(node.children[ds], tile, key);
-        }
-        
-        var smin = Number.MAX_VALUE,
-            dmax = periods.length - 1;
-            
-        for (var key in tiles) {
-            var t = tiles[key].tile;
-            if (t.d === periods[dmax]) {
-                smin = Math.min(smin, t.s);
-            }
-        }
-        
-        var rootNodes = [];
-        
-        for (var key in tiles) {
-            var t = tiles[key].tile,
-                ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
-                cs = ds + smin;
-                
-            rootNodes[ds] = rootNodes[ds] || {
-                d: dmax,
-                s: cs,
-                t1: cs * periods[dmax] * gmxAPIutils.oneDay + dateZero,
-                t2: (cs + 1) * periods[dmax] * gmxAPIutils.oneDay + dateZero,
-                count: 0,
-                tiles: {}
-            }
-            
-            addTile(rootNodes[ds], t, key);
-        }
-        
-        return rootNodes;
-    },
     
     _drawTileAsync: function (tilePoint, zoom) {
         var queue = this._drawQueue,
@@ -370,33 +300,15 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	},
     initLayerData: function(layerDescription) {					// построение списка тайлов
         var gmx = this._gmx,
-            res = {'tilesAll':{}, 'items':{}, 'tileCount':0, 'itemCount':0},
+            res = {'items':{}, 'tileCount':0, 'itemCount':0},
             prop = layerDescription.properties,
             type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
 
-		var addRes = function(z, x, y, v, s, d) {
-            var tile = new gmxVectorTile(gmx, x, y, z, v, s, d);
-			res.tilesAll[tile.gmxTileKey] = {tile: tile};
-		}
 		var cnt;
 		var arr = prop['tiles'] || [];
-		var vers = prop['tilesVers'] || [];
 		if(type === 'VectorTemporal') {
-			arr = prop['TemporalTiles'];
-			vers = prop['TemporalVers'];
-			for (var i = 0, len = arr.length; i < len; i++)
-			{
-				var arr1 = arr[i];
-				var z = Number(arr1[4])
-					,y = Number(arr1[3])
-					,x = Number(arr1[2])
-					,s = Number(arr1[1])
-					,d = Number(arr1[0])
-					,v = Number(vers[i])
-				;
-				addRes(z, x, y, v, s, d);
-			}
-            cnt = arr.length;
+            cnt = prop['TemporalTiles'];
+			
 			res['TemporalColumnName'] = prop['TemporalColumnName'];
 			res['TemporalPeriods'] = prop['TemporalPeriods'];
 			
@@ -409,14 +321,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				);
 			res['ZeroDate'] = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
 			res['ZeroUT'] = res['ZeroDate'].getTime() / 1000;
-            // var ttt = new Date();
-            res['tileTreeRoots'] = this._createTileTree(res);
-            // console.log(new Date() - ttt);
-            //console.log(res['tileTreeRoots']);
-		} else if(type === 'Vector') {
-			for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-				addRes(Number(arr[i+2]), Number(arr[i]), Number(arr[i+1]), Number(vers[cnt]), -1, -1);
-			}
 		}
         
         
@@ -424,7 +328,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		res['layerType'] = type;						// VectorTemporal Vector
 		res['identityField'] = prop['identityField'];	// ogc_fid
 		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
-		res['minZoomRasters'] = prop['RCMinZoomForRasters'] || 8;		// мин. zoom для растров
+		res['minZoomRasters'] = prop['RCMinZoomForRasters'] || 8;// мин. zoom для растров
 		
 		var imageTransform = function(hash) {
             var item = hash.item;
