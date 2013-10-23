@@ -12,6 +12,7 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.Canvas.extend(
         };
         options = L.setOptions(this, options);
 	},
+    
     _zoomStart: function() {
         this._gmx['zoomstart'] = true;
     },
@@ -20,23 +21,12 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.Canvas.extend(
         this._gmx['zoomstart'] = false;
         this._prpZoomData(map._zoom);
     },
-    
-    onRemove: function(map) {
-        L.TileLayer.Canvas.prototype.onRemove.call(this, map);
-        map.off('zoomstart', this._zoomStart, this);
-        map.off('zoomend', this._zoomEnd, this);
-    },
+
     _prpZoomData: function(zoom) {
         var gmx = this._gmx,
             map = this._map;
         gmx.tileSize = gmxAPIutils.tileSizes[zoom];
         gmx.tilesToLoad = 0;
-        // Получение сдвига OSM
-        var pos = map.getCenter();
-        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
-        var p1 = map.project(new L.LatLng(lat, pos.lng), map._zoom);
-        var point = map.project(pos);
-        gmx.shiftY = point.y - p1.y;
     },
     
     //public interface
@@ -55,6 +45,7 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.Canvas.extend(
                 
         this.initPromise.resolve();
     },
+    
     onAdd: function(map) {
         if(!this._gmx.bounds) this._initLayerData();
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
@@ -62,7 +53,33 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.Canvas.extend(
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
         this._update();
+        map.on('moveend', this._calcCurrentShiftY, this);
+        this._calcCurrentShiftY();
     },
+
+    onRemove: function(map) {
+        L.TileLayer.Canvas.prototype.onRemove.call(this, map);
+        map.off('zoomstart', this._zoomStart, this);
+        map.off('zoomend', this._zoomEnd, this);
+        map.off('moveend', this._calcCurrentShiftY, this);
+    },
+
+    _calcCurrentShiftY: function() {
+        var pos = map.getCenter();
+        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
+        var p1 = map.project(new L.LatLng(lat, pos.lng), map._zoom);
+        var point = map.project(pos);
+        this._gmx.shiftY = point.y - p1.y;
+        
+        //update shifts for all the loaded tiles
+        for (var t in this._tiles) {
+            var tile = this._tiles[t];
+            var pos = this._getTilePos(tile._tilePoint);
+            pos.y -= this._gmx.shiftY;
+            L.DomUtil.setPosition(tile, pos, L.Browser.chrome || L.Browser.android23);
+        }
+    },
+    
     _initLayerData: function() {					// построение списка тайлов
         var gmx = this._gmx,
             prop = gmx.properties,
@@ -300,8 +317,8 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.Canvas.extend(
         tile._tilePoint = tilePoint;
         this._tileContainer.appendChild(tile);
         var tilePos = this._getTilePos(tilePoint);
-		var shiftY = this._gmx.shiftY || 0;		// Сдвиг к OSM
-		tilePos.y -= shiftY;
+		tilePos.y -= this._gmx.shiftY || 0; //World-mercator to Web-mercator shift
+        
 		L.DomUtil.setPosition(tile, tilePos, L.Browser.chrome || L.Browser.android23);
         if(L.Browser.mobile) tile.style.webkitTransform += ' scale3d(1.003, 1.003, 1)';
 
