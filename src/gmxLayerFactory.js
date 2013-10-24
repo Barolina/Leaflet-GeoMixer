@@ -34,7 +34,11 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
                     GeometryType: 'POLYGON',
                     IsRasterCatalog: true,
                     RCMinZoomForRasters: ph.properties.styles[0].MinZoom,
-                    styles: []
+                    styles: [{
+						MinZoom: ph.properties.styles[0].MinZoom,
+						MaxZoom: ph.properties.styles[0].MaxZoom,
+						RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}}
+					}]
                 };
                 
                 layer = new L.TileLayer.gmxVectorLayer(layerParams);
@@ -46,8 +50,8 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
                     var tileSenderPrefix = "http://" + gmx.hostName + "/" + 
                         "TileSender.ashx?ModeKey=tile" + 
                         "&key=" + encodeURIComponent(gmx.sessionKey) +
-                        "&MapName=" + this._gmx.mapName +
-                        "&LayerName=" + this._gmx.layerName;
+                        "&MapName=" + gmx.mapName +
+                        "&LayerName=" + gmx.layerName;
                 
                     return tileSenderPrefix + 
                         "&z=" + z + 
@@ -55,8 +59,8 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
                         "&y=" + y;
                 }
                 
-                var vectorDataProvider = {load: function() {
-                    return [{id: 777, properties: {ogc_fid: 777}, geometry: ph.geometry}];
+                var vectorDataProvider = {load: function(x, y, z, v, s, d, callback) {
+                    callback([{id: 777, properties: {ogc_fid: 777}, geometry: ph.geometry}]);
                 }}
                 
                 var theTile = new gmxVectorTile(vectorDataProvider, 0, 0, 0, 0, -1, -1);

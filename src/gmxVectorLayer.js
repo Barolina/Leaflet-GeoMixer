@@ -327,7 +327,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		res['layerType'] = type;						// VectorTemporal Vector
 		res['identityField'] = prop['identityField'];	// ogc_fid
 		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
-		res['minZoomRasters'] = prop['RCMinZoomForRasters'] || 8;// мин. zoom для растров
+		res['minZoomRasters'] = prop['RCMinZoomForRasters'];// мин. zoom для растров
 		
 		var imageTransform = function(hash) {
             var item = hash.item;

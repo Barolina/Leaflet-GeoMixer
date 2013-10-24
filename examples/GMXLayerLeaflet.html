@@ -61,6 +61,13 @@
         var regionsLayerDef = L.gmx.loadLayer('AZR6A', '2FD848A8E6E54850876AF95BFECF98E5', {
             apiKey: 'U92596WMIH'
         });
+		
+		//TERRA raster
+        var terraLayerDef = L.gmx.loadLayer('AZR6A', 'D3AAFD9F5B314CC881F7678C51B0B23C',
+		{
+            apiKey: 'U92596WMIH'
+        });
+
 
         //
         var modisLayerDef = L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
@@ -76,9 +83,10 @@
             //,unloadInvisibleTiles: true
         })
         
-        L.gmx.Deferred.all(SatelliteDef, HybridDef, modisLayerDef, hotspotLayerDef, regionsLayerDef).done(function(satellite, hybrid, modisLayer, hotspotLayer, regionsLayer) {
-            modisLayer.addTo(map);
+        L.gmx.Deferred.all(SatelliteDef, HybridDef, modisLayerDef, hotspotLayerDef, regionsLayerDef, terraLayerDef).done(function(satellite, hybrid, modisLayer, hotspotLayer, regionsLayer, terraLayer) {
+            //modisLayer.addTo(map);
             satellite.addTo(map);
+			terraLayer.addTo(map);
             L.control.layers({
                 OSM: osm,
                 Satellite: satellite
@@ -86,7 +94,8 @@
                 Regions: regionsLayer,
                 MODIS: modisLayer,
                 Hotspots: hotspotLayer,
-                Hybrid: hybrid
+                Hybrid: hybrid,
+				Terra: terraLayer
            }, {collapsed: false}).addTo(map);
             
             //controls

@@ -308,7 +308,7 @@ console.log('___', zoom, layer._map._gmxMoveTime);
                                 }
                             }
                         }
-                        if(dattr.style.strokeStyle) {
+                        if(dattr.style.strokeStyle && dattr.style.lineWidth) {
                             coordsToCanvas(gmxAPIutils.polygonToCanvas);
                         }
                         if(dattr.style.fill) {

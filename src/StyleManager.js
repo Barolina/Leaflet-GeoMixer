@@ -293,9 +293,10 @@
 		if(pt['stroke']) {
             out['stroke'] = pt['stroke'];
             color = ('colorFunction' in pt ? pt['colorFunction'](prop) : pt['color'] || 255);
-            opacity = ('opacityFunction' in pt ? pt['opacityFunction'](prop)/100 : pt['opacity'] || 1);
+            opacity = 'opacityFunction' in pt ? pt['opacityFunction'](prop)/100 : 
+					  'opacity' in pt ? pt['opacity'] : 1;
             out['strokeStyle'] = gmxAPIutils.dec2rgba(color, opacity);
-            out['lineWidth'] = pt['lineWidth'] || 1;
+            out['lineWidth'] = 'lineWidth' in pt ? pt['lineWidth'] : 1;
         }
 
 		if(pt['fill']) {
