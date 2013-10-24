@@ -147,6 +147,25 @@
         
         return res;
     };
+	
+	var vectorTileDataProvider = {
+		load: function(x, y, z, v, s, d, callback) {
+			var url = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + 
+					  "&MapName=" + gmx.mapName + 
+					  "&LayerName=" + gmx.layerName + 
+					  "&z=" + z +
+					  "&x=" + x +
+					  "&y=" + y +
+					  "&v=" + v +
+					  (d !== -1 ? "&Level=" + d + "&Span=" + s : "");
+			gmxAPIutils.requestJSONP({
+                'url': url
+                ,'callback': function(st) {
+                    callback(st.Result);
+                }
+            });
+		}
+	}
     
     var initTileList = function() {
         var props = layerDescription.properties,
@@ -164,7 +183,7 @@
                     s = Number(arr1[1]),
                     d = Number(arr1[0]),
                     v = Number(vers[i]),
-                    tile = new gmxVectorTile(gmx, x, y, z, v, s, d);
+                    tile = new gmxVectorTile(vectorTileDataProvider, x, y, z, v, s, d);
                     
                 tiles[tile.gmxTileKey] = {tile: tile};
             }
@@ -175,7 +194,7 @@
             arr = props.tiles;
             vers = props.tilesVers;
             for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-                var tile = new gmxVectorTile(gmx, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
+                var tile = new gmxVectorTile(vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
                 tiles[tile.gmxTileKey] = {tile: tile};
                 activeTileKeys[tile.gmxTileKey] = true;
             }

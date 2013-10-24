@@ -1,14 +1,7 @@
 ﻿//Single vector tile, received from GeoMixer server
-var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
-    var url = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + 
-              "&MapName=" + gmx.mapName + 
-              "&LayerName=" + gmx.layerName + 
-              "&z=" + z +
-              "&x=" + x +
-              "&y=" + y +
-              "&v=" + v +
-              (d !== -1 ? "&Level=" + d + "&Span=" + s : ""),
-        loadDef = null,
+//"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
+var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
+    var loadDef = null,
         isCalcHiddenPoints = false,
         _this = this;
     
@@ -16,14 +9,11 @@ var gmxVectorTile = function(gmx, x, y, z, v, s, d) {
         if (!loadDef) {
             loadDef = new gmxDeferred();
             this.state = 'loading';
-            gmxAPIutils.requestJSONP({
-                'url': url
-                ,'callback': function(st) {
-                    _this.data = st.Result;
-                    _this.state = 'loaded';
-                    loadDef.resolve(_this.data);
-                }
-            });
+			dataProvider.load(x, y, z, v, s, d, function(data) {
+				_this.data = data;
+                _this.state = 'loaded';
+                loadDef.resolve(_this.data);
+			})
         }
         
         return loadDef;
