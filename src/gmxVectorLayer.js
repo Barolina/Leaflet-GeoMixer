@@ -305,7 +305,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
 
 		var cnt;
-		var arr = prop['tiles'] || [];
 		if(type === 'VectorTemporal') {
             cnt = prop['TemporalTiles'];
 			

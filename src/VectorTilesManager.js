@@ -18,6 +18,7 @@
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
     }
 	
+    //tree for fast tiles selection inside temporal interval
 	var createTileTree = function() {
         var ph = gmx.attr,
             periods = ph.TemporalPeriods,
@@ -172,8 +173,8 @@
             arr, vers;
             
         if (isTemporalLayer) {
-            arr = props.TemporalTiles;
-            vers = props.TemporalVers;
+            arr = props.TemporalTiles || [];
+            vers = props.TemporalVers || [];
             
             for (var i = 0, len = arr.length; i < len; i++) {
                 var arr1 = arr[i];
@@ -191,7 +192,7 @@
 			tileTreeRoots = createTileTree();
 			
         } else {
-            arr = props.tiles;
+            arr = props.tiles || [];
             vers = props.tilesVers;
             for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
                 var tile = new gmxVectorTile(vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
@@ -390,6 +391,18 @@
 	
     this.getItem = function(id) {
         return items[id];
+    }
+    
+    this.addTile = function(tile) {
+        tiles[tile.gmxTileKey] = {tile: tile};
+        activeTileKeys[tile.gmxTileKey] = true;
+        for (var subscrID in subscriptions) {
+            var tp = subscriptions[subscrID].tilePoint;
+            this.loadTiles(tp);
+            if (this.getNotLoadedTileCount(tp) == 0) {
+                subscriptions[subscrID].callback();
+            }
+        }
     }
     
     if (isTemporalLayer) {
