@@ -9,6 +9,40 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var rasters = {},
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
 		gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+		
+	var loadRasterRecursion = function(gtp, urlFunction, callback) {
+		var rUrl = urlFunction(gtp);
+
+		var onError = function() {
+			gmx.badTiles[rUrl] = true;
+			if (gtp.z > 1) {
+				// запрос по раззумливанию растрового тайла
+				var nextGtp = {
+					x: Math.floor(gtp.x/2),
+					y: Math.floor(gtp.y/2),
+					z: gtp.z - 1
+				}
+				loadRasterRecursion(nextGtp, urlFunction, callback);
+			} else {
+				callback(null);
+			}
+		};
+		
+		gmx.badTiles = gmx.badTiles || {};
+		if(gmx.badTiles[rUrl]) {
+			onError();
+			return;
+		}
+
+		gmxImageLoader.push({
+			'src': rUrl
+			,'zoom': gtp.z
+			,'callback': function(imageObj) {
+				callback(imageObj, gtp);
+			}
+			,'onerror': onError
+		});
+	}
 
     //load all missing rasters for items we are going to render
     var getTileRasters = function(geoItems) {	// Получить растры КР для тайла
@@ -25,12 +59,14 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             var url = '';
             var itemImageProcessingHook = null;
             var item = gmx.vectorTilesManager.getItem(idr);
+			var isTiles = false;
 			if(gmx.attr['IsRasterCatalog']) {
-				if(!item.properties['GMX_RasterCatalogID'] && item.properties['sceneid']) {
+				if(!item.properties['GMX_RasterCatalogID'] && item.properties['sceneid']) { //TODO: remove direct url and arrtibute name
 					url = 'http://search.kosmosnimki.ru/QuickLookImage.ashx?id=' + item.properties['sceneid'];
 					itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
 				} else {		// RasterCatalog
-					url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+					//url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+					isTiles = true;
 				}
 			} else if(item.properties['urlBG']) {
 				url = item.properties['urlBG'];
@@ -39,31 +75,73 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 				url = gmx.attr.rasterBGfunc(item);
 				itemImageProcessingHook = gmx.attr['imageProcessingHook'];
 			}
-			if(url) {
+			if(url || isTiles) {
 				needLoadRasters++;
-
-				gmxImageLoader.push({
-					'callback' : function(img) {
-						if(itemImageProcessingHook) {
-							rasters[idr] = itemImageProcessingHook({
-								'image': img,
-								'geoItem': geo,
-								'item': item,
-								'gmxTilePoint': gmxTilePoint
-							});
-						} else {
-							rasters[idr] = img;
+				
+				if (isTiles) {
+					loadRasterRecursion(gmxTilePoint,
+						function(gtp) {
+							return gmx.attr.rasterBGfunc(gtp.x, gtp.y, gtp.z, idr);
+						},
+						function(img, imageGtp) {
+							needLoadRasters--;
+							
+							if (!img) {
+								chkReadyRasters();
+								return;
+							}
+							
+							if( itemImageProcessingHook ) {
+								img = itemImageProcessingHook({
+									'image': img,
+									'geoItem': geo,
+									'item': item,
+									'gmxTilePoint': imageGtp
+								});
+							}
+							
+							if (imageGtp.z !== gmxTilePoint.z) {
+								var pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, imageGtp.z);
+								if(pos.size < 0.00390625) {// меньше 1px
+									chkReadyRasters();
+									return;
+								}
+								
+								var canvas = document.createElement('canvas');
+								canvas.width = canvas.height = 256;
+								var ptx = canvas.getContext('2d');
+								ptx.drawImage(img, Math.floor(pos.x), Math.floor(pos.y), pos.size, pos.size, 0, 0, 256, 256);
+								rasters[idr] = canvas;
+							} else {
+								rasters[idr] = img;
+							}
+							chkReadyRasters();
 						}
-						needLoadRasters--;
-						chkReadyRasters();
-					}
-					,'onerror' : function() {
-						needLoadRasters--;
-						chkReadyRasters();
-					}
-					,'src': url
-                    ,'crossOrigin': 'anonymous'
-				});
+					);
+				} else {
+					gmxImageLoader.push({
+						'callback' : function(img) {
+							if(itemImageProcessingHook) {
+								rasters[idr] = itemImageProcessingHook({
+									'image': img,
+									'geoItem': geo,
+									'item': item,
+									'gmxTilePoint': gmxTilePoint
+								});
+							} else {
+								rasters[idr] = img;
+							}
+							needLoadRasters--;
+							chkReadyRasters();
+						}
+						,'onerror' : function() {
+							needLoadRasters--;
+							chkReadyRasters();
+						}
+						,'src': url
+						,'crossOrigin': 'anonymous'
+					});
+				}
 			}
 		})
         chkReadyRasters();
