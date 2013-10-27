@@ -55,12 +55,14 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
+        map.on('moveend', this._updateShiftY, this);
     },
     
     onRemove: function(map) {
         L.TileLayer.Canvas.prototype.onRemove.call(this, map);
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
+		map.off('moveend', this._updateShiftY, this);
     },
     
     //public interface
@@ -128,6 +130,22 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         this._drawQueueHash[key] = true;
         isEmpty && setTimeout(drawNextTile, 0);
     },
+	
+	_updateShiftY: function() {
+		var gmx = this._gmx;
+		var pos = map.getCenter();
+        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
+        var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
+        var point = map.project(pos);
+        gmx.shiftY = point.y - p1.y;
+		
+		for (var t in this._tiles) {
+            var tile = this._tiles[t];
+            var pos = this._getTilePos(tile._tilePoint);
+            pos.y -= this._gmx.shiftY;
+            L.DomUtil.setPosition(tile, pos, L.Browser.chrome || L.Browser.android23);
+        }
+	},
     
     _prpZoomData: function(zoom) {
         var gmx = this._gmx,
@@ -137,12 +155,12 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         gmx._tilesToLoad = 0;
         gmx.currentZoom = map._zoom;
         // Получение сдвига OSM
-        var pos = map.getCenter();
-        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
-        var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
-        var point = map.project(pos);
-        gmx.shiftY = point.y - p1.y;
-        //console.log(gmx.shiftY);
+        // var pos = map.getCenter();
+        // var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
+        // var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
+        // var point = map.project(pos);
+        // gmx.shiftY = point.y - p1.y;
+        // console.log(gmx.shiftY);
     },
     
 	_initContainer: function () {
