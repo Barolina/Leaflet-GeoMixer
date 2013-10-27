@@ -104,7 +104,7 @@
 					dy = dy || 0,
 					min2 = bounds.min,
 					max2 = bounds.max;
-				return max2.x + dx >= min.x && min2.x - dx <= max.x && max2.y + dy >= min.y && min2.y - dy <= max.y;
+				return max2.x + dx > min.x && min2.x - dx < max.x && max2.y + dy > min.y && min2.y - dy < max.y;
 			}
 		};
         

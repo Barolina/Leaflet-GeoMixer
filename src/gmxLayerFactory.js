@@ -45,7 +45,20 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
                 layer.initFromDescription({geometry: ph.geometry, properties: vectorProperties});
                 
                 var gmx = layer._gmx;
+				
+				var bounds = gmxAPIutils.bounds(ph.geometry.coordinates[0]);
+				
                 gmx.attr.rasterBGfunc = function(x, y, z) {
+				
+					var tileSize = gmxAPIutils.tileSizes[z];
+					var minx = x * tileSize;
+					var maxx = minx + tileSize;
+					if (maxx < bounds.min.x) {
+						x += Math.pow(2, z);
+					}
+					else if (minx > bounds.max.x) {
+						x -= Math.pow(2, z);
+					}
                 
                     var tileSenderPrefix = "http://" + gmx.hostName + "/" + 
                         "TileSender.ashx?ModeKey=tile" + 
@@ -63,8 +76,10 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
                     callback([{id: 777, properties: {ogc_fid: 777}, geometry: ph.geometry}]);
                 }}
                 
-                var theTile = new gmxVectorTile(vectorDataProvider, 0, 0, 0, 0, -1, -1);
-                gmx.vectorTilesManager.addTile(theTile);
+                gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, 0,   0, 1, 0, -1, -1));
+                gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, 0,  -1, 1, 0, -1, -1));
+                gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, -1,  0, 1, 0, -1, -1));
+                gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, -1, -1, 1, 0, -1, -1));
                 
                 //layer = new L.TileLayer.gmxRasterLayer(layerParams);
             }
