@@ -51,18 +51,31 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     },
         
     onAdd: function(map) {
+		if (map.options.crs !== L.CRS.EPSG3857 && map.options.crs !== L.CRS.EPSG3395) {
+			throw "GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer";
+		}
+		
+		this._gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
+		
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
                 
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
-        map.on('moveend', this._updateShiftY, this);
+        if (this._gmx.applyShift) {
+			map.on('moveend', this._updateShiftY, this);
+		} else {
+			this._gmx.shiftY = 0;
+		}
     },
     
     onRemove: function(map) {
         L.TileLayer.Canvas.prototype.onRemove.call(this, map);
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
-		map.off('moveend', this._updateShiftY, this);
+		
+		if (this._gmx.applyShift) {
+			map.off('moveend', this._updateShiftY, this);
+		}
     },
     
     //public interface
@@ -154,13 +167,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         gmx.mInPixel = 256 / gmx.tileSize;
         gmx._tilesToLoad = 0;
         gmx.currentZoom = map._zoom;
-        // Получение сдвига OSM
-        // var pos = map.getCenter();
-        // var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
-        // var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
-        // var point = map.project(pos);
-        // gmx.shiftY = point.y - p1.y;
-        // console.log(gmx.shiftY);
     },
     
 	_initContainer: function () {
@@ -272,6 +278,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		var shiftY = this._gmx.shiftY || 0;		// Сдвиг к OSM
 		tilePos.y -= shiftY;
 		L.DomUtil.setPosition(tile, tilePos, L.Browser.chrome || L.Browser.android23);
+		
 		this.tileDrawn(tile);
 		return this._tiles[tKey];
 	}
