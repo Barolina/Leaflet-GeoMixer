@@ -10,13 +10,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         this._drawQueueHash = {};
         
         this._gmx = {
-            'hostName': options.hostName || 'maps.kosmosnimki.ru'
-            ,'mapName': options.mapName
-            ,'layerName': options.layerName
-            ,'beginDate': options.beginDate
-            ,'endDate': options.endDate
-            ,'sortItems': options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
-            ,'styles': options.styles || []
+            hostName: options.hostName || 'maps.kosmosnimki.ru'
+            ,mapName: options.mapName
+            ,layerName: options.layerName
+            ,beginDate: options.beginDate
+            ,endDate: options.endDate
+            ,sortItems: options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
+            ,styles: options.styles || []
             ,tileSubscriptions: []
         };
 
@@ -42,12 +42,12 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _zoomStart: function() {
-        this._gmx['zoomstart'] = true;
+        this._gmx.zoomstart = true;
     },
     
     _zoomEnd: function() {
-        this._gmx['zoomstart'] = false;
-        this._prpZoomData(map._zoom);
+        this._gmx.zoomstart = false;
+        this._prpZoomData(this._map._zoom);
     },
         
     onAdd: function(map) {
@@ -97,7 +97,15 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
                 
         this.initPromise.resolve();
     },
-    
+
+	setStyle: function (style, num) {
+		var gmx = this._gmx;
+        this.initPromise.done(function() {
+            gmx.styleManager.setStyle(style, num);
+        });
+	}
+	,
+
 	setFilter: function (func) {
         this._gmx.vectorTilesManager.setFilter('userFilter', func);
 		this._update();
@@ -145,8 +153,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     },
 	
 	_updateShiftY: function() {
-		var gmx = this._gmx;
-		var pos = map.getCenter();
+        var gmx = this._gmx,
+            map = this._map;
+
+        var pos = map.getCenter();
         var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
         var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
         var point = map.project(pos);
@@ -155,9 +165,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		for (var t in this._tiles) {
             var tile = this._tiles[t];
             var pos = this._getTilePos(tile._tilePoint);
-            pos.y -= this._gmx.shiftY;
+            pos.y -= gmx.shiftY;
             L.DomUtil.setPosition(tile, pos, L.Browser.chrome || L.Browser.android23);
         }
+        this._update();
 	},
     
     _prpZoomData: function(zoom) {
@@ -171,11 +182,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
     
 	_initContainer: function () {
 		L.TileLayer.Canvas.prototype._initContainer.call(this);
-        
+
         var subscriptions = this._gmx.tileSubscriptions,
             zoom = this._map._zoom;
 		this._prpZoomData(zoom);
-        
+       
         for (var key in subscriptions) {
             if (subscriptions[key].gtp.z !== zoom) {
                 this._gmx.vectorTilesManager.off(subscriptions[key].id);
@@ -211,14 +222,13 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 
 		    tileBounds = new L.Bounds(nwTilePoint, seTilePoint);
 
-        //console.log(this._tiles);
 		this._addTilesFromCenterOut(tileBounds);
 
 		if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
 			this._removeOtherTiles(tileBounds);
 		}
 	}
-	,
+    ,
 	_addTile: function (tilePoint) {
         //console.log('addTile', tilePoint);
 		var myLayer = this,
@@ -228,24 +238,20 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		if (!gmx.attr) return;
 
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-        //var key = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
         var key = zoom + '_' + tilePoint.x + '_' + tilePoint.y;
-        //console.log('subscriptions', gmx.tileSubscriptions);
         if (!gmx.tileSubscriptions[key]) {
             gmx._tilesToLoad++;
-            //console.log('subscription', zoom, tilePoint);
             var subscrID = gmx.vectorTilesManager.on(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom);
             });
             gmx.tileSubscriptions[key] = {id: subscrID, gtp: gmxTilePoint};
-        }// else {
-            //this._tileLoaded();
-        // }
+        }
 	},
 	gmxDrawTile: function (tilePoint, zoom) {
 		var gmx = this._gmx,
             _this = this;
-		if(gmx['zoomstart']) return;
+
+        if(gmx.zoomstart) return;
 
         var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
         this._gmx.styleManager.deferred.done(function () {
@@ -283,7 +289,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 		return this._tiles[tKey];
 	}
 	,
-	_getLoadedTilesPercentage: function (container) {
+	_stopLoadingImages: function (container) {
+	}
+	,
+    _getLoadedTilesPercentage: function (container) {
 		if(!container) return 0;
 		var len = 0, count = 0;
 		var arr = ['img', 'canvas'];
@@ -291,7 +300,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var tiles = container.getElementsByTagName(arr[key]);
 			if(tiles && tiles.length > 0) {
 				len += tiles.length;
-				for (var i = 0; i < tiles.length; i++) {
+				for (var i = 0, len1 = tiles.length; i < len1; i++) {
 					if (tiles[i]._tileComplete) {
 						count++;
 					}
@@ -303,7 +312,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_tileLoaded: function () {
-        //console.log('_tileLoaded', this._gmx._tilesToLoad);
         if (this._gmx._tilesToLoad === 0) {
 			this.fire('load');
 
@@ -325,16 +333,16 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 	},
     initLayerData: function(layerDescription) {					// построение списка тайлов
         var gmx = this._gmx,
-            res = {'items':{}, 'tileCount':0, 'itemCount':0},
+            res = {items:{}, tileCount:0, itemCount:0},
             prop = layerDescription.properties,
-            type = prop['type'] + (prop['Temporal'] ? 'Temporal' : '');
+            type = prop.type + (prop.Temporal ? 'Temporal' : '');
 
 		var cnt;
 		if(type === 'VectorTemporal') {
-            cnt = prop['TemporalTiles'];
+            cnt = prop.TemporalTiles;
 			
-			res['TemporalColumnName'] = prop['TemporalColumnName'];
-			res['TemporalPeriods'] = prop['TemporalPeriods'];
+			res.TemporalColumnName = prop.TemporalColumnName;
+			res.TemporalPeriods = prop.TemporalPeriods;
 			
 			var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
 			var arr = ZeroDateString.split('.');
@@ -343,16 +351,16 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				(arr.length > 1 ? arr[1] - 1 : 0),
 				(arr.length > 0 ? arr[0] : 1)
 				);
-			res['ZeroDate'] = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
-			res['ZeroUT'] = res['ZeroDate'].getTime() / 1000;
+			res.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
+			res.ZeroUT = res.ZeroDate.getTime() / 1000;
 		}
         
         
-		res['tileCount'] = cnt;
-		res['layerType'] = type;						// VectorTemporal Vector
-		res['identityField'] = prop['identityField'];	// ogc_fid
-		res['GeometryType'] = prop['GeometryType'];		// тип геометрий обьектов в слое
-		res['minZoomRasters'] = prop['RCMinZoomForRasters'];// мин. zoom для растров
+		res.tileCount = cnt;
+		res.layerType = type;						// VectorTemporal Vector
+		res.identityField = prop.identityField;	// ogc_fid
+		res.GeometryType = prop.GeometryType;		// тип геометрий обьектов в слое
+		res.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
 		
 		var imageTransform = function(hash) {
             var item = hash.item;
@@ -371,10 +379,10 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var dx = begx - 256 * gmxTilePoint.x;
 			var dy = 256 - begy + 256 * gmxTilePoint.y;
 
-			var x1 = mInPixel * points['x1'], y1 = mInPixel * points['y1'];
-			var x2 = mInPixel * points['x2'], y2 = mInPixel * points['y2'];
-			var x3 = mInPixel * points['x3'], y3 = mInPixel * points['y3'];
-			var x4 = mInPixel * points['x4'], y4 = mInPixel * points['y4'];
+			var x1 = mInPixel * points.x1, y1 = mInPixel * points.y1;
+			var x2 = mInPixel * points.x2, y2 = mInPixel * points.y2;
+			var x3 = mInPixel * points.x3, y3 = mInPixel * points.y3;
+			var x4 = mInPixel * points.x4, y4 = mInPixel * points.y4;
 
 			var	boundsP = gmxAPIutils.bounds([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]);
 			x1 -= boundsP.min.x; y1 = boundsP.max.y - y1;
@@ -398,12 +406,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 					px = px1, py = py1;
 				}
 				dist = dist.sort(function(a, b) {
-					return a['d2'] - b['d2'];
+					return a.d2 - b.d2;
 				});
 				var min = Math.min(dist[0], dist[1], dist[2], dist[3]);
-				var mn = dist[3]['d2'] / dist[0]['d2'];
+				var mn = dist[3].d2 / dist[0].d2;
 				out = arr;
-//console.log('alg : ', hash.item.properties.sceneid, mn, maxYnum, (arr[dist[0]['i']][1] > arr[dist[1]['i']][1] ? true : false), arr);
 				if(mn > 2) {
 					var inum = dist[1]['i'];
 					if(arr[dist[0]['i']][1] > arr[dist[1]['i']][1]) {
@@ -424,35 +431,38 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			var shiftPoints = chPoints([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]);
 			
 			var pt = gmx.ProjectiveImage.getCanvas({
-				'imageObj': img
-				,'points': shiftPoints
-				,'wView': ww
-				,'hView': hh
-				,'deltaX': dx
-				,'deltaY': dy
-				//,'patchSize': 64
-				//,'limit': 4
+				imageObj: img
+				,points: shiftPoints
+				,wView: ww
+				,hView: hh
+				,deltaX: dx
+				,deltaY: dy
+				//,patchSize: 64
+				//,limit: 4
 			});
-			return pt['canvas'];
+			return pt.canvas;
 		};
 		
-		if(prop['IsRasterCatalog']) {
-			res['IsRasterCatalog'] = prop['IsRasterCatalog'];
-			res['rasterBGfunc'] = function(x, y, z, idr) {
+		if(prop.IsRasterCatalog) {
+			res.IsRasterCatalog = prop.IsRasterCatalog;
+			res.rasterBGfunc = function(x, y, z, item) {
+				var properties = item.properties;
 				return 'http://' + gmx.hostName
 					+'/TileSender.ashx?ModeKey=tile'
 					+'&x=' + x
 					+'&y=' + y
 					+'&z=' + z
-					+'&idr=' + idr
+					//+'&idr=' + idr
+					//+'&LayerName=' + gmx.layerName
+					+'&LayerName=' + properties.GMX_RasterCatalogID
 					+'&MapName=' + gmx.mapName
-					+'&LayerName=' + gmx.layerName
 					+'&key=' + encodeURIComponent(gmx.sessionKey);
 			};
-			res['imageQuicklookProcessingHook'] = imageTransform;
-		} else if(prop['Quicklook']) {
-			var template = res['Quicklook'] = prop['Quicklook'];
-			res['rasterBGfunc'] = function(item) {
+			res.imageQuicklookProcessingHook = imageTransform;
+		}
+        if(prop.Quicklook) {
+			var template = res.Quicklook = prop.Quicklook;
+			res.quicklookBGfunc = function(item) {
 				var properties = item.properties;
 				var url = template;
 				var reg = /\[([^\]]+)\]/;
@@ -463,7 +473,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 				}
 				return url;
 			};
-			res['imageProcessingHook'] = imageTransform;
+			res.imageProcessingHook = imageTransform;
 		}
 		return res;
 	}

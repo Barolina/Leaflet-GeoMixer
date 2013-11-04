@@ -9,7 +9,7 @@
         items = {},
         maxStyleSize = 0,
 		tileTreeRoots;
-        
+
     var getStyleBounds = function(gmxTilePoint) {
         if (maxStyleSize === 0) {
             maxStyleSize = gmx.styleManager.getMaxStyleSize();
@@ -245,8 +245,8 @@
 			for (var j = 0, len1 = data.length; j < len1; j++) {
                 
 				var it = data[j];
-				var item = items[it.id];
-                
+				//var item = items[it.id];
+				var item = it.item;
                 var isFiltered = false;
                 for (var filterName in filters) {
                     if (filters[filterName] && !filters[filterName](item)) {
@@ -260,7 +260,7 @@
 				if(!it.bounds) {
                     it.bounds = gmxAPIutils.geoItemBounds(it);
                     var arr = [[it.bounds.min.x, it.bounds.min.y], [it.bounds.max.x, it.bounds.max.y]];
-                    item['bounds'] = (item['bounds'] ? item['bounds'].extendArray(arr) : gmxAPIutils.bounds(arr));
+                    item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
                 }
 
 				if (!bounds.intersects(it.bounds)) {
@@ -285,29 +285,20 @@
 		var data = tile.data;
 		for (var i = 0, len = data.length; i < len; i++) {
 			var it = data[i];
-			var prop = it['properties'];
-			delete it['properties'];
-			var geom = it['geometry'];
+			var prop = it.properties;
+			delete it.properties;
+			var geom = it.geometry;
 			
-			var id = it['id'] || prop[identityField];
+			var id = it.id || prop[identityField];
 			var item = items[id];
 			if(item) {
-				if(item['type'].indexOf('MULTI') == -1) {
-                    item['type'] = 'MULTI' + item['type'];
-                    item['coordinates'] = [item['coordinates']];
-                }
-                var arr = geom.coordinates;
-				if(geom['type'].indexOf('MULTI') == -1) {
-                    arr = [geom.coordinates];
-                    for (var j = 0, len1 = arr.length; j < len1; j++) {
-                        item['coordinates'].push(arr[j]);
-                    }
+				if(item.type.indexOf('MULTI') == -1) {
+                    item.type = 'MULTI' + item.type;
                 }
 			} else {
 				item = {
 					'id': id
 					,'type': geom.type
-					,'coordinates': geom.coordinates
 					,'properties': prop
 					,'propHiden': {
 						'fromTiles': {}
@@ -315,7 +306,8 @@
 				};
 				items[id] = item;
 			}
-			item['propHiden']['fromTiles'][gmxTileKey] = true;
+            it.item = item;
+			item.propHiden.fromTiles[gmxTileKey] = i;
 			if(layerProp.TemporalColumnName) {
 				var zn = prop[layerProp.TemporalColumnName] || '';
 				zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
@@ -324,7 +316,6 @@
 				item.propHiden.unixTimeStamp = vDate.getTime() - offset*60*1000;
 			}
 		}
-		
 		return data.length;
     }
 

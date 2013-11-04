@@ -60,20 +60,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             var itemImageProcessingHook = null;
             var item = gmx.vectorTilesManager.getItem(idr);
 			var isTiles = false;
-			if(gmx.attr['IsRasterCatalog']) {
-				if(!item.properties['GMX_RasterCatalogID'] && item.properties['sceneid']) { //TODO: remove direct url and arrtibute name
-					url = 'http://search.kosmosnimki.ru/QuickLookImage.ashx?id=' + item.properties['sceneid'];
-					itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
-				} else {		// RasterCatalog
-					//url = gmx.attr.rasterBGfunc(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z, idr)
+			if(gmx.attr.IsRasterCatalog) {  // RasterCatalog
+				if(!item.properties.GMX_RasterCatalogID && gmx.attr.quicklookBGfunc) {
+					url = gmx.attr.quicklookBGfunc(item)
+					itemImageProcessingHook = gmx.attr.imageQuicklookProcessingHook;
+				} else {
 					isTiles = true;
 				}
-			} else if(item.properties['urlBG']) {
-				url = item.properties['urlBG'];
-				itemImageProcessingHook = gmx.attr['imageQuicklookProcessingHook'];
-			} else if(gmx.attr['Quicklook']) {
+			} else if(item.properties.urlBG) {
+				url = item.properties.urlBG;
+				itemImageProcessingHook = gmx.attr.imageQuicklookProcessingHook;
+			} else if(gmx.attr.Quicklook) {
 				url = gmx.attr.rasterBGfunc(item);
-				itemImageProcessingHook = gmx.attr['imageProcessingHook'];
+				itemImageProcessingHook = gmx.attr.imageProcessingHook;
 			}
 			if(url || isTiles) {
 				needLoadRasters++;
@@ -81,7 +80,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 				if (isTiles) {
 					loadRasterRecursion(gmxTilePoint,
 						function(gtp) {
-							return gmx.attr.rasterBGfunc(gtp.x, gtp.y, gtp.z, idr);
+							return gmx.attr.rasterBGfunc(gtp.x, gtp.y, gtp.z, item);
 						},
 						function(img, imageGtp) {
 							needLoadRasters--;
@@ -152,9 +151,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 	var styleCanvasKeysLen = styleCanvasKeys.length;
 	var lastStyles = {};
 	var setCanvasStyle = function(item, dattr) {				// Установка canvas стилей
-		var ctx = dattr['ctx'];
-		var style = dattr['style'];
-		var parsedStyleKeys = item['propHiden']['parsedStyleKeys'] || {};
+		var ctx = dattr.ctx;
+		var style = dattr.style;
+		var gmx = dattr.gmx;
+
+		var parsedStyleKeys = item.propHiden.parsedStyleKeys || {};
 		for (var i = 0; i < styleCanvasKeysLen; i++)
 		{
 			var key = styleCanvasKeys[i];
@@ -175,19 +176,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             }            
         }
 
-        if(parsedStyleKeys['canvasPattern']) {
-            ctx.fillStyle = ctx.createPattern(parsedStyleKeys['canvasPattern']['canvas'], "repeat");
-        } else if(style['linearGradient']) {
-            var rgr = style['linearGradient'];
-            var x1 = rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1'];
-            var y1 = rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1'];
-            var x2 = rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2'];
-            var y2 = rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2'];
+        if(parsedStyleKeys.canvasPattern) {
+            ctx.fillStyle = ctx.createPattern(parsedStyleKeys.canvasPattern.canvas, "repeat");
+        } else if(style.linearGradient) {
+            var rgr = style.linearGradient;
+            var x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1;
+            var y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1;
+            var x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2;
+            var y2 = rgr.y2Function ? rgr.y2Function(prop) : rgr.y2;
             var lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
-            for (var i = 0; i < style['linearGradient']['addColorStop'].length; i++)
+            for (var i = 0, len = style.linearGradient.addColorStop.length; i < len; i++)
             {
-                var arr1 = style['linearGradient']['addColorStop'][i];
-                var arrFunc = style['linearGradient']['addColorStopFunctions'][i];
+                var arr1 = style.linearGradient.addColorStop[i];
+                var arrFunc = style.linearGradient.addColorStopFunctions[i];
                 var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]);
                 var p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2]));
                 var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
@@ -198,7 +199,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     }
 
     var getObjectsByPoint = function(arr, point) {    // Получить верхний обьект по координатам mouseClick
-        var mInPixel = gmx['mInPixel'];
+        var mInPixel = gmx.mInPixel;
         var mercPoint = [point[0] / mInPixel, point[1] / mInPixel];
         var bounds = gmxAPIutils.bounds([mercPoint]);
         var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
@@ -322,7 +323,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 var pixel = chkMousePos(e);
                 if(!pixel) return;
                 var item = getObjectsByPoint(geoItems, [dattr.tpx + pixel.x, dattr.tpy - pixel.y]);
-                if(item) layer.fire('click', {'originalEvent': e, 'latlng': item.latlng, 'pixel': pixel, 'item': item});
+                if(item) layer.fire('click', {originalEvent: e, latlng: item.latlng, pixel: pixel, item: item});
             });
 /*
             L.DomEvent.addListener(layer._map._tilePane, 'mousemove', function (e) {
@@ -356,12 +357,14 @@ console.log('___', zoom, layer._map._gmxMoveTime);
         
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
+            //var labels = {};
             for (var i = 0; i < itemsLength; i++) {
                 var geoItem = geoItems[i],
                     idr = geoItem.id,
-                    item = gmx.vectorTilesManager.getItem(idr);
+                    item = gmx.vectorTilesManager.getItem(idr),
+                    style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
 
-                dattr.style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
+                dattr.style = style.RenderStyle;
 				setCanvasStyle(item, dattr);
 
                 if (rasters[idr]) {
@@ -374,25 +377,64 @@ console.log('___', zoom, layer._map._gmxMoveTime);
                         dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
 						gmxAPIutils.pointToCanvas(dattr);
                     } else {
+                        dattr.flagPixels = false;
                         var coords = geom.coordinates;
                         if(geom.type === 'POLYGON') coords = [coords];
+                        var hiddenLines = geoItem.hiddenLines;
+
+                        var flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
+                        var cacheArr = [];
                         var coordsToCanvas = function(func) {
+                            var out = null;
+                            if(flagPixels) {
+                                coords = geoItem.pixels.coords;
+                                hiddenLines = geoItem.pixels.hidden;
+                                dattr.flagPixels = flagPixels;
+                            } else {
+                                out = { coords: [], hidden: [] };
+                            }
+                            var pixels = [], hidden = [];
                             for (var j = 0, len1 = coords.length; j < len1; j++) {
                                 var coords1 = coords[j];
-                                dattr.hiddenLines = geoItem.hiddenLines[j];
+                                var hiddenLines1 = hiddenLines[j];
                                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                     dattr.coords = coords1[j1];
-                                    func(dattr);
+                                    dattr.hiddenLines = hiddenLines1[j1];
+                                    var res = func(dattr);
+                                    if(out && res) {
+                                        pixels.push(res.coords);
+                                        hidden.push(res.hidden);
+                                    }
                                 }
                             }
+                            if(out) {
+                                out.coords.push(pixels);
+                                out.hidden.push(hidden);
+                            }
+                            return out;
                         }
                         if(dattr.style.strokeStyle && dattr.style.lineWidth) {
-                            coordsToCanvas(gmxAPIutils.polygonToCanvas);
+                            var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas, flagPixels);
+                            if(pixels) {
+                                geoItem.pixels = pixels;
+                                geoItem.pixels.z = gmx.currentZoom;
+                                flagPixels = true;
+                            }
                         }
                         if(dattr.style.fill) {
-                            coordsToCanvas(gmxAPIutils.polygonToCanvasFill);
+                            if(flagPixels) {
+                                coords = geoItem.pixels.coords;
+                                hiddenLines = geoItem.pixels.hidden;
+                            }
+                            coordsToCanvas(gmxAPIutils.polygonToCanvasFill, flagPixels);
                         }
                     }
+                    // if(dattr.style.label) {
+                        // labels[idr] = {
+                            // item: item
+                            // ,style: dattr.style
+                        // };
+                    // }
                 } else if (geom.type === 'LINESTRING' || geom.type === 'MULTILINESTRING') {	// Отрисовка геометрии линий
                     var coords = geom.coordinates;
                     if(geom.type === 'MULTILINESTRING') {
@@ -417,6 +459,18 @@ console.log('___', zoom, layer._map._gmxMoveTime);
                     }
                 }
             }
+            /*
+            // TODO: Need labels manager
+            for (var idr in labels) {
+                var label = labels[idr];
+                var item = label.item;
+                dattr.style = label.style;
+                dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
+                var txt = item.properties[dattr.style.label.field];
+                var parsedStyleKeys = item.propHiden.parsedStyleKeys.label || {};
+                //dattr.extentLabel = gmxAPIutils.getLabelSize(txt, parsedStyleKeys);
+                gmxAPIutils.setLabel(txt, dattr, parsedStyleKeys);
+            }*/
         }
         
         if (showRaster) {

@@ -39,16 +39,16 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         isCalcHiddenPoints = true;
         
 		var bounds = this.bounds;
-		var d = (bounds.max.x - bounds.min.x)/10000;
+		var d = (bounds.max.x - bounds.min.x)/100000;
 		var tbDelta = {									// границы тайла для определения onEdge отрезков
-			'minX': bounds.min.x + d
-			,'maxX': bounds.max.x - d
-			,'minY': bounds.min.y + d
-			,'maxY': bounds.max.y - d
+			minX: bounds.min.x + d
+			,maxX: bounds.max.x - d
+			,minY: bounds.min.y + d
+			,maxY: bounds.max.y - d
 		};
 		var chkOnEdge = function(p1, p2, ext) {				// отрезок на границе
 			if ((p1[0] < ext.minX && p2[0] < ext.minX) || (p1[0] > ext.maxX && p2[0] > ext.maxX)) return true;
-			if ((p1[1] < ext.minY && p2[1] < ext.minY) || (p1[1] > ext.maxY && p2[1] > ext.maxY)) return true;
+            if ((p1[1] < ext.minY && p2[1] < ext.minY) || (p1[1] > ext.maxY && p2[1] > ext.maxY)) return true;
 			return false;
 		}
 		var getHidden = function(coords, tb) {			// массив точек на границах тайлов
@@ -69,12 +69,16 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
 			if(geom['type'].indexOf('POLYGON') !== -1) {
 				var hideLines = [];								// индексы точек лежащих на границе тайла
 				var coords = geom['coordinates'];
-                if(geom['type'] === 'POLYGON') coords = [coords];
-				for (var j = 0, len1 = coords.length; j < len1; j++) {
+                if(geom['type'] === 'POLYGON') {
+                    coords = [coords];
+				}
+                for (var j = 0, len1 = coords.length; j < len1; j++) {
 					var coords1 = coords[j];
+                    var hideLines1 = [];								// индексы точек лежащих на границе тайла
                     for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-                        hideLines.push(getHidden(coords1[j1], tbDelta));
+                        hideLines1.push(getHidden(coords1[j1], tbDelta));
                     }
+                    hideLines.push(hideLines1);
 				}
 				it.hiddenLines = hideLines;
 			}

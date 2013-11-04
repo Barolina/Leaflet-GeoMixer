@@ -310,49 +310,65 @@
         return { 'notFunc': notFunc, 'canvas': canvas1 };
     }
 	,
+	'toPixels': function(p, tpx, tpy, mInPixel) {				// получить координату в px
+        var px1 = p[0] * mInPixel; 	px1 = (0.5 + px1) << 0;
+        var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
+        return [px1 - tpx, tpy - py1];
+    }
+	,
 	'pointToCanvas': function(attr) {				// Точку в canvas
-		var gmx = attr['gmx'];
-		var coords = attr['coords'];
-		var ctx = attr['ctx'];
-		var style = attr['style'];
+		var gmx = attr.gmx,
+            style = attr.style,
+            coords = attr.coords,
+            px = attr.tpx,
+            py = attr.tpy,
+            sx = attr.sx || style.sx || 4,
+            sy = attr.sy || style.sy || 4,
+            ctx = attr.ctx;
 
-		var mInPixel = gmx['mInPixel'];
-		var tpx = attr['tpx'];
-		var tpy = attr['tpy'];
+        if(gmx.transformFlag) {
+            px /= gmx.mInPixel, py /= gmx.mInPixel;
+            sx /= gmx.mInPixel, sy /= gmx.mInPixel;
+        }
 		// получить координату в px
-		var px1 = coords[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
-		var py1 = tpy - coords[1] * mInPixel;	py1 = (0.5 + py1) << 0;
-		var sx = attr['sx'] || style['sx'] || 4;
-		var sy = attr['sy'] || style['sy'] || 4;
+        var p1 = gmx.transformFlag ? [coords[0], coords[1]] : gmxAPIutils.toPixels(coords, px, py, gmx.mInPixel);
+		var px1 = p1[0];
+		var py1 = p1[1];
 
-		if(style['marker']) {
-			if(style['image']) {
-				if('opacity' in style) ctx.globalAlpha = style['opacity'];
-				ctx.drawImage(style['image'], px1 - sx, py1 - sy, 2 * sx, 2 * sy);
-				if('opacity' in style) ctx.globalAlpha = 1;
-			} else if(style['polygons']) {
-				var rotateRes = style['rotate'] || 0;
+		if(style.marker) {
+			if(style.image) {
+				if('opacity' in style) ctx.globalAlpha = style.opacity;
+                if(gmx.transformFlag) {
+                    ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
+                    ctx.drawImage(style.image, px1 - sx, sy - py1, 2 * sx, 2 * sy);
+                    ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
+				} else {
+                    ctx.drawImage(style.image, px1 - sx, py1 - sy, 2 * sx, 2 * sy);
+                }
+                if('opacity' in style) ctx.globalAlpha = 1;
+			} else if(style.polygons) {
+				var rotateRes = style.rotate || 0;
 				if(rotateRes && typeof(rotateRes) == 'string') {
-					rotateRes = (style['rotateFunction'] ? style['rotateFunction'](prop) : 0);
+					rotateRes = (style.rotateFunction ? style.rotateFunction(prop) : 0);
 				}
-				style['rotateRes'] = rotateRes || 0;
+				style.rotateRes = rotateRes || 0;
 
-				for (var i = 0; i < style['polygons'].length; i++)
+				for (var i = 0, len = style.polygons.length; i < len; i++)
 				{
-					var p = style['polygons'][i];
+					var p = style.polygons[i];
 					ctx.save();
 					ctx.lineWidth = p['stroke-width'] || 0;
-					ctx.fillStyle = p['fill_rgba'] || 'rgba(0, 0, 255, 1)';
+					ctx.fillStyle = p.fill_rgba || 'rgba(0, 0, 255, 1)';
 					
 					ctx.beginPath();
-					var arr = gmxAPIutils.rotatePoints(p['points'], style['rotateRes'], style['scale'], {'x': sx, 'y': sy});
-					for (var j = 0; j < arr.length; j++)
+					var arr = gmxAPIutils.rotatePoints(p.points, style.rotateRes, style.scale, {x: sx, y: sy});
+					for (var j = 0, len1 = arr.length; j < len1; j++)
 					{
 						var t = arr[j];
 						if(j == 0)
-							ctx.moveTo(px1 + t['x'], py1 + t['y']);
+							ctx.moveTo(px1 + t.x, py1 + t.y);
 						else
-							ctx.lineTo(px1 + t['x'], py1 + t['y']);
+							ctx.lineTo(px1 + t.x, py1 + t.y);
 					}
 					ctx.fill();
 					ctx.restore();
@@ -360,38 +376,38 @@
 			}
 		} else if(style.strokeStyle) {
 			ctx.beginPath();
-			if(style['circle']) {
-				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
+			if(style.circle) {
+				ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
 			} else {
 				ctx.strokeRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
 			}
 			ctx.stroke();
 		}
-		if(style['fill']) {
+		if(style.fill) {
 			ctx.beginPath();
-			if(style['circle']) {
-                if(style['radialGradient']) {
-                    var rgr = style['radialGradient'];
-                    var r1 = (rgr['r1Function'] ? rgr['r1Function'](prop) : rgr['r1']);
-                    var r2 = (rgr['r2Function'] ? rgr['r2Function'](prop) : rgr['r2']);
-                    var x1 = (rgr['x1Function'] ? rgr['x1Function'](prop) : rgr['x1']);
-                    var y1 = (rgr['y1Function'] ? rgr['y1Function'](prop) : rgr['y1']);
-                    var x2 = (rgr['x2Function'] ? rgr['x2Function'](prop) : rgr['x2']);
-                    var y2 = (rgr['y2Function'] ? rgr['y2Function'](prop) : rgr['y2']);
+			if(style.circle) {
+                if(style.radialGradient) {
+                    var rgr = style.radialGradient;
+                    var r1 = (rgr.r1Function ? rgr.r1Function(prop) : rgr.r1);
+                    var r2 = (rgr.r2Function ? rgr.r2Function(prop) : rgr.r2);
+                    var x1 = (rgr.x1Function ? rgr.x1Function(prop) : rgr.x1);
+                    var y1 = (rgr.y1Function ? rgr.y1Function(prop) : rgr.y1);
+                    var x2 = (rgr.x2Function ? rgr.x2Function(prop) : rgr.x2);
+                    var y2 = (rgr.y2Function ? rgr.y2Function(prop) : rgr.y2);
 
                     var radgrad = ctx.createRadialGradient(px1+x1, py1+y1, r1, px1+x2, py1+y2,r2);  
-                    for (var i = 0; i < style['radialGradient']['addColorStop'].length; i++)
+                    for (var i = 0, len = style.radialGradient.addColorStop.length; i < len; i++)
                     {
-                        var arr = style['radialGradient']['addColorStop'][i];
-                        var arrFunc = style['radialGradient']['addColorStopFunctions'][i];
+                        var arr = style.radialGradient.addColorStop[i];
+                        var arrFunc = style.radialGradient.addColorStopFunctions[i];
                         var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr[0]);
                         var p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr[2]));
-                        var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr[1], p2/100);
-                        radgrad.addColorStop(p0, p1);
+                        var p3 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr[1], p2/100);
+                        radgrad.addColorStop(p0, p3);
                     }
                     ctx.fillStyle = radgrad;
                 }
-				ctx.arc(px1, py1, style['circle'], 0, 2*Math.PI);
+				ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
 			} else {
 				ctx.fillRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
 			}
@@ -400,30 +416,19 @@
 	}
 	,
 	'lineToCanvas': function(attr) {				// Линии в canvas
-		var gmx = attr['gmx'];
-		var coords = attr['coords'];
-		var ctx = attr['ctx'];
-		var style = attr['style'];
+		var gmx = attr.gmx,
+            coords = attr.coords,
+            ctx = attr.ctx;
 
-		var mInPixel = gmx['mInPixel'];
-		var tpx = attr['tpx'];
-		var tpy = attr['tpy'];
-		var toPixels = function(p) {				// получить координату в px
-			var px1 = p[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
-			var py1 = tpy - p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
-			return [px1, py1];
-		}
-		var arr = [];
-		var lastX = null, lastY = null;
-		if(style.strokeStyle) {
+        var lastX = null, lastY = null;
+		if(attr.style.strokeStyle) {
 			ctx.beginPath();
 			for (var i = 0, len = coords.length; i < len; i++) {
-				var p1 = toPixels(coords[i]);
+                var p1 = gmxAPIutils.toPixels(coords[i], attr.tpx, attr.tpy, gmx.mInPixel);
 				if(lastX !== p1[0] || lastY !== p1[1]) {
 					if(i == 0)	ctx.moveTo(p1[0], p1[1]);
 					else 		ctx.lineTo(p1[0], p1[1]);
 					lastX = p1[0], lastY = p1[1];
-					if(ctx.fillStyle) arr.push(p1);
 				}
 			}
 			ctx.stroke();
@@ -431,67 +436,108 @@
 	}
 	,
 	'polygonToCanvas': function(attr) {				// Полигон в canvas
-		var gmx = attr['gmx'];
-		var coords = attr['coords'];
-		var hiddenLines = attr['hiddenLines'] || [];
-		var bgImage = attr['bgImage'];
-		var ctx = attr['ctx'];
-		var style = attr['style'];
+        if(attr.coords.length === 0) return;
+		var gmx = attr.gmx,
+            flagPixels = attr.flagPixels || false,
+            hiddenLines = attr.hiddenLines || [],
+            coords = attr.coords,
+            len = coords.length,
+            ctx = attr.ctx,
+            px = attr.tpx,
+            py = attr.tpy,
+            cnt = 0, cntHide = 0,
+            lastX = null, lastY = null,
+            pixels = [], hidden = [];
 
-		var mInPixel = gmx['mInPixel'];
-		var tpx = attr['tpx'];
-		var tpy = attr['tpy'];
-		var toPixels = function(p) {				// получить координату в px
-			var px1 = p[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
-			var py1 = tpy - p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
-			return [px1, py1];
-		}
-		var lastX = null, lastY = null, cntHide = 0;
         ctx.beginPath();
-        for (var i = 0, len = coords.length; i < len; i++) {
+        for (var i = 0; i < len; i++) {
             var lineIsOnEdge = false;
             if(i == hiddenLines[cntHide]) {
                 lineIsOnEdge = true;
                 cntHide++;
             }
-            var p1 = toPixels(coords[i]);
-            if(lastX !== p1[0] || lastY !== p1[1]) {
-                if(lineIsOnEdge || i == 0)	ctx.moveTo(p1[0], p1[1]);
-                else 						ctx.lineTo(p1[0], p1[1]);
-                lastX = p1[0], lastY = p1[1];
+            var p1 = [coords[i][0], coords[i][1]];
+            if(!flagPixels) p1 = [p1[0] * gmx.mInPixel, p1[1] * gmx.mInPixel];
+            var p2 = [(0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0];
+            //var p2 = [(0.5 + p1[0] - px), (0.5 + py - p1[1])];
+
+            if(lastX !== p2[0] || lastY !== p2[1]) {
+                lastX = p2[0], lastY = p2[1];
+                ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](p2[0], p2[1]);
+                if(!flagPixels) {
+                    pixels.push(p1);
+                    if(lineIsOnEdge) hidden.push(cnt);
+                }
+                cnt++;
             }
         }
+        if(cnt === 1) ctx.lineTo(lastX + 1, lastY);
         ctx.stroke();
+        return flagPixels ? null : { coords: pixels, hidden: hidden };
 	}
 	,
-	'polygonToCanvasFill': function(attr) {				// Полигон в canvas
-		var gmx = attr['gmx'];
-		var coords = attr['coords'];
-		var hiddenLines = attr['hiddenLines'] || [];
-		var bgImage = attr['bgImage'];
-		var ctx = attr['ctx'];
-		var style = attr['style'];
+	'polygonToCanvasFill': function(attr) {				// Polygon fill
+        if(attr.coords.length < 3) return;
+		var gmx = attr.gmx,
+            flagPixels = attr.flagPixels || false,
+            coords = attr.coords,
+            px = attr.tpx,
+            py = attr.tpy,
+            ctx = attr.ctx;
 
-		var mInPixel = gmx['mInPixel'];
-		var tpx = attr['tpx'];
-		var tpy = attr['tpy'];
-		var toPixels = function(p) {				// получить координату в px
-			var px1 = p[0] * mInPixel - tpx; 	px1 = (0.5 + px1) << 0;
-			var py1 = tpy - p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
-			return [px1, py1];
-		}
-
-        ctx.beginPath();
-        if(bgImage) {
-            var pattern = ctx.createPattern(bgImage, "no-repeat");
+        if(attr.bgImage) {
+            var pattern = ctx.createPattern(attr.bgImage, "no-repeat");
             ctx.fillStyle = pattern;
         }
+        ctx.lineWidth = 0;
+        ctx.beginPath();
         for (var i = 0, len = coords.length; i < len; i++) {
-            var p1 = toPixels(coords[i]);
-            if(i == 0)	ctx.moveTo(p1[0], p1[1]);
-            else		ctx.lineTo(p1[0], p1[1]);
+            var p1 = flagPixels ? coords[i] : [coords[i][0] * gmx.mInPixel, coords[i][1] * gmx.mInPixel];
+            ctx[(i == 0 ? 'moveTo' : 'lineTo')]((0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0);
         }
         ctx.fill();
+	}
+    ,
+    'labelCanvasContext': null 			// 2dContext canvas для определения размера Label
+    ,
+    'getLabelSize': function(txt, style)	{			// Получить размер Label
+        var out = [0, 0];
+        if(style) {
+            if(!gmxAPIutils.labelCanvasContext) {
+                var canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 512;
+                gmxAPIutils.labelCanvasContext = canvas.getContext('2d');
+            }
+            var ptx = gmxAPIutils.labelCanvasContext;
+            ptx.clearRect(0, 0, 512, 512);
+            
+            var size = style.size || 12;
+            ptx.font = size + 'px "Arial"';
+            ptx.strokeStyle = style.strokeStyle || 'rgba(0, 0, 255, 1)';
+            ptx.fillStyle = style.fillStyle || 'rgba(0, 0, 255, 1)';
+            ptx.fillText(txt, 0, 0);
+            
+            out = [ptx.measureText(txt).width, size + 2];
+        }
+        return out;
+    }
+	,
+	'setLabel': function(txt, attr, parsedStyleKeys) {				// Label в canvas
+		var gmx = attr.gmx,
+            size = attr.size || 12,
+            ctx = attr.ctx;
+
+        ctx.font = size + 'px "Arial"';
+        ctx.strokeStyle = parsedStyleKeys.strokeStyle || 'rgba(0, 0, 255, 1)';
+		ctx.shadowColor = ctx.strokeStyle;
+        ctx.fillStyle = parsedStyleKeys.fillStyle || 'rgba(0, 0, 255, 1)';
+		if(ctx.shadowBlur != 4) ctx.shadowBlur = 4;
+        
+        var p1 = gmxAPIutils.toPixels(attr.coords, attr.tpx, attr.tpy, gmx.mInPixel);
+		var extentLabel = parsedStyleKeys.extentLabel;
+        ctx.strokeText(txt, p1[0] - extentLabel[0]/2, p1[1]);
+        ctx.fillText(txt, p1[0] - extentLabel[0]/2, p1[1]);
+        //console.log('setLabel', attr, parsedStyleKeys);
 	}
 	,'worldWidthMerc': 20037508
 	,'r_major': 6378137.000
@@ -579,7 +625,7 @@
 				y4 = p[1];
 			}
 		});
-		return {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'x3': x3, 'y3': y3, 'x4': x4, 'y4': y4};
+		return {x1: x1, y1: y1, x2: x2, y2: y2, x3: x3, y3: y3, x4: x4, y4: y4};
 	}
     ,
     'isPointInPolygonArr': function(chkPoint, poly)	{			// Проверка точки на принадлежность полигону в виде массива
@@ -605,11 +651,11 @@
     'chkPointInPolyLine': function(chkPoint, lineHeight, coords) {	// Проверка точки(с учетом размеров) на принадлежность линии
         lineHeight *= lineHeight;
         
-        var chkPoint = { 'x': chkPoint[0], 'y': chkPoint[1] };
-        var p1 = { 'x': coords[0][0], 'y': coords[0][1] };
+        var chkPoint = { x: chkPoint[0], y: chkPoint[1] };
+        var p1 = { x: coords[0][0], y: coords[0][1] };
         for (var i = 1, len = coords.length; i < len; i++)
         {
-            var p2 = { 'x': coords[i][0], 'y': coords[i][1] };
+            var p2 = { x: coords[i][0], y: coords[i][1] };
             var sqDist = L.LineUtil._sqClosestPointOnSegment(chkPoint, p1, p2, true);
             if(sqDist < lineHeight) return true;
             p1 = p2;
