@@ -332,7 +332,8 @@
     }
 
     this.loadTiles = function(gmxTilePoint) {
-        var bounds = getStyleBounds(gmxTilePoint);
+        var bounds = getStyleBounds(gmxTilePoint),
+        _this = this;
 
         for (var key in activeTileKeys) (function(tile) {
         
@@ -342,8 +343,9 @@
                 tile.load().done(function() {
                     gmx.attr.itemCount += _updateItemsFromTile(tile);
                     for (var key in subscriptions) {
-                        if (tile.bounds.intersects(subscriptions[key].styleBounds)) {
-                        // if (tile.isIntersects(subscriptions[key].tilePoint)) {
+                        if (tile.bounds.intersects(subscriptions[key].styleBounds)
+                            && _this.getNotLoadedTileCount(subscriptions[key].tilePoint) == 0) 
+                        {
                             subscriptions[key].callback();
                         }
                     }
@@ -353,7 +355,7 @@
     }
     
     //'callback' will be called at least once:
-    // - immidiately, if all data for a given bbox is already loaded
+    // - immediately, if all data for a given bbox is already loaded
     // - after next chunk of data will be loaded
     this.on = function(gmxTilePoint, callback) {
         var id = 's'+(freeSubscrID++);

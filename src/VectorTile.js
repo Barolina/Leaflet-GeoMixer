@@ -39,7 +39,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         isCalcHiddenPoints = true;
         
 		var bounds = this.bounds;
-		var d = (bounds.max.x - bounds.min.x)/100000;
+		var d = (bounds.max.x - bounds.min.x)/10000;
 		var tbDelta = {									// границы тайла для определения onEdge отрезков
 			minX: bounds.min.x + d
 			,maxX: bounds.max.x - d

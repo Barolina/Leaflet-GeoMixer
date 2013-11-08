@@ -36,7 +36,7 @@
     }
 	,
 	'requestJSONP': function(ph) {
-        gmxAPIutils.sendCrossDomainJSONRequest(ph['url'], ph['callback'], null, ph['onError']);
+        gmxAPIutils.sendCrossDomainJSONRequest(ph.url, ph.callback, null, ph.onError);
 	}
 	,
     tileSizes: [] // Размеры тайла по zoom
@@ -112,9 +112,9 @@
 	}
 	,
 	'geoItemBounds': function(geoItem) {					// получить bounds векторного обьекта
-		var geo = geoItem['geometry'];
-		var type = geo['type'];
-		var coords = geo['coordinates'];
+		var geo = geoItem.geometry;
+		var type = geo.type;
+		var coords = geo.coordinates;
 		var arr = [];
 		var addToArr = function(pol) {
 			for (var i = 0, len = pol.length; i < len; i++)	arr.push(pol[i]);
@@ -128,7 +128,7 @@
 		} else if(type === 'MULTILINESTRING') {
 			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i]);
 		} else if(type === 'POLYGON') {
-			addToArr(coords[0]);			// дырки пропускаем
+			coords.length && addToArr(coords[0]);			// дырки пропускаем
 		} else if(type === 'MULTIPOLYGON') {
 			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i][0]);
 		}
@@ -197,36 +197,44 @@
     }
     , 
     'getPatternIcon': function(item, style) {			// получить bitmap стиля pattern
-        if(!style['pattern']) return null;
+        if (!style.pattern) return null;
 
         var notFunc = true,
-            pattern = style['pattern'],
-            prop = (item ? item['properties'] : {}),
+            pattern = style.pattern,
+            prop = (item ? item.properties : {}),
             step = (pattern.step > 0 ? pattern.step : 0),		// шаг между линиями
             patternDefaults = {					// настройки для pattern стилей
-                'min_width': 1
-                ,'max_width': 1000
-                ,'min_step': 0
-                ,'max_step': 1000
+                 minWidth: 1
+                ,maxWidth: 1000
+                ,minStep: 0
+                ,maxStep: 1000
             };
         if (pattern.patternStepFunction != null && prop != null) {
             step = pattern.patternStepFunction(prop);
             notFunc = false;
         }
-        if (step > patternDefaults['max_step']) step = patternDefaults['max_step'];
-        else if (step < patternDefaults['min_step']) step = patternDefaults['min_step'];
+        if (step > patternDefaults.maxStep) {
+            step = patternDefaults.maxStep;
+        }
+        else if (step < patternDefaults.minStep) {
+            step = patternDefaults.minStep;
+        }
         
         var size = (pattern.width > 0 ? pattern.width : 8);		// толщина линий
         if (pattern.patternWidthFunction != null && prop != null) {
             size = pattern.patternWidthFunction(prop);
             notFunc = false;
         }
-        if (size > patternDefaults['max_width']) size = patternDefaults['max_width'];
-        else if (size < patternDefaults['min_width']) size = patternDefaults['min_width'];
+        if (size > patternDefaults.maxWidth) {
+            size = patternDefaults.maxWidth;
+        }
+        else if (size < patternDefaults.minWidth) {
+            size = patternDefaults.minWidth;
+        }
 
-        var op = style['fillOpacity'];
-        if (style['opacityFunction'] != null && prop != null) {
-            op = style['opacityFunction'](prop) / 100;
+        var op = style.fillOpacity;
+        if (style.opacityFunction != null && prop != null) {
+            op = style.opacityFunction(prop) / 100;
             notFunc = false;
         }
         
@@ -236,8 +244,8 @@
         var rgb = [0xff0000, 0x00ff00, 0x0000ff];
         for (var i = 0; i < count; i++) {
             var col = arr[i];
-            if(pattern['patternColorsFunction'][i] != null) {
-                col =  (prop != null ? pattern['patternColorsFunction'][i](prop): rgb[i%3]);
+            if(pattern.patternColorsFunction[i] != null) {
+                col =  (prop != null ? pattern.patternColorsFunction[i](prop): rgb[i%3]);
                 notFunc = false;
             }
             resColors.push(col);
@@ -259,7 +267,7 @@
             radius = Math.floor(size / 2);	// радиус
             rad = 2 * Math.PI / count;		// угол в рад.
         }
-        if (ww * hh > patternDefaults['max_width']) {
+        if (ww * hh > patternDefaults.maxWidth) {
             console.log({'func': 'getPatternIcon', 'Error': 'MAX_PATTERN_SIZE', 'alert': 'Bitmap from pattern is too big'});
             return null;
         }
