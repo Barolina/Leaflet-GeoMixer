@@ -27,7 +27,7 @@
 
     var parseItem = function(style) {			// Style Scanex->leaflet
         var pt = {
-			'common': true					// true, false (true - if style without object propertie keys)
+			'common': true					// true, false (true - if style without object property keys)
 			,'MinZoom': style.MinZoom
 			,'MaxZoom': style.MaxZoom
 			,'Filter': style.Filter || null
@@ -358,6 +358,18 @@
 		}
 		return maxSize;
     }
+    
+    //is any style is visible at given zoom?
+    this.isVisibleAtZoom = function(zoom) {
+        for (var i = 0, len = styles.length; i < len; i++) {
+            var style = styles[i];
+            if (zoom >= style.MinZoom && zoom <= style.MaxZoom) {
+                return true;
+            }
+        }
+        
+        return false;
+    };
 
     initStyles();
     if(needLoadIcons < 1) this.deferred.resolve();

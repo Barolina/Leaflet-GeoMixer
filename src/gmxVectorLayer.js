@@ -235,7 +235,9 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             zoom = this._map._zoom,
             gmx = this._gmx;
 
-		if (!gmx.attr) return;
+		if (!gmx.attr || !gmx.styleManager.isVisibleAtZoom(zoom)) {
+            return;
+        }
 
 		var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var key = zoom + '_' + tilePoint.x + '_' + tilePoint.y;
