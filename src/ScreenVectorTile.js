@@ -138,7 +138,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 							chkReadyRasters();
 						}
 						,'src': url
-						,'crossOrigin': 'anonymous'
+						//,'crossOrigin': 'anonymous'
 					});
 				}
 			}

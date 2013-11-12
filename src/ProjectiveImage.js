@@ -227,7 +227,7 @@ var ProjectiveImage = function() {
 
 		// Render this patch.
 		ctx.save();
-		// Set clipping path.
+/*		// Set clipping path.
 		ctx.beginPath();
 	
 		ctx.moveTo(p1[0], p1[1]);
@@ -236,7 +236,7 @@ var ProjectiveImage = function() {
 		ctx.lineTo(p3[0], p3[1]);
 		ctx.closePath();
 		//ctx.clip();
-		
+*/		
 		// Get patch edge vectors.
 		var d12 = [p2[0] - p1[0], p2[1] - p1[1]];
 		var d24 = [p4[0] - p2[0], p4[1] - p2[1]];
@@ -254,22 +254,22 @@ var ProjectiveImage = function() {
 		// Align the transform along this corner.
 		// Calculate 1.05 pixel padding on vector basis.
 		if (amax == a1) {
-				ctx.transform(d12[0], d12[1], -d31[0], -d31[1], p1[0] + attr['deltaX'], p1[1] + attr['deltaY']);
+				ctx.setTransform(d12[0], d12[1], -d31[0], -d31[1], p1[0] + attr['deltaX'], p1[1] + attr['deltaY']);
 				if (u4 != 1) padx = 1.05 / Math.sqrt(d12[0] * d12[0] + d12[1] * d12[1]);
 				if (v4 != 1) pady = 1.05 / Math.sqrt(d31[0] * d31[0] + d31[1] * d31[1]);
 		} else if (amax == a2) {
-				ctx.transform(d12[0], d12[1],  d24[0],  d24[1], p2[0] + attr['deltaX'], p2[1] + attr['deltaY']);
+				ctx.setTransform(d12[0], d12[1],  d24[0],  d24[1], p2[0] + attr['deltaX'], p2[1] + attr['deltaY']);
 				if (u4 != 1) padx = 1.05 / Math.sqrt(d12[0] * d12[0] + d12[1] * d12[1]);
 				if (v4 != 1) pady = 1.05 / Math.sqrt(d24[0] * d24[0] + d24[1] * d24[1]);
 				dx = -1;
 		} else if (amax == a4) {
-				ctx.transform(-d43[0], -d43[1], d24[0], d24[1], p4[0] + attr['deltaX'], p4[1] + attr['deltaY']);
+				ctx.setTransform(-d43[0], -d43[1], d24[0], d24[1], p4[0] + attr['deltaX'], p4[1] + attr['deltaY']);
 				if (u4 != 1) padx = 1.05 / Math.sqrt(d43[0] * d43[0] + d43[1] * d43[1]);
 				if (v4 != 1) pady = 1.05 / Math.sqrt(d24[0] * d24[0] + d24[1] * d24[1]);
 				dx = -1;
 				dy = -1;
 		} else if (amax == a3) {
-				ctx.transform(-d43[0], -d43[1], -d31[0], -d31[1], p3[0] + attr['deltaX'], p3[1] + attr['deltaY']);
+				ctx.setTransform(-d43[0], -d43[1], -d31[0], -d31[1], p3[0] + attr['deltaX'], p3[1] + attr['deltaY']);
 				if (u4 != 1) padx = 1.05 / Math.sqrt(d43[0] * d43[0] + d43[1] * d43[1]);
 				if (v4 != 1) pady = 1.05 / Math.sqrt(d31[0] * d31[0] + d31[1] * d31[1]);
 				dy = -1;
