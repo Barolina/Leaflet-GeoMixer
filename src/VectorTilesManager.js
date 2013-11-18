@@ -251,7 +251,7 @@
         beginDate = newBeginDate;
         endDate = newEndDate;
     }
-    
+
     this.setFilter = function(filterName, filterFunc) {
         
         filters[filterName] = filterFunc;
@@ -381,7 +381,6 @@
                         }
                     }
 					var treeNode = tilesTree.getNode(tile.d, tile.s);
-					console.log(treeNode);
 					treeNode && treeNode.count--; //decrease number of tiles to load inside this node
                 })
             }
@@ -432,14 +431,32 @@
         }
     }
 	
-	// this.preloadTiles = function(bounds, dateBegin, dateEnd) {
-		// for (var key in tiles) {
-			// var tile = tiles[key].tile;
-			// if (bounds && !bounds.intersects(tile.bounds)) {
-				// continue;
-			// }
-		// }
-	// }
+	this.preloadTiles = function(dateBegin, dateEnd, bounds) {
+		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd);
+		var loadingDefs = [];
+		for (var key in tileKeys) {
+			var tile = tiles[key].tile;
+			
+			if (tile.state !== 'notLoaded') {
+				continue;
+			}
+			
+			if (bounds && !bounds.intersects(tile.bounds)) {
+				continue;
+			}
+			
+			var loadDef = tile.load();
+			(function(tile) {
+				loadDef.done(function() {
+					gmx.attr.itemCount += _updateItemsFromTile(tile);
+				})
+			})(tile);
+			loadingDefs.push(loadDef);
+		}
+	
+		return gmxDeferred.all.apply(null, loadingDefs);
+		
+	}
     
     if (isTemporalLayer) {
         this.setFilter('TemporalFilter', function(item) {
