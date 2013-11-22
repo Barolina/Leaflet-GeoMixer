@@ -191,10 +191,14 @@
 					  "&v=" + v +
 					  (d !== -1 ? "&Level=" + d + "&Span=" + s : "");
 			gmxAPIutils.requestJSONP({
-                'url': url
-                ,'callback': function(st) {
+                url: url,
+                callback: function(st) {
                     callback(st.Result);
-                }
+                },
+				onError: function() {
+					console.log('Error loading vector tile');
+					callback([]);
+				}
             });
 		}
 	}

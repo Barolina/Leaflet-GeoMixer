@@ -61,25 +61,25 @@
             ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
         
 		var dateBegin = new Date(2013, 10, 1);
-		var dateEnd = new Date(2013, 10, 11);
+		var dateEnd = new Date(2013, 10, 21);
 		
         L.gmx.loadLayer('AZR6A', 'C13B4D9706F7491EBC6DC70DFFA988C0', {
             apiKey: 'U92596WMIH',
             beginDate: new Date(dateEnd.valueOf() - oneDay),
             endDate: dateEnd
-        }).done(function(hotspotLayer)
-		{
-			hotspotLayer._gmx.vectorTilesManager.preloadTiles(dateBegin, dateEnd)
-			hotspotLayer.addTo(map);
-			$('#slider').slider({
-				min: dateBegin.valueOf(),
-				max: dateEnd.valueOf(),
-				step: oneDay,
-				value: dateEnd.valueOf(),
-				slide: function(event, ui) {
-					hotspotLayer.setDateInterval(new Date(ui.value - oneDay), new Date(ui.value));
-				}
-			});
+        }).done(function(hotspotLayer) {
+			hotspotLayer._gmx.vectorTilesManager.preloadTiles(dateBegin, dateEnd).done(function() {
+				hotspotLayer.addTo(map);
+				$('#slider').slider({
+					min: dateBegin.valueOf() + oneDay,
+					max: dateEnd.valueOf(),
+					step: oneDay,
+					value: dateEnd.valueOf(),
+					slide: function(event, ui) {
+						hotspotLayer.setDateInterval(new Date(ui.value - oneDay), new Date(ui.value));
+					}
+				});
+			})
         })
 	</script>
 </body>
