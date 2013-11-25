@@ -453,6 +453,8 @@
 			(function(tile) {
 				loadDef.done(function() {
 					gmx.attr.itemCount += _updateItemsFromTile(tile);
+					var treeNode = tilesTree.getNode(tile.d, tile.s);
+					treeNode && treeNode.count--; //decrease number of tiles to load inside this node
 				})
 			})(tile);
 			loadingDefs.push(loadDef);

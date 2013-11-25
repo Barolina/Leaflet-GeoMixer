@@ -22,6 +22,10 @@
 		#slider {
 			width: 300px;
 		}
+		#timeInfo {
+			text-align: center;
+			padding-top: 12px;
+		}
     </style>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -34,6 +38,7 @@
 <body>
 	<div id="controls">
 		<div id="slider"></div>
+		<div id="timeInfo">Loading data...</div>
 	</div>
 
 	<div id="map" style="width: 100%; height: 100%"></div>
@@ -53,29 +58,33 @@
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
 		}).addTo(map);
 		
-		// var startDate = new Date('2013/03/21');
-		var startDate = new Date('2013/11/17');
+		var updateInfo = function(currentDate) {
+			var zz = function(x) { return x < 10 ? "0" + x : x}
+			var dateStr = zz(currentDate.getUTCDate()) + '.' + zz(currentDate.getUTCMonth() + 1) + '.' + zz(currentDate.getUTCFullYear());
+			document.getElementById('timeInfo').innerHTML = dateStr;
+		}
+		
+		var startDate = new Date('2013/11/01');
 		var oneDay = 1000*60*60*24,	// milliseconds in one day
             now = startDate.getTime(),
-            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
-            ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
-        
-		var dateBegin = new Date(2013, 10, 1);
-		var dateEnd = new Date(2013, 10, 21);
+            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the UTC day
+            ddt2 = new Date(ddt1.getTime() + 20*oneDay);
 		
         L.gmx.loadLayer('AZR6A', 'C13B4D9706F7491EBC6DC70DFFA988C0', {
             apiKey: 'U92596WMIH',
-            beginDate: new Date(dateEnd.valueOf() - oneDay),
-            endDate: dateEnd
+            beginDate: new Date(ddt2.valueOf() - oneDay),
+            endDate: ddt2
         }).done(function(hotspotLayer) {
-			hotspotLayer._gmx.vectorTilesManager.preloadTiles(dateBegin, dateEnd).done(function() {
+			hotspotLayer._gmx.vectorTilesManager.preloadTiles(ddt1, ddt2).done(function() {
+				updateInfo(new Date(ddt2.valueOf() - oneDay));
 				hotspotLayer.addTo(map);
 				$('#slider').slider({
-					min: dateBegin.valueOf() + oneDay,
-					max: dateEnd.valueOf(),
+					min: ddt1.valueOf() + oneDay,
+					max: ddt2.valueOf(),
 					step: oneDay,
-					value: dateEnd.valueOf(),
+					value: ddt2.valueOf(),
 					slide: function(event, ui) {
+						updateInfo(new Date(ui.value - oneDay));
 						hotspotLayer.setDateInterval(new Date(ui.value - oneDay), new Date(ui.value));
 					}
 				});
