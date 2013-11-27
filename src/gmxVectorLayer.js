@@ -137,6 +137,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             
         var drawNextTile = function() {
             if (!queue.length) {
+				_this.fire('doneDraw');
                 return;
             }
             
@@ -149,7 +150,11 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             
         queue.push({gtp: gtp, tp: tilePoint, z: zoom, key: key});
         this._drawQueueHash[key] = true;
-        isEmpty && setTimeout(drawNextTile, 0);
+		if (isEmpty) {
+			this.fire('startDraw');
+			setTimeout(drawNextTile, 0);
+		}
+		
     },
 	
 	_updateShiftY: function() {
@@ -357,7 +362,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 			res.ZeroUT = res.ZeroDate.getTime() / 1000;
 		}
         
-        
 		res.tileCount = cnt;
 		res.layerType = type;						// VectorTemporal Vector
 		res.identityField = prop.identityField;	// ogc_fid
@@ -497,8 +501,6 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 					+'&x=' + x
 					+'&y=' + y
 					+'&z=' + z
-					//+'&idr=' + idr
-					//+'&LayerName=' + gmx.layerName
 					+'&LayerName=' + properties.GMX_RasterCatalogID
 					+'&MapName=' + gmx.mapName
 					+'&key=' + encodeURIComponent(gmx.sessionKey);

@@ -51,6 +51,15 @@
 	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 	
 	<script>
+		var bindDrawAnalyzer = function(name, layer) {
+			var startTime;
+			layer.on('startDraw', function() {
+				startTime = new Date();
+			})
+			layer.on('doneDraw', function() {
+				console.log(name, new Date() - startTime);
+			})
+		}
 
 		var map = L.map('map').setView([0, 0], 2);
 
@@ -76,6 +85,7 @@
             beginDate: new Date(ddt2.valueOf() - oneDay),
             endDate: ddt2
         }).done(function(hotspotLayer) {
+			bindDrawAnalyzer('hotspots', hotspotLayer);
 			hotspotLayer._gmx.vectorTilesManager.preloadTiles(ddt1, ddt2).done(function() {
 				updateInfo(new Date(ddt2.valueOf() - oneDay));
 				hotspotLayer.addTo(map);
