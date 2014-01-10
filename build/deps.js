@@ -12,7 +12,8 @@
     "MapManager.js",
     "gmxVectorLayer.js",
     "gmxRasterLayer.js",
-    "gmxLayerFactory.js"
+    "gmxLayerFactory.js",
+    "gmxWebGLLayer.js"
 ];
 
 if (typeof exports !== 'undefined') {

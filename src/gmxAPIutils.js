@@ -672,6 +672,162 @@
         }
         return false;
     }
+    ,
+    getWebGL: function(att) {	// Проверка поддержки клиентом WebGL
+        var attributes = {
+            alpha: true,
+            premultipliedAlpha: true,
+            antialias: true,
+            stencil: true,
+            preserveDrawingBuffer: true
+        };
+        if(att.canvas) attributes.canvas = att.canvas;
+        if('alpha' in att) attributes.alpha = att.alpha;
+        if('premultipliedAlpha' in att) attributes.premultipliedAlpha = att.premultipliedAlpha;
+        if('antialias' in att) attributes.antialias = att.antialias;
+        if('stencil' in att) attributes.stencil = att.stencil;
+        if('preserveDrawingBuffer' in att) attributes.preserveDrawingBuffer = att.preserveDrawingBuffer;
+        var _canvas = attributes.canvas !== undefined ? attributes.canvas : document.createElement( 'canvas' ),
+            _gl = null,
+            out = null;
+        try {
+            _gl = _canvas.getContext( 'webgl', attributes ) || _canvas.getContext( 'experimental-webgl', attributes );
+            if ( _gl === null ) {
+                //throw 'Error creating WebGL context.';
+                return null;
+            }
+        } catch ( error ) {
+            console.error( error );
+            return null;
+        }
+        /**
+         * Provides requestAnimationFrame in a cross browser way.
+         */
+        window.requestAnimFrame = (function() {
+          return window.requestAnimationFrame ||
+                 window.webkitRequestAnimationFrame ||
+                 window.mozRequestAnimationFrame ||
+                 window.oRequestAnimationFrame ||
+                 window.msRequestAnimationFrame ||
+                 function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+                   window.setTimeout(callback, 1000/60);
+                 };
+        })();
+        
+        out = {
+            _gl: _gl
+            ,_glExtensionTextureFloat: _gl.getExtension( 'OES_texture_float' )
+            ,_glExtensionTextureFloatLinear: _gl.getExtension( 'OES_texture_float_linear' )
+            ,_glExtensionStandardDerivatives: _gl.getExtension( 'OES_standard_derivatives' )
+            ,_glExtensionTextureFilterAnisotropic: _gl.getExtension( 'EXT_texture_filter_anisotropic' ) || _gl.getExtension( 'MOZ_EXT_texture_filter_anisotropic' ) || _gl.getExtension( 'WEBKIT_EXT_texture_filter_anisotropic' )
+            ,_glExtensionCompressedTextureS3TC: _gl.getExtension( 'WEBGL_compressed_texture_s3tc' ) || _gl.getExtension( 'MOZ_WEBGL_compressed_texture_s3tc' ) || _gl.getExtension( 'WEBKIT_WEBGL_compressed_texture_s3tc' )
+
+            ,shaders: {
+                fragment: {
+                    polygon: '\
+                        precision mediump float;\
+                        varying vec2 vTextureCoord;\
+                        uniform sampler2D uSampler;\
+                        void main(void) {\
+                            gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));\
+                        }'
+                    ,icon: '\
+                        precision mediump float;\
+                        uniform sampler2D u_image;\
+                        varying vec2 v_texCoord;\
+                        void main() {\
+                            gl_FragColor = texture2D(u_image, v_texCoord);\
+                        }'
+                }
+                ,vert: {
+                    polygon: '\
+                        attribute vec3 aVertexPosition;\
+                        attribute vec2 aTextureCoord;\
+                        uniform mat4 uMVMatrix;\
+                        uniform mat4 uPMatrix;\
+                        varying vec2 vTextureCoord;\
+                        void main(void) {\
+                            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\
+                            vTextureCoord = aTextureCoord;\
+                        }'
+                    ,icon1: '\
+                        attribute vec2 a_position;\
+                        attribute vec2 a_texCoord;\
+                        uniform vec2 u_resolution;\
+                        varying vec2 v_texCoord;\
+                        void main() {\
+                            vec2 zeroToOne = a_position / u_resolution;\
+                            vec2 zeroToTwo = zeroToOne * 2.0;\
+                            vec2 clipSpace = zeroToTwo - 1.0;\
+                            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);\
+                            v_texCoord = a_texCoord;\
+                        }'
+                    ,icon: 'attribute vec2 a_position;'
+                        + 'attribute vec2 a_texCoord;'
+                        + 'uniform float u_mInPixel;'
+                        + 'uniform vec2 u_imageSize;'
+                        + 'uniform vec2 u_shift;'
+                        + 'uniform vec2 u_resolution;'
+                        //+ 'uniform vec2 u_leftTop;'
+                        + 'varying vec2 v_texCoord;'
+                        + 'void main() {'
++ 'vec2 zero1 = a_position * u_mInPixel;'
++ 'vec2 zero2 = vec2(u_shift.x + zero1.x, u_shift.y + zero1.y);'
+//+ 'vec2 zero2 = vec2(u_resolution.x - (u_center.x - u_leftTop.x - zero1.x), 200.0 + u_resolution.y - (u_center.y - u_leftTop.y - zero1.y));'
+//+ 'vec2 zero2 = vec2(u_resolution.x - u_imageSize.x - (u_center.x - u_leftTop.x - zero1.x), u_resolution.y - u_imageSize.y - (u_center.y - u_leftTop.y - zero1.y));'
+//+ 'vec2 zero3 = vec2(u_resolution.x / 2.0 - zero2.x, u_resolution.y / 2.0 - zero1.y);'
+//+ 'vec2 zero3 = vec2(zero2.x + u_resolution.x / 2.0 - u_sw.x, zero2.y + u_resolution.y / 2.0 - u_sw.y);'
++ 'vec2 zero4 = zero2 / u_resolution;'
++ 'vec2 zero5 = zero4 * 2.0;'
++ 'vec2 clipSpace = zero5 - 1.0;'
++ 'gl_Position = vec4(clipSpace * vec2(1, 1), 0, 1);'
++ 'v_texCoord = a_texCoord;'
++ '}'
+                            //vec2 zero2 = vec2(zero1.x + u_nw.x + u_resolution.x / 2.0, -zero1.y - u_nw.y + u_resolution.y / 2.0);\
+                            //vec2 zero2 = vec2(zero1.x + 200.0, -u_resolution.y + zero1.y - 0.0);\
+                            //vec2 zero3 = zero2 - u_sw;\
+                            //vec2 zero2 = zero1 / u_resolution;\
+                            //vec2 zeroToOne = vec2(a_position.x, a_position.y) * u_mInPixel;\
+                            //vec2 clipSpace1 = clipSpace - 1.0;\
+                }
+            }
+            ,getShader: function(type, id) {
+                var shader = _gl.createShader(type === 'vert' ? _gl.VERTEX_SHADER : _gl.FRAGMENT_SHADER);
+
+                _gl.shaderSource(shader, out.shaders[type][id]);
+                _gl.compileShader(shader);
+
+                if (!_gl.getShaderParameter(shader, _gl.COMPILE_STATUS)) {
+                    console.log(_gl.getShaderInfoLog(shader));
+                    return null;
+                }
+
+                return shader;
+            }
+        };
+        if ( ! out._glExtensionTextureFloat ) {
+            console.log( 'WebGLRenderer: Float textures not supported.' );
+        }
+        if ( ! out._glExtensionStandardDerivatives ) {
+            console.log( 'WebGLRenderer: Standard derivatives not supported.' );
+        }
+        if ( ! out._glExtensionTextureFilterAnisotropic ) {
+            console.log( 'WebGLRenderer: Anisotropic texture filtering not supported.' );
+        }
+        if ( ! out._glExtensionCompressedTextureS3TC ) {
+            console.log( 'WebGLRenderer: S3TC compressed textures not supported.' );
+        }
+        if ( out._gl.getShaderPrecisionFormat === undefined ) {
+            out._gl.getShaderPrecisionFormat = function() {
+                return {
+                    "rangeMin"  : 1,
+                    "rangeMax"  : 1,
+                    "precision" : 1
+                };
+            }
+        }
+        return out;
+    }
 }
 
 !function() {
