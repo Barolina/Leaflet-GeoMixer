@@ -49,7 +49,7 @@
 	<div id="map" style="width: 100%; height: 100%"></div>
  
 	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet-src.js"></script>
-	<script src="../dist/leaflet-geomixer-src.js"></script>
+	<script src="../dist/leaflet-geomixer-src.js?key=U92596WMIH"></script>
 	<script>
 	
 		var bindDrawAnalyzer = function(name, layer) {
@@ -83,26 +83,17 @@
         
         updateInfo(ddt1);
 
-		//Satellite
-        var satelliteDef = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'C9458F2DCB754CEEACC54216C7D1EB0A', {
-            apiKey: 'U92596WMIH'
-        });
-		//Hybrid_world
-        var hybridDef = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'FFE60CFA7DAF498381F811C08A5E8CF5', {
-            apiKey: 'U92596WMIH'
-        });
-		//regions
-        var regionsLayerDef = L.gmx.loadLayer('AZR6A', '8D1EC3B3443C46A5A402DD096B5C7142', {
-            apiKey: 'U92596WMIH'
-        });
+        var satelliteDef = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'C9458F2DCB754CEEACC54216C7D1EB0A');
+        var labelsDef    = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'FFE60CFA7DAF498381F811C08A5E8CF5');
 
-        var modisLayerDef = L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
-            apiKey: 'U92596WMIH',
+        var regionsLayerDef = L.gmx.loadLayer('AZR6A', '8D1EC3B3443C46A5A402DD096B5C7142');
+        var modisLayerDef   = L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
             beginDate: ddt1,
             endDate: ddt2
         });
         
-        L.gmx.Deferred.all(satelliteDef, hybridDef, modisLayerDef, regionsLayerDef).done(function(satellite, hybrid, modisLayer, regionsLayer) {
+        
+        L.gmx.Deferred.all(satelliteDef, labelsDef, modisLayerDef, regionsLayerDef).done(function(satellite, labels, modisLayer, regionsLayer) {
 			bindDrawAnalyzer('regions', regionsLayer);
 			bindDrawAnalyzer('modis', modisLayer);
             satellite.addTo(map);
@@ -113,7 +104,7 @@
             }, {
                 MODIS: modisLayer,
                 Regions: regionsLayer,
-                Hybrid: hybrid
+                Labels: labels
            }, {collapsed: false}).addTo(map);
             
             //controls

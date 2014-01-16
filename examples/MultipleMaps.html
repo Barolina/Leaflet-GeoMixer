@@ -8,8 +8,15 @@
             height: 100%;
             margin: 0px;
         }
-        #map1, #map2 {
-            border: solid 1px;
+        table, #map1, #map2 {
+            width: 100%;
+            height: 100%;
+        }
+        td {
+            border: 1px solid black;
+        }
+        table {
+            border-collapse: collapse;
         }
     </style>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,11 +25,13 @@
 	<!--[if lte IE 8]><link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.ie.css" /><![endif]-->
 </head>
 <body>
-	<div id="map1" style="width: 49%; height: 99%; float: left"></div>
-    <div id="map2" style="width: 49%; height: 99%"></div>
- 
+    <table><tr>
+        <td><div id="map1"></div></td>
+        <td><div id="map2"></div></td>
+    </tr></table>
+
 	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
-	<script src="../dist/leaflet-geomixer-src.js"></script>
+	<script src="../dist/leaflet-geomixer-src.js?key=U92596WMIH"></script>
 	<script>
         var initMap = function(divID) {
             var map = L.map(divID).setView([55, 44], 3);
@@ -38,7 +47,6 @@
                 ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
 
             L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
-                apiKey: 'U92596WMIH',
                 beginDate: ddt1,
                 endDate: ddt2
             }).done(function(modisLayer) {

@@ -10,14 +10,14 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         this._drawQueueHash = {};
         
         this._gmx = {
-            hostName: options.hostName || 'maps.kosmosnimki.ru'
-            ,mapName: options.mapName
-            ,layerName: options.layerName
-            ,beginDate: options.beginDate
-            ,endDate: options.endDate
-            ,sortItems: options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); }
-            ,styles: options.styles || []
-            ,tileSubscriptions: []
+            hostName: options.hostName || 'maps.kosmosnimki.ru',
+            mapName: options.mapName,
+            layerName: options.layerName,
+            beginDate: options.beginDate,
+            endDate: options.endDate,
+            sortItems: options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); },
+            styles: options.styles || [],
+            tileSubscriptions: []
         };
 
         this.on('tileunload', function(e) {

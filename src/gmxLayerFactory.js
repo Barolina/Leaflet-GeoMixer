@@ -15,29 +15,27 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
         layerParams[p] = params[p];
     }
     
-    
     var hostName = params.hostName || 'maps.kosmosnimki.ru';
     
     gmxMapManager.getMap(hostName, params.apiKey, mapName).done(
         function() {
-            var ph = gmxMapManager.findLayerInfo(hostName, mapName, layerName);
+            var layerInfo = gmxMapManager.findLayerInfo(hostName, mapName, layerName),
+                layer;
             
-            var layer;
-            
-            if (ph.properties.type === 'Vector') {
+            if (layerInfo.properties.type === 'Vector') {
                 layer = new L.TileLayer.gmxVectorLayer(layerParams);
             } else {
                 layer = new L.TileLayer.gmxRasterLayer(layerParams);
             }
             
-			layer.initFromDescription(ph);
+			layer.initFromDescription(layerInfo);
             layer.initPromise.done(function() {
                 promise.resolve(layer);
             })
             
         },
-        function(ph) {
-            console.error('Error: ' + mapName + ' - ' + ph.error);
+        function(response) {
+            throw "Can't load layer" + layerName + " form map " + mapName + ": " + response.error;
         }
     );
 
