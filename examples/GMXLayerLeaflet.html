@@ -82,22 +82,22 @@
 		}
         
         updateInfo(ddt1);
-
-        var satelliteDef = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'C9458F2DCB754CEEACC54216C7D1EB0A');
-        var labelsDef    = L.gmx.loadLayer('1D30C72D02914C5FB90D1D448159CAB6', 'FFE60CFA7DAF498381F811C08A5E8CF5');
-
-        var regionsLayerDef = L.gmx.loadLayer('AZR6A', '8D1EC3B3443C46A5A402DD096B5C7142');
-        var modisLayerDef   = L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
-            beginDate: ddt1,
-            endDate: ddt2
-        });
         
-        
-        L.gmx.Deferred.all(satelliteDef, labelsDef, modisLayerDef, regionsLayerDef).done(function(satellite, labels, modisLayer, regionsLayer) {
+        L.gmx.loadLayers([
+            {map: '1D30C72D02914C5FB90D1D448159CAB6', layer: 'C9458F2DCB754CEEACC54216C7D1EB0A'},
+            {map: '1D30C72D02914C5FB90D1D448159CAB6', layer: 'BCCCE2BDC9BF417DACF27BB4D481FAD9'},
+            {map: 'AZR6A',                            layer: '8D1EC3B3443C46A5A402DD096B5C7142'},
+            {map: 'AZR6A',                            layer: 'EB271FC4D2AD425A9BAA78ADEA041AB9'}
+        ]).done(function(satellite, labels, regionsLayer, modisLayer) {
 			bindDrawAnalyzer('regions', regionsLayer);
 			bindDrawAnalyzer('modis', modisLayer);
+
+            modisLayer.setDateInterval(ddt1, ddt2);
+            
             satellite.addTo(map);
             modisLayer.addTo(map);
+            
+            
             L.control.layers({
                 OSM: osm,
                 Satellite: satellite

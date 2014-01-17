@@ -280,7 +280,6 @@
 			for (var j = 0, len1 = data.length; j < len1; j++) {
                 
 				var it = data[j];
-				//var item = items[it.id];
 				var item = it.item;
                 var isFiltered = false;
                 for (var filterName in filters) {

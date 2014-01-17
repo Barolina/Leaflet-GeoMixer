@@ -41,3 +41,12 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
 
     return promise;
 }
+
+L.gmx.loadLayers = function(layers, globalParams) {
+    var defs = layers.map(function(layerInfo) {
+        var params = L.extend({}, params, layerInfo.params);
+        return L.gmx.loadLayer(layerInfo.map, layerInfo.layer, params)
+    });
+    
+    return gmxDeferred.all.apply(null, defs);
+}
