@@ -9,15 +9,19 @@ var gmxMapManager = {
             maps[serverHost][mapName] = def;
             
             gmxSessionManager.requestSessionKey(serverHost, apiKey).done(function(sessionKey) {
-                gmxAPIutils.requestJSONP({
-                    url: "http://" + serverHost + "/TileSender.ashx?WrapStyle=func&key=" + encodeURIComponent(sessionKey) + "&MapName=" + mapName + '&ModeKey=map',
-                    callback: function(json) {
-                        //var json = JSON.parse(st);
-                        if (json && json.Status === 'ok' && json.Result) {
-                            def.resolve(json.Result);
-                        } else {
-                            def.reject(json);
-                        }
+                gmxAPIutils.requestJSONP(
+                    "http://" + serverHost + "/TileSender.ashx", 
+                    {
+                        WrapStyle: 'func',
+                        key: sessionKey,
+                        MapName: mapName,
+                        ModeKey: 'map'
+                    }
+                ).done(function(json) {
+                    if (json && json.Status === 'ok' && json.Result) {
+                        def.resolve(json.Result);
+                    } else {
+                        def.reject(json);
                     }
                 });
             })

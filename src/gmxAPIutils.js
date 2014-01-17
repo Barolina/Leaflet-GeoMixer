@@ -1,46 +1,57 @@
 ﻿var gmxAPIutils = {
-	lastMapId: 0
-	,
+	lastMapId: 0,
+    
 	newMapId: function()
 	{
 		gmxAPIutils.lastMapId += 1;
 		return "random_" + gmxAPIutils.lastMapId;
-	}
-	,
+	},
+    
 	uniqueGlobalName: function(thing)
 	{
 		var id = gmxAPIutils.newMapId();
 		window[id] = thing;
 		return id;
-	}
-	,
-	'sendCrossDomainJSONRequest': function(url, callback, callbackParamName, callbackError) {
+	},
+    
+    /** Sends JSONP requests 
+      @return {gmxDeferred} Defered with server JSON resonse or error status
+    */
+	requestJSONP: function(url, params, callbackParamName) {
+        var def = new gmxDeferred();
         callbackParamName = callbackParamName || 'CallbackName';
         
         var script = document.createElement("script");
         script.setAttribute("charset", "UTF-8");
         var callbackName = gmxAPIutils.uniqueGlobalName(function(obj)
         {
-            callback && callback(obj);
-            window[callbackName] = false;
+            delete window[callbackName];
             document.getElementsByTagName("head").item(0).removeChild(script);
+            def.resolve(obj);
         });
+        var urlParams = L.extend({}, params);
+        urlParams[callbackParamName] = callbackName;
+        
+        var paramsStringItems = [];
+        
+        for (var p in urlParams) {
+            paramsStringItems.push(p + '=' + encodeURIComponent(urlParams[p]));
+        }
         
         var sepSym = url.indexOf('?') == -1 ? '?' : '&';
         
-        script.setAttribute("src", url + sepSym + callbackParamName + "=" + callbackName);
-        if(callbackError) script.onerror = function(e) {
-            callbackError(e);
+        script.onerror = function(e) {
+            def.reject(e);
         };
+        
+        script.setAttribute("src", url + sepSym + paramsStringItems.join('&'));
         document.getElementsByTagName("head").item(0).appendChild(script);
-    }
-	,
-	'requestJSONP': function(ph) {
-        gmxAPIutils.sendCrossDomainJSONRequest(ph.url, ph.callback, null, ph.onError);
-	}
-	,
+        return def;
+    },
+    
     tileSizes: [] // Размеры тайла по zoom
 	,
+    
     getTileNumFromLeaflet: function (tilePoint, zoom) {
 		var pz = Math.pow(2, zoom);
 		var tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0);
@@ -51,9 +62,9 @@
 			,'y': pz/2 - 1 - ty % pz
 		};
 		return gmxTilePoint;
-	}
-	,
-	'getTilePosZoomDelta': function(tilePoint, zoomFrom, zoomTo) {		// получить смещение тайла на меньшем zoom
+	},
+    
+	getTilePosZoomDelta: function(tilePoint, zoomFrom, zoomTo) {		// получить смещение тайла на меньшем zoom
 		var dz = Math.pow(2, zoomFrom - zoomTo);
 		var size = 256 / dz;
 		var dx = tilePoint.x % dz;

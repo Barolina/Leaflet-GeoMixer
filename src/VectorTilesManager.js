@@ -182,24 +182,31 @@
 	
 	var vectorTileDataProvider = {
 		load: function(x, y, z, v, s, d, callback) {
-			var url = gmx.tileSenderPrefix + '&ModeKey=tile&r=t' + 
-					  "&MapName=" + gmx.mapName + 
-					  "&LayerName=" + gmx.layerName + 
-					  "&z=" + z +
-					  "&x=" + x +
-					  "&y=" + y +
-					  "&v=" + v +
-					  (d !== -1 ? "&Level=" + d + "&Span=" + s : "");
-			gmxAPIutils.requestJSONP({
-                url: url,
-                callback: function(st) {
+            var params = {
+                ModeKey: 'tile',
+                r: 't',
+                MapName: gmx.mapName,
+                LayerName: gmx.layerName,
+                z: z,
+                x: x,
+                y: y,
+                v: v
+            }
+            
+            if (d !== -1) {
+                params.Level = d;
+                params.Span = s;
+            }
+            
+			gmxAPIutils.requestJSONP(gmx.tileSenderPrefix, params).done(
+                function(st) {
                     callback(st.Result);
                 },
-				onError: function() {
+				function() {
 					console.log('Error loading vector tile');
 					callback([]);
 				}
-            });
+            );
 		}
 	}
     

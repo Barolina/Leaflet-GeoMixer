@@ -34,14 +34,17 @@ var gmxSessionManager = {
         if (!(serverHost in keys)) {
             apiKey = apiKey || this._searchScriptAPIKey();
             keys[serverHost] = new gmxDeferred();
-            gmxAPIutils.requestJSONP({
-                url: "http://" + serverHost + "/ApiKey.ashx?WrapStyle=func&Key=" + apiKey,
-                callback: function(response) {
-                    if(response && response.Status === 'ok') {
-                        keys[serverHost].resolve(response.Result.Key);
-                    } else {
-                        keys[serverHost].reject();
-                    }
+            gmxAPIutils.requestJSONP(
+                "http://" + serverHost + "/ApiKey.ashx",
+                {
+                    WrapStyle: 'func',
+                    Key: apiKey,
+                }
+            ).done(function(response) {
+                if(response && response.Status === 'ok') {
+                    keys[serverHost].resolve(response.Result.Key);
+                } else {
+                    keys[serverHost].reject();
                 }
             });
         }
