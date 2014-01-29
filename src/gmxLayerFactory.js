@@ -55,3 +55,25 @@ L.gmx.loadLayers = function(layers, globalParams) {
     
     return gmxDeferred.all.apply(null, defs);
 }
+
+L.gmx.loadMap = function(mapName, params) {
+	var def = new gmxDeferred();
+	var hostName = 'maps.kosmosnimki.ru';
+	
+	params = params || {};
+	
+	gmxMapManager.getMap(hostName, params.apiKey, mapName).done(function(mapInfo) {
+		var loadedMap = new gmxMap(mapInfo);
+		
+		if (params.map) {
+			for (var l = 0; l < loadedMap.layers.length; l++) {
+				if (loadedMap.layers[l]._gmx.properties.visible) {
+					loadedMap.layers[l].addTo(params.map);
+				}
+			}
+		}
+		
+		def.resolve(map);
+	})
+	return def;
+}

@@ -31,10 +31,34 @@ var gmxMapManager = {
     findLayerInfo: function(serverHost, mapName, layerName) {
         var hostMaps = this._maps[serverHost];
         var data = hostMaps && hostMaps[mapName] && hostMaps[mapName].getFulfilledData();
+		
+		var resLayerInfo;
+		
+		gmxMapManager.iterateLayers(data, function(layerInfo) {
+			if (layerInfo.properties.name === layerName) {
+				resLayerInfo = layerInfo;
+			}
+		})
         
-        return data && data.layersByName[layerName];
+        return resLayerInfo;
     },
     _maps: {} //Deferred for each map. Structure maps[serverHost][mapName]
+}
+
+gmxMapManager.iterateLayers = function(treeInfo, callback) {
+	var iterate = function(arr) {
+        for (var i=0, len=arr.length; i<len; i++) {
+            var layer = arr[i];
+            
+            if(layer.type === 'group') {
+                var res = iterate(layer.content.children);
+            } else if (layer.type === 'layer') {
+                callback(layer.content);
+            }
+        }
+    }
+    
+    treeInfo && iterate(treeInfo.children);
 }
 
 var gmxMap = function(mapInfo) {
@@ -43,21 +67,13 @@ var gmxMap = function(mapInfo) {
     this.layersByName = {};
     
     var _this = this;
-    
-    var interateLayer = function(arr) {
-        for(var i=0, len=arr.length; i<len; i++) {
-            var layer = arr[i];
-            
-            if(layer.type === 'group') {
-                var res = interateLayer(layer.content.children);
-            } else if (layer.type === 'layer') {
-                var content = layer.content;
-                _this.layers.push(content);
-                _this.layersByTitle[content.properties.title] = content;
-                _this.layersByName[content.properties.name] = content;
-            }
-        }
-    }
-    
-    interateLayer(data[0].children);
+	
+	gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
+		var layer = new L.TileLayer.gmxVectorLayer({mapName: mapInfo.properties.name, layerName: layerInfo.properties.name});
+		layer.initFromDescription(layerInfo);
+		
+		_this.layers.push(layer);
+		_this.layersByTitle[layerInfo.properties.title] = layer;
+		_this.layersByName[layerInfo.properties.name] = layer;
+	});
 }
