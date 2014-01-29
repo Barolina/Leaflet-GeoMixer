@@ -29,25 +29,35 @@ var gmxMapManager = {
         return maps[serverHost][mapName];
     },
     findLayerInfo: function(serverHost, mapName, layerName) {
-        var maps = this._maps;
-        var data = maps[serverHost] && maps[serverHost][mapName] && maps[serverHost][mapName].getFulfilledData();
+        var hostMaps = this._maps[serverHost];
+        var data = hostMaps && hostMaps[mapName] && hostMaps[mapName].getFulfilledData();
         
-        if (!data) return;
-        
-        var findLayer = function(arr) {
-            for(var i=0, len=arr.length; i<len; i++) {
-                var layer = arr[i];
-                
-                if(layer.type === 'group') {
-					var res = findLayer(layer.content.children);
-                    if (res) return res;
-				} else if(layer.type === 'layer' && layerName === layer.content.properties.name) {
-                    return layer.content;
-                }
-            }
-        }
-        
-        return findLayer(data[0].children);
+        return data && data.layersByName[layerName];
     },
     _maps: {} //Deferred for each map. Structure maps[serverHost][mapName]
+}
+
+var gmxMap = function(mapInfo) {
+    this.layers = [];
+    this.layersByTitle = {};
+    this.layersByName = {};
+    
+    var _this = this;
+    
+    var interateLayer = function(arr) {
+        for(var i=0, len=arr.length; i<len; i++) {
+            var layer = arr[i];
+            
+            if(layer.type === 'group') {
+                var res = interateLayer(layer.content.children);
+            } else if (layer.type === 'layer') {
+                var content = layer.content;
+                _this.layers.push(content);
+                _this.layersByTitle[content.properties.title] = content;
+                _this.layersByName[content.properties.name] = content;
+            }
+        }
+    }
+    
+    interateLayer(data[0].children);
 }

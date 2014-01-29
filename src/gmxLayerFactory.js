@@ -18,9 +18,14 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
     var hostName = params.hostName || 'maps.kosmosnimki.ru';
     
     gmxMapManager.getMap(hostName, params.apiKey, mapName).done(
-        function() {
+        function(mapInfo) {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapName, layerName),
                 layer;
+            
+            if (!layerInfo) {
+                promise.reject("There are no layer " + layerName + " in map " + mapName);
+                return;
+            }
             
             if (layerInfo.properties.type === 'Vector') {
                 layer = new L.TileLayer.gmxVectorLayer(layerParams);
@@ -35,7 +40,7 @@ L.gmx.loadLayer = function(mapName, layerName, params) {
             
         },
         function(response) {
-            throw "Can't load layer" + layerName + " form map " + mapName + ": " + response.error;
+            promise.reject("Can't load layer " + layerName + " form map " + mapName + ": " + response.error);
         }
     );
 
