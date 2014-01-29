@@ -6,7 +6,7 @@
 		for (var i = 0; i < scripts.length; i++) {
 			var src = scripts[i].src;
 			if (src) {
-				var res = src.match(/^(.*)leaflet-geomixer-src\.js$/);
+				var res = src.match(/^(.*)leaflet-geomixer-src\.js/);
 				if (res) {
 					return res[1] + '../src/';
 				}
