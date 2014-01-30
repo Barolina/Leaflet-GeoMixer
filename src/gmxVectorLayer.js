@@ -241,6 +241,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
             gmx = this._gmx;
 
 		if (!gmx.attr || !gmx.styleManager.isVisibleAtZoom(zoom)) {
+            this._tileLoaded();
             return;
         }
 

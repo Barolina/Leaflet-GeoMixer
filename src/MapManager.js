@@ -69,11 +69,19 @@ var gmxMap = function(mapInfo) {
     var _this = this;
 	
 	gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
-		var layer = new L.TileLayer.gmxVectorLayer({mapName: mapInfo.properties.name, layerName: layerInfo.properties.name});
+        var props = layerInfo.properties,
+            layerOptions = {mapName: mapInfo.properties.name, layerName: props.name};
+        
+        if (props.type === 'Vector') {
+            layer = new L.TileLayer.gmxVectorLayer(layerOptions);
+        } else {
+            layer = new L.TileLayer.gmxRasterLayer(layerOptions);
+        }
+
 		layer.initFromDescription(layerInfo);
 		
 		_this.layers.push(layer);
-		_this.layersByTitle[layerInfo.properties.title] = layer;
-		_this.layersByName[layerInfo.properties.name] = layer;
+		_this.layersByTitle[props.title] = layer;
+		_this.layersByName[props.name] = layer;
 	});
 }

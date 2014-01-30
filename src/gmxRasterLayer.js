@@ -2,18 +2,20 @@
 L.TileLayer.gmxRasterLayer = L.TileLayer.gmxVectorLayer.extend(
 {
     initFromDescription: function(ph){
-		var vectorProperties = {
-			type: 'Vector',
-			identityField: 'ogc_fid',
-			GeometryType: 'POLYGON',
-			IsRasterCatalog: true,
-			RCMinZoomForRasters: ph.properties.styles[0].MinZoom,
-			styles: [{
-				MinZoom: ph.properties.styles[0].MinZoom,
-				MaxZoom: ph.properties.styles[0].MaxZoom,
-				RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}}
-			}]
-		};
+        var props = ph.properties,
+            vectorProperties = {
+                type: 'Vector',
+                identityField: 'ogc_fid',
+                GeometryType: 'POLYGON',
+                IsRasterCatalog: true,
+                RCMinZoomForRasters: props.styles[0].MinZoom,
+                visible: props.visible,
+                styles: [{
+                    MinZoom: props.styles[0].MinZoom,
+                    MaxZoom: props.styles[0].MaxZoom,
+                    RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}}
+                }]
+            };
 
 		L.TileLayer.gmxVectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
 		
