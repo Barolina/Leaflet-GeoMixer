@@ -63,6 +63,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         map.on('zoomend', this._zoomEnd, this);
         if (this._gmx.applyShift) {
 			map.on('moveend', this._updateShiftY, this);
+            this._updateShiftY();
 		} else {
 			this._gmx.shiftY = 0;
 		}
