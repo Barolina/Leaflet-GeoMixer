@@ -1,4 +1,6 @@
-# GeoMixer-Leaflet Plugin Documentation
+# Leaflet-GeoMixer Plugin Documentation
+
+Leaflet-GeoMixer is a plugin to add data from GeoMixer server to any Leaflet map. It adds several new classes to handle the GeoMixer layers and functions to instantiate these classes.
 
 ## Simple example
 
@@ -19,7 +21,7 @@
 ```
 
 ## Adding plugin
-To add the plugin just add plugin's script to your page:
+To add the plugin just include plugin's script to your page:
 
 ```html
 <script src="leaflet-geomixer.js?key=GeoMixerAPIKey"></script>
@@ -29,79 +31,85 @@ To add the plugin just add plugin's script to your page:
 
 ## GeoMixer Data Structure
 
-The main entity in GeoMixer in **layer**. Each layer has several properties including `ID`, `type` and `title`.
-Layer IDs are unique inside one server. The main layer types are **vector** and **raster**.
+The main entity in GeoMixer in a **layer**. Each layer has several properties including `ID`, `type` and `title`.
+Layer IDs are unique within one server. The main layer types are **vector** and **raster**.
 
-Each vector layer consists of geometry items. Item has `type`, `geometry` and `properties`.
+Each vector layer consists of geometry items. Item has `type`, `geometry` and `properties` attributes.
 
 Layers are combined into **maps**.
 
 ## Layer Factories
 
-Layers are created using factory functions in asynchronous manner. 
+Layers are created using factory functions in asynchronous manner. There are several ways to instantiate a layer.
 
 ### L.gmx.loadLayer
 ```js
  L.gmx.loadLayer(mapID, layerID, options): promise
 ```
 
-`mapID` is ID GeoMixer's map and `layerID` is ID of layer to load. `params` is a hash with the following possible keys.
+`mapID` is ID of GeoMixer's map and `layerID` is ID of layer to load. `options` is a an optional hash, which can containthe following keys.
 
 Option|Description|Type|Default value
 ------|-----------|:--:|-------------
-hostName| Host name of the GeoMixer server without `http://` and terminal `/`|`String`|maps.kosmosnimki.ru
-apiKey|GeoMixer API key for host. If not given, it will be extracted from the script parameters (see above). No key is required to work from `localhost`|`String`|
+hostName| Host name of the GeoMixer server (without `http://` and terminal `/`)|`String`|maps.kosmosnimki.ru
+apiKey|GeoMixer API key for GeoMixer server. If not defined here, it will be extracted from the plugin's script parameters (see above). No key is required to work from `localhost`.|`String`|
 beginDate|Start date for time interval (only for temporal layers)|`Date`|
 endDate|End date for time interval (only for temporal layers)|`Date`|
 
-Function returns promise, which is fulfilled with an instance of GeoMixer layer (see description below)
+Function returns promise, which is fulfilled with an instance of GeoMixer layer (see description below). This instance can be used to add layer to map, tune visualization, etc.
 
 ### L.gmx.loadLayers
 ```js
  L.gmx.loadLayers(layers, commonOptions): promise
 ```
 
-Helper function to load several layers at once. `layer` is the array of the hashes with the following keys:
+Helper function to load several layers at once. `layers` is an array of hashes with the following keys:
   * mapID - ID of GeoMixer map
   * layerID - ID of layer
   * options - layer options
 
 Each element of array corresponds to single `L.gmx.loadLayer` call. `commonOptions` are applied to all the layers.
 
-Returned promise if fulfilled when all the layers are loaded. Layers are passed as separate arguments to fulfillment functions.
+Returned promise if fulfilled when all the layers are loaded. Layers are passed as separate arguments to resolve functions.
 
 ### L.gmx.loadMap
 ```js
  L.gmx.loadMap(mapID, options): promise
 ```
 
-Loads all the layers from the GeoMixer's map. 
+Loads all layers from the GeoMixer's map. 
 
-`options` can have only one key: `leafletMap` - instance of `L.Map`. If Leaflet map is defined, all visible (in original GeoMixer map) layers will be added to the map. Function returns a promise, that is fulfilled after all the layers are loaded with the `L.gmxMap`.
+`options` is an optional hash. The following keys are possible.
+
+Option|Description|Type
+------|-----------|:--:|-------------
+leafletMap| Leaflet map to add all the layers, that are visible in original GeoMixer map |`L.Map`
+
+Function returns a promise, that is fulfilled after all the layers are loaded with an instance of `L.gmx.Map`.
 
 ## Class L.gmx.VectorLayer
 
-`gmxVectorLayer` class provides interface for drawing GeoMixer vector layers on Leaflet map.
+`gmxVectorLayer` class provides interface for rendering GeoMixer vector layers on Leaflet map.
 
-Layers can be added to Leaflet map by calling `L.Map.addLayer()` or `L.gmx.VectorLayer.addTo()`.
+Layers can be added to Leaflet map in native way by calling `L.Map.addLayer()` or `L.gmx.VectorLayer.addTo()`.
 
 ### Methods
 Method|Syntax|Return type|Description
 ------|------|:---------:|-----------
-setFilter|`setFilter(function(item)->Boolean)`|`this`|set function to filter out items before rendering. The only argument is the function, that receives an item and return boolean value (`false` means filter out)
-setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Set date interval for temporal layers. Only items within date interval will be rendered on map. `beginDate` and `endDate` are of type `Date`
-addTo|`addTo(map)`|`this`|Add layer to given Leaflet map. `map` argument is of type `L.Map`.
+setFilter|`setFilter(function(item): Boolean)`|`this`|set function to filter out items before rendering. The only argument is a function, that receives an item and returns boolean value (`false` means filter item out)
+setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Set date interval for temporal layers. Only items within date interval will be rendered. `beginDate` and `endDate` are of type `Date`
+addTo|`addTo(map)`|`this`|Add layer to Leaflet map. `map` argument is of type `L.Map`.
 
 ## Class L.gmx.RasterLayer
 
-`gmxVectorLayer` class is used to render raster GeoMixer layer.
+`L.gmx.RasterLayer` class is used to render raster GeoMixer layer.
 
 Method|Syntax|Return type|Description
 ------|------|:---------:|-----------
-addTo|`addTo(map)`|`this`|Add layer to given Leaflet map. `map` argument is of type `L.Map`.
+addTo|`addTo(map)`|`this`|Add layer to Leaflet map. `map` argument is of type `L.Map`.
 
 ## Class L.gmx.Map
-`L.gmx.Map` is used to work with GeoMixer map (collection of layers).
+`L.gmx.Map` is used to work with GeoMixer map (collection of layers). It has several properties to iterate and find GeoMixer layers.
 
 ###Properties
 Property|Type|Description
