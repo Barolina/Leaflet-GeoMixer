@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0px;
+        }
+    </style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+	<link rel="stylesheet" href="http://leaflet.github.io/Leaflet.draw/leaflet.draw.css" />
+</head>
+<body>
+	<div id="map" style="width: 100%; height: 100%"></div>
+ 
+    <!-- Leaflet plugins -->
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet-src.js"></script>
+	<script src="http://mlevans.github.io/leaflet-hash/javascripts/leaflet-hash.js"></script>
+	<script src="http://leaflet.github.io/Leaflet.draw/leaflet.draw.js"></script>
+	<script src="https://rawgithub.com/jseppi/Leaflet.MakiMarkers/master/Leaflet.MakiMarkers.js"></script>
+    
+	<script src="../dist/leaflet-geomixer-src.js?key=U92596WMIH"></script>
+	<script>
+		var map = L.map('map').setView([60, 50], 3);
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+        
+        //Leaflet Hash plugin
+        new L.Hash(map);
+        
+        var rocketIcon = L.MakiMarkers.icon({
+            icon: "waste-basket",
+            color: "#b0b",
+            size: "m"
+        });
+        
+        //Leaflet.Draw plugin
+        var drawControl = new L.Control.Draw({
+            draw: {
+                polygon: null, 
+                polyline: null,
+                circle: null,
+                rectangle: null,
+                marker: {icon: rocketIcon}
+            }
+        });
+		map.addControl(drawControl);
+        
+        map.on('draw:created', function (e) {
+			drawnItems.addLayer(e.layer);
+		});
+        
+        var drawnItems = new L.FeatureGroup();
+		map.addLayer(drawnItems);
+        
+        //Leaflet-Geomixer plugin
+        L.gmx.loadMap('AZR6A', {leafletMap: map});
+	</script>
+</body>
+</html>
