@@ -1,10 +1,17 @@
 Leaflet-GeoMixer
 ================
 
-Leaflet plugin to add data from [GeoMixer](http://geomixer.ru) to any Leaflet map.
+Leaflet plugin to add data from [GeoMixer](http://geomixer.ru) to any Leaflet map. 
+
+[Documentation](documentation.md) is available in separate file.
 
 Demos
 ------
+  * [Layers integration](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html) - intergrate GeoMixer layers into map. Demonstrates work with temporal layers.
+  * [Animation](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html) - preload data from hotspot layer and show select day to show hotspots using slider.
+  * [GeoMixer map](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html) - load all the layers form GeoMixer map using one command.
+  * [Plugins](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html) - integrate GeoMixer layers along with several Leaflet plugins
+  * [MultipleMaps](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html) - multiple maps on one page
 
 Build
 ------
