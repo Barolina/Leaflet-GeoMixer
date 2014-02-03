@@ -320,10 +320,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_tileLoaded: function () {
+        
         if (this._gmx._tilesToLoad === 0) {
 			this.fire('load');
 
 			if (this._animated) {
+                L.DomUtil.addClass(this._tileContainer, 'leaflet-zoom-animated');
 				// clear scaled tiles after all new tiles are loaded (for performance)
 				clearTimeout(this._clearBgBufferTimer);
 				this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 500);
