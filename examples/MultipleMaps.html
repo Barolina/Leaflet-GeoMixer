@@ -23,6 +23,9 @@
 
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css" />
 	<!--[if lte IE 8]><link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.ie.css" /><![endif]-->
+    
+    <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+    <script src="../dist/leaflet-geomixer-src.js?key=U92596WMIH"></script>
 </head>
 <body>
     <table><tr>
@@ -30,8 +33,6 @@
         <td><div id="map2"></div></td>
     </tr></table>
 
-	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
-	<script src="../dist/leaflet-geomixer-src.js?key=U92596WMIH"></script>
 	<script>
         var initMap = function(divID) {
             var map = L.map(divID).setView([55, 44], 3);
@@ -49,7 +50,7 @@
             L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
                 beginDate: ddt1,
                 endDate: ddt2
-            }).done(function(modisLayer) {
+            }).then(function(modisLayer) {
                 modisLayer.addTo(map);
             });
         }

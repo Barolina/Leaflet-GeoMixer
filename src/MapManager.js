@@ -8,7 +8,7 @@ var gmxMapManager = {
             maps[serverHost] = maps[serverHost] || {};
             maps[serverHost][mapName] = def;
             
-            gmxSessionManager.requestSessionKey(serverHost, apiKey).done(function(sessionKey) {
+            gmxSessionManager.requestSessionKey(serverHost, apiKey).then(function(sessionKey) {
                 gmxAPIutils.requestJSONP(
                     "http://" + serverHost + "/TileSender.ashx", 
                     {
@@ -17,7 +17,7 @@ var gmxMapManager = {
                         MapName: mapName,
                         ModeKey: 'map'
                     }
-                ).done(function(json) {
+                ).then(function(json) {
                     if (json && json.Status === 'ok' && json.Result) {
                         def.resolve(json.Result);
                     } else {
@@ -28,21 +28,21 @@ var gmxMapManager = {
         }
         return maps[serverHost][mapName];
     },
-    findLayerInfo: function(serverHost, mapName, layerName) {
+    findLayerInfo: function(serverHost, mapID, layerID) {
         var hostMaps = this._maps[serverHost];
-        var data = hostMaps && hostMaps[mapName] && hostMaps[mapName].getFulfilledData();
+        var data = hostMaps && hostMaps[mapID] && hostMaps[mapID].getFulfilledData();
 		
 		var resLayerInfo;
 		
-		gmxMapManager.iterateLayers(data, function(layerInfo) {
-			if (layerInfo.properties.name === layerName) {
+		gmxMapManager.iterateLayers(data && data[0], function(layerInfo) {
+			if (layerInfo.properties.name === layerID) {
 				resLayerInfo = layerInfo;
 			}
 		})
         
         return resLayerInfo;
     },
-    _maps: {} //Deferred for each map. Structure maps[serverHost][mapName]
+    _maps: {} //Deferred for each map. Structure maps[serverHost][mapID]
 }
 
 gmxMapManager.iterateLayers = function(treeInfo, callback) {
@@ -70,12 +70,15 @@ var gmxMap = function(mapInfo) {
 	
 	gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
         var props = layerInfo.properties,
-            layerOptions = {mapName: mapInfo.properties.name, layerName: props.name};
+            layerOptions = {
+                mapName: mapInfo.properties.name, 
+                layerID: props.name
+            };
         
         if (props.type === 'Vector') {
-            layer = new L.TileLayer.gmxVectorLayer(layerOptions);
+            layer = new L.gmx.VectorLayer(layerOptions);
         } else {
-            layer = new L.TileLayer.gmxRasterLayer(layerOptions);
+            layer = new L.gmx.RasterLayer(layerOptions);
         }
 
 		layer.initFromDescription(layerInfo);

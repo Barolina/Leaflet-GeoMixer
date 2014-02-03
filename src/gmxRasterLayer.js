@@ -1,5 +1,5 @@
 ﻿//Raster layer is just vector layer with the single object and special background tiles
-L.TileLayer.gmxRasterLayer = L.TileLayer.gmxVectorLayer.extend(
+L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 {
     initFromDescription: function(ph){
         var props = ph.properties,
@@ -17,7 +17,7 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.gmxVectorLayer.extend(
                 }]
             };
 
-		L.TileLayer.gmxVectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
+		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
 		
 		var gmx = this._gmx;
 		
@@ -39,7 +39,7 @@ L.TileLayer.gmxRasterLayer = L.TileLayer.gmxVectorLayer.extend(
 				"TileSender.ashx?ModeKey=tile" + 
 				"&key=" + encodeURIComponent(gmx.sessionKey) +
 				"&MapName=" + gmx.mapName +
-				"&LayerName=" + gmx.layerName;
+				"&LayerName=" + gmx.layerID;
 		
 			return tileSenderPrefix + 
 				"&z=" + z + 

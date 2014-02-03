@@ -51,17 +51,6 @@
 	<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet-src.js"></script>
 	<script src="../dist/leaflet-geomixer-src.js?key=U92596WMIH"></script>
 	<script>
-	
-		var bindDrawAnalyzer = function(name, layer) {
-			var startTime;
-			layer.on('startDraw', function() {
-				startTime = new Date();
-			})
-			layer.on('doneDraw', function() {
-				console.log(name, new Date() - startTime);
-			})
-		}
-
 		var map = L.map('map').setView([60, 50], 3);
 
 		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -84,19 +73,15 @@
         updateInfo(ddt1);
         
         L.gmx.loadLayers([
-            {map: '1D30C72D02914C5FB90D1D448159CAB6', layer: 'C9458F2DCB754CEEACC54216C7D1EB0A'},
-            {map: '1D30C72D02914C5FB90D1D448159CAB6', layer: 'BCCCE2BDC9BF417DACF27BB4D481FAD9'},
-            {map: 'AZR6A',                            layer: '8D1EC3B3443C46A5A402DD096B5C7142'},
-            {map: 'AZR6A',                            layer: 'EB271FC4D2AD425A9BAA78ADEA041AB9'}
-        ]).done(function(satellite, labels, regionsLayer, modisLayer) {
-			bindDrawAnalyzer('regions', regionsLayer);
-			bindDrawAnalyzer('modis', modisLayer);
-
+            {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'C9458F2DCB754CEEACC54216C7D1EB0A'},
+            {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'BCCCE2BDC9BF417DACF27BB4D481FAD9'},
+            {mapID: 'AZR6A',                            layerID: '8D1EC3B3443C46A5A402DD096B5C7142'},
+            {mapID: 'AZR6A',                            layerID: 'EB271FC4D2AD425A9BAA78ADEA041AB9'}
+        ]).then(function(satellite, labels, regionsLayer, modisLayer) {
             modisLayer.setDateInterval(ddt1, ddt2);
             
             satellite.addTo(map);
             modisLayer.addTo(map);
-            
             
             L.control.layers({
                 OSM: osm,

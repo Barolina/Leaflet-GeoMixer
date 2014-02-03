@@ -182,11 +182,11 @@
 	
 	var vectorTileDataProvider = {
 		load: function(x, y, z, v, s, d, callback) {
-            var params = {
+            var requestParams = {
                 ModeKey: 'tile',
                 r: 't',
                 MapName: gmx.mapName,
-                LayerName: gmx.layerName,
+                LayerName: gmx.layerID,
                 z: z,
                 x: x,
                 y: y,
@@ -194,11 +194,11 @@
             }
             
             if (d !== -1) {
-                params.Level = d;
-                params.Span = s;
+                requestParams.Level = d;
+                requestParams.Span = s;
             }
             
-			gmxAPIutils.requestJSONP(gmx.tileSenderPrefix, params).done(
+			gmxAPIutils.requestJSONP(gmx.tileSenderPrefix, requestParams).then(
                 function(st) {
                     callback(st.Result);
                 },
@@ -381,7 +381,7 @@
             if (!bounds.intersects(tile.bounds)) return;
            
             if (tile.state === 'notLoaded') {
-                tile.load().done(function() {
+                tile.load().then(function() {
                     gmx.attr.itemCount += _updateItemsFromTile(tile);
                     for (var key in subscriptions) {
                         if (tile.bounds.intersects(subscriptions[key].styleBounds)
@@ -457,7 +457,7 @@
 			
 			var loadDef = tile.load();
 			(function(tile) {
-				loadDef.done(function() {
+				loadDef.then(function() {
 					gmx.attr.itemCount += _updateItemsFromTile(tile);
 					var treeNode = tilesTree.getNode(tile.d, tile.s);
 					treeNode && treeNode.count--; //decrease number of tiles to load inside this node

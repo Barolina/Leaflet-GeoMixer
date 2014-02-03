@@ -474,7 +474,7 @@ console.log('___', zoom, layer._map._gmxMoveTime);
         }
         
         if (showRaster) {
-            getTileRasters(geoItems).done(doDraw); //first load all raster images, then render all of them at once
+            getTileRasters(geoItems).then(doDraw); //first load all raster images, then render all of them at once
         } else {
             doDraw();
         }

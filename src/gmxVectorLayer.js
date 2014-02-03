@@ -1,5 +1,5 @@
 ﻿// Плагин векторного слоя
-L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
+L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     initialize: function(options) {
         options = L.setOptions(this, options);
@@ -12,7 +12,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         this._gmx = {
             hostName: options.hostName || 'maps.kosmosnimki.ru',
             mapName: options.mapName,
-            layerName: options.layerName,
+            layerID: options.layerID,
             beginDate: options.beginDate,
             endDate: options.endDate,
             sortItems: options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); },
@@ -100,7 +100,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
 
 	setStyle: function (style, num) {
 		var gmx = this._gmx;
-        this.initPromise.done(function() {
+        this.initPromise.then(function() {
             gmx.styleManager.setStyle(style, num);
         });
 	}
@@ -262,7 +262,7 @@ L.TileLayer.gmxVectorLayer = L.TileLayer.Canvas.extend(
         if(gmx.zoomstart) return;
 
         var screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
-        this._gmx.styleManager.deferred.done(function () {
+        this._gmx.styleManager.deferred.then(function () {
             screenTile.drawTile();
             var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
             if (gmx.vectorTilesManager.getNotLoadedTileCount(gtp) === 0) {

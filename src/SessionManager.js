@@ -40,7 +40,7 @@ var gmxSessionManager = {
                     WrapStyle: 'func',
                     Key: apiKey,
                 }
-            ).done(function(response) {
+            ).then(function(response) {
                 if(response && response.Status === 'ok') {
                     keys[serverHost].resolve(response.Result.Key);
                 } else {

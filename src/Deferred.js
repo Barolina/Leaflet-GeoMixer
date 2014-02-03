@@ -27,7 +27,7 @@
         _fulfill.apply(null, [false].concat([].slice.call(arguments)));
     }
     
-    this.done = function(resolveCallback, rejectCallback) {
+    this.then = function(resolveCallback, rejectCallback) {
         if (isFulfilled) {
             if (isResolved) {
                 resolveCallback && resolveCallback.apply(null, fulfilledData);
@@ -43,7 +43,7 @@
     this.once = function(onceResolveCallback) {
         if (!onceAdded) {
             onceAdded = true;
-            this.done(onceResolveCallback);
+            this.then(onceResolveCallback);
         }
     }
     
@@ -59,7 +59,7 @@ gmxDeferred.all = function() {
     var results = new Array(defArray.length);
     
     defArray.forEach(function(def, i) {
-        def.done(function(res) {
+        def.then(function(res) {
             results[i] = res;
             left--;
             if (left == 0) {
