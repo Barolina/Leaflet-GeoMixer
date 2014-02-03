@@ -4,9 +4,27 @@
 	<title>GeoMixer Vector Layer Example</title>
 	<meta charset="utf-8" />
     <style>
-        html, body {
+        html, body, #map {
             height: 100%;
             margin: 0px;
+        }
+        
+        #infoPanel {
+            position: absolute;
+			right: 11px;
+			top: 11px;
+            text-align: center;
+			z-index: 1;
+        }
+        
+        #info {
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            padding: 10px;
+            max-width: 680px;
+            display: inline-block;
+            text-align: left;
         }
     </style>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,7 +33,19 @@
 	<link rel="stylesheet" href="http://leaflet.github.io/Leaflet.draw/leaflet.draw.css" />
 </head>
 <body>
-	<div id="map" style="width: 100%; height: 100%"></div>
+	<div id="map"></div>
+    
+    <div id="infoPanel">
+        <div id="info">
+                Rasters from GeoMixer are integrated into Leaflet map along with several plugins:
+                <ul>
+                    <li><a href="https://github.com/Leaflet/Leaflet.draw" target="_blank">Leaflet.Draw</a> to place markers
+                    <li><a href="https://github.com/mlevans/leaflet-hash" target="_blank">Leaflet-hash</a> to store position in URL and
+                    <li><a href="https://github.com/jseppi/Leaflet.MakiMarkers" target="_blank">Leaflet.MakiMarkers</a> to use 
+                        icons from MapBox <a href="https://www.mapbox.com/maki/" target="_blank">Maki</a> icon collection.
+                </ul>
+        </div>
+    </div>
  
     <!-- Leaflet plugins -->
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet-src.js"></script>
