@@ -1,7 +1,7 @@
 Leaflet-GeoMixer
 ================
 
-Leaflet plugin to add data from [GeoMixer](http://geomixer.ru) on any Leaflet map.
+Leaflet plugin to add data from [GeoMixer](http://geomixer.ru) to any Leaflet map.
 
 Demos
 ------
@@ -22,12 +22,8 @@ Run the following command to build production version:
 jake
 ```
 
-Files `leaflet-geomixer.js` and `leaflet-geomixer-src.js` will appear in `dist` forder. Do not commit these files to the repository!
+File `leaflet-geomixer.js` will appear in `dist` forder. Do not commit this file to the repository!
 
-The following command builds plugin in development mode (which loads all source files dynamically):
+You can use plugin without building including file `build/leaflet-geomixer-dev.js`. Note, that this script loads all the sources dynamically and should not be used for production deployment.
 
-```
-jake dev
-```
-
-List of source files is maintained in file `build/deps.js`. It should be updated properly for correct builds. Build in development mode should be performed after each change of this list.
+List of source files is maintained in file `build/deps.js`. It should be updated properly for correct builds.

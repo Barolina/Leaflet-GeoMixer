@@ -18,3 +18,7 @@
 if (typeof exports !== 'undefined') {
 	exports.deps = deps;
 }
+
+if (typeof gmxDevOnLoad === 'function') {
+	gmxDevOnLoad(deps);
+}
