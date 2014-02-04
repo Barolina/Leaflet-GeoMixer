@@ -3,7 +3,7 @@ Leaflet-GeoMixer
 
 Leaflet plugin to add data from [GeoMixer](http://geomixer.ru) to any Leaflet map. 
 
-[Documentation](documentation.md) is available in separate file.
+[Documentation](documentation.md) is available in separate file ([Russian version](documentation-rus.md)).
 
 Demos
 ------
