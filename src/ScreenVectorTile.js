@@ -92,10 +92,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 							
 							if( itemImageProcessingHook ) {
 								img = itemImageProcessingHook({
-									'image': img,
-									'geoItem': geo,
-									'item': item,
-									'gmxTilePoint': imageGtp
+									gmx: gmx,
+									image: img,
+									geoItem: geo,
+									item: item,
+									gmxTilePoint: imageGtp
 								});
 							}
 							
@@ -122,10 +123,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 						'callback' : function(img) {
 							if(itemImageProcessingHook) {
 								rasters[idr] = itemImageProcessingHook({
-									'image': img,
-									'geoItem': geo,
-									'item': item,
-									'gmxTilePoint': gmxTilePoint
+									gmx: gmx,
+									image: img,
+									geoItem: geo,
+									item: item,
+									gmxTilePoint: gmxTilePoint
 								});
 							} else {
 								rasters[idr] = img;

@@ -8,6 +8,7 @@
     "VectorTile.js",
     "VectorTilesManager.js",
     "gmxAPIutils.js",
+    "gmxImageTransform.js",
     "SessionManager.js",
     "MapManager.js",
     "gmxVectorLayer.js",
