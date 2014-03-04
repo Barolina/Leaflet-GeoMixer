@@ -324,7 +324,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 	}
 	,
 	_tileLoaded: function () {
-        
         if (this._gmx._tilesToLoad === 0) {
 			this.fire('load');
 
@@ -335,16 +334,136 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 				this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 500);
 			}
 		}
-	}
-	,
+	},
 	_tileOnLoad: function (tile) {
 		if (tile) L.DomUtil.addClass(tile, 'leaflet-tile-loaded');
 		this._tileLoaded();
-	}
-	,
+	},
 	tileDrawn: function (tile) {
 		this._tileOnLoad(tile);
 	},
+    _lastCursor: null
+    ,
+	_gmxGetTileByPoint: function (point) {
+        var maxX = point.x,
+            minX = maxX - 256,
+            maxY = point.y,
+            minY = maxY - 256,
+            gmx = this._gmx,
+            zoom = this._map._zoom,
+            pos = null;
+		for (var t in this._tiles) {
+            var tile = this._tiles[t],
+                tilePos = tile._leaflet_pos;
+            if(maxX < tilePos.x || minX > tilePos.x || maxY < tilePos.y || minY > tilePos.y) continue;
+            var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tile._tilePoint, zoom);
+            return geoItems = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom);
+        }
+        return null;
+    },
+	gmxObjectsByPoint: function (arr, point) {    // Получить верхний обьект по координатам mouseClick
+        var gmx = this._gmx,
+            out = [],
+            mInPixel = gmx.mInPixel,
+            mercPoint = [point.x, point.y],
+            bounds = gmxAPIutils.bounds([mercPoint]);
+        var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
+            var x = (mb.min.x + mb.max.x) / 2, y = (mb.min.y + mb.max.y) / 2;
+            return [
+                [x - dx, y - dy]
+                ,[x - dx, y + dy]
+                ,[x + dx, y + dy]
+                ,[x + dx, y - dy]
+                ,[x - dx, y - dy]
+            ];
+        }
+        
+        for (var i = arr.length - 1; i >= 0; i--) {
+            var geoItem = arr[i],
+                idr = geoItem.id,
+                item = gmx.vectorTilesManager.getItem(idr),
+                parsedStyle = item.propHiden.parsedStyleKeys,
+                lineWidth = parsedStyle.lineWidth || 0,
+                dx = (parsedStyle.sx + lineWidth) / mInPixel,
+                dy = (parsedStyle.sy + lineWidth) / mInPixel;
+            if (!geoItem.bounds.intersects(bounds, dx, dy)) continue;
+
+            var type = geoItem.geometry.type;
+            var coords = geoItem.geometry.coordinates;
+            if(type === 'LINESTRING') {
+                if (!gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) continue;
+            } else if(type === 'MULTILINESTRING') {
+                var flag = false;
+                for (var j = 0, len = coords.length; j < len; j++) {
+                    if (gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords[j])) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag) continue;
+            } else {
+                if(type === 'MULTIPOLYGON') {
+                    if(parsedStyle.marker) {
+                        coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                        if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                    } else {
+                        var flag = false;
+                        for (var j = 0, len = coords.length; j < len; j++) {
+                            if (gmxAPIutils.isPointInPolygonArr(mercPoint, coords[j][0])) {
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if (!flag) continue;
+                    }
+                } else if(type === 'POLYGON') {
+                    coords = (parsedStyle.marker ? getMarkerPolygon(geoItem.bounds, dx, dy) : coords[0]);
+                    if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                } else if(type === 'POINT') {
+                    coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                    if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                }
+            }
+            
+            out.push({ id: idr
+                ,properties: item.properties
+                ,geometry: geoItem.geometry
+                ,crs: 'EPSG:3395'
+                ,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
+            });
+		}
+        return out;
+    },
+	gmxEventCheck: function (ev) {
+        var type = ev.type,
+            gmx = this._gmx,
+            point = { x: ev.layerPoint.x, y: ev.layerPoint.y }
+            zoom = this._map._zoom,
+            arr = [];
+
+        if(this.hasEventListeners('click')
+            || this.hasEventListeners('mouseover')
+            || this.hasEventListeners('mouseout')
+            || this.hasEventListeners('mousemove')) {
+            var geoItems = this._gmxGetTileByPoint(point);
+            if(!geoItems || geoItems.length < 1) {
+                return false;
+            }
+            
+            var mercatorPoint = L.Projection.Mercator.project(ev.latlng),
+                arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
+            if(arr && arr.length) {
+                ev.gmx = {
+                    items: arr
+                    ,layer: this
+                };
+                this.fire(type, ev);
+                return true;
+            }
+        }
+        return false;
+	},
+
     initLayerData: function(layerDescription) {					// построение списка тайлов
         var gmx = this._gmx,
             res = {items:{}, tileCount:0, itemCount:0},
@@ -414,10 +533,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 res.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
                 res.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
             }
-            if('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров обьектов слоя
-                if(meta.shiftXfield) res.shiftXfield = meta.shiftXfield.Value;
-                if(meta.shiftYfield) res.shiftYfield = meta.shiftYfield.Value;
-            }
+            // if('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров объектов слоя
+                // if(meta.shiftXfield) res.shiftXfield = meta.shiftXfield.Value;
+                // if(meta.shiftYfield) res.shiftYfield = meta.shiftYfield.Value;
+            // }
 		}
 		return res;
 	}

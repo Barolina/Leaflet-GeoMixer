@@ -11,6 +11,7 @@
     "gmxImageTransform.js",
     "SessionManager.js",
     "MapManager.js",
+    "gmxEventsManager.js",
     "gmxVectorLayer.js",
     "gmxRasterLayer.js",
     "gmxLayerFactory.js"

@@ -27,15 +27,15 @@
 
     var parseItem = function(style) {			// Style Scanex->leaflet
         var pt = {
-			'common': true					// true, false (true - if style without object property keys)
-			,'MinZoom': style.MinZoom
-			,'MaxZoom': style.MaxZoom
-			,'Filter': style.Filter || null
-			,'onMouseOver': !style.DisableBalloonOnMouseMove
-			,'onMouseClick': !style.DisableBalloonOnClick
-			,'BalloonEnable': style.BalloonEnable || false
-			,'RenderStyle': ('RenderStyle' in style ? parseStyle(style.RenderStyle) : null)
-			,'HoverStyle': ('HoverStyle' in style ? parseStyle(style.HoverStyle) : null)
+			common: true					// true, false (true - if style without object property keys)
+			,MinZoom: style.MinZoom
+			,MaxZoom: style.MaxZoom
+			,Filter: style.Filter || null
+			,onMouseOver: !style.DisableBalloonOnMouseMove
+			,onMouseClick: !style.DisableBalloonOnClick
+			,BalloonEnable: style.BalloonEnable || false
+			,RenderStyle: ('RenderStyle' in style ? parseStyle(style.RenderStyle) : null)
+			,HoverStyle: ('HoverStyle' in style ? parseStyle(style.HoverStyle) : null)
 		};
 		if('Filter' in style) {
             var ph = gmxParsers.parseSQL(style.Filter);
@@ -231,8 +231,8 @@
 
 		needLoadIcons++;
 		var ph = {
-			'src': url
-			,'callback': function(it, svgFlag) {
+			src: url
+			,callback: function(it, svgFlag) {
 				pt.sx = it.width / 2;
 				pt.sy = it.height / 2;
 				if(svgFlag) {
@@ -244,7 +244,7 @@
 				needLoadIcons--;
 				chkReadyIcons();
 			}
-			,'onerror': function(){
+			,onerror: function(){
 				pt.sx = 1;
 				pt.sy = 0;
 				pt.image = null;

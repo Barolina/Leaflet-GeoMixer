@@ -35,12 +35,12 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 		}
 
 		gmxImageLoader.push({
-			'src': rUrl
-			,'zoom': gtp.z
-			,'callback': function(imageObj) {
+			src: rUrl
+			,zoom: gtp.z
+			,callback: function(imageObj) {
 				callback(imageObj, gtp);
 			}
-			,'onerror': onError
+			,onerror: onError
 		});
 	}
 
@@ -89,7 +89,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 								chkReadyRasters();
 								return;
 							}
-							
+
 							if( itemImageProcessingHook ) {
 								img = itemImageProcessingHook({
 									gmx: gmx,
@@ -99,14 +99,14 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 									gmxTilePoint: imageGtp
 								});
 							}
-							
+
 							if (imageGtp.z !== gmxTilePoint.z) {
 								var pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, imageGtp.z);
 								if(pos.size < 0.00390625) {// меньше 1px
 									chkReadyRasters();
 									return;
 								}
-								
+
 								var canvas = document.createElement('canvas');
 								canvas.width = canvas.height = 256;
 								var ptx = canvas.getContext('2d');
@@ -120,7 +120,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 					);
 				} else {
 					gmxImageLoader.push({
-						'callback' : function(img) {
+						callback : function(img) {
 							if(itemImageProcessingHook) {
 								rasters[idr] = itemImageProcessingHook({
 									gmx: gmx,
@@ -135,11 +135,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 							needLoadRasters--;
 							chkReadyRasters();
 						}
-						,'onerror' : function() {
+						,onerror : function() {
 							needLoadRasters--;
 							chkReadyRasters();
 						}
-						,'src': url
+						,src: url
 						//,'crossOrigin': 'anonymous'
 					});
 				}
@@ -262,11 +262,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 }
             }
             
-            return { 'id': idr
-                ,'properties': item.properties
-                ,'geometry': geoItem.geometry
-                ,'crs': 'EPSG:3395'
-                ,'latlng': L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
+            return { id: idr
+                ,properties: item.properties
+                ,geometry: geoItem.geometry
+                ,crs: 'EPSG:3395'
+                ,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
             };
 		}
         return null;
@@ -288,74 +288,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
         var ctx = tile.getContext('2d');
         var dattr = {
-                gmx: gmx,
-                tpx: 256 * gmxTilePoint.x,
-                tpy: 256 *(1 + gmxTilePoint.y),
-                ctx: ctx
-            };
-
-        var chkMousePos = function (e) {
-            var rect = tile.getBoundingClientRect();
-            var pos = {
-              x: e.clientX - rect.left,
-              y: e.clientY - rect.top
-            };
-            var pixel = ctx.getImageData(pos.x, pos.y, 1, 1).data;
-            var empty = (pixel[0] + pixel[1] + pixel[2] + pixel[3] === 0);
-            return (empty ? null : pos);
+            gmx: gmx,
+            tpx: 256 * gmxTilePoint.x,
+            tpy: 256 *(1 + gmxTilePoint.y),
+            ctx: ctx
         };
-
-        if(layer.hasEventListeners('mousemove') || layer.hasEventListeners('click')) {
-            var lastCursor = null;
-
-            L.DomEvent.addListener(tile, 'mousemove', function (e) {
-                var pos = chkMousePos(e);
-                var cursor = '';    // default
-                if(pos) {
-                    cursor = 'pointer';
-                    layer.fire('mousemove', {'originalEvent': e, 'pixel': pos});
-                }
-                if(lastCursor !== cursor) tile.style.cursor = cursor;
-                lastCursor = cursor;
-            });
-            
-            L.DomEvent.addListener(tile, 'click', function (e) {
-                if(zoom !== gmx.currentZoom) return;
-                L.DomEvent.stopPropagation(e);
-                var pixel = chkMousePos(e);
-                if(!pixel) return;
-                var item = getObjectsByPoint(geoItems, [dattr.tpx + pixel.x, dattr.tpy - pixel.y]);
-                if(item) layer.fire('click', {originalEvent: e, latlng: item.latlng, pixel: pixel, item: item});
-            });
-/*
-            L.DomEvent.addListener(layer._map._tilePane, 'mousemove', function (e) {
-                if(zoom !== gmx.currentZoom || e.target.id !== tile.id || layer._map._gmxMoveTime > new Date().getTime()) return;
-console.log('cccccc', zoom, layer._map._gmxMoveTime, new Date().getTime());
-                //var p1 = layer._map.containerPointToLayerPoint([e.clientX, e.clientY]);
-                var pos = chkMousePos(e);
-                var cursor = '';    // default
-                if(pos) {
-                    cursor = 'pointer';
-                    layer.fire('mousemove', {'originalEvent': e, 'pixel': pos});
-                    //L.DomEvent.stopPropagation(e);
-                    layer._map._gmxMoveTime = new Date().getTime() + 1000;
-console.log('___', zoom, layer._map._gmxMoveTime);
-                }
-                if(lastCursor !== cursor) tile.style.cursor = cursor;
-                lastCursor = cursor;
-            });
-            
-            L.DomEvent.addListener(layer._map._tilePane, 'click', function (e) {
-                if(zoom !== gmx.currentZoom || e.target.id !== tile.id) return;
-                L.DomEvent.stopPropagation(e);
-                var pixel = chkMousePos(e);
-                //var pixel = chkMousePos({'clientX': p1.x, 'clientY': p1.y});
-                if(!pixel) return;
-                var item = getObjectsByPoint(geoItems, [dattr.tpx + pixel.x, dattr.tpy - pixel.y]);
-                if(item) layer.fire('click', {'originalEvent': e, 'latlng': item.latlng, 'pixel': pixel, 'item': item});
-            });
-*/
-        }
         
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
