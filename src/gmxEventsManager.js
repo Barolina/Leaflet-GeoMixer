@@ -13,7 +13,7 @@ var gmxEventsManager = L.Handler.extend({
 		var eventCheck = function (ev) {
             var type = ev.type,
                 arr = this._layers,
-                cursor = 'default';
+                cursor = '';    // default
             for (var i = 0, len = arr.length; i < len; i++) {
                 var id = arr[i],
                     layer = this._map._layers[id],
@@ -31,7 +31,11 @@ var gmxEventsManager = L.Handler.extend({
 
 		map.on({
 			click: eventCheck,
+			dblclick: eventCheck,
+			mousedown: eventCheck,
+			mouseup: eventCheck,
 			mousemove: eventCheck,
+			contextmenu: eventCheck,
 			layeradd: function (ev) {
                 this._layers.push(ev.layer._leaflet_id);
             },

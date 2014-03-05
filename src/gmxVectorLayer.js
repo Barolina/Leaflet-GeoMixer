@@ -428,39 +428,56 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             out.push({ id: idr
                 ,properties: item.properties
                 ,geometry: geoItem.geometry
-                ,crs: 'EPSG:3395'
-                ,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
+                //,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
             });
 		}
         return out;
     },
-	gmxEventCheck: function (ev) {
-        var type = ev.type,
-            gmx = this._gmx,
-            point = { x: ev.layerPoint.x, y: ev.layerPoint.y }
-            zoom = this._map._zoom,
-            arr = [];
-
-        if(this.hasEventListeners('click')
-            || this.hasEventListeners('mouseover')
-            || this.hasEventListeners('mouseout')
-            || this.hasEventListeners('mousemove')) {
-            var geoItems = this._gmxGetTileByPoint(point);
-            if(!geoItems || geoItems.length < 1) {
-                return false;
-            }
-            
-            var mercatorPoint = L.Projection.Mercator.project(ev.latlng),
-                arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
-            if(arr && arr.length) {
-                ev.gmx = {
-                    items: arr
-                    ,layer: this
-                };
-                this.fire(type, ev);
-                return true;
+	_gmxLastHover: null
+    ,
+	_chkLastHover: function (ev) {
+        if (this._gmxLastHover) {
+            if (this.hasEventListeners('mouseout')) {
+                ev.gmx = this._gmxLastHover;
+                this.fire('mouseout', ev);
             }
         }
+        this._gmxLastHover = null;
+        this._map.doubleClickZoom.enable();
+    },
+	gmxEventCheck: function (ev) {
+        var type = ev.type,
+            point = { x: ev.layerPoint.x, y: ev.layerPoint.y }
+            arr = [];
+
+        if (
+            this.hasEventListeners('mousemove') ||
+            this.hasEventListeners('mouseover') ||
+            this.hasEventListeners('mouseout') ||
+            this.hasEventListeners(type)
+            ) {
+            var geoItems = this._gmxGetTileByPoint(point);
+            if (geoItems && geoItems.length) {
+                var mercatorPoint = L.Projection.Mercator.project(ev.latlng),
+                    arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
+                if (arr && arr.length) {
+                    ev.gmx = {
+                        targets: arr
+                        ,target: arr[0]
+                    };
+                    this.fire(type, ev);
+                    if (type === 'mousemove') {
+                        if (!this._gmxLastHover && this.hasEventListeners('mouseover')) {
+                            this.fire('mouseover', ev);
+                        }
+                    }
+                    this._gmxLastHover = ev.gmx;
+                    this._map.doubleClickZoom.disable();
+                    return true;
+                }
+            }
+        }
+        this._chkLastHover(ev);
         return false;
 	},
 
