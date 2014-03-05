@@ -78,7 +78,46 @@
             {mapID: 'AZR6A',                            layerID: 'EB271FC4D2AD425A9BAA78ADEA041AB9'}
         ]).then(function(satellite, labels, regionsLayer, modisLayer) {
             modisLayer.setDateInterval(ddt1, ddt2);
-            
+
+            var popup = L.popup();
+            function onMyClick(e) {
+                var gmx = e.gmx;
+                    item = gmx.target;
+                    prop = item.properties;
+                
+                var str = 'You clicked the vector object ';
+                str += '<strong>id:</strong>&nbsp;' + item.id;
+                str += '<br><strong>rasterID</strong>:&nbsp;' + prop.GMX_RasterCatalogID;
+                str += '<br> at ' + e.latlng.toString();
+                popup
+                    .setLatLng(e.latlng)
+                    .setContent(str)
+                    .openOn(map);
+            }
+
+            modisLayer.on('click', function(ev) {
+                console.log('click', arguments);
+                onMyClick(ev);
+            });
+            modisLayer.on('dblclick', function(ev) {
+                console.log('dblclick', arguments);
+            });
+            modisLayer.on('mousedown', function(ev) {
+                console.log('mousedown', arguments);
+            });
+            modisLayer.on('mouseup', function(ev) {
+                console.log('mouseup', arguments);
+            });
+            modisLayer.on('mouseover', function(ev) {
+                console.log('mouseover', arguments);
+            });
+            modisLayer.on('mouseout', function(ev) {
+                console.log('mouseout', arguments);
+            });
+            modisLayer.on('contextmenu', function(ev) {
+                console.log('contextmenu', arguments);
+            });
+
             satellite.addTo(map);
             modisLayer.addTo(map);
             
