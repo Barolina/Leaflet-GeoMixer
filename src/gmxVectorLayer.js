@@ -90,7 +90,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     
         this._gmx.properties = ph.properties;
         this._gmx.geometry = ph.geometry;
-        this._gmx.attr = this.initLayerData(ph);
+        this.initLayerData(ph);
         this._gmx.vectorTilesManager = new gmxVectorTilesManager(this._gmx, ph);
         this._gmx.styleManager = new gmxStyleManager(this._gmx);
         this._gmx.ProjectiveImage = new ProjectiveImage();
@@ -166,8 +166,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
         var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
         var point = map.project(pos);
-        gmx.shiftX = gmx.attr.shiftXlayer ? gmx.attr.shiftXlayer * gmx.mInPixel : 0;
-        gmx.shiftY = point.y - p1.y + (gmx.attr.shiftYlayer ? gmx.attr.shiftYlayer * gmx.mInPixel : 0);
+        gmx.shiftX = gmx.shiftXlayer ? gmx.shiftXlayer * gmx.mInPixel : 0;
+        gmx.shiftY = point.y - p1.y + (gmx.shiftYlayer ? gmx.shiftYlayer * gmx.mInPixel : 0);
 
 		for (var t in this._tiles) {
             var tile = this._tiles[t];
@@ -244,7 +244,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             zoom = this._map._zoom,
             gmx = this._gmx;
 
-		if (!gmx.attr || !gmx.styleManager.isVisibleAtZoom(zoom)) {
+		if (!gmx.layerType || !gmx.styleManager.isVisibleAtZoom(zoom)) {
             this._tileLoaded();
             return;
         }
@@ -365,7 +365,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             out = [],
             mInPixel = gmx.mInPixel,
-            mercPoint = [point.x, point.y],
+            mercPoint = [point.x - gmx.shiftXlayer, point.y - gmx.shiftYlayer],
             bounds = gmxAPIutils.bounds([mercPoint]);
         var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
             var x = (mb.min.x + mb.max.x) / 2, y = (mb.min.y + mb.max.y) / 2;
@@ -487,11 +487,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             prop = layerDescription.properties,
             type = prop.type + (prop.Temporal ? 'Temporal' : '');
 
+        gmx.items = {}, gmx.tileCount = 0, gmx.itemCount = 0;
 		var cnt;
 		if(type === 'VectorTemporal') {
             cnt = prop.TemporalTiles;
-			res.TemporalColumnName = prop.TemporalColumnName;
-			res.TemporalPeriods = prop.TemporalPeriods;
+			gmx.TemporalColumnName = prop.TemporalColumnName;
+			gmx.TemporalPeriods = prop.TemporalPeriods;
 			var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
 			var arr = ZeroDateString.split('.');
 			var zn = new Date(					// Начальная дата
@@ -499,24 +500,24 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 				(arr.length > 1 ? arr[1] - 1 : 0),
 				(arr.length > 0 ? arr[0] : 1)
 				);
-			res.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
-			res.ZeroUT = res.ZeroDate.getTime() / 1000;
+			gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
+			gmx.ZeroUT = gmx.ZeroDate.getTime() / 1000;
 		}
         
-		res.tileCount = cnt;
-		res.layerType = type;						// VectorTemporal Vector
-		res.identityField = prop.identityField;	// ogc_fid
-		res.GeometryType = prop.GeometryType;		// тип геометрий обьектов в слое
-		res.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
+		gmx.tileCount = cnt;
+		gmx.layerType = type;					// VectorTemporal Vector
+		gmx.identityField = prop.identityField;	// ogc_fid
+		gmx.GeometryType = prop.GeometryType;		// тип геометрий обьектов в слое
+		gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
 
         //prop.pointsFields = 'x1,y1,x2,y2,x3,y3,x4,y4';
         if(prop.pointsFields) {
-            res.pointsFields = prop.pointsFields.split(',');
+            gmx.pointsFields = prop.pointsFields.split(',');
         }
 
 		if(prop.IsRasterCatalog) {
-			res.IsRasterCatalog = prop.IsRasterCatalog;
-			res.rasterBGfunc = function(x, y, z, item) {
+			gmx.IsRasterCatalog = prop.IsRasterCatalog;
+			gmx.rasterBGfunc = function(x, y, z, item) {
 				var properties = item.properties;
 				return 'http://' + gmx.hostName
 					+'/TileSender.ashx?ModeKey=tile'
@@ -527,11 +528,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 					+'&MapName=' + gmx.mapName
 					+'&key=' + encodeURIComponent(gmx.sessionKey);
 			};
-			res.imageQuicklookProcessingHook = gmxImageTransform;
+			gmx.imageQuicklookProcessingHook = gmxImageTransform;
 		}
         if(prop.Quicklook) {
-			var template = res.Quicklook = prop.Quicklook;
-			res.quicklookBGfunc = function(item) {
+			var template = gmx.Quicklook = prop.Quicklook;
+			gmx.quicklookBGfunc = function(item) {
 				var properties = item.properties;
 				var url = template;
 				var reg = /\[([^\]]+)\]/;
@@ -542,17 +543,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 				}
 				return url;
 			};
-			res.imageProcessingHook = gmxImageTransform;
+			gmx.imageProcessingHook = gmxImageTransform;
 		}
         if('MetaProperties' in prop) {
             var meta = prop.MetaProperties;
             if('shiftX' in meta || 'shiftY' in meta) {              // сдвиг всего слоя
-                res.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
-                res.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
+                gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
+                gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
             }
             // if('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров объектов слоя
-                // if(meta.shiftXfield) res.shiftXfield = meta.shiftXfield.Value;
-                // if(meta.shiftYfield) res.shiftYfield = meta.shiftYfield.Value;
+                // if(meta.shiftXfield) gmx.shiftXfield = meta.shiftXfield.Value;
+                // if(meta.shiftYfield) gmx.shiftYfield = meta.shiftYfield.Value;
             // }
 		}
 		return res;

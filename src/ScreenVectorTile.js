@@ -3,8 +3,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     
 	var gmx = layer._gmx;
 	var tKey = tilePoint.x + ':' + tilePoint.y;
-    var showRaster = 'rasterBGfunc' in gmx.attr &&
-        (zoom >= gmx.attr.minZoomRasters);
+    var showRaster = 'rasterBGfunc' in gmx &&
+        (zoom >= gmx.minZoomRasters);
 
     var rasters = {},
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
@@ -60,19 +60,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             var itemImageProcessingHook = null;
             var item = gmx.vectorTilesManager.getItem(idr);
 			var isTiles = false;
-			if(gmx.attr.IsRasterCatalog) {  // RasterCatalog
-				if(!item.properties.GMX_RasterCatalogID && gmx.attr.quicklookBGfunc) {
-					url = gmx.attr.quicklookBGfunc(item)
-					itemImageProcessingHook = gmx.attr.imageQuicklookProcessingHook;
+			if(gmx.IsRasterCatalog) {  // RasterCatalog
+				if(!item.properties.GMX_RasterCatalogID && gmx.quicklookBGfunc) {
+					url = gmx.quicklookBGfunc(item)
+					itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
 				} else {
 					isTiles = true;
 				}
 			} else if(item.properties.urlBG) {
 				url = item.properties.urlBG;
-				itemImageProcessingHook = gmx.attr.imageQuicklookProcessingHook;
-			} else if(gmx.attr.Quicklook) {
-				url = gmx.attr.rasterBGfunc(item);
-				itemImageProcessingHook = gmx.attr.imageProcessingHook;
+				itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
+			} else if(gmx.Quicklook) {
+				url = gmx.rasterBGfunc(item);
+				itemImageProcessingHook = gmx.imageProcessingHook;
 			}
 			if(url || isTiles) {
 				needLoadRasters++;
@@ -80,7 +80,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 				if (isTiles) {
 					loadRasterRecursion(gmxTilePoint,
 						function(gtp) {
-							return gmx.attr.rasterBGfunc(gtp.x, gtp.y, gtp.z, item);
+							return gmx.rasterBGfunc(gtp.x, gtp.y, gtp.z, item);
 						},
 						function(img, imageGtp) {
 							needLoadRasters--;

@@ -13,9 +13,8 @@
 	var tilesTree = {
 		_rootNodes: [],
 		initFromTiles: function() {
-			var ph = gmx.attr,
-				periods = ph.TemporalPeriods,
-				dateZero = ph.ZeroUT,
+			var periods = gmx.TemporalPeriods,
+				dateZero = gmx.ZeroUT,
 				roots = [];
 				 
 			var addTile = function (node, tile, key) {
@@ -145,7 +144,7 @@
 				return null;
 			}
 			
-			var periods = gmx.attr.TemporalPeriods;
+			var periods = gmx.TemporalPeriods;
 			
 			var findNode = function(node, d, s) {
 				if (!node) return null;
@@ -382,7 +381,7 @@
            
             if (tile.state === 'notLoaded') {
                 tile.load().then(function() {
-                    gmx.attr.itemCount += _updateItemsFromTile(tile);
+                    gmx.itemCount += _updateItemsFromTile(tile);
                     for (var key in subscriptions) {
                         if (tile.bounds.intersects(subscriptions[key].styleBounds)
                             && _this.getNotLoadedTileCount(subscriptions[key].tilePoint) == 0) 
@@ -458,7 +457,7 @@
 			var loadDef = tile.load();
 			(function(tile) {
 				loadDef.then(function() {
-					gmx.attr.itemCount += _updateItemsFromTile(tile);
+					gmx.itemCount += _updateItemsFromTile(tile);
 					var treeNode = tilesTree.getNode(tile.d, tile.s);
 					treeNode && treeNode.count--; //decrease number of tiles to load inside this node
 				})

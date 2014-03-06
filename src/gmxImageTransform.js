@@ -14,8 +14,8 @@ var gmxImageTransform = function(hash) {
 //- посчитать длины сторон
 //- если соотношение самой длинной и самой короткой больше, чем 2, тогда северный отрезок из двух коротких - это верхний край квиклука
 //- если соотношение меньше, чем 2, то самая северная вершина - это левый верхний угол изображения
-    if (gmx.attr.pointsFields) {
-        var keys = gmx.attr.pointsFields;
+    if (gmx.pointsFields) {
+        var keys = gmx.pointsFields;
         coord = [];
         for (var i=0, prev=null, len=keys.length; i<len; i++) {
             var key = keys[i];
@@ -102,7 +102,7 @@ var gmxImageTransform = function(hash) {
         return out;
     }
     var shiftPoints = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]];
-    if(!gmx.attr.pointsFields) shiftPoints = chPoints(shiftPoints);
+    if(!gmx.pointsFields) shiftPoints = chPoints(shiftPoints);
     
     var pt = gmx.ProjectiveImage.getCanvas({
         imageObj: img

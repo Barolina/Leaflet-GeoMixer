@@ -23,7 +23,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 		
 		var bounds = gmxAPIutils.bounds(ph.geometry.coordinates[0]);
 		
-		gmx.attr.rasterBGfunc = function(x, y, z) {
+		gmx.rasterBGfunc = function(x, y, z) {
 		
 			var tileSize = gmxAPIutils.tileSizes[z];
 			var minx = x * tileSize;
