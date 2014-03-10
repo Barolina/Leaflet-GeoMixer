@@ -272,9 +272,8 @@
     }
 
     this.getItems = function(gmxTilePoint) {
-        var bounds = getStyleBounds(gmxTilePoint);
-        
-        var resItems = [];
+        var bounds = getStyleBounds(gmxTilePoint),
+            resItems = [];
         for (var key in activeTileKeys) {
             var tile = tiles[key].tile;
             if (!bounds.intersects(tile.bounds)) {
@@ -284,10 +283,9 @@
                
 			var data = tile.data || [];
 			for (var j = 0, len1 = data.length; j < len1; j++) {
-                
-				var it = data[j];
-				var item = it.item;
-                var isFiltered = false;
+				var it = data[j],
+                    item = it.item,
+                    isFiltered = false;
                 for (var filterName in filters) {
                     if (filters[filterName] && !filters[filterName](item)) {
                         isFiltered = true;
@@ -319,29 +317,28 @@
     }
 
     var _updateItemsFromTile = function(tile) {
-        var gmxTileKey = tile.gmxTileKey;
-		var layerProp = gmx.properties;
-		var identityField = layerProp.identityField || 'ogc_fid';
-		var data = tile.data;
+        var gmxTileKey = tile.gmxTileKey,
+            layerProp = gmx.properties,
+            identityField = layerProp.identityField || 'ogc_fid',
+            data = tile.data;
 		for (var i = 0, len = data.length; i < len; i++) {
-			var it = data[i];
-			var prop = it.properties;
+			var it = data[i],
+                prop = it.properties,
+                geom = it.geometry,
+                id = it.id || prop[identityField],
+                item = items[id];
 			delete it.properties;
-			var geom = it.geometry;
-			
-			var id = it.id || prop[identityField];
-			var item = items[id];
 			if(item) {
 				if(item.type.indexOf('MULTI') == -1) {
                     item.type = 'MULTI' + item.type;
                 }
 			} else {
 				item = {
-					'id': id
-					,'type': geom.type
-					,'properties': prop
-					,'propHiden': {
-						'fromTiles': {}
+					id: id
+					,type: geom.type
+					,properties: prop
+					,propHiden: {
+						fromTiles: {}
 					}
 				};
 				items[id] = item;
@@ -360,8 +357,8 @@
     }
 
     this.getNotLoadedTileCount = function(gmxTilePoint) {
-        var count = 0;
-        var bounds = getStyleBounds(gmxTilePoint);
+        var count = 0,
+            bounds = getStyleBounds(gmxTilePoint);
         for (var key in activeTileKeys) {
             var tile = tiles[key].tile;
             if (tile.state !== 'loaded' && bounds.intersects(tile.bounds)) {
@@ -441,8 +438,8 @@
     }
 	
 	this.preloadTiles = function(dateBegin, dateEnd, bounds) {
-		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd);
-		var loadingDefs = [];
+		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd),
+            loadingDefs = [];
 		for (var key in tileKeys) {
 			var tile = tiles[key].tile;
 			

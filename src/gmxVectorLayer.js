@@ -221,17 +221,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         bounds.min.y += shiftY, bounds.max.y += shiftY;
         bounds.min.x -= shiftX, bounds.max.x -= shiftX;
 
-		var nwTilePoint = new L.Point(
-		        Math.floor(bounds.min.x / tileSize),
-		        Math.floor(bounds.min.y / tileSize)),
+        var nwTilePoint = new L.Point(
+                Math.floor(bounds.min.x / tileSize),
+                Math.floor(bounds.min.y / tileSize)),
 
-		    seTilePoint = new L.Point(
-		        Math.floor(bounds.max.x / tileSize),
-		        Math.floor(bounds.max.y / tileSize)),
+            seTilePoint = new L.Point(
+                Math.floor(bounds.max.x / tileSize),
+                Math.floor(bounds.max.y / tileSize)),
 
-		    tileBounds = new L.Bounds(nwTilePoint, seTilePoint);
+            tileBounds = new L.Bounds(nwTilePoint, seTilePoint);
 
-		this._addTilesFromCenterOut(tileBounds);
+        this._addTilesFromCenterOut(tileBounds);
 
 		if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
 			this._removeOtherTiles(tileBounds);
@@ -365,7 +365,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             out = [],
             mInPixel = gmx.mInPixel,
-            mercPoint = [point.x - gmx.shiftXlayer, point.y - gmx.shiftYlayer],
+            shiftXlayer = gmx.shiftXlayer || 0,
+            shiftYlayer = gmx.shiftYlayer || 0,
+            mercPoint = [point.x - shiftXlayer, point.y - shiftYlayer],
             bounds = gmxAPIutils.bounds([mercPoint]);
         var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
             var x = (mb.min.x + mb.max.x) / 2, y = (mb.min.y + mb.max.y) / 2;
@@ -441,9 +443,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 ev.gmx = this._gmxLastHover;
                 this.fire('mouseout', ev);
             }
+            this._gmxLastHover = null;
+            this._map.doubleClickZoom.enable();
         }
-        this._gmxLastHover = null;
-        this._map.doubleClickZoom.enable();
     },
 	gmxEventCheck: function (ev) {
         var type = ev.type,
@@ -461,15 +463,25 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 var mercatorPoint = L.Projection.Mercator.project(ev.latlng),
                     arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
                 if (arr && arr.length) {
+                    var target = arr[0];
+                    if (type === 'mousemove' &&
+                        this._gmxLastHover &&
+                        this._gmxLastHover.target.id !== target.id &&
+                        this.hasEventListeners('mouseout')
+                        ) {
+                        ev.gmx = this._gmxLastHover;
+                        this.fire('mouseout', ev);
+                    }
                     ev.gmx = {
                         targets: arr
-                        ,target: arr[0]
+                        ,target: target
                     };
                     this.fire(type, ev);
-                    if (type === 'mousemove') {
-                        if (!this._gmxLastHover && this.hasEventListeners('mouseover')) {
-                            this.fire('mouseover', ev);
-                        }
+                    if (type === 'mousemove' &&
+                        (!this._gmxLastHover || this._gmxLastHover.target.id !== target.id) &&
+                        this.hasEventListeners('mouseover')
+                        ) {
+                        this.fire('mouseover', ev);
                     }
                     this._gmxLastHover = ev.gmx;
                     this._map.doubleClickZoom.disable();
@@ -514,22 +526,42 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if(prop.pointsFields) {
             gmx.pointsFields = prop.pointsFields.split(',');
         }
-
-		if(prop.IsRasterCatalog) {
-			gmx.IsRasterCatalog = prop.IsRasterCatalog;
-			gmx.rasterBGfunc = function(x, y, z, item) {
-				var properties = item.properties;
-				return 'http://' + gmx.hostName
-					+'/TileSender.ashx?ModeKey=tile'
-					+'&x=' + x
-					+'&y=' + y
-					+'&z=' + z
-					+'&LayerName=' + properties.GMX_RasterCatalogID
-					+'&MapName=' + gmx.mapName
-					+'&key=' + encodeURIComponent(gmx.sessionKey);
-			};
-			gmx.imageQuicklookProcessingHook = gmxImageTransform;
+        if('MetaProperties' in prop) {
+            var meta = prop.MetaProperties;
+            if('shiftX' in meta || 'shiftY' in meta) {              // сдвиг всего слоя
+                gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
+                gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
+            }
+            if('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров объектов слоя
+                if(meta.shiftXfield) gmx.shiftXfield = meta.shiftXfield.Value;
+                if(meta.shiftYfield) gmx.shiftYfield = meta.shiftYfield.Value;
+            }
 		}
+
+        if(prop.IsRasterCatalog) {
+            gmx.IsRasterCatalog = prop.IsRasterCatalog;
+            gmx.rasterBGfunc = function(x, y, z, item) {
+                var properties = item.properties;
+                if (gmx.shiftXfield && properties[gmx.shiftXfield]) {
+                    var dx = properties[gmx.shiftXfield] || 0;
+                    x += Math.floor(gmx.mInPixel * dx / 256);
+                }
+                if (gmx.shiftYfield && properties[gmx.shiftYfield]) {
+                    var dy = properties[gmx.shiftYfield] || 0;
+                    y += Math.floor(gmx.mInPixel * dy / 256);
+                }
+                
+                return 'http://' + gmx.hostName
+                    +'/TileSender.ashx?ModeKey=tile'
+                    +'&x=' + x
+                    +'&y=' + y
+                    +'&z=' + z
+                    +'&LayerName=' + properties.GMX_RasterCatalogID
+                    +'&MapName=' + gmx.mapName
+                    +'&key=' + encodeURIComponent(gmx.sessionKey);
+            };
+            gmx.imageQuicklookProcessingHook = gmxImageTransform;
+        }
         if(prop.Quicklook) {
 			var template = gmx.Quicklook = prop.Quicklook;
 			gmx.quicklookBGfunc = function(item) {
@@ -544,17 +576,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 				return url;
 			};
 			gmx.imageProcessingHook = gmxImageTransform;
-		}
-        if('MetaProperties' in prop) {
-            var meta = prop.MetaProperties;
-            if('shiftX' in meta || 'shiftY' in meta) {              // сдвиг всего слоя
-                gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
-                gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
-            }
-            // if('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров объектов слоя
-                // if(meta.shiftXfield) gmx.shiftXfield = meta.shiftXfield.Value;
-                // if(meta.shiftYfield) gmx.shiftYfield = meta.shiftYfield.Value;
-            // }
 		}
 		return res;
 	}
