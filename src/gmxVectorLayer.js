@@ -542,15 +542,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.IsRasterCatalog = prop.IsRasterCatalog;
             gmx.rasterBGfunc = function(x, y, z, item) {
                 var properties = item.properties;
-                if (gmx.shiftXfield && properties[gmx.shiftXfield]) {
-                    var dx = properties[gmx.shiftXfield] || 0;
-                    x += Math.floor(gmx.mInPixel * dx / 256);
-                }
-                if (gmx.shiftYfield && properties[gmx.shiftYfield]) {
-                    var dy = properties[gmx.shiftYfield] || 0;
-                    y += Math.floor(gmx.mInPixel * dy / 256);
-                }
-                
                 return 'http://' + gmx.hostName
                     +'/TileSender.ashx?ModeKey=tile'
                     +'&x=' + x
