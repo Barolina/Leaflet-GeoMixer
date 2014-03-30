@@ -68,6 +68,10 @@ var gmxEventsManager = L.Handler.extend({
                         break;
                     }
                 }
+                if (_this._lastLayer && _this._lastLayer._leaflet_id === id) {
+                    _this._lastLayer = null;
+                    _this._lastId = 0;
+                }
             }
 		}, this);
 	}
