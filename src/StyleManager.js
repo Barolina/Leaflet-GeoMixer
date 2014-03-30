@@ -2,6 +2,7 @@
     var MAX_STYLE_SIZE = 256,
         needLoadIcons = 0,
         styles = [],
+        hoverStyles = [],
         imagesSize = {},
         defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'},
         me = this;
@@ -13,7 +14,17 @@
             len = Math.max(arr.length, gmx.styles.length);
 
 		for (var i = 0; i < len; i++) {
-			styles.push(parseItem(gmx.styles[i] || arr[i]));
+			var gmxStyle = gmx.styles[i] || arr[i];
+            if (gmxStyle.HoverStyle === undefined && gmxStyle.RenderStyle) {
+                var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
+                if (hoveredStyle.marker && hoveredStyle.marker.size) hoveredStyle.marker.size += 1;
+                if (hoveredStyle.outline) hoveredStyle.outline.thickness += 1;
+                //if (hoveredStyle.outline) hoveredStyle.outline.color = 0xff0000;
+                gmxStyle.HoverStyle = hoveredStyle;
+            } else if (gmxStyle.HoverStyle === null) {
+                delete gmxStyle.HoverStyle;
+            }
+			styles.push(parseItem(gmxStyle));
 		}
     }
 
@@ -34,8 +45,8 @@
 			,onMouseOver: !style.DisableBalloonOnMouseMove
 			,onMouseClick: !style.DisableBalloonOnClick
 			,BalloonEnable: style.BalloonEnable || false
-			,RenderStyle: ('RenderStyle' in style ? parseStyle(style.RenderStyle) : null)
-			,HoverStyle: ('HoverStyle' in style ? parseStyle(style.HoverStyle) : null)
+			,RenderStyle: (style.RenderStyle ? parseStyle(style.RenderStyle) : null)
+			,HoverStyle: (style.HoverStyle ? parseStyle(style.HoverStyle) : null)
 		};
 		if('Filter' in style) {
             var ph = gmxParsers.parseSQL(style.Filter);
@@ -325,6 +336,7 @@
 			if ('FilterFunction' in st && !st.FilterFunction(item.properties)) continue;
 			if(item.propHiden.currentFilter !== i) {
                 itemStyleParser(item, st.RenderStyle);
+                if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
             }
 
             item.propHiden.currentFilter = i;
@@ -338,8 +350,13 @@
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
 		var style = styles[item.propHiden.currentFilter];
+        
+        if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
+            itemStyleParser(item, style.HoverStyle);
+            return style.HoverStyle;
+        }
         itemStyleParser(item, style.RenderStyle);
-        return style;
+        return style.RenderStyle;
     }
 
     // estimete style size for arbitrary object

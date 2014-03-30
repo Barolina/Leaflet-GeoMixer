@@ -53,17 +53,16 @@
 	,
     
     getTileNumFromLeaflet: function (tilePoint, zoom) {
-		var pz = Math.pow(2, zoom);
-		var tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0);
-		var ty = tilePoint.y % pz + (tilePoint.y < 0 ? pz : 0);
-		var gmxTilePoint = {
-			'z': zoom
-			,'x': tx % pz - pz/2
-			,'y': pz/2 - 1 - ty % pz
-		};
-		return gmxTilePoint;
-	},
-    
+        var pz = Math.pow(2, zoom),
+            tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0),
+            ty = tilePoint.y % pz + (tilePoint.y < 0 ? pz : 0);
+        return {
+            z: zoom
+            ,x: tx % pz - pz/2
+            ,y: pz/2 - 1 - ty % pz
+        };
+    },
+
 	getTilePosZoomDelta: function(tilePoint, zoomFrom, zoomTo) {		// получить смещение тайла на меньшем zoom
 		var dz = Math.pow(2, zoomFrom - zoomTo);
 		var size = 256 / dz;

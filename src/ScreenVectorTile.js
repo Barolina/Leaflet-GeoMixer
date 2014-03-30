@@ -45,10 +45,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
     //load missing rasters for one item
     var getItemRasters = function(geo) {
-        var idr = geo.id;
-        if (idr in rasters) return;
-        var def = new gmxDeferred(),
-            properties = geo.item.properties,
+        var idr = geo.id,
+            def = new gmxDeferred();
+        if (idr in rasters) def;
+        var properties = geo.item.properties,
             item = gmx.vectorTilesManager.getItem(idr),
             ww = gmxAPIutils.worldWidthMerc,
             shiftX = Number(gmx.shiftXfield ? properties[gmx.shiftXfield] : 0) % ww,
@@ -315,15 +315,13 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
-            //var labels = {};
-            for (var i = 0; i < itemsLength; i++) {
-                var geoItem = geoItems[i],
-                    idr = geoItem.id,
+            var drawItem = function(geoItem) {
+                var idr = geoItem.id,
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
 
-                dattr.style = style.RenderStyle;
-				setCanvasStyle(item, dattr);
+                dattr.style = style;
+                setCanvasStyle(item, dattr);
 
                 if (rasters[idr]) {
                     dattr.bgImage = rasters[idr];
@@ -333,7 +331,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     if(dattr.style.image) { // отображение мультиполигона маркером
                         dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
-						gmxAPIutils.pointToCanvas(dattr);
+                        gmxAPIutils.pointToCanvas(dattr);
                     } else {
                         dattr.flagPixels = false;
                         var coords = geom.coordinates;
@@ -400,9 +398,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             dattr.coords = coords[j];
                             gmxAPIutils.lineToCanvas(dattr);
                         }
-					} else {
-						dattr.coords = coords;
-						gmxAPIutils.lineToCanvas(dattr);
+                    } else {
+                        dattr.coords = coords;
+                        gmxAPIutils.lineToCanvas(dattr);
                     }
                 } else if (geom.type === 'POINT' || geom.type === 'MULTIPOINT') {	// Отрисовка геометрии точек
                     var coords = geom.coordinates;
@@ -411,11 +409,22 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             dattr.coords = coords[j];
                             gmxAPIutils.pointToCanvas(dattr);
                         }
-					} else {
-						dattr.coords = coords;
-						gmxAPIutils.pointToCanvas(dattr);
+                    } else {
+                        dattr.coords = coords;
+                        gmxAPIutils.pointToCanvas(dattr);
                     }
                 }
+            }
+            //var labels = {};
+            var hoverItems = [];
+            for (var i = 0; i < itemsLength; i++) {
+                var it = geoItems[i],
+                    idr = it.id;
+                if (gmx.lastHover && gmx.lastHover.id === idr) hoverItems.push(it);
+                else drawItem(it);
+            }
+            for (var i = 0, len = hoverItems.length; i < len; i++) {
+                drawItem(hoverItems[i]);
             }
             /*
             // TODO: Need labels manager

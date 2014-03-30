@@ -8,18 +8,31 @@ var gmxEventsManager = L.Handler.extend({
 	initialize: function (map) {
         this._map = map;
         this._layers = [];
+        this._lastLayer = null;
+        this._lastId = null;
         var _this = this;
 
-		var eventCheck = function (ev) {
+        var clearLastHover = function () {
+            if (_this._lastLayer) {
+                _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
+            }
+        }
+
+        var eventCheck = function (ev) {
             var type = ev.type,
-                arr = this._layers,
+                arr = _this._layers,
+                id = 0,
+                objId = 0,
+                layer = null,
                 cursor = '';    // default
-            for (var i = 0, len = arr.length; i < len; i++) {
-                var id = arr[i],
-                    layer = this._map._layers[id],
-                    needCheck = 'gmxEventCheck' in layer;
-                if('gmxEventCheck' in layer) {
-                    if(layer.gmxEventCheck(ev)) {
+            for (var i = arr.length - 1; i >= 0; i--) {
+                id = arr[i];
+                layer = _this._map._layers[id];
+                var needCheck = 'gmxEventCheck' in layer && layer.options.clickable;
+
+                if(needCheck) {
+                    objId = layer.gmxEventCheck(ev);
+                    if(objId) {
                         cursor = 'pointer';
                         break;
                     }
@@ -27,6 +40,13 @@ var gmxEventsManager = L.Handler.extend({
             }
             if(map._lastCursor !== cursor) map._container.style.cursor = cursor;
             map._lastCursor = cursor;
+            if (_this._lastId && (_this._lastLayer != layer || _this._lastId != objId)) {
+                clearLastHover();
+            }
+            if (cursor) {
+                _this._lastLayer = layer;
+                _this._lastId = objId;
+            }
         }
 
 		map.on({

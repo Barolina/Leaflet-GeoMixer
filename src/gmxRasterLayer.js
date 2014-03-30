@@ -1,6 +1,9 @@
 ﻿//Raster layer is just vector layer with the single object and special background tiles
 L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 {
+	options: {
+        clickable: false
+    },
     initFromDescription: function(ph){
         var props = ph.properties,
             vectorProperties = {
@@ -13,7 +16,8 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                 styles: [{
                     MinZoom: props.styles[0].MinZoom,
                     MaxZoom: props.styles[0].MaxZoom,
-                    RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}}
+                    RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}},
+                    HoverStyle: null
                 }]
             };
 
