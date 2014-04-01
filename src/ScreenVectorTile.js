@@ -353,19 +353,22 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             for (var j = 0, len1 = coords.length; j < len1; j++) {
                                 var coords1 = coords[j];
                                 var hiddenLines1 = hiddenLines[j];
+                                var pixels1 = [], hidden1 = [];
                                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                     dattr.coords = coords1[j1];
                                     dattr.hiddenLines = hiddenLines1[j1];
                                     var res = func(dattr);
                                     if(out && res) {
-                                        pixels.push(res.coords);
-                                        hidden.push(res.hidden);
+                                        pixels1.push(res.coords);
+                                        hidden1.push(res.hidden);
                                     }
                                 }
+                                pixels.push(pixels1);
+                                hidden.push(hidden1);
                             }
                             if(out) {
-                                out.coords.push(pixels);
-                                out.hidden.push(hidden);
+                                out.coords = pixels;
+                                out.hidden = hidden;
                             }
                             return out;
                         }
@@ -382,7 +385,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                                 coords = geoItem.pixels.coords;
                                 hiddenLines = geoItem.pixels.hidden;
                             }
+                            ctx.beginPath();
                             coordsToCanvas(gmxAPIutils.polygonToCanvasFill, flagPixels);
+                            ctx.closePath();
+                            ctx.fill();
                         }
                     }
                     // if(dattr.style.label) {

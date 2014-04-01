@@ -458,6 +458,7 @@
 	'polygonToCanvas': function(attr) {				// Полигон в canvas
         if(attr.coords.length === 0) return;
 		var gmx = attr.gmx,
+            mInPixel = gmx.mInPixel,
             flagPixels = attr.flagPixels || false,
             hiddenLines = attr.hiddenLines || [],
             coords = attr.coords,
@@ -477,9 +478,8 @@
                 cntHide++;
             }
             var p1 = [coords[i][0], coords[i][1]];
-            if(!flagPixels) p1 = [p1[0] * gmx.mInPixel, p1[1] * gmx.mInPixel];
+            if (!flagPixels) p1 = [p1[0] * mInPixel, p1[1] * mInPixel];
             var p2 = [(0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0];
-            //var p2 = [(0.5 + p1[0] - px), (0.5 + py - p1[1])];
 
             if(lastX !== p2[0] || lastY !== p2[1]) {
                 lastX = p2[0], lastY = p2[1];
@@ -497,10 +497,12 @@
 	}
 	,
 	'polygonToCanvasFill': function(attr) {				// Polygon fill
-        if(attr.coords.length < 3) return;
+        if (attr.coords.length < 3) return;
 		var gmx = attr.gmx,
+            mInPixel = gmx.mInPixel,
             flagPixels = attr.flagPixels || false,
             coords = attr.coords,
+            len = coords.length,
             px = attr.tpx,
             py = attr.tpy,
             ctx = attr.ctx;
@@ -510,12 +512,14 @@
             ctx.fillStyle = pattern;
         }
         ctx.lineWidth = 0;
-        ctx.beginPath();
-        for (var i = 0, len = coords.length; i < len; i++) {
-            var p1 = flagPixels ? coords[i] : [coords[i][0] * gmx.mInPixel, coords[i][1] * gmx.mInPixel];
-            ctx[(i == 0 ? 'moveTo' : 'lineTo')]((0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0);
+        var p1 = flagPixels ? coords[0] : [coords[0][0] * mInPixel, coords[0][1] * mInPixel],
+            p2 = [(0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0];
+        ctx.moveTo(p2[0], p2[1]);
+        for (var i = 1; i < len; i++) {
+            p1 = flagPixels ? coords[i] : [coords[i][0] * mInPixel, coords[i][1] * mInPixel];
+            p2 = [(0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0];
+            ctx.lineTo(p2[0], p2[1]);
         }
-        ctx.fill();
 	}
     ,
     'labelCanvasContext': null 			// 2dContext canvas для определения размера Label
@@ -648,7 +652,7 @@
 		return {x1: x1, y1: y1, x2: x2, y2: y2, x3: x3, y3: y3, x4: x4, y4: y4};
 	}
     ,
-    'isPointInPolygonArr': function(chkPoint, poly)	{			// Проверка точки на принадлежность полигону в виде массива
+    isPointInPolygonArr: function(chkPoint, poly) { // Проверка точки на принадлежность полигону в виде массива
         var isIn = false,
             x = chkPoint[0], 
             y = chkPoint[1],
@@ -666,6 +670,16 @@
             p1 = p2;
         }
         return isIn;
+    }
+    ,
+    isPointInPolygonWithHell: function(chkPoint, coords) {
+        var flag = false;
+        if (!gmxAPIutils.isPointInPolygonArr(chkPoint, coords[0])) return false;
+        flag = true;
+        for (var j = 1, len = coords.length; j < len; j++) {
+            if (gmxAPIutils.isPointInPolygonArr(chkPoint, coords[j])) return false;
+        }
+        return true;
     }
     ,
     'chkPointInPolyLine': function(chkPoint, lineHeight, coords) {	// Проверка точки(с учетом размеров) на принадлежность линии

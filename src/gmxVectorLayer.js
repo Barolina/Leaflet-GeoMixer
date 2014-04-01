@@ -374,6 +374,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             shiftXlayer = gmx.shiftXlayer || 0,
             shiftYlayer = gmx.shiftYlayer || 0,
             mercPoint = [point.x - shiftXlayer, point.y - shiftYlayer],
+            pixelPoint = [mercPoint[0] * mInPixel, mercPoint[1] * mInPixel],
             bounds = gmxAPIutils.bounds([mercPoint]);
         var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
             var x = (mb.min.x + mb.max.x) / 2, y = (mb.min.y + mb.max.y) / 2;
@@ -415,9 +416,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         coords = getMarkerPolygon(geoItem.bounds, dx, dy);
                         if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
                     } else {
-                        var flag = false;
+                        var flag = false,
+                            chkPoint = mercPoint,
+                            flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
+                        if(flagPixels) {
+                            coords = geoItem.pixels.coords;
+                            chkPoint = pixelPoint;
+                        }
                         for (var j = 0, len = coords.length; j < len; j++) {
-                            if (gmxAPIutils.isPointInPolygonArr(mercPoint, coords[j][0])) {
+                            if (gmxAPIutils.isPointInPolygonWithHell(chkPoint, coords[j])) {
                                 flag = true;
                                 break;
                             }
@@ -425,8 +432,18 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         if (!flag) continue;
                     }
                 } else if(type === 'POLYGON') {
-                    coords = (parsedStyle.marker ? getMarkerPolygon(geoItem.bounds, dx, dy) : coords[0]);
-                    if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                    if(parsedStyle.marker) {
+                        coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                        if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                    } else {
+                        var chkPoint = mercPoint,
+                            flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
+                        if(flagPixels) {
+                            coords = geoItem.pixels.coords;
+                            chkPoint = pixelPoint;
+                        }
+                        if (!gmxAPIutils.isPointInPolygonWithHell(chkPoint, coords)) continue;
+                    }
                 } else if(type === 'POINT') {
                     coords = getMarkerPolygon(geoItem.bounds, dx, dy);
                     if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
