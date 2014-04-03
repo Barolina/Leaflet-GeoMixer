@@ -79,6 +79,13 @@
         ]).then(function(satellite, labels, regionsLayer, modisLayer) {
             modisLayer.setDateInterval(ddt1, ddt2);
 
+            var rastersView = {};
+            modisLayer.setPropertiesHook(function(item) {
+                var id = item.id;
+                item.options.skipRasters = rastersView[id] ? false : true;      // set rasters visibility
+                return item;
+            });
+
             var popup = L.popup();
             function onMyClick(e) {
                 var gmx = e.gmx;
@@ -97,6 +104,15 @@
 
             modisLayer.on('click', function(ev) {
                 console.log('click', arguments);
+                var gmx = ev.gmx,
+                    item = gmx.target,
+                    id = item.id;
+                if(rastersView[id]) {
+                    delete rastersView[id];
+                } else {
+                    rastersView[id] = true;
+                }
+                modisLayer.redrawItem(id);
                 onMyClick(ev);
             });
             modisLayer.on('dblclick', function(ev) {

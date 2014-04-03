@@ -101,26 +101,32 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.initPromise.resolve();
     },
 
-	setStyle: function (style, num) {
-		var gmx = this._gmx;
+    setStyle: function (style, num) {
+        var gmx = this._gmx;
         this.initPromise.then(function() {
             gmx.styleManager.setStyle(style, num);
         });
-	}
-	,
+    },
 
-	setFilter: function (func) {
-        this._gmx.vectorTilesManager.setFilter('userFilter', func);
-		this._update();
-	}
-	,
-	setDateInterval: function (beginDate, endDate) {
+    setPropertiesHook: function (func) {
+        //this._gmx.vectorTilesManager.setPropertiesHook.bind(this._gmx.vectorTilesManager, 'userHook', func);
+        this._gmx.vectorTilesManager.setPropertiesHook('userHook', func);
+    },
+
+    setFilter: function (func) {
+        this._gmx.vectorTilesManager.setPropertiesHook('userFilter', function(item) {
+            return func(item) ? item.properties : null;
+        });
+        this._update();
+    },
+
+    setDateInterval: function (beginDate, endDate) {
         var gmx = this._gmx;
-		gmx.beginDate = beginDate;
-		gmx.endDate = endDate;
+        gmx.beginDate = beginDate;
+        gmx.endDate = endDate;
         gmx.vectorTilesManager.setDateInterval(beginDate, endDate);
-		this._update();
-	},
+        this._update();
+    },
     
     addTo: function (map) {
 		map.addLayer(this);
@@ -391,7 +397,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             var geoItem = arr[i],
                 idr = geoItem.id,
                 item = gmx.vectorTilesManager.getItem(idr),
-                parsedStyle = item.propHiden.parsedStyleKeys,
+                parsedStyle = item.options.parsedStyleKeys,
                 lineWidth = parsedStyle.lineWidth || 0,
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
                 dy = (parsedStyle.sy + lineWidth) / mInPixel;
@@ -439,7 +445,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         var chkPoint = mercPoint,
                             flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
                         if(flagPixels) {
-                            coords = geoItem.pixels.coords;
+                            coords = geoItem.pixels.coords[0];
                             chkPoint = pixelPoint;
                         }
                         if (!gmxAPIutils.isPointInPolygonWithHell(chkPoint, coords)) continue;
@@ -530,6 +536,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             }
         }
         return gmxTiles;
+    },
+    redrawItem: function (id) {    // redraw Item
+        var gmx = this._gmx,
+            item = gmx.vectorTilesManager.getItem(id),
+            gmxTiles = this._getTilesByBounds(item.bounds);
+        this._redrawTilesHash(gmxTiles);    // reset hover
     },
     _redrawTilesHash: function (gmxTiles) {    // Перерисовать список gmxTiles тайлов на экране
         var gmx = this._gmx,

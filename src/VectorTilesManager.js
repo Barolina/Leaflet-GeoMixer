@@ -262,7 +262,7 @@
         endDate = newEndDate;
     }
 
-    this.setFilter = function(filterName, filterFunc) {
+    this.setPropertiesHook = function(filterName, filterFunc) {
         
         filters[filterName] = filterFunc;
         
@@ -337,20 +337,20 @@
 					id: id
 					,type: geom.type
 					,properties: prop
-					,propHiden: {
+					,options: {
 						fromTiles: {}
 					}
 				};
 				items[id] = item;
 			}
             it.item = item;
-			item.propHiden.fromTiles[gmxTileKey] = i;
+			item.options.fromTiles[gmxTileKey] = i;
 			if(layerProp.TemporalColumnName) {
 				var zn = prop[layerProp.TemporalColumnName] || '';
 				zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
 				var vDate = new Date(zn);
 				var offset = vDate.getTimezoneOffset();
-				item.propHiden.unixTimeStamp = vDate.getTime() - offset*60*1000;
+				item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
 			}
 		}
 		return data.length;
@@ -467,8 +467,8 @@
 	}
     
     if (isTemporalLayer) {
-        this.setFilter('TemporalFilter', function(item) {
-            var unixTimeStamp = item.propHiden.unixTimeStamp;
+        this.setPropertiesHook('TemporalFilter', function(item) {
+            var unixTimeStamp = item.options.unixTimeStamp;
             return unixTimeStamp >= beginDate.valueOf() && unixTimeStamp <= endDate.valueOf();
         })
         if (gmx.beginDate && gmx.endDate) {

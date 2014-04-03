@@ -453,11 +453,11 @@
 			}
 			ctx.stroke();
 		}
-	}
-	,
-	'polygonToCanvas': function(attr) {				// Полигон в canvas
+	},
+
+    polygonToCanvas: function(attr) {       // Полигон в canvas
         if(attr.coords.length === 0) return;
-		var gmx = attr.gmx,
+        var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
             flagPixels = attr.flagPixels || false,
             hiddenLines = attr.hiddenLines || [],
@@ -494,11 +494,11 @@
         if(cnt === 1) ctx.lineTo(lastX + 1, lastY);
         ctx.stroke();
         return flagPixels ? null : { coords: pixels, hidden: hidden };
-	}
-	,
-	'polygonToCanvasFill': function(attr) {				// Polygon fill
+    },
+
+    polygonToCanvasFill: function(attr) {     // Polygon fill
         if (attr.coords.length < 3) return;
-		var gmx = attr.gmx,
+        var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
             flagPixels = attr.flagPixels || false,
             coords = attr.coords,
@@ -507,10 +507,6 @@
             py = attr.tpy,
             ctx = attr.ctx;
 
-        if(attr.bgImage) {
-            var pattern = ctx.createPattern(attr.bgImage, "no-repeat");
-            ctx.fillStyle = pattern;
-        }
         ctx.lineWidth = 0;
         var p1 = flagPixels ? coords[0] : [coords[0][0] * mInPixel, coords[0][1] * mInPixel],
             p2 = [(0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0];
@@ -520,9 +516,9 @@
             p2 = [(0.5 + p1[0] - px) << 0, (0.5 + py - p1[1]) << 0];
             ctx.lineTo(p2[0], p2[1]);
         }
-	}
-    ,
-    'labelCanvasContext': null 			// 2dContext canvas для определения размера Label
+    },
+
+    labelCanvasContext: null 			// 2dContext canvas для определения размера Label
     ,
     'getLabelSize': function(txt, style)	{			// Получить размер Label
         var out = [0, 0];

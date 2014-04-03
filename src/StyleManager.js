@@ -272,7 +272,7 @@
     var itemStyleParser = function(item, pt) {
 		var out = {},
             prop = item.properties,
-            propHiden = item.propHiden,
+            options = item.options,
             color = 255, opacity = 1;
 
         out.sx = pt.sx;
@@ -325,7 +325,7 @@
             out.sy = out.label.extentLabel[1];
         }
         */
-		propHiden.parsedStyleKeys = out;
+		options.parsedStyleKeys = out;
         return out;
     }
 
@@ -334,22 +334,22 @@
 			var st = styles[i];
 			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
 			if ('FilterFunction' in st && !st.FilterFunction(item.properties)) continue;
-			if(item.propHiden.currentFilter !== i) {
+			if(item.options.currentFilter !== i) {
                 itemStyleParser(item, st.RenderStyle);
                 if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
             }
 
-            item.propHiden.currentFilter = i;
+            item.options.currentFilter = i;
             return true;
 		}
         return false;
     }
 
-    gmx.vectorTilesManager.setFilter('styleFilter', chkStyleFilter);
+    gmx.vectorTilesManager.setPropertiesHook('styleFilter', chkStyleFilter);
  
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
-		var style = styles[item.propHiden.currentFilter];
+		var style = styles[item.options.currentFilter];
         
         if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
             itemStyleParser(item, style.HoverStyle);

@@ -47,7 +47,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var getItemRasters = function(geo) {
         var idr = geo.id,
             def = new gmxDeferred();
-        if (idr in rasters) def;
+        if (idr in rasters) return def;
         var properties = geo.item.properties,
             item = gmx.vectorTilesManager.getItem(idr),
             ww = gmxAPIutils.worldWidthMerc,
@@ -230,11 +230,13 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 			}
 		}
         geoItems.forEach(function(geo) {
-            needLoadRasters++;
-            getItemRasters(geo).then(function() {
-                needLoadRasters--;
-                chkReadyRasters();
-            });
+            if (!geo.item.options.skipRasters) {
+                needLoadRasters++;
+                getItemRasters(geo).then(function() {
+                    needLoadRasters--;
+                    chkReadyRasters();
+                });
+            }
 		})
         chkReadyRasters();
         return def;
@@ -244,22 +246,21 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 	var styleCanvasKeysLen = styleCanvasKeys.length;
 	var lastStyles = {};
 	var setCanvasStyle = function(item, dattr) {				// Установка canvas стилей
-		var ctx = dattr.ctx;
-		var style = dattr.style;
-		var gmx = dattr.gmx;
+		var ctx = dattr.ctx,
+            style = dattr.style,
+            gmx = dattr.gmx;
 
-		var parsedStyleKeys = item.propHiden.parsedStyleKeys || {};
-		for (var i = 0; i < styleCanvasKeysLen; i++)
-		{
-			var key = styleCanvasKeys[i];
-			var valKey = parsedStyleKeys[key] || style[key];
-			if(key in style && valKey !== lastStyles[key]) {
+        var parsedStyleKeys = item.options.parsedStyleKeys || {};
+        for (var i = 0; i < styleCanvasKeysLen; i++) {
+            var key = styleCanvasKeys[i],
+                valKey = parsedStyleKeys[key] || style[key];
+            if(key in style && valKey !== lastStyles[key]) {
                 ctx[key] = lastStyles[key] = valKey;
             }
         }
         if(style.dashes) {
-            var dashes = style.dashes;
-            var dashOffset = style.dashOffset || 0;
+            var dashes = style.dashes,
+                dashOffset = style.dashOffset || 0;
             if ('setLineDash' in ctx) {     //Chrome
                 ctx.setLineDash(dashes);
                 //ctx.lineDashOffset(dashOffset);
@@ -272,19 +273,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         if(parsedStyleKeys.canvasPattern) {
             ctx.fillStyle = ctx.createPattern(parsedStyleKeys.canvasPattern.canvas, "repeat");
         } else if(style.linearGradient) {
-            var rgr = style.linearGradient;
-            var x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1;
-            var y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1;
-            var x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2;
-            var y2 = rgr.y2Function ? rgr.y2Function(prop) : rgr.y2;
-            var lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
+            var rgr = style.linearGradient,
+                x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1,
+                y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1,
+                x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2,
+                y2 = rgr.y2Function ? rgr.y2Function(prop) : rgr.y2,
+                lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
             for (var i = 0, len = style.linearGradient.addColorStop.length; i < len; i++)
             {
-                var arr1 = style.linearGradient.addColorStop[i];
-                var arrFunc = style.linearGradient.addColorStopFunctions[i];
-                var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]);
-                var p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2]));
-                var p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
+                var arr1 = style.linearGradient.addColorStop[i],
+                    arrFunc = style.linearGradient.addColorStopFunctions[i],
+                    p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]),
+                    p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2])),
+                    p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
                 lineargrad.addColorStop(p0, p1);
             }
             ctx.fillStyle = lineargrad; 
@@ -292,18 +293,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     }
 
     this.drawTile = function() {
+        if (!layer._map) return 0;
         var geoItems = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom); //call each time because of possible items updates
         var itemsLength = geoItems.length;
         if(itemsLength === 0) {
-			if (tKey in layer._tiles) {
-				layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
-			}
-			return 0;
-		}
+            if (tKey in layer._tiles) {
+                layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
+            }
+            return 0;
+        }
 
         geoItems = geoItems.sort(gmx.sortItems);
-		var tile = layer.gmxGetCanvasTile(tilePoint);
-		tile.id = gmxTileKey;
+        var tile = layer.gmxGetCanvasTile(tilePoint);
+        tile.id = gmxTileKey;
 
         var ctx = tile.getContext('2d');
         var dattr = {
@@ -326,6 +328,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 if (rasters[idr]) {
                     dattr.bgImage = rasters[idr];
                 }
+                if (item.options.skipRasters) {
+                    delete dattr.bgImage;
+                }
 
                 var geom = geoItem.geometry;
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
@@ -340,7 +345,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
                         var flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
                         var cacheArr = [];
-                        var coordsToCanvas = function(func) {
+                        var coordsToCanvas = function(func, flagFill) {
                             var out = null;
                             if(flagPixels) {
                                 coords = geoItem.pixels.coords;
@@ -354,6 +359,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                                 var coords1 = coords[j];
                                 var hiddenLines1 = hiddenLines[j];
                                 var pixels1 = [], hidden1 = [];
+                                ctx.beginPath();
                                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                     dattr.coords = coords1[j1];
                                     dattr.hiddenLines = hiddenLines1[j1];
@@ -363,6 +369,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                                         hidden1.push(res.hidden);
                                     }
                                 }
+                                ctx.closePath();
+                                if (flagFill) ctx.fill();
                                 pixels.push(pixels1);
                                 hidden.push(hidden1);
                             }
@@ -373,7 +381,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             return out;
                         }
                         if(dattr.style.strokeStyle && dattr.style.lineWidth) {
-                            var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas, flagPixels);
+                            var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas);
                             if(pixels) {
                                 geoItem.pixels = pixels;
                                 geoItem.pixels.z = gmx.currentZoom;
@@ -385,10 +393,13 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                                 coords = geoItem.pixels.coords;
                                 hiddenLines = geoItem.pixels.hidden;
                             }
-                            ctx.beginPath();
-                            coordsToCanvas(gmxAPIutils.polygonToCanvasFill, flagPixels);
-                            ctx.closePath();
-                            ctx.fill();
+                            ctx.save();
+                            if(dattr.bgImage) {
+                                var pattern = ctx.createPattern(dattr.bgImage, "no-repeat");
+                                ctx.fillStyle = pattern;
+                            }
+                            coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
+                            ctx.restore();
                         }
                     }
                     // if(dattr.style.label) {
@@ -440,7 +451,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 dattr.style = label.style;
                 dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
                 var txt = item.properties[dattr.style.label.field];
-                var parsedStyleKeys = item.propHiden.parsedStyleKeys.label || {};
+                var parsedStyleKeys = item.options.parsedStyleKeys.label || {};
                 //dattr.extentLabel = gmxAPIutils.getLabelSize(txt, parsedStyleKeys);
                 gmxAPIutils.setLabel(txt, dattr, parsedStyleKeys);
             }*/
