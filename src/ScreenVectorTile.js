@@ -314,6 +314,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 var idr = geoItem.id,
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
+                dattr.item = item;
                 dattr.style = style;
                 setCanvasStyle(item, dattr);
 

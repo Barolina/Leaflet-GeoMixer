@@ -48,9 +48,54 @@
         document.getElementsByTagName("head").item(0).appendChild(script);
         return def;
     },
+    getXmlHttp: function() {
+        var xmlhttp;
+        if (typeof XMLHttpRequest != 'undefined') {
+            xmlhttp = new XMLHttpRequest();
+        } else {
+          try {
+            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+          } catch (e) {
+            try {
+              xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            } catch (E) {
+              xmlhttp = false;
+            }
+          }
+        }
+        return xmlhttp;
+    },
+    request: function(ph) { // {'type': 'GET|POST', 'url': 'string', 'callback': 'func'}
+      try {
+        var xhr = gmxAPIutils.getXmlHttp();
+        xhr.open((ph.type ? ph.type : 'GET'), ph.url, ph.async || false);
+        xhr.send((ph.params ? ph.params : null));
+        if (ph.async) {
+            xhr.withCredentials = true;
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    //self.log('xhr.status ' + xhr.status);
+                    if(xhr.status == 200) {
+                        ph.callback(xhr.responseText);
+                        xhr = null;
+                    }
+                }
+            };
+        } else {
+            if(xhr.status == 200) {
+                ph.callback(xhr.responseText);
+            }
+        }
+        return xhr.status;
+      } catch (e) {
+        if(ph.onError) ph.onError(xhr.responseText);
+        return e.description; // turn all errors into empty results
+      }
+    }
+    ,
     
     tileSizes: [] // Размеры тайла по zoom
-	,
+    ,
     
     getTileNumFromLeaflet: function (tilePoint, zoom) {
         var pz = Math.pow(2, zoom),
@@ -334,11 +379,13 @@
         var px1 = p[0] * mInPixel; 	px1 = (0.5 + px1) << 0;
         var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
         return [px1 - tpx, tpy - py1];
-    }
-	,
-	'pointToCanvas': function(attr) {				// Точку в canvas
-		var gmx = attr.gmx,
+    },
+    pointToCanvas: function(attr) {				// Точку в canvas
+        var gmx = attr.gmx,
             style = attr.style,
+            item = attr.item,
+            options = item.options,
+            parsedStyleKeys = options.parsedStyleKeys,
             coords = attr.coords,
             px = attr.tpx,
             py = attr.tpy,
@@ -350,62 +397,55 @@
             px /= gmx.mInPixel, py /= gmx.mInPixel;
             sx /= gmx.mInPixel, sy /= gmx.mInPixel;
         }
-		// получить координату в px
-        var p1 = gmx.transformFlag ? [coords[0], coords[1]] : gmxAPIutils.toPixels(coords, px, py, gmx.mInPixel);
-		var px1 = p1[0];
-		var py1 = p1[1];
+        // получить координату в px
+        var p1 = gmx.transformFlag ? [coords[0], coords[1]] : gmxAPIutils.toPixels(coords, px, py, gmx.mInPixel),
+            px1 = p1[0], py1 = p1[1];
 
-		if(style.marker) {
-			if(style.image) {
-				if('opacity' in style) ctx.globalAlpha = style.opacity;
+        if(style.marker) {
+            style.rotateRes = parsedStyleKeys.rotate || 0;
+            if(style.image) {
+                if('opacity' in style) ctx.globalAlpha = style.opacity;
                 if(gmx.transformFlag) {
                     ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
                     ctx.drawImage(style.image, px1 - sx, sy - py1, 2 * sx, 2 * sy);
                     ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
-				} else {
+                } else {
                     ctx.drawImage(style.image, px1 - sx, py1 - sy, 2 * sx, 2 * sy);
                 }
                 if('opacity' in style) ctx.globalAlpha = 1;
-			} else if(style.polygons) {
-				var rotateRes = style.rotate || 0;
-				if(rotateRes && typeof(rotateRes) == 'string') {
-					rotateRes = (style.rotateFunction ? style.rotateFunction(prop) : 0);
-				}
-				style.rotateRes = rotateRes || 0;
-
-				for (var i = 0, len = style.polygons.length; i < len; i++)
-				{
-					var p = style.polygons[i];
-					ctx.save();
-					ctx.lineWidth = p['stroke-width'] || 0;
-					ctx.fillStyle = p.fill_rgba || 'rgba(0, 0, 255, 1)';
-					
-					ctx.beginPath();
-					var arr = gmxAPIutils.rotatePoints(p.points, style.rotateRes, style.scale, {x: sx, y: sy});
-					for (var j = 0, len1 = arr.length; j < len1; j++)
-					{
-						var t = arr[j];
-						if(j == 0)
-							ctx.moveTo(px1 + t.x, py1 + t.y);
-						else
-							ctx.lineTo(px1 + t.x, py1 + t.y);
-					}
-					ctx.fill();
-					ctx.restore();
-				}
-			}
-		} else if(style.strokeStyle) {
-			ctx.beginPath();
-			if(style.circle) {
-				ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
-			} else {
-				ctx.strokeRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
-			}
-			ctx.stroke();
-		}
-		if(style.fill) {
-			ctx.beginPath();
-			if(style.circle) {
+            } else if(style.polygons) {
+                for (var i = 0, len = style.polygons.length; i < len; i++) {
+                    var p = style.polygons[i];
+                    ctx.save();
+                    ctx.lineWidth = p['stroke-width'] || 0;
+                    ctx.fillStyle = p.fill_rgba || 'rgba(0, 0, 255, 1)';
+                    
+                    ctx.beginPath();
+                    var arr = gmxAPIutils.rotatePoints(p.points, style.rotateRes, style.scale, {x: sx, y: sy});
+                    for (var j = 0, len1 = arr.length; j < len1; j++)
+                    {
+                        var t = arr[j];
+                        if(j == 0)
+                            ctx.moveTo(px1 + t.x, py1 + t.y);
+                        else
+                            ctx.lineTo(px1 + t.x, py1 + t.y);
+                    }
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        } else if(style.strokeStyle) {
+            ctx.beginPath();
+            if(style.circle) {
+                ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
+            } else {
+                ctx.strokeRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
+            }
+            ctx.stroke();
+        }
+        if(style.fill) {
+            ctx.beginPath();
+            if(style.circle) {
                 if(style.radialGradient) {
                     var rgr = style.radialGradient;
                     var r1 = (rgr.r1Function ? rgr.r1Function(prop) : rgr.r1);
@@ -427,14 +467,13 @@
                     }
                     ctx.fillStyle = radgrad;
                 }
-				ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
-			} else {
-				ctx.fillRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
-			}
-			ctx.fill();
-		}
-	}
-	,
+                ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
+            } else {
+                ctx.fillRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
+            }
+            ctx.fill();
+        }
+    },
 	'lineToCanvas': function(attr) {				// Линии в canvas
 		var gmx = attr.gmx,
             coords = attr.coords,

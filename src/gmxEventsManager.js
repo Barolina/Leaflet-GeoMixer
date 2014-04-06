@@ -25,6 +25,7 @@ var gmxEventsManager = L.Handler.extend({
                 objId = 0,
                 layer = null,
                 cursor = '';    // default
+            _this._map.gmxMouseDown = ev.originalEvent.buttons;
             for (var i = arr.length - 1; i >= 0; i--) {
                 id = arr[i];
                 layer = _this._map._layers[id];
@@ -49,17 +50,17 @@ var gmxEventsManager = L.Handler.extend({
             }
         }
 
-		map.on({
-			click: eventCheck,
-			dblclick: eventCheck,
-			mousedown: eventCheck,
-			mouseup: eventCheck,
-			mousemove: eventCheck,
-			contextmenu: eventCheck,
-			layeradd: function (ev) {
+        map.on({
+            click: eventCheck,
+            dblclick: eventCheck,
+            mousedown: eventCheck,
+            mouseup: eventCheck,
+            mousemove: eventCheck,
+            contextmenu: eventCheck,
+            layeradd: function (ev) {
                 this._layers.push(ev.layer._leaflet_id);
             },
-			layerremove: function (ev) {
+            layerremove: function (ev) {
                 var id = ev.layer._leaflet_id,
                     arr = this._layers;
                 for (var i = 0, len = arr.length; i < len; i++) {
@@ -73,8 +74,8 @@ var gmxEventsManager = L.Handler.extend({
                     _this._lastId = 0;
                 }
             }
-		}, this);
-	}
+        }, this);
+    }
 });
 
 L.Map.addInitHook(function () {

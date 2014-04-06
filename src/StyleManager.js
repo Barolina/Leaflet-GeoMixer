@@ -2,7 +2,6 @@
     var MAX_STYLE_SIZE = 256,
         needLoadIcons = 0,
         styles = [],
-        hoverStyles = [],
         imagesSize = {},
         defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'},
         me = this;
@@ -270,25 +269,32 @@
 	}
 
     var itemStyleParser = function(item, pt) {
-		var out = {},
+        var out = {},
             prop = item.properties,
             options = item.options,
             color = 255, opacity = 1;
 
         out.sx = pt.sx;
         out.sy = pt.sy;
-		if(pt.marker) {
+        if(pt.marker) {
             out.marker = pt.marker;
-            if(pt.image) out.image = pt.image;
+            if (pt.image) out.image = pt.image;
+            if (pt.rotate) {
+                var rotateRes = pt.rotate || 0;
+                if(rotateRes && typeof(rotateRes) == 'string') {
+                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop) : 0);
+                }
+                out.rotate = rotateRes || 0;
+            }
         }
 
-		if(pt.size) {
+        if(pt.size) {
             out.size = ('sizeFunction' in pt ? pt.sizeFunction(prop) : pt.size);
             out.sx = out.size;
             out.sy = out.size;
         }
 
-		if(pt.stroke) {
+        if(pt.stroke) {
             out.stroke = pt.stroke;
             out.strokeStyle = pt.strokeStyle;
             if('colorFunction' in pt || 'opacityFunction' in pt) {
@@ -299,9 +305,9 @@
             out.lineWidth = 'lineWidth' in pt ? pt.lineWidth : 1;
         }
 
-		if(pt.fill) {
+        if(pt.fill) {
             out.fill = pt.fill;
-			if(pt.pattern) {
+            if(pt.pattern) {
                 out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt));
             } else {
                 out.fillStyle = pt.fillStyle;
@@ -313,7 +319,7 @@
             }
         }
         /*
-		if(pt.label) {
+        if(pt.label) {
             out.label = pt.label;
             color = pt.label.color || 0;
             out.label.strokeStyle = gmxAPIutils.dec2rgba(color, 1);
@@ -325,23 +331,23 @@
             out.sy = out.label.extentLabel[1];
         }
         */
-		options.parsedStyleKeys = out;
+        options.parsedStyleKeys = out;
         return out;
     }
 
     var chkStyleFilter = function(item) {
-		for (var i = 0, len = styles.length; i < len; i++) {
-			var st = styles[i];
-			if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-			if ('FilterFunction' in st && !st.FilterFunction(item.properties)) continue;
-			if(item.options.currentFilter !== i) {
+        for (var i = 0, len = styles.length; i < len; i++) {
+            var st = styles[i];
+            if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
+            if ('FilterFunction' in st && !st.FilterFunction(item.properties)) continue;
+            if(item.options.currentFilter !== i) {
                 itemStyleParser(item, st.RenderStyle);
                 if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
             }
 
             item.options.currentFilter = i;
             return true;
-		}
+        }
         return false;
     }
 
@@ -349,8 +355,8 @@
  
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
-		var style = styles[item.options.currentFilter];
-        
+        var style = styles[item.options.currentFilter];
+
         if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;

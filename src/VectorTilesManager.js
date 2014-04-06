@@ -332,8 +332,10 @@
         var gmxTileKey = tile.gmxTileKey,
             layerProp = gmx.properties,
             identityField = layerProp.identityField || 'ogc_fid',
-            data = tile.data;
-        for (var i = 0, len = data.length; i < len; i++) {
+            data = tile.data,
+            len = data.length;
+
+        for (var i = 0; i < len; i++) {
             var it = data[i],
                 prop = it.properties,
                 geom = it.geometry,
@@ -365,7 +367,7 @@
                 item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
             }
         }
-        return data.length;
+        return len;
     }
 
     this.getNotLoadedTileCount = function(gmxTilePoint) {
