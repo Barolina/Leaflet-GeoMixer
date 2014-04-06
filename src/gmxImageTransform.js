@@ -7,7 +7,9 @@ var gmxImageTransform = function(hash) {
         begx = mInPixel * item.bounds.min.x,
         begy = mInPixel * item.bounds.max.y,
         geoItem = hash.geoItem,
-        coord = geoItem.geometry.coordinates;
+        coord = geoItem.geometry.coordinates,
+        properties = item.properties,
+        quicklookPlatform = properties[gmx.quicklookPlatform] || '',
         img = hash.image;
 //Алгоритм натяжения:
 //- вычислить 4 угла (текущий алгоритм)
@@ -51,8 +53,16 @@ var gmxImageTransform = function(hash) {
         }
     }
     
-    var points = gmxAPIutils.getQuicklookPoints(coord),
-        dx = begx - 256 * gmxTilePoint.x,
+    var points = {};
+    if (quicklookPlatform === 'LANDSAT8') {
+        points.x1 = item.bounds.min.x, points.y1 = item.bounds.max.y;
+        points.x2 = item.bounds.max.x, points.y2 = item.bounds.max.y;
+        points.x3 = item.bounds.max.x, points.y3 = item.bounds.min.y;
+        points.x4 = item.bounds.min.x, points.y4 = item.bounds.min.y;
+    } else {
+        points = gmxAPIutils.getQuicklookPoints(coord);
+    }
+    var dx = begx - 256 * gmxTilePoint.x,
         dy = 256 - begy + 256 * gmxTilePoint.y,
         x1 = mInPixel * points.x1, y1 = mInPixel * points.y1,
         x2 = mInPixel * points.x2, y2 = mInPixel * points.y2,

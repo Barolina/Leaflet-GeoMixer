@@ -70,7 +70,7 @@
             {
                 var it = arr[i];
                 if(first.isError) {
-                    if(it.onerror) it.onerror(null);
+                    if(it.onerror) it.onerror(item.src);
                 } else if(first.imageObj) {
                     if(it.callback) it.callback(first.imageObj);
                 } else if(first.svgPattern) {

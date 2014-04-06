@@ -6,6 +6,7 @@
         beginDate, endDate,
         isTemporalLayer = layerDescription.properties.Temporal,
         filters = {},
+        styleHook = null,
         items = {},
         maxStyleSize = 0;
 
@@ -143,9 +144,9 @@
 			if (d < 0 || s < 0) {
 				return null;
 			}
-			
+
 			var periods = gmx.TemporalPeriods;
-			
+
 			var findNode = function(node, d, s) {
 				if (!node) return null;
 				
@@ -178,9 +179,9 @@
         var mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
     }
-	
-	var vectorTileDataProvider = {
-		load: function(x, y, z, v, s, d, callback) {
+
+    var vectorTileDataProvider = {
+        load: function(x, y, z, v, s, d, callback) {
             var requestParams = {
                 ModeKey: 'tile',
                 r: 't',
@@ -191,32 +192,32 @@
                 y: y,
                 v: v
             }
-            
+
             if (d !== -1) {
                 requestParams.Level = d;
                 requestParams.Span = s;
             }
-            
-			gmxAPIutils.requestJSONP(gmx.tileSenderPrefix, requestParams).then(
+
+            gmxAPIutils.requestJSONP(gmx.tileSenderPrefix, requestParams).then(
                 function(st) {
                     callback(st.Result);
                 },
-				function() {
-					console.log('Error loading vector tile');
-					callback([]);
-				}
+                function() {
+                    console.log('Error loading vector tile');
+                    callback([]);
+                }
             );
-		}
-	}
+        }
+    }
     
     var initTileList = function() {
         var props = layerDescription.properties,
             arr, vers;
-            
+
         if (isTemporalLayer) {
             arr = props.TemporalTiles || [];
             vers = props.TemporalVers || [];
-            
+
             for (var i = 0, len = arr.length; i < len; i++) {
                 var arr1 = arr[i];
                 var z = Number(arr1[4]),
@@ -226,12 +227,12 @@
                     d = Number(arr1[0]),
                     v = Number(vers[i]),
                     tile = new gmxVectorTile(vectorTileDataProvider, x, y, z, v, s, d);
-                    
+
                 tiles[tile.gmxTileKey] = {tile: tile};
             }
-			
-			tilesTree.initFromTiles();
-			
+
+            tilesTree.initFromTiles();
+
         } else {
             arr = props.tiles || [];
             vers = props.tilesVers;
@@ -242,9 +243,9 @@
             }
         }
     }
-    
+
     initTileList();
-    
+
     this.setDateInterval = function(newBeginDate, newEndDate) {
         if (!isTemporalLayer || (newBeginDate == beginDate && newBeginDate == endDate)) { return; };
                 
@@ -260,6 +261,14 @@
         
         beginDate = newBeginDate;
         endDate = newEndDate;
+    }
+
+    this.addStyleHook = function(func) {
+        styleHook = func;
+    }
+
+    this.removeStyleHook = function() {
+        styleHook = null;
     }
 
     this.setPropertiesHook = function(filterName, filterFunc) {
@@ -280,10 +289,10 @@
                 //отсекаем тайлы за границами screenTile + макс.размер из массива стилей (без учета обьектов)
                 continue;
             }
-               
-			var data = tile.data || [];
-			for (var j = 0, len1 = data.length; j < len1; j++) {
-				var it = data[j],
+
+            var data = tile.data || [];
+            for (var j = 0, len1 = data.length; j < len1; j++) {
+                var it = data[j],
                     item = it.item,
                     isFiltered = false;
                 for (var filterName in filters) {
@@ -292,27 +301,30 @@
                         break;
                     }
                 }
-                
+
                 if (isFiltered) {continue;}
-                
-				if(!it.bounds) {
+
+                if (styleHook) {
+                    item.styleExtend = styleHook(item);
+                }
+                if(!it.bounds) {
                     it.bounds = gmxAPIutils.geoItemBounds(it);
                     var arr = [[it.bounds.min.x, it.bounds.min.y], [it.bounds.max.x, it.bounds.max.y]];
                     item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
                 }
 
-				if (!bounds.intersects(it.bounds)) {
+                if (!bounds.intersects(it.bounds)) {
                     // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
                     continue;
                 }
-                
-				if (item.type === 'POLYGON' || item.type === 'MULTIPOLYGON') {
+
+                if (item.type === 'POLYGON' || item.type === 'MULTIPOLYGON') {
                     tile.calcHiddenPoints();
                 }
-                
-				resItems.push(it);
-			}
-		}
+
+                resItems.push(it);
+            }
+        }
         return resItems;
     }
 
@@ -321,39 +333,39 @@
             layerProp = gmx.properties,
             identityField = layerProp.identityField || 'ogc_fid',
             data = tile.data;
-		for (var i = 0, len = data.length; i < len; i++) {
-			var it = data[i],
+        for (var i = 0, len = data.length; i < len; i++) {
+            var it = data[i],
                 prop = it.properties,
                 geom = it.geometry,
                 id = it.id || prop[identityField],
                 item = items[id];
-			delete it.properties;
-			if(item) {
-				if(item.type.indexOf('MULTI') == -1) {
+            delete it.properties;
+            if(item) {
+                if(item.type.indexOf('MULTI') == -1) {
                     item.type = 'MULTI' + item.type;
                 }
-			} else {
-				item = {
-					id: id
-					,type: geom.type
-					,properties: prop
-					,options: {
-						fromTiles: {}
-					}
-				};
-				items[id] = item;
-			}
+            } else {
+                item = {
+                    id: id
+                    ,type: geom.type
+                    ,properties: prop
+                    ,options: {
+                        fromTiles: {}
+                    }
+                };
+                items[id] = item;
+            }
             it.item = item;
-			item.options.fromTiles[gmxTileKey] = i;
-			if(layerProp.TemporalColumnName) {
-				var zn = prop[layerProp.TemporalColumnName] || '';
-				zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
-				var vDate = new Date(zn);
-				var offset = vDate.getTimezoneOffset();
-				item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
-			}
-		}
-		return data.length;
+            item.options.fromTiles[gmxTileKey] = i;
+            if(layerProp.TemporalColumnName) {
+                var zn = prop[layerProp.TemporalColumnName] || '';
+                zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
+                var vDate = new Date(zn);
+                var offset = vDate.getTimezoneOffset();
+                item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
+            }
+        }
+        return data.length;
     }
 
     this.getNotLoadedTileCount = function(gmxTilePoint) {

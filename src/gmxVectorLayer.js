@@ -108,6 +108,14 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         });
     },
 
+    addStyleHook: function (func) {
+        this._gmx.vectorTilesManager.addStyleHook(func);
+    },
+
+    removeStyleHook: function () {
+        this._gmx.vectorTilesManager.removeStyleHook();
+    },
+
     setPropertiesHook: function (func) {
         //this._gmx.vectorTilesManager.setPropertiesHook.bind(this._gmx.vectorTilesManager, 'userHook', func);
         this._gmx.vectorTilesManager.setPropertiesHook('userHook', func);
@@ -601,7 +609,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         if('MetaProperties' in prop) {
             var meta = prop.MetaProperties;
-            if('shiftX' in meta || 'shiftY' in meta) {              // сдвиг всего слоя
+            if('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя
                 gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
                 gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
             }
@@ -609,7 +617,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 if(meta.shiftXfield) gmx.shiftXfield = meta.shiftXfield.Value;
                 if(meta.shiftYfield) gmx.shiftYfield = meta.shiftYfield.Value;
             }
-		}
+            if('quicklookPlatform' in meta) {    // тип спутника
+                gmx.quicklookPlatform = meta.quicklookPlatform.Value;
+            }
+        }
 
         if(prop.IsRasterCatalog) {
             gmx.IsRasterCatalog = prop.IsRasterCatalog;
