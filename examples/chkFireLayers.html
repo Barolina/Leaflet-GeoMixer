@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0px;
+        }
+        #controls {
+            position: absolute;
+			left: 54px;
+			top: 11px;
+			z-index: 1;
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        
+        #controls button {
+            border-radius: 5px;
+            
+        }
+        
+        #controls > div{
+            padding: 6px;
+        }
+    </style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+</head>
+<body>
+	<div id="controls">
+		<div>
+            <span id="timeInfo"></span>
+        </div>
+ 	</div>
+
+	<div id="map" style="width: 100%; height: 100%"></div>
+ 
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet-src.js"></script>
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+	<script>
+		var map = L.map('map').setView([56.394890, 48.691406], 9);
+
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+
+		var startDate = new Date('2013/06/19');
+		var endDate = new Date('2013/09/24');
+		//var startDate = new Date('2014/03/31');
+		var oneDay = 1000*60*60*24,	// milliseconds in one day
+            now = startDate.getTime(),
+            endd = endDate.getTime(),
+            //ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
+            ddt1 = new Date( now - now % oneDay + oneDay), //beginning of the previous UTC day
+            ddt2 = new Date( endd - endd % oneDay + oneDay); //beginning of the previous UTC day
+            //ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
+
+        var updateInfo = function(begDate, endDate) {
+			var zz = function(x) { return x < 10 ? "0" + x : x}
+			var dateStr = zz(begDate.getUTCDate()) + '.' + zz(begDate.getUTCMonth() + 1) + '.' + zz(begDate.getUTCFullYear());
+			dateStr += ' - ' + zz(endDate.getUTCDate()) + '.' + zz(endDate.getUTCMonth() + 1) + '.' + zz(endDate.getUTCFullYear());
+			var dateStr1 = begDate.toString();
+			document.getElementById('timeInfo').innerHTML = dateStr;
+		}
+        
+        updateInfo(ddt1, ddt2);
+        
+        L.gmx.loadLayers([
+            {mapID: 'NDFYK', layerID: '254C50EFB0C94B3885DBA0C6C89B4C88'}
+            ,{mapID: 'NDFYK', layerID: '0F203142F063462DB0961D4F60BDC14E'}
+            ,{mapID: 'NDFYK', layerID: 'C13B4D9706F7491EBC6DC70DFFA988C0'}
+            ,{mapID: 'NDFYK', layerID: '3E88643A8AC94AFAB4FD44941220B1CE'}
+            
+            
+        ]).then(function(m1, m2, m3, m4) {
+            m1.setDateInterval(ddt1, ddt2);
+            m2.setDateInterval(ddt1, ddt2);
+            m3.setDateInterval(ddt1, ddt2);
+            m4.setDateInterval(ddt1, ddt2);
+            
+            L.control.layers({
+                OSM: osm
+            }, {
+                '[FireService].[HotSpotsScanex]': m1,
+                '[FireService].[ClustersPerDayScanex]': m2,
+                '[FireService].[HotSpotsGlobal]': m3,
+                '[FireService].[ClustersPerDayGlobal]': m4
+           }, {collapsed: false}).addTo(map);
+        })
+	</script>
+</body>
+</html>
