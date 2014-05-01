@@ -17,7 +17,7 @@
 			var periods = gmx.TemporalPeriods,
 				dateZero = gmx.ZeroUT,
 				roots = [];
-				 
+
 			var addTile = function (node, tile, key) {
 				var d = node.d;
 				if (tile.d === periods[d]) {
@@ -25,16 +25,16 @@
 					node.tiles[key] = true;
 					return;
 				}
-				
+
 				var childrenCount = periods[d] / periods[d-1];
-				
+
 				if (!('children' in node)) {
 					node.children = new Array(childrenCount);
 				}
-				
+
 				var sChild = Math.floor(tile.s * tile.d / periods[d-1]);
 				var ds = sChild - node.s*childrenCount;
-				
+
 				if (!node.children[ds]) {
 					node.children[ds] = {
 						d: d-1,
@@ -45,22 +45,22 @@
 						tiles: {}
 					}
 				}
-				
+
 				addTile(node.children[ds], tile, key);
 			}
-			
+
 			var smin = Number.MAX_VALUE,
 				dmax = periods.length - 1;
-				
+
 			for (var key in tiles) {
 				var t = tiles[key].tile;
 				if (t.d === periods[dmax]) {
 					smin = Math.min(smin, t.s);
 				}
 			}
-			
+
 			this._rootNodes = [];
-			
+
 			for (var key in tiles) {
 				var t = tiles[key].tile,
 					ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
@@ -74,28 +74,28 @@
 					count: 0,
 					tiles: {}
 				}
-				
+
 				addTile(this._rootNodes[ds], t, key);
 			}
 		},
-		
+
 		selectTiles: function(t1, t2) {
 			var t1Val = t1.valueOf() / 1000,
 				t2Val = t2.valueOf() / 1000;
-			
+
 			// --------------------
 			var selectTilesForNode = function(node, t1, t2) {
 				if (t1 >= node.t2 || t2 <= node.t1) {
 					return {count: 0, tiles: {}};
 				}
-				
+
 				if (node.d === 0) {
 					return {
 						tiles: node.tiles,
 						count: node.count
 					}
 				}
-				
+
 				var childrenCount = 0; //number of tiles if we use shorter intervals
 				var childrenRes = [];
 				for (var ds = 0; ds < node.children.length; ds++) {
@@ -106,7 +106,7 @@
 					}
 					childrenCount += childrenRes[ds].count;
 				}
-				
+
 				if (childrenCount < node.count) {
 					var resTiles = {};
 					for (var ds = 0; ds < childrenRes.length; ds++) {
@@ -114,7 +114,7 @@
 							resTiles[key] = childrenRes[ds].tiles[key];
 						}
 					}
-					
+
 					return {
 						tiles: resTiles,
 						count: childrenCount
@@ -126,7 +126,7 @@
 					} 
 				}
 			}
-			
+
 			var res = {};
 			for (var ds = 0; ds < this._rootNodes.length; ds++) {
 				if (this._rootNodes[ds]) {
@@ -136,10 +136,10 @@
 					}
 				}
 			}
-			
+
 			return res;
 		},
-		
+
 		getNode: function(d, s) {
 			if (d < 0 || s < 0) {
 				return null;
@@ -149,25 +149,25 @@
 
 			var findNode = function(node, d, s) {
 				if (!node) return null;
-				
+
 				if (periods[node.d] === d) {
 					return node.s === s ? node : null;
 				}
-				
+
 				var childrenCount = periods[node.d] / periods[node.d-1];
 				var sChild = Math.floor(s * d / periods[node.d-1]);
 				var ds = sChild - node.s*childrenCount;
-				
+
 				return node.children[ds] ? findNode(node.children[ds], d, s) : null;
 			}
-			
+
 			for (var ds = 0; ds < this._rootNodes.length; ds++) {
 				var node = findNode(this._rootNodes[ds], d, s);
 				if (node) {
 					return node;
 				}
 			}
-			
+
 			return null;
 		}
 	}
@@ -209,7 +209,7 @@
             );
         }
     }
-    
+
     var initTileList = function() {
         var props = layerDescription.properties,
             arr, vers;
@@ -248,17 +248,8 @@
 
     this.setDateInterval = function(newBeginDate, newEndDate) {
         if (!isTemporalLayer || (newBeginDate == beginDate && newBeginDate == endDate)) { return; };
-                
+
         activeTileKeys = tilesTree.selectTiles(newBeginDate, newEndDate);
-        
-        for (var subscrID in subscriptions) {
-            var tp = subscriptions[subscrID].tilePoint;
-            this.loadTiles(tp);
-            if (this.getNotLoadedTileCount(tp) == 0) {
-                subscriptions[subscrID].callback();
-            }
-        }
-        
         beginDate = newBeginDate;
         endDate = newEndDate;
     }
@@ -387,9 +378,9 @@
         _this = this;
 
         for (var key in activeTileKeys) (function(tile) {
-        
+
             if (!bounds.intersects(tile.bounds)) return;
-           
+
             if (tile.state === 'notLoaded') {
                 tile.load().then(function() {
                     gmx.itemCount += _updateItemsFromTile(tile);
@@ -400,13 +391,13 @@
                             subscriptions[key].callback();
                         }
                     }
-					var treeNode = tilesTree.getNode(tile.d, tile.s);
-					treeNode && treeNode.count--; //decrease number of tiles to load inside this node
+                    var treeNode = tilesTree.getNode(tile.d, tile.s);
+                    treeNode && treeNode.count--; //decrease number of tiles to load inside this node
                 })
             }
-		})(tiles[key].tile);
+        })(tiles[key].tile);
     }
-    
+
     //'callback' will be called at least once:
     // - immediately, if all data for a given bbox is already loaded
     // - after next chunk of data will be loaded
@@ -417,28 +408,28 @@
             callback: callback, 
             styleBounds: getStyleBounds(gmxTilePoint)
         };
-        
+
         this.loadTiles(gmxTilePoint);
-        
+
         if (this.getNotLoadedTileCount(gmxTilePoint) == 0) {
             callback();
         }
-        
+
         return id;
     }
-    
+
     this.off = function(id) {
         delete subscriptions[id];
     }
-    
+
     this.getTile = function(tileKey) {
         return tiles[tileKey];
     }
-	
+
     this.getItem = function(id) {
         return items[id];
     }
-    
+
     this.addTile = function(tile) {
         tiles[tile.gmxTileKey] = {tile: tile};
         activeTileKeys[tile.gmxTileKey] = true;
@@ -450,21 +441,21 @@
             }
         }
     }
-	
+
 	this.preloadTiles = function(dateBegin, dateEnd, bounds) {
 		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd),
             loadingDefs = [];
 		for (var key in tileKeys) {
 			var tile = tiles[key].tile;
-			
+
 			if (tile.state !== 'notLoaded') {
 				continue;
 			}
-			
+
 			if (bounds && !bounds.intersects(tile.bounds)) {
 				continue;
 			}
-			
+
 			var loadDef = tile.load();
 			(function(tile) {
 				loadDef.then(function() {
@@ -475,11 +466,10 @@
 			})(tile);
 			loadingDefs.push(loadDef);
 		}
-	
+
 		return gmxDeferred.all.apply(null, loadingDefs);
-		
 	}
-    
+
     if (isTemporalLayer) {
         this.setPropertiesHook('TemporalFilter', function(item) {
             var unixTimeStamp = item.options.unixTimeStamp;

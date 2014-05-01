@@ -233,11 +233,6 @@
     }
 	var getImageSize = function(pt, flag, id)	{				// определение размеров image
 		var url = pt.iconUrl;
-		var chkReadyIcons = function() {
-			if(needLoadIcons < 1) {
-				me.deferred.resolve();
-			}
-		}
 
 		needLoadIcons++;
 		var ph = {
@@ -252,7 +247,7 @@
 				}
 				imagesSize[url] = pt;
 				needLoadIcons--;
-				chkReadyIcons();
+                me.chkReady();
 			}
 			,onerror: function(){
 				pt.sx = 1;
@@ -393,7 +388,15 @@
         
         return false;
     };
+    this.isReady = function() {
+        return needLoadIcons < 1;
+    }
+    this.chkReady = function() {
+        if(needLoadIcons < 1) {
+            this.deferred.resolve();
+        }
+    }
 
     initStyles();
-    if(needLoadIcons < 1) this.deferred.resolve();
+    this.chkReady();
 }

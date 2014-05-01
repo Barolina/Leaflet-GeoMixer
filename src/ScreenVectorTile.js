@@ -4,6 +4,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         tKey = tilePoint.x + ':' + tilePoint.y,
         showRaster = 'rasterBGfunc' in gmx && (zoom >= gmx.minZoomRasters),
         rasters = {},
+        tileRastersPromise = null,
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
         tbounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z),
         gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
@@ -34,6 +35,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
         gmxImageLoader.push({
             src: rUrl
+            ,layerID: gmx.layerID
             ,zoom: gtp.z
             ,callback: function(imageObj) {
                 callback(imageObj, gtp);
@@ -102,9 +104,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 }
             }
             var chkLoad = function() {
-                var def1 = new gmxDeferred(), len = arr.length, cnt = len;
+                var itemRastersPromise = new gmxDeferred(), len = arr.length, cnt = len;
                 var chkReadyRasters = function() {
-                    if(cnt < 1) def1.resolve(arr);
+                    if(cnt < 1) itemRastersPromise.resolve(arr);
                 };
                 for (var i = 0; i < len; i++) {
                     var p = arr[i];
@@ -136,7 +138,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
                             if (imageGtp.z !== gmxTilePoint.z) {
                                 var pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, imageGtp.z);
-                                if(pos.size < 0.00390625) {// меньше 1px
+                                if(pos.size < 1/256) {// меньше 1px
                                     chkReadyRasters();
                                     return;
                                 }
@@ -153,37 +155,40 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         }
                     );
                 }
-                return def1;
+                return itemRastersPromise;
             }
             chkLoad().then(function(parr) {
-                if (shiftX === 0 && shiftY === 0) {
-                    if (parr[0][2]) rasters[idr] = parr[0][2];
-                } else {
-                    var canvas = document.createElement('canvas');
-                    canvas.width = 256, canvas.height = 256;
-                    var ptx = canvas.getContext('2d'),
-                        count = 0;
-                    for (var i = 0, len = parr.length; i < len; i++) {
-                        if(parr[i].length < 7) continue;
-                        var p = parr[i],
-                            w = p[2] + (p[2] < 0 ? 256 : 0),
-                            h = p[3] + (p[3] < 0 ? 256 : 0),
-                            sx = 0, sw = 256 - w, dx = w, dw = sw;
-                        if(p[4] > p[0]) {
-                            sx = sw, sw = w, dx = 0, dw = sw;
-                        }
-                       if(sx === 256 || sw < 1) continue;
+                var len = parr.length;
+                if (len) {
+                    if (shiftX === 0 && shiftY === 0) {
+                        if (parr[0][2]) rasters[idr] = parr[0][2];
+                    } else {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = 256, canvas.height = 256;
+                        var ptx = canvas.getContext('2d'),
+                            count = 0;
+                        for (var i = 0; i < len; i++) {
+                            if(parr[i].length < 7) continue;
+                            var p = parr[i],
+                                w = p[2] + (p[2] < 0 ? 256 : 0),
+                                h = p[3] + (p[3] < 0 ? 256 : 0),
+                                sx = 0, sw = 256 - w, dx = w, dw = sw;
+                            if(p[4] > p[0]) {
+                                sx = sw, sw = w, dx = 0, dw = sw;
+                            }
+                           if(sx === 256 || sw < 1) continue;
 
-                        var sy = h, sh = 256 - h, dy = 0, dh = sh;
-                        if(p[5] > p[1]) {
-                            sy = 0, dy = sh, sh = h, dh = sh;
+                            var sy = h, sh = 256 - h, dy = 0, dh = sh;
+                            if(p[5] > p[1]) {
+                                sy = 0, dy = sh, sh = h, dh = sh;
+                            }
+                           if(sy === 256 || sh < 1) continue;
+                            ptx.drawImage(p[6], sx, sy, sw, sh, dx, dy, dw, dh);
+                            count++;
                         }
-                       if(sy === 256 || sh < 1) continue;
-                        ptx.drawImage(p[6], sx, sy, sw, sh, dx, dy, dw, dh);
-                        count++;
+                        if (count < 1) canvas = null;
+                        rasters[idr] = canvas;
                     }
-                    if (count < 1) canvas = null;
-                    rasters[idr] = canvas;
                 }
                 def.resolve();
             });
@@ -207,6 +212,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 ,onerror : function() {
                     def.resolve();
                 }
+                ,layerID: gmx.layerID
                 ,src: url
                 ,crossOrigin: 'anonymous'
             });
@@ -215,7 +221,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     }
 
     //load all missing rasters for items we are going to render
-    var getTileRasters = function(geoItems) {	// Получить растры КР для тайла
+    var getTileRasters = function(geoItems) {
         var def = new gmxDeferred(),
             needLoadRasters = 0,
             chkReadyRasters = function() {
@@ -223,17 +229,23 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     def.resolve();
                 }
             };
-        geoItems.forEach(function(geo, i) {
+        var itemPromises = geoItems.map(function(geo) {
             var isSkipRasters  = geo.item.styleExtend && geo.item.styleExtend.skipRasters;
             if (!isSkipRasters && tbounds.intersects(geo.bounds, -1, -1)) {
                 needLoadRasters++;
-                getItemRasters(geo).then(function() {
+                var itemRasterPromise = getItemRasters(geo);
+                itemRasterPromise.then(function() {
                     needLoadRasters--;
                     chkReadyRasters();
                 });
+                return itemRasterPromise;
             }
-        })
+        });
         chkReadyRasters();
+
+        def.then(null, function() {
+            itemPromises.forEach(function(promise) { promise.reject() });
+        });
         return def;
     }
 
@@ -449,12 +461,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 gmxAPIutils.setLabel(txt, dattr, parsedStyleKeys);
             }*/
         }
-        
+
         if (showRaster) {
-            getTileRasters(geoItems).then(doDraw); //first load all raster images, then render all of them at once
+            tileRastersPromise = getTileRasters(geoItems);
+            tileRastersPromise.then(doDraw); //first load all raster images, then render all of them at once
         } else {
             doDraw();
         }
-		return itemsLength;
+
+        return itemsLength;
+    }
+
+    this.cancel = function() {
+        if (tileRastersPromise) tileRastersPromise.reject();
+        rasters = {};
     }
 }
