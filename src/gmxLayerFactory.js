@@ -73,7 +73,7 @@ L.gmx.loadMap = function(mapID, options) {
 			}
 		}
 		
-		def.resolve(map);
+		def.resolve(loadedMap);
 	})
 	return def;
 }
