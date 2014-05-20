@@ -64,7 +64,7 @@ gmxMapManager.iterateLayers = function(treeInfo, callback) {
 var gmxMap = function(mapInfo) {
     this.layers = [];
     this.layersByTitle = {};
-    this.layersByName = {};
+    this.layersByID = {};
     
     var _this = this;
 	
@@ -85,6 +85,6 @@ var gmxMap = function(mapInfo) {
 		
 		_this.layers.push(layer);
 		_this.layersByTitle[props.title] = layer;
-		_this.layersByName[props.name] = layer;
+		_this.layersByID[props.name] = layer;
 	});
 }
