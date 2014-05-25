@@ -13,7 +13,11 @@
 		window[id] = thing;
 		return id;
 	},
-    
+
+    isPageHidden: function()	{		// Видимость окна браузера
+        return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden || false;
+    },
+   
     /** Sends JSONP requests 
       @return {gmxDeferred} Defered with server JSON resonse or error status
     */

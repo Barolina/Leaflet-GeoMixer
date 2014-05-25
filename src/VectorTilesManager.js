@@ -271,9 +271,8 @@
         }
     }
 
-    this.getItems = function(gmxTilePoint) {
-        var bounds = getStyleBounds(gmxTilePoint),
-            resItems = [];
+    this.getItems = function(bounds) {
+        var resItems = [];
         for (var key in activeTileKeys) {
             var tile = tiles[key].tile;
             if (!bounds.intersects(tile.bounds)) {

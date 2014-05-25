@@ -404,23 +404,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._tileOnLoad(tile);
     },
 
-    _gmxGetTileByPoint: function (point) {
-        var gmx = this._gmx,
-            zoom = this._map._zoom,
-            maxX = point.x,
-            minX = maxX - 256,
-            maxY = point.y,
-            minY = maxY - 256,
-            pos = null;
-        for (var t in this._tiles) {
-            var tile = this._tiles[t],
-                tilePos = tile._leaflet_pos;
-            if(maxX < tilePos.x || minX > tilePos.x || maxY < tilePos.y || minY > tilePos.y) continue;
-            var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tile._tilePoint, zoom);
-            return gmx.vectorTilesManager.getItems(gmxTilePoint, zoom);
-        }
-        return null;
-    },
     gmxObjectsByPoint: function (arr, point) {    // Получить верхний обьект по координатам mouseClick
         var gmx = this._gmx,
             out = [],
@@ -533,13 +516,14 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             || this.hasEventListeners('mouseout')
             || this.hasEventListeners(type)
             )) {
-            var point = { x: ev.layerPoint.x, y: ev.layerPoint.y },
-                geoItems = this._gmxGetTileByPoint(point);
-            if (geoItems && geoItems.length) {
                 var lng = ev.latlng.lng % 360,
                     latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
                     mercatorPoint = L.Projection.Mercator.project(latlng),
-                    arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
+                    bounds = gmxAPIutils.bounds([[mercatorPoint.x, mercatorPoint.y]]),
+                    geoItems = gmx.vectorTilesManager.getItems(bounds);
+
+            if (geoItems && geoItems.length) {
+                var arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
                 if (arr && arr.length) {
                     var target = arr[0],
                         changed = !lastHover || lastHover.id !== target.id;

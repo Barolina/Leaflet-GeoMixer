@@ -244,7 +244,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         chkReadyRasters();
 
         def.then(null, function() {
-            itemPromises.forEach(function(promise) { promise.reject() });
+            itemPromises.forEach(function(promise) { if (promise) promise.reject() });
         });
         return def;
     }
@@ -299,9 +299,16 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         }
     }
 
+    var getStyleBounds = function(gmxTilePoint) {
+        var maxStyleSize = gmx.styleManager.getMaxStyleSize(),
+            mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
+        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
+    }
+
     this.drawTile = function() {
         if (!layer._map) return 0;
-        var geoItems = gmx.vectorTilesManager.getItems(gmxTilePoint, zoom), //call each time because of possible items updates
+        var bounds = getStyleBounds(gmxTilePoint),
+            geoItems = gmx.vectorTilesManager.getItems(bounds), //call each time because of possible items updates
             itemsLength = geoItems.length;
         if(itemsLength === 0) {
             if (tKey in layer._tiles) {
