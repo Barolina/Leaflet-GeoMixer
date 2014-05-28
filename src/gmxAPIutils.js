@@ -667,6 +667,40 @@
 		s = s.toFixed(3);
 		return s;
 	},
+
+	pad2: function(t) {
+		return (t < 10) ? ("0" + t) : ("" + t);
+	},
+
+	trunc: function(x) {
+		return ("" + (Math.round(10000000*x)/10000000 + 0.00000001)).substring(0, 9);
+	},
+
+	formatDegrees: function(angle) {
+		angle = Math.round(10000000*angle)/10000000 + 0.00000001;
+		var a1 = Math.floor(angle);
+		var a2 = Math.floor(60*(angle - a1));
+		var a3 = gmxAPIutils.pad2(3600*(angle - a1 - a2/60)).substring(0, 2);
+		return gmxAPIutils.pad2(a1) + "°" + gmxAPIutils.pad2(a2) + "'" + a3 + '"';
+	},
+
+	LatLon_formatCoordinates: function(x, y) {
+		return  gmxAPIutils.formatDegrees(Math.abs(y)) + (y > 0 ? " N, " : " S, ") + 
+			gmxAPIutils.formatDegrees(Math.abs(x)) + (x > 0 ? " E" : " W");
+	},
+
+	formatCoordinates: function(x, y) {
+		return  gmxAPIutils.LatLon_formatCoordinates(x, y);
+	},
+
+	LatLon_formatCoordinates2: function(x, y) {
+		return  gmxAPIutils.trunc(Math.abs(y)) + (y > 0 ? " N, " : " S, ") + 
+			gmxAPIutils.trunc(Math.abs(x)) + (x > 0 ? " E" : " W");
+	}
+	,
+	formatCoordinates2: function(x, y) {
+		return  gmxAPIutils.LatLon_formatCoordinates2(x, y);
+	},
     
     //x, y, z - GeoMixer tile coordinates
     getTileBounds: function(x, y, z) {
@@ -820,4 +854,8 @@ L.PolyUtil.getArea = function (latlngs) {
     }
     var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY/2);
     return out;
+};
+
+L.Util.formatCoordinates = function (latlng, type) {
+    return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
 };
