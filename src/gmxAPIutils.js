@@ -617,6 +617,56 @@
 	{
 		return ang * (Math.PI/180.0);
 	},
+
+	distVincenty: function(lon1, lat1, lon2, lat2) {
+		var p1 = {
+            lon: gmxAPIutils.deg_rad(lon1),
+            lat: gmxAPIutils.deg_rad(lat1)
+        },
+            p2 = {
+            lon: gmxAPIutils.deg_rad(lon2),
+            lat: gmxAPIutils.deg_rad(lat2)
+        },
+            a = gmxAPIutils.r_major,
+            b = 6356752.3142,
+            f = 1/298.257223563;  // WGS-84 ellipsiod
+
+        var L1 = p2.lon - p1.lon,
+            U1 = Math.atan((1-f) * Math.tan(p1.lat)),
+            U2 = Math.atan((1-f) * Math.tan(p2.lat)),
+            sinU1 = Math.sin(U1), cosU1 = Math.cos(U1),
+            sinU2 = Math.sin(U2), cosU2 = Math.cos(U2),
+            lambda = L1,
+            lambdaP = 2*Math.PI,
+            iterLimit = 20;
+		while (Math.abs(lambda-lambdaP) > 1e-12 && --iterLimit>0) {
+				var sinLambda = Math.sin(lambda), cosLambda = Math.cos(lambda),
+                    sinSigma = Math.sqrt((cosU2*sinLambda) * (cosU2*sinLambda) + 
+					(cosU1*sinU2-sinU1*cosU2*cosLambda) * (cosU1*sinU2-sinU1*cosU2*cosLambda));
+				if (sinSigma == 0) return 0;
+				var cosSigma = sinU1*sinU2 + cosU1*cosU2*cosLambda,
+                    sigma = Math.atan2(sinSigma, cosSigma),
+                    sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma,
+                    cosSqAlpha = 1 - sinAlpha*sinAlpha,
+                    cos2SigmaM = cosSigma - 2*sinU1*sinU2/cosSqAlpha;
+				if (isNaN(cos2SigmaM)) cos2SigmaM = 0;
+				var C = f/16*cosSqAlpha*(4+f*(4-3*cosSqAlpha));
+				lambdaP = lambda;
+				lambda = L1 + (1-C) * f * sinAlpha *
+					(sigma + C*sinSigma*(cos2SigmaM+C*cosSigma*(-1+2*cos2SigmaM*cos2SigmaM)));
+		}
+		if (iterLimit==0) return NaN
+
+		var uSq = cosSqAlpha * (a*a - b*b) / (b*b),
+            A = 1 + uSq/16384*(4096+uSq*(-768+uSq*(320-175*uSq))),
+            B = uSq/1024 * (256+uSq*(-128+uSq*(74-47*uSq))),
+            deltaSigma = B*sinSigma*(cos2SigmaM+B/4*(cosSigma*(-1+2*cos2SigmaM*cos2SigmaM)-
+				B/6*cos2SigmaM*(-3+4*sinSigma*sinSigma)*(-3+4*cos2SigmaM*cos2SigmaM))),
+            s = b*A*(sigma-deltaSigma);
+
+		s = s.toFixed(3);
+		return s;
+	},
     
     //x, y, z - GeoMixer tile coordinates
     getTileBounds: function(x, y, z) {
@@ -737,9 +787,37 @@
     }
 }
 
+gmxAPIutils.lambertCoefX = 100*gmxAPIutils.distVincenty(0, 0, 0.01, 0);				// 111319.5;
+gmxAPIutils.lambertCoefY = 100*gmxAPIutils.distVincenty(0, 0, 0, 0.01)*180/Math.PI;	// 6335440.712613423;
+
 !function() {
     //pre-calculate tile sizes
     for (var z = 0; z < 30; z++) {
         gmxAPIutils.tileSizes[z] = 40075016.685578496 / Math.pow(2, z);
     }
 }()
+
+L.LineUtil.getLength = function (latlngs) {
+    var length = 0;
+    if (latlngs && latlngs.length) {
+		var lng = false, lat = false;
+		latlngs.forEach(function(latlng) {
+			if (lng !== false && lat !== false)
+				length += parseFloat(gmxAPIutils.distVincenty(lng, lat, latlng.lng, latlng.lat));
+			lng = latlng.lng;
+			lat = latlng.lat;
+		});
+    }
+    return length;
+};
+
+L.PolyUtil.getArea = function (latlngs) {
+    var area = 0;
+    for(var i=0, len = latlngs.length; i<len; i++) {
+        var ipp = (i == (len - 1) ? 0 : i + 1),
+            p1 = latlngs[i], p2 = latlngs[ipp];
+        area += p1.lng * Math.sin(gmxAPIutils.deg_rad(p2.lat)) - p2.lng * Math.sin(gmxAPIutils.deg_rad(p1.lat));
+    }
+    var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY/2);
+    return out;
+};
