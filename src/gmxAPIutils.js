@@ -172,8 +172,7 @@
 		return res.extendArray(arr);
 	}
 	,
-	'geoItemBounds': function(geoItem) {					// получить bounds векторного обьекта
-		var geo = geoItem.geometry;
+	'geoItemBounds': function(geo) {// получить bounds векторного обьекта		
 		var type = geo.type;
 		var coords = geo.coordinates;
 		var arr = [];

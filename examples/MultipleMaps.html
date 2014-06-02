@@ -34,7 +34,7 @@
 
 	<script>
         var initMap = function(divID) {
-            var map = L.map(divID).setView([55, 44], 3);
+            var map = L.map(divID).setView([55, 84], 3);
     
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                 maxZoom: 18,
@@ -42,9 +42,9 @@
             }).addTo(map);
             
             var oneDay = 1000*60*60*24, // milliseconds in one day
-                now = Date.now(),
-                ddt1 = new Date(now - now % oneDay - oneDay), //beginning of the previous UTC day
-                ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
+                now = new Date(2014, 3, 1).valueOf(),
+                ddt1 = new Date(now - now % oneDay),
+                ddt2 = new Date(ddt1.getTime() + oneDay);
 
             L.gmx.loadLayer('AZR6A', 'EB271FC4D2AD425A9BAA78ADEA041AB9', {
                 beginDate: ddt1,

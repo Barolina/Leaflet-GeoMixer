@@ -182,7 +182,15 @@
 
     var vectorTileDataProvider = {
         load: function(x, y, z, v, s, d, callback) {
-            var requestParams = {
+            gmxVectorTileLoader.load(
+                gmx.tileSenderPrefix, 
+                {x: x, y: y, z: z, v: v, s: s, d: d, layerID: gmx.layerID}
+            ).then(callback, function() {
+                console.log('Error loading vector tile');
+                callback([]);
+            })
+            
+            /*var requestParams = {
                 ModeKey: 'tile',
                 r: 't',
                 MapName: gmx.mapName,
@@ -206,7 +214,7 @@
                     console.log('Error loading vector tile');
                     callback([]);
                 }
-            );
+            );*/
         }
     }
 
@@ -284,6 +292,7 @@
             for (var j = 0, len1 = data.length; j < len1; j++) {
                 var it = data[j],
                     item = it.item,
+                    geom = it[it.length-1],
                     isFiltered = false;
                 for (var filterName in filters) {
                     if (filters[filterName] && !filters[filterName](item)) {
@@ -298,7 +307,7 @@
                     item.styleExtend = styleHook(item);
                 }
                 if(!it.bounds) {
-                    it.bounds = gmxAPIutils.geoItemBounds(it);
+                    it.bounds = gmxAPIutils.geoItemBounds(geom);
                     var arr = [[it.bounds.min.x, it.bounds.min.y], [it.bounds.max.x, it.bounds.max.y]];
                     item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
                 }
@@ -321,15 +330,15 @@
     var _updateItemsFromTile = function(tile) {
         var gmxTileKey = tile.gmxTileKey,
             layerProp = gmx.properties,
-            identityField = layerProp.identityField || 'ogc_fid',
             data = tile.data,
-            len = data.length;
+            len = data.length,
+            geomIndex = data[0] && (data[0].length - 1);
 
         for (var i = 0; i < len; i++) {
             var it = data[i],
-                prop = it.properties,
-                geom = it.geometry,
-                id = it.id || prop[identityField],
+                geom = it[geomIndex],
+                //prop = it.properties,
+                id = it[0],
                 item = items[id];
             delete it.properties;
             if(item) {
@@ -340,7 +349,7 @@
                 item = {
                     id: id
                     ,type: geom.type
-                    ,properties: prop
+                    ,properties: it
                     ,options: {
                         fromTiles: {}
                     }
@@ -350,11 +359,14 @@
             it.item = item;
             item.options.fromTiles[gmxTileKey] = i;
             if(layerProp.TemporalColumnName) {
-                var zn = prop[layerProp.TemporalColumnName] || '';
-                zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
-                var vDate = new Date(zn);
-                var offset = vDate.getTimezoneOffset();
-                item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
+                var zn = it[gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];
+                item.options.unixTimeStamp = zn*1000;
+                
+                // var zn = prop[layerProp.TemporalColumnName] || '';
+                // zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
+                // var vDate = new Date(zn);
+                // var offset = vDate.getTimezoneOffset();
+                // item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
             }
         }
         return len;

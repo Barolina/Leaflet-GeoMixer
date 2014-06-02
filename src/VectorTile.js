@@ -10,7 +10,16 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
             loadDef = new gmxDeferred();
             this.state = 'loading';
             dataProvider.load(x, y, z, v, s, d, function(data) {
-                _this.data = data;
+            
+                //clone data to avoid conflicts between multiple maps
+                //TODO: fixme!
+                _this.data = new Array(data.length);
+                for (var i = 0; i < data.length; i++) {
+                    _this.data[i] = data[i].slice();
+                }
+                
+                // _this.data = data;
+                
                 _this.state = 'loaded';
                 loadDef.resolve(_this.data);
             })
@@ -63,9 +72,10 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
             }
             return hideLines;
         }
+        
+        var geomIndex = this.data[0] && (this.data[0].length - 1); //geometry is always the last attribute
         for (var i = 0, len = this.data.length; i < len; i++) {
-            var it = this.data[i],
-                geom = it.geometry;
+            var geom = this.data[i][geomIndex];
             if(geom.type.indexOf('POLYGON') !== -1) {
                 var hideLines = [], // индексы точек лежащих на границе тайла
                     coords = geom.coordinates;
@@ -80,7 +90,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                     }
                     hideLines.push(hideLines1);
                 }
-                it.hiddenLines = hideLines;
+                this.data[i].hiddenLines = hideLines;
             }
         }
     }

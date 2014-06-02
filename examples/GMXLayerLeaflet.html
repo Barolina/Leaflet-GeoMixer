@@ -161,15 +161,16 @@
                 updateInfo(ddt1);
             }
             
+            var IsDayIndex = modisLayer._gmx.tileAttributeIndexes.IsDay;
             document.getElementById("dayFilter").onclick = function() {
                 modisLayer.setFilter(function(item) {
-                    return item.properties.IsDay === 'True';
+                    return item.properties[IsDayIndex];
                 });
             }
             
             document.getElementById("nightFilter").onclick = function() {
                 modisLayer.setFilter(function(item) {
-                    return item.properties.IsDay !== 'True';
+                    return !item.properties[IsDayIndex];
                 });
             }
             

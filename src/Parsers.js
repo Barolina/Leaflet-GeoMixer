@@ -305,9 +305,9 @@
 				}
 			}
 
-			return function(props)
+			return function(props, indexes)
 			{
-				var fieldValue = props[fieldName];
+				var fieldValue = props[indexes[fieldName]];
 				if (fieldValue == null)
 					return false;
 				if (matchPattern != null)
@@ -371,9 +371,9 @@
 				node = node.tail;
 			var fieldName = node.head;
 
-			return function(props)
+			return function(props, indexes)
 			{
-				var value = props[fieldName];
+				var value = props[indexes[fieldName]];
 				if (value == null)
 					return false;
 				var node = state;
@@ -400,9 +400,9 @@
 		{
 			// Linked list contains only processed inner term.
 			var innerTerm = state.head;
-			return function(props)
+			return function(props, indexes)
 			{
-				return !innerTerm(props);
+				return !innerTerm(props, indexes);
 			}
 		}
 	);
@@ -423,13 +423,13 @@
 		{
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props)
+			return function(props, indexes)
 			{
 				var flag = true;
 				var node = state;
 				while (node != null)
 				{
-					flag = flag && node.head(props);
+					flag = flag && node.head(props, indexes);
 					node = node.tail;
 				}
 				return flag;
@@ -443,13 +443,13 @@
 		{
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props)
+			return function(props, indexes)
 			{
 				var flag = false;
 				var node = state;
 				while (node != null)
 				{
-					flag = flag || node.head(props);
+					flag = flag || node.head(props, indexes);
 					node = node.tail;
 				}
 				return flag;
@@ -490,13 +490,13 @@
 		),
 		function(state)
 		{
-			return function(props)
+			return function(props, indexes)
 			{
 				var pos = state;
 				var term = 0.0;
 				while (pos != null)
 				{
-					term += pos.head(props);
+					term += pos.head(props, indexes);
 					if (pos.tail == null)
 						return term;
 					else
@@ -516,7 +516,7 @@
 			numberLiteral,
 			function(state)
 			{
-				return function(props)
+				return function(props, indexes)
 				{
 					return parseFloat(state.head);
 				}
@@ -541,9 +541,9 @@
 			sequence([token("floor("), additiveExpression, token(")")]),
 			function(state)
 			{
-				return function(props)
+				return function(props, indexes)
 				{
-					var res = state.head(props);
+					var res = state.head(props, indexes);
 					return Math.floor(res);
 				}
 			}
@@ -552,9 +552,9 @@
 			sequence([token("["), fieldName, token("]")]),
 			function(state)
 			{
-				return function(props)
+				return function(props, indexes)
 				{
-					return parseFloat(props[state.head]);
+					return parseFloat(props[indexes[state.head]]);
 				}
 			}
 		),
@@ -570,9 +570,9 @@
 			whitespaceSeparatedSequence([token("-"), multiplicativeTerm]),
 			function(state)
 			{
-				return function(props)
+				return function(props, indexes)
 				{
-					return -state.head(props);
+					return -state.head(props, indexes);
 				}
 			}
 		)
@@ -585,13 +585,13 @@
 		),
 		function(state)
 		{
-			return function(props)
+			return function(props, indexes)
 			{
 				var pos = state;
 				var term = 1.0;
 				while (pos != null)
 				{
-					term *= pos.head(props);
+					term *= pos.head(props, indexes);
 					if (pos.tail == null)
 						return term;
 					else
@@ -612,9 +612,9 @@
 			whitespaceSeparatedSequence([token("-"), multiplicativeTerm]),
 			function(state)
 			{
-				return function(props)
+				return function(props, indexes)
 				{
-					return -state.head(props);
+					return -state.head(props, indexes);
 				}
 			}
 		)

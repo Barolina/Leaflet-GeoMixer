@@ -19,7 +19,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             layerID: options.layerID,
             beginDate: options.beginDate,
             endDate: options.endDate,
-            sortItems: options.sortItems || function(a, b) { return Number(a.id) - Number(b.id); },
+            sortItems: options.sortItems || function(a, b) { return Number(a[0]) - Number(b[0]); },
             styles: options.styles || [],
             screenTiles: {},
             tileSubscriptions: []
@@ -102,6 +102,16 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         this._gmx.properties = ph.properties;
         this._gmx.geometry = ph.geometry;
+
+        if (ph.properties.attributes) {
+            var tileAttributeIndexes = {},
+                attrs = ph.properties.attributes;
+            for (var a = 0; a < attrs.length; a++) {
+                tileAttributeIndexes[attrs[a]] = a + 1;
+            }
+            this._gmx.tileAttributeIndexes = tileAttributeIndexes;
+        }
+        
         this.initLayerData(ph);
         this._gmx.vectorTilesManager = new gmxVectorTilesManager(this._gmx, ph);
         this._gmx.styleManager = new gmxStyleManager(this._gmx);
@@ -426,16 +436,19 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         for (var i = arr.length - 1; i >= 0; i--) {
             var geoItem = arr[i],
-                idr = geoItem.id,
+                idr = geoItem[0],
                 item = gmx.vectorTilesManager.getItem(idr),
                 parsedStyle = item.options.parsedStyleKeys,
                 lineWidth = parsedStyle.lineWidth || 0,
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
                 dy = (parsedStyle.sy + lineWidth) / mInPixel;
+                
             if (!geoItem.bounds.intersects(bounds, dx, dy)) continue;
 
-            var type = geoItem.geometry.type;
-            var coords = geoItem.geometry.coordinates;
+            var geom = geoItem[geoItem.length-1],
+                type = geom.type,
+                coords = geom.coordinates;
+                
             if(type === 'LINESTRING') {
                 if (!gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) continue;
             } else if(type === 'MULTILINESTRING') {
@@ -489,7 +502,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
             out.push({ id: idr
                 ,properties: item.properties
-                ,geometry: geoItem.geometry
+                ,geometry: geom
                 ,bounds: item.bounds
                 //,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
             });
@@ -651,7 +664,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     +'&x=' + x
                     +'&y=' + y
                     +'&z=' + z
-                    +'&LayerName=' + properties.GMX_RasterCatalogID
+                    +'&LayerName=' + properties[gmx.tileAttributeIndexes['GMX_RasterCatalogID']]
                     +'&MapName=' + gmx.mapName
                     +'&key=' + encodeURIComponent(gmx.sessionKey);
             };
@@ -660,12 +673,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if(prop.Quicklook) {
 			var template = gmx.Quicklook = prop.Quicklook;
 			gmx.quicklookBGfunc = function(item) {
-				var properties = item.properties;
 				var url = template;
 				var reg = /\[([^\]]+)\]/;
 				var matches = reg.exec(url);
 				while(matches && matches.length > 1) {
-					url = url.replace(matches[0], properties[matches[1]]);
+					url = url.replace(matches[0], item.properties[gmx.tileAttributeIndexes[matches[1]]]);
 					matches = reg.exec(url);
 				}
 				return url;

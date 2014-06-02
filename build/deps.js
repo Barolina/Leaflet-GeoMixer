@@ -12,6 +12,7 @@
     "SessionManager.js",
     "MapManager.js",
     "gmxEventsManager.js",
+    "VectorTileLoader.js",
     "gmxVectorLayer.js",
     "gmxRasterLayer.js",
     "gmxLayerFactory.js"

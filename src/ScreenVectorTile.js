@@ -47,7 +47,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
     //load missing rasters for one item
     var getItemRasters = function(geo) {
-        var idr = geo.id,
+        var idr = geo[0],
             item = gmx.vectorTilesManager.getItem(idr),
             def = new gmxDeferred();
         if (idr in rasters) return def;
@@ -330,14 +330,14 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
             var drawItem = function(geoItem) {
-                var idr = geoItem.id,
+                var idr = geoItem[0],
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
                 dattr.style = style;
                 setCanvasStyle(item, dattr);
 
-                var geom = geoItem.geometry;
+                var geom = geoItem[geoItem.length-1];
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     if(dattr.style.image) { // отображение мультиполигона маркером
                         dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];

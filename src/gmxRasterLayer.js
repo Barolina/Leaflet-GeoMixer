@@ -52,7 +52,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 		}
 		
 		var vectorDataProvider = {load: function(x, y, z, v, s, d, callback) {
-			callback([{id: 777, properties: {ogc_fid: 777}, geometry: ph.geometry}]);
+			callback([[777, ph.geometry]]);
 		}}
 		
 		//there are no z=0 tile in GeoMixer - use 4 tiles with z=1

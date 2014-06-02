@@ -334,7 +334,7 @@
         for (var i = 0, len = styles.length; i < len; i++) {
             var st = styles[i];
             if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-            if ('FilterFunction' in st && !st.FilterFunction(item.properties)) continue;
+            if ('FilterFunction' in st && !st.FilterFunction(item.properties, gmx.tileAttributeIndexes)) continue;
             if(item.options.currentFilter !== i) {
                 itemStyleParser(item, st.RenderStyle);
                 if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
@@ -352,7 +352,7 @@
     this.getObjStyle = function(item) {
         var style = styles[item.options.currentFilter];
 
-        if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
+        if (gmx.lastHover && item[0] === gmx.lastHover.id && style.HoverStyle) {
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
         }
