@@ -46,7 +46,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     }
 
     var getPropItem = function(prop, key) {
-        return prop[gmx.tileAttributeIndexes[key]];
+        return gmx.tileAttributeIndexes ? prop[gmx.tileAttributeIndexes[key]] : '';
     }
 
     //load missing rasters for one item
