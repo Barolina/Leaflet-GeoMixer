@@ -170,9 +170,9 @@
 		};
         
 		return res.extendArray(arr);
-	}
-	,
-	'geoItemBounds': function(geo) {// получить bounds векторного обьекта		
+    },
+
+    geoItemBounds: function(geo) {// получить bounds векторного обьекта		
 		var type = geo.type;
 		var coords = geo.coordinates;
 		var arr = [];
@@ -193,8 +193,17 @@
 			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i][0]);
 		}
 		return gmxAPIutils.bounds(arr);
-	}
-	,'dec2rgba': function(i, a)	{				// convert decimal to rgb
+	},
+
+    getPropertiesHash: function(arr, indexes) {
+        var properties = {};
+        for (var key in indexes) {
+            properties[key] = arr[indexes[key]];
+        };
+        return properties;
+    },
+
+    dec2rgba: function(i, a)	{				// convert decimal to rgb
 		var r = (i >> 16) & 255;
 		var g = (i >> 8) & 255;
 		var b = i & 255;
@@ -236,9 +245,9 @@
 		}
 		
 		return xmlDoc;
-	}
-    ,
-    'rotatePoints': function(arr, angle, scale, center) {			// rotate - массива точек
+	},
+
+    rotatePoints: function(arr, angle, scale, center) {			// rotate - массива точек
         var out = [];
         angle *= Math.PI / 180.0
         var sin = Math.sin(angle);

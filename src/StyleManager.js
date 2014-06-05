@@ -2,6 +2,7 @@
     var MAX_STYLE_SIZE = 256,
         needLoadIcons = 0,
         styles = [],
+        items = {},
         imagesSize = {},
         defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'},
         me = this;
@@ -263,10 +264,16 @@
 		gmxImageLoader.unshift(ph);
 	}
 
+    var getItemOptions = function(item) {
+        var id = item.id;
+        if (!items[id]) items[id] = {}
+        return items[id];
+	}
+
     var itemStyleParser = function(item, pt) {
-        var out = {},
+        var itemOptions = getItemOptions(item),
+            out = {},
             prop = item.properties,
-            options = item.options,
             color = 255, opacity = 1;
 
         out.sx = pt.sx;
@@ -326,21 +333,23 @@
             out.sy = out.label.extentLabel[1];
         }
         */
-        options.parsedStyleKeys = out;
+        itemOptions.parsedStyleKeys = out;
         return out;
     }
 
     var chkStyleFilter = function(item) {
+        var itemOptions = getItemOptions(item);
+        
         for (var i = 0, len = styles.length; i < len; i++) {
             var st = styles[i];
             if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
             if ('FilterFunction' in st && !st.FilterFunction(item.properties, gmx.tileAttributeIndexes)) continue;
-            if(item.options.currentFilter !== i) {
+            if(itemOptions.currentFilter !== i) {
                 itemStyleParser(item, st.RenderStyle);
                 if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
             }
 
-            item.options.currentFilter = i;
+            itemOptions.currentFilter = i;
             return true;
         }
         return false;
@@ -350,8 +359,10 @@
  
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
-        var style = styles[item.options.currentFilter];
+        var itemOptions = getItemOptions(item),
+            style = styles[itemOptions.currentFilter];
 
+        if (!style) { chkStyleFilter(item); style = styles[itemOptions.currentFilter]; }
         if (gmx.lastHover && item[0] === gmx.lastHover.id && style.HoverStyle) {
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;

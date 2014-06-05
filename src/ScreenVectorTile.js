@@ -45,28 +45,35 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         });
     }
 
+    var getPropItem = function(prop, key) {
+        return prop[gmx.tileAttributeIndexes[key]];
+    }
+
     //load missing rasters for one item
     var getItemRasters = function(geo) {
         var idr = geo[0],
             item = gmx.vectorTilesManager.getItem(idr),
             def = new gmxDeferred();
         if (idr in rasters) return def;
+
         var properties = geo.item.properties,
             ww = gmxAPIutils.worldWidthMerc,
-            shiftX = Number(gmx.shiftXfield ? properties[gmx.shiftXfield] : 0) % ww,
-            shiftY = Number(gmx.shiftYfield ? properties[gmx.shiftYfield] : 0);
-        var url = '',
+            shiftX = Number(gmx.shiftXfield ? getPropItem(properties, gmx.shiftXfield) : 0) % ww,
+            shiftY = Number(gmx.shiftYfield ? getPropItem(properties, gmx.shiftYfield) : 0),
+            GMX_RasterCatalogID = getPropItem(item.properties, 'GMX_RasterCatalogID'),
+            urlBG = getPropItem(item.properties, 'urlBG'),
+            url = '',
             itemImageProcessingHook = null,
             isTiles = false;
         if (gmx.IsRasterCatalog) {  // RasterCatalog
-            if(!item.properties.GMX_RasterCatalogID && gmx.quicklookBGfunc) {
+            if(!GMX_RasterCatalogID && gmx.quicklookBGfunc) {
                 url = gmx.quicklookBGfunc(item)
                 itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
             } else {
                 isTiles = true;
             }
-        } else if(item.properties.urlBG) {
-            url = item.properties.urlBG;
+        } else if(urlBG) {
+            url = urlBG;
             itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
         } else if(gmx.Quicklook) {
             url = gmx.rasterBGfunc(item);

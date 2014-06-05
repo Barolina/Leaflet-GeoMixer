@@ -262,7 +262,7 @@
         endDate = newEndDate;
     }
 
-    this.addStyleHook = function(func) {
+    this.setStyleHook = function(func) {
         styleHook = func;
     }
 
@@ -340,6 +340,10 @@
                 //prop = it.properties,
                 id = it[0],
                 item = items[id];
+// TODO: old properties null = ''
+it.forEach(function(zn, j) {
+if (zn === null) it[j] = '';
+});
             delete it.properties;
             if(item) {
                 if(item.type.indexOf('MULTI') == -1) {

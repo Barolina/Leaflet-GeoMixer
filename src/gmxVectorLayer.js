@@ -128,8 +128,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         });
     },
 
-    addStyleHook: function (func) {
-        this._gmx.vectorTilesManager.addStyleHook(func);
+    setStyleHook: function (func) {
+        this._gmx.vectorTilesManager.setStyleHook(func);
     },
 
     removeStyleHook: function () {
@@ -438,7 +438,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             var geoItem = arr[i],
                 idr = geoItem[0],
                 item = gmx.vectorTilesManager.getItem(idr),
-                parsedStyle = item.options.parsedStyleKeys,
+                parsedStyle = gmx.styleManager.getObjStyle(item),
                 lineWidth = parsedStyle.lineWidth || 0,
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
                 dy = (parsedStyle.sy + lineWidth) / mInPixel;
@@ -548,6 +548,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     ev.gmx = {
                         targets: arr
                         ,target: target
+                        ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
                         ,id: target.id
                     };
                     if (this.hasEventListeners(type)) this.fire(type, ev);

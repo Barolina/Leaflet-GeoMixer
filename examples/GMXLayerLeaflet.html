@@ -78,6 +78,24 @@
             {mapID: 'AZR6A',                            layerID: 'EB271FC4D2AD425A9BAA78ADEA041AB9'}
         ]).then(function(satellite, labels, regionsLayer, modisLayer) {
             modisLayer.setDateInterval(ddt1, ddt2);
+            var popup = L.popup({maxWidth: 1000});
+
+            regionsLayer.on('click', function(ev) {
+                var gmx = ev.gmx,
+                    item = gmx.target,
+                    prop = gmx.properties;
+                
+                var str = 'You clicked the vector object ';
+                str += '<strong>id:</strong>&nbsp;' + item.id;
+                for (var key in prop) {
+                    str += '<br>'+key+':&nbsp;<strong>' + prop[key] + '</strong>';
+                }
+                str += '<br> at ' + ev.latlng.toString();
+                popup
+                    .setLatLng(ev.latlng)
+                    .setContent(str)
+                    .openOn(map);
+            });
 
             var rastersView = {};
             modisLayer.setPropertiesHook(function(item) {
@@ -86,11 +104,10 @@
                 return item;
             });
 
-            var popup = L.popup();
             function onMyClick(e) {
-                var gmx = e.gmx;
-                    item = gmx.target;
-                    prop = item.properties;
+                var gmx = e.gmx,
+                    item = gmx.target,
+                    prop = gmx.properties;
                 
                 var str = 'You clicked the vector object ';
                 str += '<strong>id:</strong>&nbsp;' + item.id;
