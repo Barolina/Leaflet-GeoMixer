@@ -853,6 +853,17 @@ L.LineUtil.getLength = function (latlngs) {
     return length;
 };
 
+L.LineUtil.prettifyDistance = function (length, type) {
+    var km = ' ' + L.Util.gmxLocale.getText('units.km');
+    if (type === 'km')
+        return (Math.round(length)/1000) + km;
+    if (length < 2000 || type === 'm')
+        return Math.round(length) + ' ' + L.Util.gmxLocale.getText('units.m');
+    if (length < 200000)
+        return (Math.round(length/10)/100) + km;
+    return Math.round(length/1000) + km;
+};
+
 L.PolyUtil.getArea = function (latlngs) {
     var area = 0;
     for(var i=0, len = latlngs.length; i<len; i++) {
@@ -862,6 +873,25 @@ L.PolyUtil.getArea = function (latlngs) {
     }
     var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY/2);
     return out;
+};
+
+L.PolyUtil.prettifyArea = function (area, type) {
+    var km2 = ' ' + L.Util.gmxLocale.getText('units.km2');
+
+    if (type === 'km2')
+        return ("" + (Math.round(area/100)/10000)) + km2;
+    if (type === 'ha')
+        return ("" + (Math.round(area/100)/100)) + ' ' + L.Util.gmxLocale.getText('units.ha');
+
+    if (area < 100000 || type === 'm2')
+        return Math.round(area) + ' ' + L.Util.gmxLocale.getText('units.m2');
+    if (area < 3000000)
+        return ("" + (Math.round(area/1000)/1000)).replace(".", ",") + km2;
+    if (area < 30000000)
+        return ("" + (Math.round(area/10000)/100)).replace(".", ",") + km2;
+    if (area < 300000000)
+        return ("" + (Math.round(area/100000)/10)).replace(".", ",") + km2;
+    return (Math.round(area/1000000)) + km2;
 };
 
 L.Util.formatCoordinates = function (latlng, type) {

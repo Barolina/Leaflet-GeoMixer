@@ -4,6 +4,8 @@ _translationsHash.flags["rus"] = "img/flag_ru.png";
 _translationsHash.titles["rus"] = "Русский";
 
 _translationsHash.hash["rus"] = {
+    "Length" : "Длина",
+    "Area" : "Площадь",
     "units.m": "м",
     "units.km": "км",
     "units.m2": "кв. м",

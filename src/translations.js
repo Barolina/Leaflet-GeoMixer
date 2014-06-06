@@ -83,7 +83,7 @@ L.Util.gmxLocale = {
     },
 
     addText: function (lang, newHash) {
-        return _translationsHash.addtext.apply(_translationsHash, lang, newHash);
+        return _translationsHash.addtext.apply(_translationsHash, arguments);
     }
 };
 
