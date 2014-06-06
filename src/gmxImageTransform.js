@@ -1,24 +1,24 @@
 ﻿// трансформация снимка
 var gmxImageTransform = function(hash) {
-    var item = hash.item,
-        ready = false,
+    var ready = false,
         gmx = hash.gmx,
         gmxTilePoint = hash.gmxTilePoint,
         mInPixel = gmx.mInPixel,
-        begx = mInPixel * item.bounds.min.x,
-        begy = mInPixel * item.bounds.max.y,
         geoItem = hash.geoItem,
-        coord = geoItem[geoItem.length-1].coordinates,
-        properties = item.properties,
+        properties = geoItem.arr,
+        dataOption = geoItem.dataOption || {},
+        coord = properties[properties.length-1].coordinates,
+        begx = mInPixel * dataOption.bounds.min.x,
+        begy = mInPixel * dataOption.bounds.max.y,
         quicklookPlatform = properties[gmx.tileAttributeIndexes[gmx.quicklookPlatform]] || '',
         img = hash.image,
         points = {};
 
     if (quicklookPlatform === 'LANDSAT8') {
-        points.x1 = item.bounds.min.x, points.y1 = item.bounds.max.y;
-        points.x2 = item.bounds.max.x, points.y2 = item.bounds.max.y;
-        points.x3 = item.bounds.max.x, points.y3 = item.bounds.min.y;
-        points.x4 = item.bounds.min.x, points.y4 = item.bounds.min.y;
+        points.x1 = dataOption.bounds.min.x, points.y1 = dataOption.bounds.max.y;
+        points.x2 = dataOption.bounds.max.x, points.y2 = dataOption.bounds.max.y;
+        points.x3 = dataOption.bounds.max.x, points.y3 = dataOption.bounds.min.y;
+        points.x4 = dataOption.bounds.min.x, points.y4 = dataOption.bounds.min.y;
         ready = true;
     } else if (quicklookPlatform === 'SPOT 6') {
         points.x1 = coord[0][0], points.y1 = coord[0][1];

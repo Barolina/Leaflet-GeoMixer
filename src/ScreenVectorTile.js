@@ -51,17 +51,17 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
     //load missing rasters for one item
     var getItemRasters = function(geo) {
-        var idr = geo[0],
+        var properties = geo.arr,
+            idr = properties[0],
             item = gmx.vectorTilesManager.getItem(idr),
             def = new gmxDeferred();
         if (idr in rasters) return def;
 
-        var properties = geo.item.properties,
-            ww = gmxAPIutils.worldWidthMerc,
+        var ww = gmxAPIutils.worldWidthMerc,
             shiftX = Number(gmx.shiftXfield ? getPropItem(properties, gmx.shiftXfield) : 0) % ww,
             shiftY = Number(gmx.shiftYfield ? getPropItem(properties, gmx.shiftYfield) : 0),
-            GMX_RasterCatalogID = getPropItem(item.properties, 'GMX_RasterCatalogID'),
-            urlBG = getPropItem(item.properties, 'urlBG'),
+            GMX_RasterCatalogID = getPropItem(properties, 'GMX_RasterCatalogID'),
+            urlBG = getPropItem(properties, 'urlBG'),
             url = '',
             itemImageProcessingHook = null,
             isTiles = false;
@@ -237,8 +237,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 }
             };
         var itemPromises = geoItems.map(function(geo) {
-            var isSkipRasters  = geo.item.styleExtend && geo.item.styleExtend.skipRasters;
-            if (!isSkipRasters && tbounds.intersects(geo.bounds, -1, -1)) {
+            var dataOption  = geo.dataOption || {},
+                isSkipRasters  = dataOption.styleExtend && dataOption.styleExtend.skipRasters;
+            if (!isSkipRasters && tbounds.intersects(dataOption.bounds, -1, -1)) {
                 needLoadRasters++;
                 var itemRasterPromise = getItemRasters(geo);
                 itemRasterPromise.then(function() {
@@ -339,6 +340,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             ctx.clearRect(0, 0, 256, 256);
             var drawItem = function(geoItem) {
                 var arr = geoItem.arr,
+                    dataOption = geoItem.dataOption,
                     idr = arr[0],
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
@@ -350,20 +352,20 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 var geom = arr[arr.length-1];
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     if(dattr.style.image) { // отображение мультиполигона маркером
-                        dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
+                        dattr.coords = [(dataOption.bounds.min.x + dataOption.bounds.max.x)/2, (dataOption.bounds.min.y + dataOption.bounds.max.y)/2];
                         gmxAPIutils.pointToCanvas(dattr);
                     } else {
                         dattr.flagPixels = false;
-                        var hiddenLines = geoItem.hiddenLines,
+                        var hiddenLines = dataOption.hiddenLines,
                             coords = geom.coordinates,
-                            flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom,
+                            flagPixels = dataOption.pixels && dataOption.pixels.z === gmx.currentZoom,
                             cacheArr = [];
                         if(geom.type === 'POLYGON') coords = [coords];
                         var coordsToCanvas = function(func, flagFill) {
                             var out = null;
                             if(flagPixels) {
-                                coords = geoItem.pixels.coords;
-                                hiddenLines = geoItem.pixels.hidden;
+                                coords = dataOption.pixels.coords;
+                                hiddenLines = dataOption.pixels.hidden;
                                 dattr.flagPixels = flagPixels;
                             } else {
                                 out = { coords: [], hidden: [] };
@@ -397,8 +399,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if(dattr.style.strokeStyle && dattr.style.lineWidth) {
                             var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas);
                             if(pixels) {
-                                geoItem.pixels = pixels;
-                                geoItem.pixels.z = gmx.currentZoom;
+                                dataOption.pixels = pixels;
+                                dataOption.pixels.z = gmx.currentZoom;
                                 flagPixels = true;
                             }
                         }
@@ -409,10 +411,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             delete dattr.bgImage;
                         }
                         if ((dattr.style.fill || dattr.bgImage) &&
-                            tbounds.intersects(geoItem.bounds, -1, -1)) {
+                            tbounds.intersects(dataOption.bounds, -1, -1)) {
                             if(flagPixels) {
-                                coords = geoItem.pixels.coords;
-                                hiddenLines = geoItem.pixels.hidden;
+                                coords = dataOption.pixels.coords;
+                                hiddenLines = dataOption.pixels.hidden;
                             }
                             ctx.save();
                             if(dattr.bgImage) {

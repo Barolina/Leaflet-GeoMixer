@@ -319,7 +319,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     gmxDrawTile: function (tilePoint, zoom) {
         var gmx = this._gmx;
-        if(gmx.zoomstart) return;
+        if(gmx.zoomstart || !this._map) return;
 
         var screenTiles = gmx.screenTiles,
             zoom = this._map._zoom,
@@ -414,7 +414,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._tileOnLoad(tile);
     },
 
-    gmxObjectsByPoint: function (arr, point) {    // Получить верхний обьект по координатам mouseClick
+    gmxObjectsByPoint: function (geoItems, point) {    // Получить верхний обьект по координатам mouseClick
         var gmx = this._gmx,
             out = [],
             mInPixel = gmx.mInPixel,
@@ -434,16 +434,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             ];
         }
 
-        for (var i = arr.length - 1; i >= 0; i--) {
-            var geoItem = arr[i],
+        for (var i = geoItems.length - 1; i >= 0; i--) {
+            var geoItem = geoItems[i].arr,
                 idr = geoItem[0],
+                dataOption = geoItems[i].dataOption || {},
                 item = gmx.vectorTilesManager.getItem(idr),
                 parsedStyle = gmx.styleManager.getObjStyle(item),
                 lineWidth = parsedStyle.lineWidth || 0,
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
                 dy = (parsedStyle.sy + lineWidth) / mInPixel;
                 
-            if (!geoItem.bounds.intersects(bounds, dx, dy)) continue;
+            if (!dataOption.bounds.intersects(bounds, dx, dy)) continue;
 
             var geom = geoItem[geoItem.length-1],
                 type = geom.type,
@@ -463,7 +464,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             } else {
                 if(type === 'MULTIPOLYGON') {
                     if(parsedStyle.marker) {
-                        coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                        coords = getMarkerPolygon(dataOption.bounds, dx, dy);
                         if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
                     } else {
                         var flag = false,
@@ -483,7 +484,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     }
                 } else if(type === 'POLYGON') {
                     if(parsedStyle.marker) {
-                        coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                        coords = getMarkerPolygon(dataOption.bounds, dx, dy);
                         if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
                     } else {
                         var chkPoint = mercPoint,
@@ -495,7 +496,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         if (!gmxAPIutils.isPointInPolygonWithHell(chkPoint, coords)) continue;
                     }
                 } else if(type === 'POINT') {
-                    coords = getMarkerPolygon(geoItem.bounds, dx, dy);
+                    coords = getMarkerPolygon(dataOption.bounds, dx, dy);
                     if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
                 }
             }
@@ -503,7 +504,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             out.push({ id: idr
                 ,properties: item.properties
                 ,geometry: geom
-                ,bounds: item.bounds
+                ,bounds: dataOption.bounds
                 //,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
             });
         }

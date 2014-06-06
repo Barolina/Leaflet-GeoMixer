@@ -289,12 +289,13 @@
             }
 
             var data = tile.data || [],
-                dataOptions = tile.dataOptions || [];
+                dataOptions = tile.dataOptions || {};
             for (var j = 0, len1 = data.length; j < len1; j++) {
                 var it = data[j],
                     id = it[0],
                     item = items[id],
                     geom = it[it.length-1],
+                    dataOption = dataOptions[id] || {},
                     isFiltered = false;
                 for (var filterName in filters) {
                     if (filters[filterName] && !filters[filterName](item)) {
@@ -305,16 +306,14 @@
 
                 if (isFiltered) {continue;}
 
-                if (styleHook) {
-                    item.styleExtend = styleHook(item);
-                }
-                if(!it.bounds) {
-                    it.bounds = gmxAPIutils.geoItemBounds(geom);
-                    var arr = [[it.bounds.min.x, it.bounds.min.y], [it.bounds.max.x, it.bounds.max.y]];
+                if(!dataOption.bounds) {
+                    dataOption.bounds = gmxAPIutils.geoItemBounds(geom);
+                    var arr = [[dataOption.bounds.min.x, dataOption.bounds.min.y], [dataOption.bounds.max.x, dataOption.bounds.max.y]];
                     item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
+                    if (!dataOptions[id]) dataOptions[id] = dataOption;
                 }
 
-                if (!bounds.intersects(it.bounds)) {
+                if (!bounds.intersects(dataOption.bounds)) {
                     // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
                     continue;
                 }
@@ -323,7 +322,11 @@
                     tile.calcHiddenPoints();
                 }
 
-                resItems.push({arr: it, dataOption: dataOptions[id]});
+                var out = {arr: it, dataOption: dataOptions[id]};
+                if (styleHook) {
+                    out.styleExtend = styleHook(item);
+                }
+                resItems.push(out);
             }
         }
         return resItems;
