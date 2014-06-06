@@ -356,7 +356,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         gmxAPIutils.pointToCanvas(dattr);
                     } else {
                         dattr.flagPixels = false;
-                        var hiddenLines = dataOption.hiddenLines,
+                        var hiddenLines = dataOption.hiddenLines || [],
                             coords = geom.coordinates,
                             flagPixels = dataOption.pixels && dataOption.pixels.z === gmx.currentZoom,
                             cacheArr = [];
@@ -373,12 +373,12 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             var pixels = [], hidden = [];
                             for (var j = 0, len1 = coords.length; j < len1; j++) {
                                 var coords1 = coords[j];
-                                var hiddenLines1 = hiddenLines[j];
+                                var hiddenLines1 = hiddenLines[j] || [];
                                 var pixels1 = [], hidden1 = [];
                                 ctx.beginPath();
                                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                     dattr.coords = coords1[j1];
-                                    dattr.hiddenLines = hiddenLines1[j1];
+                                    dattr.hiddenLines = hiddenLines1[j1] || [];
                                     var res = func(dattr);
                                     if(out && res) {
                                         pixels1.push(res.coords);

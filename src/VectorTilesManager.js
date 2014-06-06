@@ -289,13 +289,13 @@
             }
 
             var data = tile.data || [],
-                dataOptions = tile.dataOptions || {};
+                dataOptions = tile.dataOptions || [];
             for (var j = 0, len1 = data.length; j < len1; j++) {
                 var it = data[j],
                     id = it[0],
                     item = items[id],
                     geom = it[it.length-1],
-                    dataOption = dataOptions[id] || {},
+                    dataOption = dataOptions[j] || {},
                     isFiltered = false;
                 for (var filterName in filters) {
                     if (filters[filterName] && !filters[filterName](item)) {
@@ -310,7 +310,7 @@
                     dataOption.bounds = gmxAPIutils.geoItemBounds(geom);
                     var arr = [[dataOption.bounds.min.x, dataOption.bounds.min.y], [dataOption.bounds.max.x, dataOption.bounds.max.y]];
                     item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
-                    if (!dataOptions[id]) dataOptions[id] = dataOption;
+                    if (!dataOptions[j]) dataOptions[j] = dataOption;
                 }
 
                 if (!bounds.intersects(dataOption.bounds)) {
@@ -322,7 +322,7 @@
                     tile.calcHiddenPoints();
                 }
 
-                var out = {arr: it, dataOption: dataOptions[id]};
+                var out = {arr: it, dataOption: dataOptions[j]};
                 if (styleHook) {
                     out.styleExtend = styleHook(item);
                 }

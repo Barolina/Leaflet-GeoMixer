@@ -13,12 +13,13 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
             
                 //clone data to avoid conflicts between multiple maps
                 //TODO: fixme!
-                _this.data = new Array(data.length);
-                for (var i = 0; i < data.length; i++) {
-                    _this.data[i] = data[i].slice();
-                }
+                // _this.data = new Array(data.length);
+                // for (var i = 0; i < data.length; i++) {
+                    // _this.data[i] = data[i].slice();
+                // }
                 
-                // _this.data = data;
+                _this.data = data;
+                _this.dataOptions = new Array(data.length);
                 
                 _this.state = 'loaded';
                 loadDef.resolve(_this.data);
@@ -78,7 +79,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
             var geom = this.data[i][geomIndex],
                 id = this.data[i][0];
             if(geom.type.indexOf('POLYGON') !== -1) {
-                var hideLines = [], // индексы точек лежащих на границе тайла
+                var hideLines = null, // индексы точек лежащих на границе тайла
                     coords = geom.coordinates;
                 if(geom.type === 'POLYGON') {
                     coords = [coords];
@@ -89,17 +90,22 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                     for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                         hideLines1.push(getHidden(coords1[j1], tbDelta));
                     }
-                    hideLines.push(hideLines1);
+                    if (hideLines1.length) {
+                        if (!hideLines) hideLines = [];
+                        hideLines.push(hideLines1);
+                    }
                 }
-                if (!this.dataOptions[id]) this.dataOptions[id] = {};
-                this.dataOptions[id].hiddenLines = hideLines;
+                if (hideLines) {
+                    if (!this.dataOptions[i]) this.dataOptions[i] = {};
+                    this.dataOptions[i].hiddenLines = hideLines;
+                }
             }
         }
     }
 
     this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = null;
-    this.dataOptions = {};
+    this.dataOptions = null;
     this.x = x;
     this.y = y;
     this.z = z;
