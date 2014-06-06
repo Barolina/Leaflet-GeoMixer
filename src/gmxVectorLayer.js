@@ -19,7 +19,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             layerID: options.layerID,
             beginDate: options.beginDate,
             endDate: options.endDate,
-            sortItems: options.sortItems || function(a, b) { return Number(a[0]) - Number(b[0]); },
+            sortItems: options.sortItems || null,
             styles: options.styles || [],
             screenTiles: {},
             tileSubscriptions: []
@@ -636,11 +636,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 		gmx.identityField = prop.identityField; // ogc_fid
 		gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
 		gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
-
-        //prop.pointsFields = 'x1,y1,x2,y2,x3,y3,x4,y4';
-        if(prop.pointsFields) {
-            gmx.pointsFields = prop.pointsFields.split(',');
+        if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
+            gmx.sortItems = function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); };
         }
+
         if('MetaProperties' in prop) {
             var meta = prop.MetaProperties;
             if('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя

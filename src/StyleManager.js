@@ -269,6 +269,7 @@
         if (!items[id]) items[id] = {}
         return items[id];
 	}
+    this.getItemOptions = getItemOptions;
 
     var itemStyleParser = function(item, pt) {
         var itemOptions = getItemOptions(item),

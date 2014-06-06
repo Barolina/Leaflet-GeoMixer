@@ -262,9 +262,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var setCanvasStyle = function(item, dattr) {				// Установка canvas стилей
         var ctx = dattr.ctx,
             style = dattr.style,
+            itemOptions = dattr.itemOptions,
             gmx = dattr.gmx;
 
-        var parsedStyleKeys = item.options.parsedStyleKeys || {};
+        var parsedStyleKeys = itemOptions.parsedStyleKeys || {};
         for (var i = 0; i < styleCanvasKeysLen; i++) {
             var key = styleCanvasKeys[i],
                 valKey = parsedStyleKeys[key] || style[key];
@@ -323,7 +324,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             }
             return 0;
         }
-        geoItems = geoItems.sort(gmx.sortItems);
         var tile = layer.gmxGetCanvasTile(tilePoint),
             ctx = tile.getContext('2d'),
             dattr = {
@@ -333,18 +333,21 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 ctx: ctx
             };
         tile.id = gmxTileKey;
+        if (gmx.sortItems) geoItems = geoItems.sort(gmx.sortItems);
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
             var drawItem = function(geoItem) {
-                var idr = geoItem[0],
+                var arr = geoItem.arr,
+                    idr = arr[0],
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
                 dattr.style = style;
+                dattr.itemOptions = gmx.styleManager.getItemOptions(item);
                 setCanvasStyle(item, dattr);
 
-                var geom = geoItem[geoItem.length-1];
+                var geom = arr[arr.length-1];
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     if(dattr.style.image) { // отображение мультиполигона маркером
                         dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];

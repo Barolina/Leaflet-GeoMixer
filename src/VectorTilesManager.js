@@ -288,10 +288,12 @@
                 continue;
             }
 
-            var data = tile.data || [];
+            var data = tile.data || [],
+                dataOptions = tile.dataOptions || [];
             for (var j = 0, len1 = data.length; j < len1; j++) {
                 var it = data[j],
-                    item = it.item,
+                    id = it[0],
+                    item = items[id],
                     geom = it[it.length-1],
                     isFiltered = false;
                 for (var filterName in filters) {
@@ -321,7 +323,7 @@
                     tile.calcHiddenPoints();
                 }
 
-                resItems.push(it);
+                resItems.push({arr: it, dataOption: dataOptions[id]});
             }
         }
         return resItems;
@@ -344,7 +346,7 @@
 it.forEach(function(zn, j) {
 if (zn === null) it[j] = '';
 });
-            delete it.properties;
+            //delete it.properties;
             if(item) {
                 if(item.type.indexOf('MULTI') == -1) {
                     item.type = 'MULTI' + item.type;
@@ -360,7 +362,7 @@ if (zn === null) it[j] = '';
                 };
                 items[id] = item;
             }
-            it.item = item;
+            //it.item = item;
             item.options.fromTiles[gmxTileKey] = i;
             if(layerProp.TemporalColumnName) {
                 var zn = it[gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];

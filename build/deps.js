@@ -15,7 +15,10 @@
     "VectorTileLoader.js",
     "gmxVectorLayer.js",
     "gmxRasterLayer.js",
-    "gmxLayerFactory.js"
+    "gmxLayerFactory.js",
+    "translations.js",
+    "lang_ru.js",
+    "lang_en.js"
 ];
 
 if (typeof exports !== 'undefined') {

@@ -30,7 +30,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
 
     this.clear = function() {
         this.state = 'notLoaded';
-        this.data = null;
+        this.data = this.dataOptions = null;
         
         isCalcHiddenPoints = false;
         loadDef = null;
@@ -75,7 +75,8 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         
         var geomIndex = this.data[0] && (this.data[0].length - 1); //geometry is always the last attribute
         for (var i = 0, len = this.data.length; i < len; i++) {
-            var geom = this.data[i][geomIndex];
+            var geom = this.data[i][geomIndex],
+                id = this.data[i][0];
             if(geom.type.indexOf('POLYGON') !== -1) {
                 var hideLines = [], // индексы точек лежащих на границе тайла
                     coords = geom.coordinates;
@@ -90,13 +91,15 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                     }
                     hideLines.push(hideLines1);
                 }
-                this.data[i].hiddenLines = hideLines;
+                if (!this.dataOptions[id]) this.dataOptions[id] = {};
+                this.dataOptions[id].hiddenLines = hideLines;
             }
         }
     }
 
     this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = null;
+    this.dataOptions = {};
     this.x = x;
     this.y = y;
     this.z = z;
