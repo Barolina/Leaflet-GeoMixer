@@ -93,29 +93,21 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     //public interface
     initFromDescription: function(ph) {
-        var apikeyRequestHost = this.options.apikeyRequestHost || this._gmx.hostName;
-        var sk = gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
-        this._gmx.sessionKey = sk;
-        this._gmx.tileSenderPrefix = "http://" + this._gmx.hostName + "/" + 
+        var gmx = this._gmx,
+            apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName,
+            sk = gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
+        gmx.sessionKey = sk;
+        gmx.tileSenderPrefix = "http://" + gmx.hostName + "/" + 
             "TileSender.ashx?WrapStyle=None" + 
             "&key=" + encodeURIComponent(sk);
 
-        this._gmx.properties = ph.properties;
-        this._gmx.geometry = ph.geometry;
+        gmx.properties = ph.properties;
+        gmx.geometry = ph.geometry;
 
-        if (ph.properties.attributes) {
-            var tileAttributeIndexes = {},
-                attrs = ph.properties.attributes;
-            for (var a = 0; a < attrs.length; a++) {
-                tileAttributeIndexes[attrs[a]] = a + 1;
-            }
-            this._gmx.tileAttributeIndexes = tileAttributeIndexes;
-        }
-        
         this.initLayerData(ph);
-        this._gmx.vectorTilesManager = new gmxVectorTilesManager(this._gmx, ph);
-        this._gmx.styleManager = new gmxStyleManager(this._gmx);
-        this._gmx.ProjectiveImage = new ProjectiveImage();
+        gmx.vectorTilesManager = new gmxVectorTilesManager(gmx, ph);
+        gmx.styleManager = new gmxStyleManager(gmx);
+        gmx.ProjectiveImage = new ProjectiveImage();
         this._update();
 
         this.initPromise.resolve();
@@ -685,6 +677,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 			};
 			gmx.imageProcessingHook = gmxImageTransform;
 		}
+
+        if (prop.attributes) {
+            var tileAttributeIndexes = {},
+                attrs = prop.attributes;
+            if (gmx.identityField) tileAttributeIndexes[gmx.identityField] = 0;
+            for (var a = 0; a < attrs.length; a++) {
+                tileAttributeIndexes[attrs[a]] = a + 1;
+            }
+            gmx.tileAttributeIndexes = tileAttributeIndexes;
+        }
+
 		return res;
 	}
 });

@@ -1,7 +1,6 @@
 ﻿var gmxImageLoader = {
     maxCount: 20        // макс.кол. запросов
     ,curCount: 0        // номер текущего запроса
-    ,timer: null        // таймер
     ,items: []          // массив текущих запросов
     ,itemsCache: {}     // Кэш загруженных image по image.src
     ,emptyImageUrl: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
@@ -75,10 +74,6 @@
         if (this.curCount > this.maxCount) return;
         if (this.items.length < 1) {
             this.curCount = 0;
-            if(this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
             return false;
         }
         var item = this.items.shift(),
@@ -120,22 +115,15 @@
         this.curCount++;
         imageObj.src = item.src;
     },
-    chkTimer: function() {  // установка таймера
-        var _this = this;
-        if(!this.timer) {
-            this.timer = setInterval(function() {
-                _this.nextLoad();
-            }, 50);
-        }
-    },
+
     push: function(item) {  // добавить запрос в конец очереди
         this.items.push(item);
-        this.chkTimer();
+        this.nextLoad();
         return this.items.length;
     },
     unshift: function(item) {   // добавить запрос в начало очереди
         this.items.unshift(item);
-        this.chkTimer();
+        this.nextLoad();
         return this.items.length;
     },
     getCounts: function() { // получить размер очереди + колич.выполняющихся запросов
