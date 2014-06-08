@@ -10,11 +10,12 @@
     this.deferred = new gmxDeferred()
     var initStyles = function() {
         var props = gmx.properties,
+            balloonEnable = false,
             arr = props.styles,
             len = Math.max(arr.length, gmx.styles.length);
 
-		for (var i = 0; i < len; i++) {
-			var gmxStyle = gmx.styles[i] || arr[i];
+        for (var i = 0; i < len; i++) {
+            var gmxStyle = gmx.styles[i] || arr[i];
             if (gmxStyle.HoverStyle === undefined && gmxStyle.RenderStyle) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
                 if (hoveredStyle.marker && hoveredStyle.marker.size) hoveredStyle.marker.size += 1;
@@ -24,8 +25,11 @@
             } else if (gmxStyle.HoverStyle === null) {
                 delete gmxStyle.HoverStyle;
             }
-			styles.push(parseItem(gmxStyle));
-		}
+            var pt = parseItem(gmxStyle);
+            if (!balloonEnable && pt.BalloonEnable) balloonEnable = true;
+            styles.push(parseItem(gmxStyle));
+        }
+        gmx.balloonEnable = balloonEnable;
     }
 
     this.setStyle = function(st, num) {

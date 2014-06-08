@@ -450,6 +450,22 @@ if (zn === null) it[j] = '';
         return items[id];
     }
 
+    this.getItemGeometries = function(id) {
+        var fromTiles = items[id].options.fromTiles,
+            geomItems = [];
+        for (var key in fromTiles) {
+            var data = tiles[key].tile.data;
+            for (var j = 0, len1 = data.length; j < len1; j++) {
+                var prop = data[j];
+                if (id === prop[0]) {
+                    geomItems.push(prop[prop.length - 1]);
+                    break;
+                }
+            }
+        }
+        return geomItems;
+    }
+
     this.addTile = function(tile) {
         tiles[tile.gmxTileKey] = {tile: tile};
         activeTileKeys[tile.gmxTileKey] = true;

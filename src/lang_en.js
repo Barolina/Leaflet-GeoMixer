@@ -4,6 +4,7 @@ _translationsHash.flags["eng"] = "img/flag_en.png";
 _translationsHash.titles["eng"] = "English";
 
 _translationsHash.hash["eng"] = {
+    "Coordinates" : "Coordinates",
     "Length" : "Length",
     "Area" : "Area",
     "units.m": "m",
