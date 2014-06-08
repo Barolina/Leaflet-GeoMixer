@@ -728,6 +728,8 @@ L.gmx.VectorLayer.include({
             this._popup.on('popupopen', options.popupopen, this);
 		}
 
+        this._popup.updateLayout = this._popup._updateLayout;
+
 		return this;
 	},
 
@@ -762,10 +764,6 @@ L.gmx.VectorLayer.include({
             this.fire('popupclose', {popup: this._popup});
 		}
 		return this;
-	},
-
-	updateLayout: function () {
-        this._updateLayout();
 	},
 
 	_openPopup: function (e) {
