@@ -764,6 +764,10 @@ L.gmx.VectorLayer.include({
 		return this;
 	},
 
+	updateLayout: function () {
+        this._updateLayout();
+	},
+
 	_openPopup: function (e) {
         var gmx = e.gmx,
             properties = gmx.properties,
