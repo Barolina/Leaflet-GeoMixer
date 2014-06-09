@@ -120,10 +120,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.initPromise.then(function() {
             gmx.styleManager.setStyle(style, num);
         });
+        return this;
     },
 
     setStyleHook: function (func) {
         this._gmx.vectorTilesManager.setStyleHook(func);
+        return this;
     },
 
     removeStyleHook: function () {
@@ -133,6 +135,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     setPropertiesHook: function (func) {
         //this._gmx.vectorTilesManager.setPropertiesHook.bind(this._gmx.vectorTilesManager, 'userHook', func);
         this._gmx.vectorTilesManager.setPropertiesHook('userHook', func);
+        return this;
     },
 
     setFilter: function (func) {
@@ -140,6 +143,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             return !func || func(item) ? item.properties : null;
         });
         this._redrawTiles();
+        return this;
+    },
+
+    removeFilter: function () {
+        this._gmx.vectorTilesManager.removePropertiesHook('userFilter');
+        this._redrawTiles();
+        return this;
     },
 
     setDateInterval: function (beginDate, endDate) {
@@ -148,6 +158,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.endDate = endDate;
         gmx.vectorTilesManager.setDateInterval(beginDate, endDate);
         this._redrawTiles();
+        return this;
     },
 
     _redrawTiles: function () {
@@ -532,7 +543,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     delta = 5 / gmx.mInPixel,
                     bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
             bounds = bounds.addBuffer(delta, delta, delta, delta);
-            var geoItems = gmx.vectorTilesManager.getItems(bounds);
+            var geoItems = gmx.vectorTilesManager.getItems(bounds, true);
 
             if (geoItems && geoItems.length) {
                 var arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
@@ -742,6 +753,7 @@ L.gmx.VectorLayer.include({
 
 			this._popupHandlersAdded = false;
 		}
+        this._gmx.balloonEnable = false;
 		return this;
 	},
 

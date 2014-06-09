@@ -264,12 +264,15 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         var ctx = dattr.ctx,
             style = dattr.style,
             itemOptions = dattr.itemOptions,
+            styleExtend = dattr.styleExtend,
             gmx = dattr.gmx;
 
         var parsedStyleKeys = itemOptions.parsedStyleKeys || {};
         for (var i = 0; i < styleCanvasKeysLen; i++) {
             var key = styleCanvasKeys[i],
                 valKey = parsedStyleKeys[key] || style[key];
+                // TODO: when add Geomixer styles array for users
+                //valKey = styleExtend[key] || parsedStyleKeys[key] || style[key];
             if(key in style && valKey !== lastStyles[key]) {
                 ctx[key] = lastStyles[key] = valKey;
             }
@@ -287,7 +290,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         }
 
         if(parsedStyleKeys.canvasPattern) {
-            ctx.fillStyle = ctx.createPattern(parsedStyleKeys.canvasPattern.canvas, "repeat");
+            ctx.fillStyle = lastStyles.fillStyle = ctx.createPattern(parsedStyleKeys.canvasPattern.canvas, "repeat");
         } else if(style.linearGradient) {
             var rgr = style.linearGradient,
                 x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1,
@@ -304,7 +307,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
                 lineargrad.addColorStop(p0, p1);
             }
-            ctx.fillStyle = lineargrad; 
+            ctx.fillStyle = lastStyles.fillStyle = lineargrad; 
         }
     }
 
@@ -341,10 +344,12 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             var drawItem = function(geoItem) {
                 var arr = geoItem.arr,
                     dataOption = geoItem.dataOption,
+                    styleExtend = geoItem.styleExtend,
                     idr = arr[0],
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
+                dattr.styleExtend = styleExtend;
                 dattr.style = style;
                 dattr.itemOptions = gmx.styleManager.getItemOptions(item);
                 setCanvasStyle(item, dattr);
@@ -407,7 +412,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if (rasters[idr]) {
                             dattr.bgImage = rasters[idr];
                         }
-                        if (item.styleExtend && item.styleExtend.skipRasters) {
+                        if (styleExtend && styleExtend.skipRasters) {
                             delete dattr.bgImage;
                         }
                         if ((dattr.style.fill || dattr.bgImage) &&

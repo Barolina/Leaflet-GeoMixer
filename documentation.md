@@ -97,8 +97,10 @@ Layers can be added to Leaflet map in native way by calling `L.Map.addLayer()` o
 Method|Syntax|Return type|Description
 ------|------|:---------:|-----------
 setFilter|`setFilter(function(item): Boolean)`|`this`|set function to filter out items before rendering. The only argument is a function, that receives an item and returns boolean value (`false` means filter item out)
+removeFilter|`removeFilter()`||Remove filter function.
 setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Set date interval for temporal layers. Only items within date interval will be rendered. `beginDate` and `endDate` are of type `Date`
 addTo|`addTo(map)`|`this`|Add layer to Leaflet map. `map` argument is of type `L.Map`.
+bindPopup|`bindPopup(html <String> `&#124;` el <HTMLElement> `&#124;` popup <Popup>, options <Popup options>? )`|`this`|Binds a popup to a click on this layer.
 
 ## Class L.gmx.RasterLayer
 

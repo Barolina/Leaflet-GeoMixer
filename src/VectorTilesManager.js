@@ -279,7 +279,11 @@
         }
     }
 
-    this.getItems = function(bounds) {
+    this.removePropertiesHook = function(filterName) {
+        delete filters[filterName];
+    }
+
+    this.getItems = function(bounds, hover) {
         var resItems = [];
         for (var key in activeTileKeys) {
             var tile = tiles[key].tile;
@@ -324,7 +328,7 @@
 
                 var out = {arr: it, dataOption: dataOptions[j]};
                 if (styleHook) {
-                    out.styleExtend = styleHook(item);
+                    out.styleExtend = styleHook(item, hover);
                 }
                 resItems.push(out);
             }
