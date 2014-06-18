@@ -25,7 +25,9 @@ var gmxEventsManager = L.Handler.extend({
                 objId = 0,
                 layer = null,
                 cursor = '';    // default
-            _this._map.gmxMouseDown = ev.originalEvent.buttons;
+            _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
+            if(type === 'mousemove' &&  _this._map.gmxMouseDown) return;
+
             for (var i = arr.length - 1; i >= 0; i--) {
                 id = arr[i];
                 layer = _this._map._layers[id];
