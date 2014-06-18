@@ -843,11 +843,11 @@
     },
 
     prettifyDistance: function(length, type) {
-        var km = ' ' + L.Util.gmxLocale.getText('units.km');
+        var km = ' ' + L.gmxLocale.getText('units.km');
         if (type === 'km')
             return (Math.round(length)/1000) + km;
         if (length < 2000 || type === 'm')
-            return Math.round(length) + ' ' + L.Util.gmxLocale.getText('units.m');
+            return Math.round(length) + ' ' + L.gmxLocale.getText('units.m');
         if (length < 200000)
             return (Math.round(length/10)/100) + km;
         return Math.round(length/1000) + km;
@@ -865,15 +865,15 @@
     },
 
     prettifyArea: function(area, type) {
-        var km2 = ' ' + L.Util.gmxLocale.getText('units.km2');
+        var km2 = ' ' + L.gmxLocale.getText('units.km2');
 
         if (type === 'km2')
             return ("" + (Math.round(area/100)/10000)) + km2;
         if (type === 'ha')
-            return ("" + (Math.round(area/100)/100)) + ' ' + L.Util.gmxLocale.getText('units.ha');
+            return ("" + (Math.round(area/100)/100)) + ' ' + L.gmxLocale.getText('units.ha');
 
         if (area < 100000 || type === 'm2')
-            return Math.round(area) + ' ' + L.Util.gmxLocale.getText('units.m2');
+            return Math.round(area) + ' ' + L.gmxLocale.getText('units.m2');
         if (area < 3000000)
             return ("" + (Math.round(area/1000)/1000)).replace(".", ",") + km2;
         if (area < 30000000)
