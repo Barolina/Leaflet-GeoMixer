@@ -189,32 +189,6 @@
                 console.log('Error loading vector tile');
                 callback([]);
             })
-            
-            /*var requestParams = {
-                ModeKey: 'tile',
-                r: 't',
-                MapName: gmx.mapName,
-                LayerName: gmx.layerID,
-                z: z,
-                x: x,
-                y: y,
-                v: v
-            }
-
-            if (d !== -1) {
-                requestParams.Level = d;
-                requestParams.Span = s;
-            }
-
-            gmxAPIutils.requestJSONP(gmx.tileSenderPrefix, requestParams).then(
-                function(st) {
-                    callback(st.Result);
-                },
-                function() {
-                    console.log('Error loading vector tile');
-                    callback([]);
-                }
-            );*/
         }
     }
 

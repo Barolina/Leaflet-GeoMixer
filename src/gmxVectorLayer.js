@@ -480,7 +480,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                             chkPoint = pixelPoint;
                         }
                         for (var j = 0, len = coords.length; j < len; j++) {
-                            if (gmxAPIutils.isPointInPolygonWithHell(chkPoint, coords[j])) {
+                            if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j])) {
                                 flag = true;
                                 break;
                             }
@@ -498,7 +498,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                             coords = geoItem.pixels.coords[0];
                             chkPoint = pixelPoint;
                         }
-                        if (!gmxAPIutils.isPointInPolygonWithHell(chkPoint, coords)) continue;
+                        if (!gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords)) continue;
                     }
                 } else if(type === 'POINT') {
                     coords = getMarkerPolygon(dataOption.bounds, dx, dy);
@@ -515,6 +515,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         return out;
     },
+    
     gmxEventCheck: function (ev, skipOver) {
         var layer = this,
             gmx = layer._gmx,
@@ -582,6 +583,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._map.doubleClickZoom.enable();
         return 0;
     },
+    
     _getTilesByBounds: function (bounds) {    // Получить список gmxTiles по bounds
         var gmx = this._gmx,
             tileSize = gmx.tileSize,

@@ -803,7 +803,7 @@
         return isIn;
     }
     ,
-    isPointInPolygonWithHell: function(chkPoint, coords) {
+    isPointInPolygonWithHoles: function(chkPoint, coords) {
         var flag = false;
         if (!gmxAPIutils.isPointInPolygonArr(chkPoint, coords[0])) return false;
         flag = true;
@@ -938,7 +938,7 @@
                 type = geom.type;
                 if (type.indexOf("POINT") != -1) {
                     var latlng = L.Projection.Mercator.unproject({y: geom.coordinates[1], x: geom.coordinates[0]});
-                    out = '<b>' + L.Util.gmxLocale.getText('Coordinates') + '</b>: '
+                    out = '<b>' + L.gmxLocale.getText('Coordinates') + '</b>: '
                         + gmxAPIutils.formatCoordinates(latlng.lng, latlng.lat);
                 } else if (type.indexOf("LINESTRING") != -1) {
                     res += gmxAPIutils.geoLength(geom);
@@ -949,10 +949,10 @@
         });
         if (!out) {
             if (type.indexOf("LINESTRING") != -1) {
-                out = '<b>' + L.Util.gmxLocale.getText('Length') + '</b>: '
+                out = '<b>' + L.gmxLocale.getText('Length') + '</b>: '
                     + gmxAPIutils.prettifyDistance(res, units.length);
             } else if (type.indexOf("POLYGON") != -1) {
-                out = '<b>' + L.Util.gmxLocale.getText('Area') + '</b>: '
+                out = '<b>' + L.gmxLocale.getText('Area') + '</b>: '
                     + gmxAPIutils.prettifyArea(res, units.square);
             }
         }

@@ -59,7 +59,7 @@
                     layerID  = options.layerID;
                 if (rastersView[layerID]) {
                     (function(player) {
-                        player.addStyleHook(function(item) {
+                        player.setStyleHook(function(item) {
                             return {skipRasters: rastersView[layerID][item.id] ? false : true};
                         });
                         player.on('click', function(ev) {
