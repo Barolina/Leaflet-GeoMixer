@@ -73,7 +73,8 @@ var gmxMap = function(mapInfo) {
             layerOptions = {
                 mapName: mapInfo.properties.name, 
                 layerID: props.name
-            };
+            },
+            layer;
         
         if (props.type === 'Vector') {
             layer = new L.gmx.VectorLayer(layerOptions);
