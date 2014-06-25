@@ -18,7 +18,7 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
     var hostName = options.hostName || 'maps.kosmosnimki.ru';
     
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
-        function(mapInfo) {
+        function() {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID),
                 layer;
             

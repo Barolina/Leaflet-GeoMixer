@@ -19,11 +19,11 @@
         resolveCallbacks = rejectCallbacks = [];
     }
     
-    this.resolve = function(data) {
+    this.resolve = function(/*data*/) {
         _fulfill.apply(null, [true].concat([].slice.call(arguments)));
     }
     
-    this.reject = function(data) {
+    this.reject = function(/*data*/) {
         _fulfill.apply(null, [false].concat([].slice.call(arguments)));
     }
     

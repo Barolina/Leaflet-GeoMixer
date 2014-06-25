@@ -11,9 +11,7 @@
 
 	var Pair = function(t1, t2)
 	{
-		var head = t1;
-		var tail = t2;
-		return { 'head': t1, 'tail': t2};
+		return { head: t1, tail: t2};
 	}
 
 // C-style linked list via recursive typedef. 
@@ -474,7 +472,7 @@
 			return result.tail.head;
 		else
 			return (applyParser(str, whitespace).head == str.length) ?
-				function(props) { return true; } :
+				function(/*props*/) { return true; } :
 				null;
 	}
 
@@ -516,7 +514,7 @@
 			numberLiteral,
 			function(state)
 			{
-				return function(props, indexes)
+				return function(/*props, indexes*/)
 				{
 					return parseFloat(state.head);
 				}

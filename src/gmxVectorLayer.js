@@ -375,9 +375,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this._tiles[tKey];
     },
 
-    _stopLoadingImages: function (container) {
-    },
-
     _getLoadedTilesPercentage: function (container) {
         if(!container) return 0;
         var len = 0, count = 0;
@@ -607,10 +604,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._redrawTilesHash(gmxTiles);    // reset hover
     },
     _redrawTilesHash: function (gmxTiles) {    // Перерисовать список gmxTiles тайлов на экране
-        var gmx = this._gmx,
-            zoom = this._map._zoom,
-            pz = Math.pow(2, zoom);
-        var tileBounds = this._getScreenTileBounds();
+        var zoom = this._map._zoom,
+            pz = Math.pow(2, zoom),
+            tileBounds = this._getScreenTileBounds(),
+            x, y;
+            
         for (y = tileBounds.min.y; y <= tileBounds.max.y; y++) {
             for (x = tileBounds.min.x; x <= tileBounds.max.x; x++) {
                 var tx = (x % pz + (x < 0 ? pz : 0))% pz - pz/2,

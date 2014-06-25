@@ -395,7 +395,6 @@
     pointToCanvas: function(attr) {				// Точку в canvas
         var gmx = attr.gmx,
             style = attr.style,
-            item = attr.item,
             itemOptions = attr.itemOptions,
             parsedStyleKeys = itemOptions.parsedStyleKeys,
             coords = attr.coords,

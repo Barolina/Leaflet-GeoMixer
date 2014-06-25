@@ -76,8 +76,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         
         var geomIndex = this.data[0] && (this.data[0].length - 1); //geometry is always the last attribute
         for (var i = 0, len = this.data.length; i < len; i++) {
-            var geom = this.data[i][geomIndex],
-                id = this.data[i][0];
+            var geom = this.data[i][geomIndex];
             if(geom.type.indexOf('POLYGON') !== -1) {
                 var hideLines = null, // индексы точек лежащих на границе тайла
                     coords = geom.coordinates;

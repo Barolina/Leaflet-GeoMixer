@@ -15,8 +15,7 @@
 		_rootNodes: [],
 		initFromTiles: function() {
 			var periods = gmx.TemporalPeriods,
-				dateZero = gmx.ZeroUT,
-				roots = [];
+				dateZero = gmx.ZeroUT;
 
 			var addTile = function (node, tile, key) {
 				var d = node.d;

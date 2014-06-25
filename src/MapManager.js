@@ -51,7 +51,7 @@ gmxMapManager.iterateLayers = function(treeInfo, callback) {
             var layer = arr[i];
             
             if(layer.type === 'group') {
-                var res = iterate(layer.content.children);
+                iterate(layer.content.children);
             } else if (layer.type === 'layer') {
                 callback(layer.content);
             }

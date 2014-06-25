@@ -4,7 +4,6 @@
         styles = [],
         items = {},
         imagesSize = {},
-        defaultStyle = {lineWidth: 1, strokeStyle: 'rgba(0, 0, 255, 1)'},
         me = this;
 
     this.deferred = new gmxDeferred()
@@ -94,7 +93,7 @@
             if('angle' in ph) pt.rotate = ph.angle;
             if('image' in ph) {
                 pt.iconUrl = ph.image;
-                getImageSize(pt, true, '');
+                getImageSize(pt, true);
             }
         } else {
             if(typeof(st.fill) === 'object') {					//	fill style
@@ -236,7 +235,7 @@
         }
 		return pt;
     }
-	var getImageSize = function(pt, flag, id)	{				// определение размеров image
+	var getImageSize = function(pt, flag)	{				// определение размеров image
 		var url = pt.iconUrl;
 
 		needLoadIcons++;

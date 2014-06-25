@@ -263,9 +263,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var setCanvasStyle = function(item, dattr) {				// Установка canvas стилей
         var ctx = dattr.ctx,
             style = dattr.style,
-            itemOptions = dattr.itemOptions,
-            styleExtend = dattr.styleExtend,
-            gmx = dattr.gmx;
+            itemOptions = dattr.itemOptions;
+            // styleExtend = dattr.styleExtend;
 
         var parsedStyleKeys = itemOptions.parsedStyleKeys || {};
         for (var i = 0; i < styleCanvasKeysLen; i++) {
@@ -363,8 +362,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         dattr.flagPixels = false;
                         var hiddenLines = dataOption.hiddenLines || [],
                             coords = geom.coordinates,
-                            flagPixels = dataOption.pixels && dataOption.pixels.z === gmx.currentZoom,
-                            cacheArr = [];
+                            flagPixels = dataOption.pixels && dataOption.pixels.z === gmx.currentZoom;
                         if(geom.type === 'POLYGON') coords = [coords];
                         var coordsToCanvas = function(func, flagFill) {
                             var out = null;
@@ -461,7 +459,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 }
             }
             //var labels = {};
-            var hoverItems = [];
+            //var hoverItems = [];
             for (var i = 0; i < itemsLength; i++) {
                 drawItem(geoItems[i]);
                 // var it = geoItems[i],
