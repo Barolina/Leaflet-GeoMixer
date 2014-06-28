@@ -327,7 +327,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             }
             return 0;
         }
-        var tile = layer.gmxGetCanvasTile(tilePoint),
+        var map_id = layer._map._leaflet_id,
+            tile = layer.gmxGetCanvasTile(tilePoint),
             ctx = tile.getContext('2d'),
             dattr = {
                 gmx: gmx,
@@ -360,38 +361,45 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         gmxAPIutils.pointToCanvas(dattr);
                     } else {
                         dattr.flagPixels = false;
+                        if (!dataOption.pixels) dataOption.pixels = {};
                         var hiddenLines = dataOption.hiddenLines || [],
                             coords = geom.coordinates,
-                            flagPixels = dataOption.pixels && dataOption.pixels.z === gmx.currentZoom;
+                            pixels_map = dataOption.pixels[map_id],
+                            flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
+
                         if(geom.type === 'POLYGON') coords = [coords];
                         var coordsToCanvas = function(func, flagFill) {
                             var out = null;
                             if(flagPixels) {
-                                coords = dataOption.pixels.coords;
-                                hiddenLines = dataOption.pixels.hidden;
+                                coords = pixels_map.coords;
+                                hiddenLines = pixels_map.hidden;
                                 dattr.flagPixels = flagPixels;
                             } else {
                                 out = { coords: [], hidden: [] };
+                                var pixels = [], hidden = [];
                             }
-                            var pixels = [], hidden = [];
                             for (var j = 0, len1 = coords.length; j < len1; j++) {
                                 var coords1 = coords[j];
                                 var hiddenLines1 = hiddenLines[j] || [];
-                                var pixels1 = [], hidden1 = [];
+                                if (out) {
+                                    var pixels1 = [], hidden1 = [];
+                                }
                                 ctx.beginPath();
                                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                                     dattr.coords = coords1[j1];
                                     dattr.hiddenLines = hiddenLines1[j1] || [];
                                     var res = func(dattr);
-                                    if(out && res) {
+                                    if (out && res) {
                                         pixels1.push(res.coords);
                                         hidden1.push(res.hidden);
                                     }
                                 }
                                 ctx.closePath();
                                 if (flagFill) ctx.fill();
-                                pixels.push(pixels1);
-                                hidden.push(hidden1);
+                                if (out) {
+                                    pixels.push(pixels1);
+                                    hidden.push(hidden1);
+                                }
                             }
                             if(out) {
                                 out.coords = pixels;
@@ -402,8 +410,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if(dattr.style.strokeStyle && dattr.style.lineWidth) {
                             var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas);
                             if(pixels) {
-                                dataOption.pixels = pixels;
-                                dataOption.pixels.z = gmx.currentZoom;
+                                pixels_map = pixels;
+                                pixels_map.z = gmx.currentZoom;
+                                dataOption.pixels[map_id] = pixels_map;
                                 flagPixels = true;
                             }
                         }
@@ -416,8 +425,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if ((dattr.style.fill || dattr.bgImage) &&
                             tbounds.intersects(dataOption.bounds, -1, -1)) {
                             if(flagPixels) {
-                                coords = dataOption.pixels.coords;
-                                hiddenLines = dataOption.pixels.hidden;
+                                coords = pixels_map.coords;
+                                hiddenLines = pixels_map.hidden;
                             }
                             ctx.save();
                             if(dattr.bgImage) {
