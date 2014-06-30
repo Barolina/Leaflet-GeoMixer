@@ -37,10 +37,11 @@
 
         getText: function(key) {
             var lang = L.gmxLocale.getLanguage(),
-                locale = this[lang];
+                locale = this[lang] || {};
 
             var keyArr = key ? key.split(/\./) : [];
             for (var i = 0, len = keyArr.length; i < len; i++) {
+                if (!locale) break;
                 locale = locale[keyArr[i]];
             }
             return locale;

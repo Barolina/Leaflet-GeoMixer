@@ -16,7 +16,7 @@
     "gmxVectorLayer.js",
     "gmxRasterLayer.js",
     "gmxLayerFactory.js",
-    "translations.js",
+    "L.gmxLocale.js",
     "lang_ru.js",
     "lang_en.js"
 ];
