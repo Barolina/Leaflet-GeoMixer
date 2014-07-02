@@ -367,7 +367,7 @@
             style = styles[itemOptions.currentFilter];
 
         if (!style) { chkStyleFilter(item); style = styles[itemOptions.currentFilter]; }
-        if (gmx.lastHover && item[0] === gmx.lastHover.id && style.HoverStyle) {
+        if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
         }
