@@ -317,7 +317,13 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     }
 
     this.drawTile = function() {
-        if (!layer._map) return 0;
+        var def = new gmxDeferred();
+        
+        if (!layer._map) {
+            def.resolve();
+            return def;
+        };
+        
         var bounds = getStyleBounds(gmxTilePoint),
             geoItems = gmx.vectorTilesManager.getItems(bounds), //call each time because of possible items updates
             itemsLength = geoItems.length;
@@ -325,7 +331,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             if (tKey in layer._tiles) {
                 layer._tiles[tKey].getContext('2d').clearRect(0, 0, 256, 256);
             }
-            return 0;
+            def.resolve();
+            return def;
         }
         var map_id = layer._map._leaflet_id,
             tile = layer.gmxGetCanvasTile(tilePoint),
@@ -336,6 +343,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 tpy: 256 *(1 + gmxTilePoint.y),
                 ctx: ctx
             };
+            
         tile.id = gmxTileKey;
         if (gmx.sortItems) geoItems = geoItems.sort(gmx.sortItems);
 
@@ -476,6 +484,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 // if (gmx.lastHover && gmx.lastHover.id === idr) hoverItems.push(it);
                 // else drawItem(it);
             }
+            
+            def.resolve();
             /*
             for (var i = 0, len = hoverItems.length; i < len; i++) {
                 drawItem(hoverItems[i]);
@@ -495,12 +505,12 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
 
         if (showRaster) {
             tileRastersPromise = getTileRasters(geoItems);
-            tileRastersPromise.then(doDraw); //first load all raster images, then render all of them at once
+            tileRastersPromise.then(doDraw, def.reject.bind(def)); //first load all raster images, then render all of them at once
         } else {
             doDraw();
         }
 
-        return itemsLength;
+        return def;
     }
 
     this.cancel = function() {

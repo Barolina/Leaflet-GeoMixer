@@ -259,7 +259,7 @@
 				pt.image = null;
 				imagesSize[url] = pt;
 				needLoadIcons--;
-				chkReadyIcons();
+				me.chkReady();
 				console.log({url: url, func: 'getImageSize', Error: 'image not found'});
 			}
 		};
@@ -403,9 +403,7 @@
         
         return false;
     };
-    this.isReady = function() {
-        return needLoadIcons < 1;
-    }
+    
     this.chkReady = function() {
         if(needLoadIcons < 1) {
             this.deferred.resolve();

@@ -70,7 +70,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-        map.on('mouseup', this._drawTileAsync, this);
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
         if (this._gmx.applyShift) {
@@ -84,7 +83,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     onRemove: function(map) {
         L.TileLayer.Canvas.prototype.onRemove.call(this, map);
-        map.off('mouseup', this._drawTileAsync, this);
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
 
@@ -185,11 +183,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _drawTileAsync: function (tilePoint, zoom) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
-            key = zoom ? zoom + '_' + tilePoint.x + '_' + tilePoint.y : '',
+            key = zoom + '_' + tilePoint.x + '_' + tilePoint.y,
             _this = this;
 
         if ( key in this._drawQueueHash ) {
-            return;
+            return this._drawQueueHash[key];
         }
 
         var drawNextTile = function() {
@@ -197,21 +195,27 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 _this.fire('doneDraw');
                 return;
             }
-            //if (_this._map.gmxMouseDown) return;
+            
             var bbox = queue.shift();
             delete _this._drawQueueHash[bbox.key];
-            _this.gmxDrawTile(bbox.tp, bbox.z);
+            _this.gmxDrawTile(bbox.tp, bbox.z).then(
+                bbox.def.resolve.bind(bbox.def),
+                bbox.def.reject.bind(bbox.def)
+            );
             setTimeout(drawNextTile, 0);
         }
-        if (key !== '') {
-            var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            queue.push({gtp: gtp, tp: tilePoint, z: zoom, key: key});
-            this._drawQueueHash[key] = true;
-        }
+        
+        var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
+        var def = new gmxDeferred();
+        queue.push({gtp: gtp, tp: tilePoint, z: zoom, key: key, def: def});
+        this._drawQueueHash[key] = def;
+        
         if (isEmpty) {
             this.fire('startDraw');
+            setTimeout(drawNextTile, 0);
         }
-        setTimeout(drawNextTile, 0);
+        
+        return def;
     },
 
     _updateShiftY: function() {
@@ -314,17 +318,32 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var key = zoom + ':' + tilePoint.x + ':' + tilePoint.y;
         if (!gmx.tileSubscriptions[key]) {
             gmx._tilesToLoad++;
+            var isDrawnFirstTime = false;
             var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
             var subscrID = gmx.vectorTilesManager.on(gmxTilePoint, function() {
-                myLayer._drawTileAsync(tilePoint, zoom);
+                myLayer._drawTileAsync(tilePoint, zoom).then(function() {
+                    if (gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint) === 0 && !isDrawnFirstTime) {
+                        gmx._tilesToLoad--;
+                        myLayer._tileLoaded();
+                        isDrawnFirstTime = true;
+                    }
+                }, function() {
+                    gmx._tilesToLoad--;
+                    myLayer._tileLoaded();
+                });
             });
             gmx.tileSubscriptions[key] = {id: subscrID, gtp: gmxTilePoint};
         }
     },
 
     gmxDrawTile: function (tilePoint, zoom) {
-        var gmx = this._gmx;
-        if(gmx.zoomstart || !this._map) return;
+        var gmx = this._gmx,
+            def = new gmxDeferred();
+            
+        if(gmx.zoomstart || !this._map) {
+            def.resolve();
+            return def;
+        };
 
         var screenTiles = gmx.screenTiles,
             zoom = this._map._zoom,
@@ -332,22 +351,18 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             screenTile = null,
             _this = this;
 
-        if (!screenTiles[zkey]) screenTiles[zkey] = screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
-        else {
+        if (!screenTiles[zkey]) {
+            screenTiles[zkey] = screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
+        } else {
             screenTile = screenTiles[zkey];
             screenTile.cancel();
         }
+        
         gmx.styleManager.deferred.then(function () {
-            screenTile.drawTile();
-            var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            if (gmx.vectorTilesManager.getNotLoadedTileCount(gtp) === 0) {
-                gmx._tilesToLoad--;
-                _this._tileLoaded();
-            }
+            screenTile.drawTile().then(def.resolve.bind(def), def.reject.bind(def));
         });
-        if (gmx.styleManager.isReady()) {
-            gmx.styleManager.deferred.resolve();
-        }
+        
+        return def;
     },
 
     gmxGetCanvasTile: function (tilePoint) {
@@ -604,21 +619,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._redrawTilesHash(gmxTiles);    // reset hover
     },
     _redrawTilesHash: function (gmxTiles) {    // Перерисовать список gmxTiles тайлов на экране
-        var zoom = this._map._zoom,
-            pz = Math.pow(2, zoom),
-            tileBounds = this._getScreenTileBounds(),
-            x, y;
-            
-        for (y = tileBounds.min.y; y <= tileBounds.max.y; y++) {
-            for (x = tileBounds.min.x; x <= tileBounds.max.x; x++) {
-                var tx = (x % pz + (x < 0 ? pz : 0))% pz - pz/2,
-                    ty = pz/2 - 1 - (y % pz + (y < 0 ? pz : 0))% pz;
-                if (!gmxTiles || gmxTiles[zoom + '_' + tx + '_' + ty]) {
-                    var key = zoom + '_' + x + '_' + y;
-                    if(!this._drawQueueHash[key]) {
-                        this._drawTileAsync(new L.Point(x, y), zoom);
-                    }
-                }
+        var zoom = this._map._zoom;
+        for (var key in this._tiles) {
+            var tile = this._tiles[key],
+                tilePoint = tile._tilePoint,
+                zkey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
+                gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
+                hashKey = zoom + '_' + gtp.x + '_' + gtp.y;
+                
+            if (hashKey in gmxTiles) {
+                delete this._gmx.tileSubscriptions[zkey];
+                this._addTile(tilePoint);
             }
         }
     },
