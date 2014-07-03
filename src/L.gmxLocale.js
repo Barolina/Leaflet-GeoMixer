@@ -11,7 +11,7 @@
         },
 
         getLanguage: function(){
-            return this._language || window.language || DEFAULT_LANGUAGE;
+            return window.language || this._language || DEFAULT_LANGUAGE;
         }
     };
 
