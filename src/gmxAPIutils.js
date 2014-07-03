@@ -904,6 +904,19 @@
             return 0;
     },
 
+    geometryToGeoJSON: function (geom) {
+        return L.GeoJSON.asFeature({
+            type: geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
+                : geom.type === 'POLYGON' ? 'Polygon'
+                : geom.type === 'MULTILINESTRING' ? 'MultiLineString'
+                : geom.type === 'LINESTRING' ? 'LineString'
+                : geom.type === 'MULTIPOINT' ? 'MultiPoint'
+                : geom.type === 'POINT' ? 'Point'
+                : geom.type,
+            coordinates: geom.coordinates
+        });
+    },
+
     geoArea: function(geom) {
         var ret = 0;
         if (geom.type == "MULTIPOLYGON") {
