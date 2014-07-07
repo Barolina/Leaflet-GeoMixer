@@ -602,12 +602,20 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             zoom = this._map._zoom,
             shiftX = gmx.shiftX || 0,   // Сдвиг слоя
             shiftY = gmx.shiftY || 0,   // Сдвиг слоя + OSM
-            minY = Math.floor((bounds.min.y + shiftY)/ tileSize), maxY = Math.floor((bounds.max.y + shiftY)/ tileSize),
-            minX = Math.floor((bounds.min.x + shiftX)/ tileSize), maxX = Math.floor((bounds.max.x + shiftX)/ tileSize),
+            minLatLng = L.Projection.Mercator.unproject(new L.Point(bounds.min.x, bounds.min.y)),
+            maxLatLng = L.Projection.Mercator.unproject(new L.Point(bounds.max.x, bounds.max.y)),
+            minPoint = this._map.project(minLatLng),
+            maxPoint = this._map.project(maxLatLng),
+            screenBounds = map.getPixelBounds(),
+            maxY = Math.floor((Math.max(minPoint.y, screenBounds.min.y) + shiftY)/256),
+            minY = Math.floor((Math.min(maxPoint.y, screenBounds.max.y) + shiftY)/256),
+            minX = Math.floor((Math.max(minPoint.x, screenBounds.min.x) + shiftX)/256),
+            maxX = Math.floor((Math.min(maxPoint.x, screenBounds.max.x) + shiftX)/256),
             gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
-                gmxTiles[zoom + '_' + x + '_' + y] = true;
+                var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet({x: x, y: y}, zoom);
+                gmxTiles[zoom + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y] = true;
             }
         }
         return gmxTiles;
