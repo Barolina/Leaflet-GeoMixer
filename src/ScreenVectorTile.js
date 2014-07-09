@@ -334,8 +334,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             def.resolve();
             return def;
         }
-        var map_id = layer._map._leaflet_id,
-            tile = layer.gmxGetCanvasTile(tilePoint),
+        var tile = layer.gmxGetCanvasTile(tilePoint),
             ctx = tile.getContext('2d'),
             dattr = {
                 gmx: gmx,
@@ -372,7 +371,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if (!dataOption.pixels) dataOption.pixels = {};
                         var hiddenLines = dataOption.hiddenLines || [],
                             coords = geom.coordinates,
-                            pixels_map = dataOption.pixels[map_id],
+                            pixels_map = dataOption.pixels,
                             flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
 
                         if(geom.type === 'POLYGON') coords = [coords];
@@ -420,7 +419,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             if(pixels) {
                                 pixels_map = pixels;
                                 pixels_map.z = gmx.currentZoom;
-                                dataOption.pixels[map_id] = pixels_map;
+                                dataOption.pixels = pixels_map;
                                 flagPixels = true;
                             }
                         }

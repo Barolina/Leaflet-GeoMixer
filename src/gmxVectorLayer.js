@@ -440,16 +440,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             mercPoint = [point.x - shiftXlayer, point.y - shiftYlayer],
             pixelPoint = [mercPoint[0] * mInPixel, mercPoint[1] * mInPixel],
             bounds = gmxAPIutils.bounds([mercPoint]);
-        var getMarkerPolygon = function(mb, dx, dy) {    // Получить полигон по bounds маркера
-            var x = (mb.min.x + mb.max.x) / 2, y = (mb.min.y + mb.max.y) / 2;
-            return [
-                [x - dx, y - dy]
-                ,[x - dx, y + dy]
-                ,[x + dx, y + dy]
-                ,[x + dx, y - dy]
-                ,[x - dx, y - dy]
-            ];
-        }
 
         for (var i = geoItems.length - 1; i >= 0; i--) {
             var geoItem = geoItems[i].arr,
@@ -479,41 +469,33 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 }
                 if (!flag) continue;
             } else {
-                if(type === 'MULTIPOLYGON') {
+                if(type === 'MULTIPOLYGON' || type === 'POLYGON') {
                     if(parsedStyle.marker) {
-                        coords = getMarkerPolygon(dataOption.bounds, dx, dy);
+                        coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx, dy);
                         if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
                     } else {
                         var flag = false,
                             chkPoint = mercPoint,
-                            flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
+                            pixels_map = dataOption.pixels || null,
+                            boundsArr = dataOption.boundsArr,
+                            flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
                         if(flagPixels) {
-                            coords = geoItem.pixels.coords;
+                            coords = pixels_map.coords;
                             chkPoint = pixelPoint;
                         }
                         for (var j = 0, len = coords.length; j < len; j++) {
-                            if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j])) {
-                                flag = true;
-                                break;
+                            var b = boundsArr[j][0];
+                            if (b.intersects(bounds)) {
+                                if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j])) {
+                                    flag = true;
+                                    break;
+                                }
                             }
                         }
                         if (!flag) continue;
                     }
-                } else if(type === 'POLYGON') {
-                    if(parsedStyle.marker) {
-                        coords = getMarkerPolygon(dataOption.bounds, dx, dy);
-                        if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
-                    } else {
-                        var chkPoint = mercPoint,
-                            flagPixels = geoItem.pixels && geoItem.pixels.z === gmx.currentZoom;
-                        if(flagPixels) {
-                            coords = geoItem.pixels.coords[0];
-                            chkPoint = pixelPoint;
-                        }
-                        if (!gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords)) continue;
-                    }
                 } else if(type === 'POINT') {
-                    coords = getMarkerPolygon(dataOption.bounds, dx, dy);
+                    coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx, dy);
                     if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
                 }
             }
@@ -521,13 +503,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             out.push({ id: idr
                 ,properties: item.properties
                 ,geometry: geom
-                ,bounds: dataOption.bounds
-                //,latlng: L.Projection.Mercator.unproject({'x':bounds.min.x, 'y':bounds.min.y})
+                ,bounds: item.bounds
             });
         }
         return out;
     },
-    
+
     gmxEventCheck: function (ev, skipOver) {
         var layer = this,
             gmx = layer._gmx,
@@ -548,13 +529,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             || this.hasEventListeners('mouseout')
             || this.hasEventListeners(type)
             )) {
-                var lng = ev.latlng.lng % 360,
-                    latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
-                    mercatorPoint = L.Projection.Mercator.project(latlng),
-                    shiftXlayer = gmx.shiftXlayer || 0,
-                    shiftYlayer = gmx.shiftYlayer || 0,
-                    delta = 5 / gmx.mInPixel,
-                    bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
+            var lng = ev.latlng.lng % 360,
+                latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
+                mercatorPoint = L.Projection.Mercator.project(latlng),
+                shiftXlayer = gmx.shiftXlayer || 0,
+                shiftYlayer = gmx.shiftYlayer || 0,
+                delta = 5 / gmx.mInPixel,
+                bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
             bounds = bounds.addBuffer(delta, delta, delta, delta);
             var geoItems = gmx.vectorTilesManager.getItems(bounds, true);
 
@@ -607,8 +588,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             minPoint = this._map.project(minLatLng),
             maxPoint = this._map.project(maxLatLng),
             screenBounds = this._map.getPixelBounds(),
-            maxY = Math.floor((Math.max(minPoint.y, screenBounds.min.y) + shiftY)/256),
-            minY = Math.floor((Math.min(maxPoint.y, screenBounds.max.y) + shiftY)/256),
+            minY = Math.floor((Math.max(maxPoint.y, screenBounds.min.y) + shiftY)/256),
+            maxY = 1 + Math.floor((Math.min(minPoint.y, screenBounds.max.y) + shiftY)/256),
             minX = Math.floor((Math.max(minPoint.x, screenBounds.min.x) + shiftX)/256),
             maxX = Math.floor((Math.min(maxPoint.x, screenBounds.max.x) + shiftX)/256),
             gmxTiles = {};
@@ -817,7 +798,7 @@ L.gmx.VectorLayer.include({
                 var geometries = this._gmx.vectorTilesManager.getItemGeometries(gmx.id);
                 res = L.Util.getGeometriesSummary(geometries, this._gmx.units);
             }
-            var hookID = gmxAPIutils.newMapId(),
+            var hookID = gmxAPIutils.newId(),
                 st = "<span id='" + hookID + "'>" + res + "</span>";
             spanIDs[hookID] = key;
             templateBalloon = templateBalloon.replace(matches[0], st);

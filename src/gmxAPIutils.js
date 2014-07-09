@@ -1,15 +1,15 @@
 ﻿var gmxAPIutils = {
 	lastMapId: 0,
     
-	newMapId: function()
+	newId: function()
 	{
 		gmxAPIutils.lastMapId += 1;
-		return "random_" + gmxAPIutils.lastMapId;
+		return '_' + gmxAPIutils.lastMapId;
 	},
     
 	uniqueGlobalName: function(thing)
 	{
-		var id = gmxAPIutils.newMapId();
+		var id = gmxAPIutils.newId();
 		window[id] = thing;
 		return id;
 	},
@@ -143,6 +143,9 @@
 				if (y > this.max.y) this.max.y = y;
                 return this;
 			},
+			extendBounds: function(bounds) {
+				this.extendArray([[bounds.min.x, bounds.min.y], [bounds.max.x, bounds.max.y]]);
+			},
 			extendArray: function(arr) {
                 if (!arr) { return this };
 				for(var i=0, len=arr.length; i<len; i++) {
@@ -172,28 +175,69 @@
 		return res.extendArray(arr);
     },
 
-    geoItemBounds: function(geo) {// получить bounds векторного обьекта		
-		var type = geo.type;
-		var coords = geo.coordinates;
-		var arr = [];
-		var addToArr = function(pol) {
-			for (var i = 0, len = pol.length; i < len; i++)	arr.push(pol[i]);
-		}
-		if(type === 'POINT') {
-			arr.push(coords);
-		} else if(type === 'MULTIPOINT') {
-			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i]);
-		} else if(type === 'LINESTRING') {
-			addToArr(coords);
-		} else if(type === 'MULTILINESTRING') {
-			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i]);
-		} else if(type === 'POLYGON') {
-			coords.length && addToArr(coords[0]);			// дырки пропускаем
-		} else if(type === 'MULTIPOLYGON') {
-			for (var i = 0, len = coords.length; i < len; i++) addToArr(coords[i][0]);
-		}
-		return gmxAPIutils.bounds(arr);
-	},
+    geoItemBounds: function(geo) {  // get bounds by geometry
+        var type = geo.type,
+            coords = geo.coordinates,
+            bounds = null,
+            boundsArr = [],
+            arr = [];
+        if (type === 'MULTIPOLYGON') {
+            bounds = gmxAPIutils.bounds();
+            for (var i = 0, len = coords.length; i < len; i++) {
+                var arr1 = [];
+                for (var j = 0, len1 = coords[i].length; j < len1; j++) {
+                    var b = gmxAPIutils.bounds(coords[i][j]);
+                    arr1.push(b);
+                    if (j === 0) bounds.extendBounds(b);
+                }
+                boundsArr.push(arr1);
+            }
+        } else if (type === 'POLYGON') {
+            bounds = gmxAPIutils.bounds();
+            for (var i = 0, len = coords.length; i < len; i++) {
+                var b = gmxAPIutils.bounds(coords[i]);
+                boundsArr.push(b);
+                if (i === 0) bounds.extendBounds(b);
+            }
+            boundsArr = [boundsArr];
+        } else if (type === 'POINT') {
+            bounds = gmxAPIutils.bounds([coords]);
+            //boundsArr.push(bounds);
+        } else if (type === 'MULTIPOINT') {
+            bounds = gmxAPIutils.bounds();
+            for (var i = 0, len = coords.length; i < len; i++) {
+                var b = gmxAPIutils.bounds([coords[i]]);
+                bounds.extendBounds(b);
+                //boundsArr.push(b);
+            }
+        } else if (type === 'LINESTRING') {
+            bounds = gmxAPIutils.bounds(coords);
+            //boundsArr.push(bounds);
+        } else if (type === 'MULTILINESTRING') {
+            bounds = gmxAPIutils.bounds();
+            for (var i = 0, len = coords.length; i < len; i++) {
+                var b = gmxAPIutils.bounds([coords[i]]);
+                bounds.extendBounds(b);
+                //boundsArr.push(b);
+            }
+        }
+        return {
+            bounds: bounds,
+            boundsArr: boundsArr
+        };
+    },
+
+    getMarkerPolygon: function(bounds, dx, dy) {
+        var x = (bounds.min.x + bounds.max.x) / 2,
+            y = (bounds.min.y + bounds.max.y) / 2;
+        return [
+            [x - dx, y - dy]
+            ,[x - dx, y + dy]
+            ,[x + dx, y + dy]
+            ,[x + dx, y - dy]
+            ,[x - dx, y - dy]
+        ];
+    },
 
     getPropertiesHash: function(arr, indexes) {
         var properties = {};
@@ -535,7 +579,7 @@
                 lastX = p2[0], lastY = p2[1];
                 ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](p2[0], p2[1]);
                 if(!flagPixels) {
-                    pixels.push(p1);
+                    pixels.push([L.Util.formatNum(p1[0], 2), L.Util.formatNum(p1[1], 2)]);
                     if(lineIsOnEdge) hidden.push(cnt);
                 }
                 cnt++;
@@ -811,7 +855,28 @@
         }
         return true;
     },
+/*
+    isPointInPath: function(attr, coords) {
+        if (!this._canvas) this._canvas = L.DomUtil.create('canvas');
+        var canvas = this._canvas,
+            px = attr.tpx,
+            py = attr.tpy;
+        canvas.width = canvas.height = 256;
+        var ctx = canvas.getContext("2d");
+        ctx.beginPath();
 
+        var x = (0.5 + coords[0][0] - px) << 0,
+            y = (0.5 + py - coords[0][1]) << 0;
+        ctx.moveTo(x, y);
+        for (var i = 1, len = coords.length; i < len; i++) {
+            x = (0.5 + coords[i][0] - px) << 0,
+            y = (0.5 + py - coords[i][1]) << 0;
+            ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        return ctx.isPointInPath(attr.x, attr.y);
+    },
+*/
     chkPointInPolyLine: function(chkPoint, lineHeight, coords) {	// Проверка точки(с учетом размеров) на принадлежность линии
         lineHeight *= lineHeight;
         

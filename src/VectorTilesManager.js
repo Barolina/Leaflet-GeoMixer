@@ -284,7 +284,9 @@
                 if (isFiltered) {continue;}
 
                 if(!dataOption.bounds) {
-                    dataOption.bounds = gmxAPIutils.geoItemBounds(geom);
+                    var b = gmxAPIutils.geoItemBounds(geom);
+                    dataOption.bounds = b.bounds;
+                    if (b.boundsArr.length) dataOption.boundsArr = b.boundsArr;
                     var arr = [[dataOption.bounds.min.x, dataOption.bounds.min.y], [dataOption.bounds.max.x, dataOption.bounds.max.y]];
                     item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
                     if (!dataOptions[j]) dataOptions[j] = dataOption;
