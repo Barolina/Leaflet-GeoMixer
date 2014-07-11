@@ -30,14 +30,14 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+	<script src="http://scanex.github.io/Leaflet-GeoMixer/build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
 </head>
 <body>
 	<div id="map" style="width: 100%; height: 100%"></div>
- 
-	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
-	<script src="http://scanex.github.io/Leaflet-GeoMixer/build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
 	<script>
-		var map = L.map('map').setView([58.998438, 49.775619], 3);
+		var map = L.map('map').setView([55.73, 37.59], 8);
 
 		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
@@ -46,87 +46,38 @@
 
         L.gmx.loadLayers([
             {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'C9458F2DCB754CEEACC54216C7D1EB0A'},
-            {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'BCCCE2BDC9BF417DACF27BB4D481FAD9'},
-            {mapID: 'AZR6A',                            layerID: '8D1EC3B3443C46A5A402DD096B5C7142'},
-            //{mapID: 'G1XRF',                            layerID: '63E7EDBCEDB44F2F8DD823830681D577'}
-            //{mapID: '2E3JJ',                            layerID: 'A3ED5F7D46EC491289F2665DBC29C5B1'}
-            //{options: { clickable: false }, mapID: 'UIRCQ', layerID: 'B0A30EF77D7F4182B302B9F7CB83CA25'}
-            {mapID: 'UIRCQ', layerID: 'B0A30EF77D7F4182B302B9F7CB83CA25'}
-            //{mapID: '1CB019F36D024831972F3029B724D7CA', layerID: '076EFE8A3D66461BBEC1234B006DE272'}
-            //{mapID: 'UIRCQ', layerID: 'B9025486956F405890367FD2758F997A'}
-            //{mapID: 'UIRCQ', layerID: '82972FEF71C14307B2737CAEFA0451B2'}
-            
-            //{mapID: 'W81PQ', layerID: '076EFE8A3D66461BBEC1234B006DE272'}
-            //{mapID: 'ATTBP', layerID: '04DDB23F49F84B9A9122CBA6BC26D3ED'}
-//        ]).then(function(modisLayer) {
-        ]).then(function(satellite, labels, regionsLayer, testLayer) {
-            
+            {mapID: 'H2DUP', layerID: 'B2CC196063834EF48A163EC14C392FAE'}
+        ]).then(function(satellite, testLayer) {
+            var videoNext = 0,
+                videoArr = [
+                    {title: 'search_step1', frame: 'tkJRP8Z-2I4'} 
+                    ,{title: 'search_step2-3', frame: 'cC6n2KhuZ-M'} 
+                    ,{title: 'Media_plugin', frame: '_2wfGPz-oCQ'}
+                    ,{title: 'Fires', frame: '9IYIxvZlhSs'}
+                ]; 
             testLayer.bindPopup(
-                'Add image to popup<br> [image]<br><b>t2</b>: [t2]',
+                '',
                 {
+                    maxWidth: 1024,
                     'popupopen': function(ev) {
-                        var gmx = ev.gmx,
-                            popup= ev.popup;
-                        if (gmx) {
-                            var spanKeys = gmx.spanKeys;
-                            spanKeys['t2'].style.color = 'red';
-                        }
-                        var img = new Image();
-                        spanKeys['image'].appendChild(img);
-                        img.onload = function (e) {
-                            popup.updateLayout();
-                        };
-                        img.src = 'http://c.tile.osm.org/3/5/3.png';
-                        console.log('popupopen', arguments);
+                        var popup= ev.popup;
+                        if (videoNext >= videoArr.length) videoNext = 0;
+                        var video = videoArr[videoNext],
+                            txt = 'Title: <b>' + video.title + '</b><br>'
+                                + '<iframe width="560" height="315" src="//www.youtube.com/embed/' + video.frame + '" frameborder="0" allowfullscreen></iframe>';
+                        var content = L.DomUtil.create('div', 'video');
+                        content.innerHTML = txt;
+                        popup.setContent(content);
+                        videoNext++;
                     }
                 }
             );
-/*
-            var rasters = {};
-            var rastersView = {};
-            modisLayer.addStyleHook(function(item) {
-                return {skipRasters: rastersView[item.id] ? false : true};
-            });
 
-            //var popup = L.popup({maxWidth:1000});
-            modisLayer._popup.on('popupopen', function(ev) {
-                var gmx = ev.gmx;
-                if (gmx) {
-                    var spanKeys = gmx.spanKeys;
-                    spanKeys['t2'].style.color = 'red';
-                }
-                //console.log('popupopen', arguments);
-            });
-
-             popup.on('popupopen', function(ev) {
-                var gmx = ev.gmx;
-                if (gmx) {
-                    var spanKeys = gmx.spanKeys;
-                    spanKeys['t2'].style.color = 'red';
-                }
-                //console.log('popupopen', arguments);
-            });
-           modisLayer.on('click', function(ev) {
-                var gmx = ev.gmx,
-                    item = gmx.target,
-                    id = item.id;
-                if(rastersView[id]) {
-                    delete rastersView[id];
-                } else {
-                    rastersView[id] = true;
-                }
-                modisLayer.redrawItem(id);
-                //console.log('click', arguments);
-                onMyClick(ev);
-            });
-*/            
             L.control.layers({
                 OSM: osm,
                 Satellite: satellite
             }, {
-                TestLayer: testLayer,
-                Regions: regionsLayer,
-                Labels: labels
+                TestLayer: testLayer
             }, {collapsed: false}).addTo(map);
 
             osm.addTo(map);
