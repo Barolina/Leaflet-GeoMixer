@@ -160,8 +160,19 @@
                 this.max.y += dymax;
                 return this;
             },
-            //TODO: do we still need dx, dy?
-			intersects: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
+			contains: function (point) { // ([x, y]) -> Boolean
+				var min = this.min, max = this.max,
+					x = point[0], y = point[1];
+				return x > min.x && x < max.x && y > min.y && y < max.y;
+            },
+			intersects: function (bounds) { // (Bounds) -> Boolean
+				var min = this.min,
+					max = this.max,
+					min2 = bounds.min,
+					max2 = bounds.max;
+				return max2.x > min.x && min2.x < max.x && max2.y > min.y && min2.y < max.y;
+            },
+			intersectsWithDelta: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
 				var min = this.min,
 					max = this.max,
 					dx = dx || 0,
@@ -199,16 +210,13 @@
                 boundsArr.push(b);
                 if (i === 0) bounds.extendBounds(b);
             }
-            boundsArr = [boundsArr];
         } else if (type === 'POINT') {
             bounds = gmxAPIutils.bounds([coords]);
-            //boundsArr.push(bounds);
         } else if (type === 'MULTIPOINT') {
             bounds = gmxAPIutils.bounds();
             for (var i = 0, len = coords.length; i < len; i++) {
                 var b = gmxAPIutils.bounds([coords[i]]);
                 bounds.extendBounds(b);
-                //boundsArr.push(b);
             }
         } else if (type === 'LINESTRING') {
             bounds = gmxAPIutils.bounds(coords);
@@ -855,39 +863,51 @@
         }
         return true;
     },
-/*
-    isPointInPath: function(attr, coords) {
-        if (!this._canvas) this._canvas = L.DomUtil.create('canvas');
-        var canvas = this._canvas,
-            px = attr.tpx,
-            py = attr.tpy;
-        canvas.width = canvas.height = 256;
-        var ctx = canvas.getContext("2d");
-        ctx.beginPath();
 
-        var x = (0.5 + coords[0][0] - px) << 0,
-            y = (0.5 + py - coords[0][1]) << 0;
-        ctx.moveTo(x, y);
-        for (var i = 1, len = coords.length; i < len; i++) {
-            x = (0.5 + coords[i][0] - px) << 0,
-            y = (0.5 + py - coords[i][1]) << 0;
-            ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        return ctx.isPointInPath(attr.x, attr.y);
-    },
-*/
-    chkPointInPolyLine: function(chkPoint, lineHeight, coords) {	// Проверка точки(с учетом размеров) на принадлежность линии
+    isPointInPolyLine: function(chkPoint, lineHeight, coords, hiddenLines) {
+        // Проверка точки(с учетом размеров) на принадлежность линии
+        var dx = chkPoint[0], dy = chkPoint[1],
+            nullPoint = { x: dx, y: dy },
+            minx = dx - lineHeight, maxx = dx + lineHeight,
+            miny = dy - lineHeight, maxy = dy + lineHeight,
+            cntHide = 0;
+
         lineHeight *= lineHeight;
-        
-        var chkPoint = { x: chkPoint[0], y: chkPoint[1] };
-        var p1 = { x: coords[0][0], y: coords[0][1] };
-        for (var i = 1, len = coords.length; i < len; i++)
-        {
-            var p2 = { x: coords[i][0], y: coords[i][1] };
-            var sqDist = L.LineUtil._sqClosestPointOnSegment(chkPoint, p1, p2, true);
-            if(sqDist < lineHeight) return true;
-            p1 = p2;
+        for (var i = 1, len = coords.length; i < len; i++) {
+            if(hiddenLines && i == hiddenLines[cntHide]) {
+                cntHide++;
+            } else {
+                var p1 = coords[i-1], p2 = coords[i],
+                    x1 = p1[0], y1 = p1[1],
+                    x2 = p2[0], y2 = p2[1];
+                
+                if(!(Math.max(x1, x2) < minx
+                    || Math.min(x1, x2) > maxx
+                    || Math.max(y1, y2) < miny
+                    || Math.min(y1, y2) > maxy)) {
+                    var sqDist = L.LineUtil._sqClosestPointOnSegment(nullPoint, { x: x1, y: y1 }, { x: x2, y: y2 }, true);
+                    if(sqDist < lineHeight) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    },
+
+    isPointInLines: function (attr) {
+        var arr = attr.coords,
+            point = attr.point,
+            delta = attr.delta,
+            boundsArr = attr.boundsArr,
+            hidden = attr.hidden;
+        for (var j = 0, len = arr.length, flag = false; j < len; j++) {
+            flag = boundsArr[j] ? boundsArr[j].contains(point) : true;
+            if (flag
+                && gmxAPIutils.isPointInPolyLine(point, delta, arr[j], hidden ? hidden[j] : null)
+            ) {
+               return true;
+            }
         }
         return false;
     },

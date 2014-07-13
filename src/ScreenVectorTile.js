@@ -239,7 +239,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         var itemPromises = geoItems.map(function(geo) {
             var dataOption  = geo.dataOption || {},
                 isSkipRasters  = dataOption.styleExtend && dataOption.styleExtend.skipRasters;
-            if (!isSkipRasters && tbounds.intersects(dataOption.bounds, -1, -1)) {
+            if (!isSkipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 needLoadRasters++;
                 var itemRasterPromise = getItemRasters(geo);
                 itemRasterPromise.then(function() {
@@ -430,7 +430,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             delete dattr.bgImage;
                         }
                         if ((dattr.style.fill || dattr.bgImage) &&
-                            tbounds.intersects(dataOption.bounds, -1, -1)) {
+                            tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                             if(flagPixels) {
                                 coords = pixels_map.coords;
                                 hiddenLines = pixels_map.hidden;

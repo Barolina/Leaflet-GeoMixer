@@ -450,54 +450,82 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 lineWidth = parsedStyle.lineWidth || 0,
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
                 dy = (parsedStyle.sy + lineWidth) / mInPixel;
-                
-            if (!dataOption.bounds.intersects(bounds, dx, dy)) continue;
 
-            var geom = geoItem[geoItem.length-1],
+            if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) continue;
+
+            var geom = geoItem[geoItem.length - 1],
+                fill = parsedStyle.fill,
+                marker = parsedStyle.marker,
                 type = geom.type,
-                coords = geom.coordinates;
-                
-            if(type === 'LINESTRING') {
-                if (!gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) continue;
-            } else if(type === 'MULTILINESTRING') {
+                chktype = type,
+                hiddenLines = dataOption.hiddenLines,
+                boundsArr = dataOption.boundsArr,
+                coords = geom.coordinates,
+                ph = {
+                    point: mercPoint,
+                    bounds: bounds,
+                    coords: coords,
+                    boundsArr: boundsArr
+                };
+
+            if(type === 'MULTIPOLYGON' || type === 'POLYGON') {
+                if(marker) {
+                    chktype = 'POINT';
+                } else if(!fill) {
+                    if (type === 'POLYGON') {
+                        chktype = 'MULTILINESTRING';
+                        hiddenLines = hiddenLines[0];
+                    } else {
+                        chktype = 'LIKEMULTILINESTRING';
+                    }
+                    ph.hidden = hiddenLines;
+                }
+            }
+
+            if(chktype === 'LINESTRING') {
+                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) continue;
+            } else if(chktype === 'LIKEMULTILINESTRING') {
                 var flag = false;
+                ph.delta = lineWidth / mInPixel;
                 for (var j = 0, len = coords.length; j < len; j++) {
-                    if (gmxAPIutils.chkPointInPolyLine(mercPoint, lineWidth / mInPixel, coords[j])) {
+                    ph.coords = coords[j];
+                    ph.hidden = hiddenLines[j];
+                    ph.boundsArr = boundsArr[j];
+                    if (gmxAPIutils.isPointInLines(ph)) {
                         flag = true;
                         break;
                     }
                 }
                 if (!flag) continue;
-            } else {
-                if(type === 'MULTIPOLYGON' || type === 'POLYGON') {
-                    if(parsedStyle.marker) {
-                        coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx, dy);
-                        if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
-                    } else {
-                        var flag = false,
-                            chkPoint = mercPoint,
-                            pixels_map = dataOption.pixels || null,
-                            boundsArr = dataOption.boundsArr,
-                            flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
-                        if(flagPixels) {
-                            coords = pixels_map.coords;
-                            chkPoint = pixelPoint;
-                        }
-                        for (var j = 0, len = coords.length; j < len; j++) {
-                            var b = boundsArr[j][0];
-                            if (b.intersects(bounds)) {
-                                if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j])) {
-                                    flag = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!flag) continue;
-                    }
-                } else if(type === 'POINT') {
-                    coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx, dy);
-                    if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+            } else if(chktype === 'MULTILINESTRING') {
+                ph.delta = lineWidth / mInPixel;
+                ph.hidden = hiddenLines;
+                if (!gmxAPIutils.isPointInLines(ph)) {
+                    continue;
                 }
+            } else if(chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
+                var flag = false,
+                    chkPoint = mercPoint,
+                    pixels_map = dataOption.pixels || null,
+                    flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
+                if(flagPixels) {
+                    coords = pixels_map.coords;
+                    chkPoint = pixelPoint;
+                }
+                for (var j = 0, len = coords.length; j < len; j++) {
+                    var b = boundsArr[j];
+                    if(chktype === 'MULTIPOLYGON') b = b[0];
+                    if (b.intersects(bounds)) {
+                        if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j])) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if (!flag) continue;
+            } else if(chktype === 'POINT') {
+                coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx, dy);
+                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
             }
 
             out.push({ id: idr
@@ -590,8 +618,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             screenBounds = this._map.getPixelBounds(),
             minY = Math.floor((Math.max(maxPoint.y, screenBounds.min.y) + shiftY)/256),
             maxY = 1 + Math.floor((Math.min(minPoint.y, screenBounds.max.y) + shiftY)/256),
-            minX = Math.floor((Math.max(minPoint.x, screenBounds.min.x) + shiftX)/256),
-            maxX = Math.floor((Math.min(maxPoint.x, screenBounds.max.x) + shiftX)/256),
+            minX = maxLatLng.lng < -179 ? screenBounds.min.x : Math.max(minPoint.x, screenBounds.min.x),
+            minX = Math.floor((minX + shiftX)/256),
+            maxX = maxLatLng.lng > 179 ? screenBounds.max.x : Math.min(maxPoint.x, screenBounds.max.x),
+            maxX = Math.floor((maxX + shiftX)/256),
             gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
