@@ -238,8 +238,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             };
         var itemPromises = geoItems.map(function(geo) {
             var dataOption  = geo.dataOption || {},
-                isSkipRasters  = dataOption.styleExtend && dataOption.styleExtend.skipRasters;
-            if (!isSkipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
+                styleExtend = geo.styleExtend || {};
+            if (!styleExtend.skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 needLoadRasters++;
                 var itemRasterPromise = getItemRasters(geo);
                 itemRasterPromise.then(function() {

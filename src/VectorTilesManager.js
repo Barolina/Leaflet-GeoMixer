@@ -259,14 +259,14 @@
     this.getItems = function(bounds, hover) {
         var resItems = [];
         for (var key in activeTileKeys) {
-            var tile = tiles[key].tile;
-            if (!bounds.intersects(tile.bounds)) {
-                //отсекаем тайлы за границами screenTile + макс.размер из массива стилей (без учета обьектов)
+            var tile = tiles[key].tile,
+                data = tile.data;
+            if (!data || !bounds.intersects(tile.bounds)) {
+                // VectorTile not loaded or not on screen
                 continue;
             }
 
-            var data = tile.data || [],
-                dataOptions = tile.dataOptions || [];
+            var dataOptions = tile.dataOptions || [];
             for (var j = 0, len1 = data.length; j < len1; j++) {
                 var it = data[j],
                     id = it[0],
