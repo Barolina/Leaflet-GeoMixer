@@ -238,8 +238,13 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             };
         var itemPromises = geoItems.map(function(geo) {
             var dataOption  = geo.dataOption || {},
-                styleExtend = geo.styleExtend || {};
-            if (!styleExtend.skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
+                skipRasters = false;
+                if (gmx.styleHook) {
+                    geo.styleExtend = gmx.styleHook(gmx.vectorTilesManager.getItem(geo.arr[0]));
+                    skipRasters = geo.styleExtend.skipRasters;
+                }
+
+            if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 needLoadRasters++;
                 var itemRasterPromise = getItemRasters(geo);
                 itemRasterPromise.then(function() {
@@ -351,12 +356,14 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             var drawItem = function(geoItem) {
                 var arr = geoItem.arr,
                     dataOption = geoItem.dataOption,
-                    styleExtend = geoItem.styleExtend,
                     idr = arr[0],
                     item = gmx.vectorTilesManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
-                dattr.styleExtend = styleExtend;
+                if (gmx.styleHook && !geoItem.styleExtend) {
+                    geoItem.styleExtend = gmx.styleHook(item);
+                }
+                dattr.styleExtend = geoItem.styleExtend || {};
                 dattr.style = style;
                 dattr.itemOptions = gmx.styleManager.getItemOptions(item);
                 setCanvasStyle(item, dattr);
@@ -426,7 +433,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if (rasters[idr]) {
                             dattr.bgImage = rasters[idr];
                         }
-                        if (styleExtend && styleExtend.skipRasters) {
+                        if (dattr.styleExtend.skipRasters) {
                             delete dattr.bgImage;
                         }
                         if ((dattr.style.fill || dattr.bgImage) &&

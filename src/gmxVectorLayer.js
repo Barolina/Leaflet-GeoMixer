@@ -122,12 +122,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     setStyleHook: function (func) {
-        this._gmx.vectorTilesManager.setStyleHook(func);
+        this._gmx.styleHook = func;
         return this;
     },
 
     removeStyleHook: function () {
-        this._gmx.vectorTilesManager.removeStyleHook();
+        this._gmx.styleHook = null;
     },
 
     setPropertiesHook: function (func) {

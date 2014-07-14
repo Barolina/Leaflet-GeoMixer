@@ -235,14 +235,6 @@
         endDate = newEndDate;
     }
 
-    this.setStyleHook = function(func) {
-        styleHook = func;
-    }
-
-    this.removeStyleHook = function() {
-        styleHook = null;
-    }
-
     this.setPropertiesHook = function(filterName, filterFunc) {
         
         filters[filterName] = filterFunc;
@@ -302,9 +294,6 @@
                 }
 
                 var out = {arr: it, dataOption: dataOptions[j]};
-                if (styleHook) {
-                    out.styleExtend = styleHook(item, hover);
-                }
                 resItems.push(out);
             }
         }
