@@ -363,13 +363,15 @@ if (zn === null) it[j] = '';
 
     this.loadTiles = function(gmxTilePoint) {
         var bounds = getStyleBounds(gmxTilePoint),
-        _this = this;
+            leftToLoad = 0,
+            _this = this;
 
         for (var key in activeTileKeys) (function(tile) {
 
             if (!bounds.intersects(tile.bounds)) return;
 
             if (tile.state === 'notLoaded') {
+                leftToLoad++;
                 tile.load().then(function() {
                     gmx.itemCount += _updateItemsFromTile(tile);
                     for (var key in subscriptions) {
@@ -384,6 +386,7 @@ if (zn === null) it[j] = '';
                 })
             }
         })(tiles[key].tile);
+        return leftToLoad;
     }
 
     //'callback' will be called at least once:
@@ -397,11 +400,9 @@ if (zn === null) it[j] = '';
             styleBounds: getStyleBounds(gmxTilePoint)
         };
 
-        this.loadTiles(gmxTilePoint);
+        var leftToLoad = this.loadTiles(gmxTilePoint);
 
-        if (this.getNotLoadedTileCount(gmxTilePoint) == 0) {
-            callback();
-        }
+        leftToLoad || callback();
 
         return id;
     }

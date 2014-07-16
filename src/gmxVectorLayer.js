@@ -322,7 +322,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
             var subscrID = gmx.vectorTilesManager.on(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom).then(function() {
-                    if (gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint) === 0 && !isDrawnFirstTime) {
+                    if (/*gmx.vectorTilesManager.getNotLoadedTileCount(gmxTilePoint) === 0 && */ !isDrawnFirstTime) {
                         gmx._tilesToLoad--;
                         myLayer._tileLoaded();
                         isDrawnFirstTime = true;
