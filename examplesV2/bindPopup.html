@@ -8,23 +8,21 @@
             height: 100%;
             margin: 0px;
         }
-        #controls {
+        
+        #infoPanel {
             position: absolute;
-			left: 54px;
-			top: 11px;
+			left: 0px;
+			right: 0px;
+			top: 21px;
+            text-align: center;
 			z-index: 1;
+        }
+        
+        #info {
 			background-color: #ffffff;
 			border-radius: 5px;
             box-shadow: 0 1px 7px rgba(0,0,0,0.65);
-        }
-        
-        #controls button {
-            border-radius: 5px;
-            
-        }
-        
-        #controls > div{
-            padding: 6px;
+            padding: 10px;
         }
     </style>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +34,11 @@
 </head>
 <body>
 	<div id="map" style="width: 100%; height: 100%"></div>
+    <div id="infoPanel">
+        <span id="info">
+                Add layer with <b>`historical places of Moscow region with photo`</b> from a <a href="http://maps.kosmosnimki.ru/api/index.html?H2DUP" target="_blank">GeoMixer map</a>
+        </span>
+    </div>
 	<script>
 		var map = L.map('map').setView([55.73, 37.59], 8);
 
@@ -45,41 +48,24 @@
 		});
 
         L.gmx.loadLayers([
-            {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'C9458F2DCB754CEEACC54216C7D1EB0A'},
             {mapID: 'H2DUP', layerID: 'B2CC196063834EF48A163EC14C392FAE'}
-        ]).then(function(satellite, testLayer) {
-            var videoNext = 0,
-                videoArr = [
-                    {title: 'search_step1', frame: 'tkJRP8Z-2I4'} 
-                    ,{title: 'search_step2-3', frame: 'cC6n2KhuZ-M'} 
-                    ,{title: 'Media_plugin', frame: '_2wfGPz-oCQ'}
-                    ,{title: 'Fires', frame: '9IYIxvZlhSs'}
-                ]; 
+        ]).then(function(testLayer) {
+            testLayer.setFilter(function(ev) {
+                return ev.properties[23] /* photo */? true : false;
+            });
             testLayer.bindPopup(
                 '',
                 {
-                    maxWidth: 1024,
+                    maxWidth: 560,
                     'popupopen': function(ev) {
-                        var popup= ev.popup;
-                        if (videoNext >= videoArr.length) videoNext = 0;
-                        var video = videoArr[videoNext],
-                            txt = 'Title: <b>' + video.title + '</b><br>'
-                                + '<iframe width="560" height="315" src="//www.youtube.com/embed/' + video.frame + '" frameborder="0" allowfullscreen></iframe>';
-                        var content = L.DomUtil.create('div', 'video');
-                        content.innerHTML = txt;
-                        popup.setContent(content);
-                        videoNext++;
+                        var key = 'Фото1',
+                            gmx = ev.gmx,
+                            properties = gmx.properties,
+                            spanKeys = ev.gmx.spanKeys;
+                        spanKeys[key].innerHTML = '<img width="560" height="315" src="' + properties[key] + '"/>';
                     }
                 }
             );
-
-            L.control.layers({
-                OSM: osm,
-                Satellite: satellite
-            }, {
-                TestLayer: testLayer
-            }, {collapsed: false}).addTo(map);
-
             osm.addTo(map);
             testLayer.addTo(map);
         })
