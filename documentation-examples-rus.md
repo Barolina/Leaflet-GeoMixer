@@ -4,5 +4,5 @@
 
 Пример|Описание|Примечание
 ------|:---------:|-----------
-[GeoMixerMap.html](examples/GeoMixerMap.html)| Загрузка карты с сервера ГеоМиксера| Загружаются все видимые слои заданной карты
-[satelliteLayer.html](examplesV2/satelliteLayer.html)|Загрузка базовой подложки - снимки|
+[GeoMixerMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html)| Загрузка карты с сервера ГеоМиксера| Загружаются все видимые слои заданной карты
+[satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)|Загрузка базовой подложки - снимки|
