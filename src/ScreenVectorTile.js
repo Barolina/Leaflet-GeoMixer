@@ -240,7 +240,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             var dataOption  = geo.dataOption || {},
                 skipRasters = false;
                 if (gmx.styleHook) {
-                    geo.styleExtend = gmx.styleHook(gmx.vectorTilesManager.getItem(geo.arr[0]));
+                    var idr = geo.arr[0];
+                    geo.styleExtend = gmx.styleHook(
+                        gmx.vectorTilesManager.getItem(idr),
+                        gmx.lastHover && idr === gmx.lastHover.id
+                    );
                     skipRasters = geo.styleExtend.skipRasters;
                 }
 
@@ -361,7 +365,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
                 if (gmx.styleHook && !geoItem.styleExtend) {
-                    geoItem.styleExtend = gmx.styleHook(item);
+                    geoItem.styleExtend = gmx.styleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
                 }
                 dattr.styleExtend = geoItem.styleExtend || {};
                 dattr.style = style;
