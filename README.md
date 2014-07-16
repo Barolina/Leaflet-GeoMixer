@@ -13,6 +13,8 @@ Demos
   * [Plugins](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html) - integrate GeoMixer layers along with several Leaflet plugins
   * [MultipleMaps](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html) - multiple maps on one page
 
+[Examples](documentation-examples-rus.md).
+
 Build
 ------
 
