@@ -14,6 +14,7 @@
     "gmxEventsManager.js",
     "VectorTileLoader.js",
     "gmxVectorLayer.js",
+    "gmxVectorLayer.Popup.js",
     "gmxRasterLayer.js",
     "gmxLayerFactory.js",
     "L.gmxLocale.js",
