@@ -27,4 +27,8 @@
 
 Пример|Описание|Примечание
 ------|---------|-----------
-[ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Установка контролов ГеоМиксера| 
+[L.Control.gmxLayers.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxLayers.html)| Контрол слоев|
+[L.Control.gmxZoom.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxZoom.html)| Контрол зуммирования|
+[L.Control.gmxBottom.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxBottom.html)| Подкладка нижних контролов|
+[L.Control.gmxCopyright.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Контрол копирайтов|
+[ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов ГеоМиксера| 
