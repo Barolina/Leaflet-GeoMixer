@@ -1,6 +1,6 @@
-## Галерея примеров
+# Галерея примеров
 
-#Плагин Leaflet-GeoMixer
+##Плагин Leaflet-GeoMixer
 
 Пример|Описание|Примечание
 ------|---------|-----------
@@ -8,16 +8,16 @@
 [satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)|Загрузка базовой подложки - снимки|
 [bindPopup.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Добавление пользовательского контента в тело балуна.
 
-#Плагина [Leaflet.imageTransform](https://github.com/ScanEx/Leaflet.imageTransform)
+##Плагин [Leaflet.imageTransform](https://github.com/ScanEx/Leaflet.imageTransform)
 
 Пример|Описание
 ------|---------
 [Landsat8.html](http://scanex.github.io/Leaflet.imageTransform/examples/Landsat8.html)| Снимки Landsat| Плагин [Leaflet.imageTransform](https://github.com/ScanEx/Leaflet.imageTransform)
 [Editing.html](http://scanex.github.io/Leaflet.imageTransform/examples/Editing.html)| Перепривязка снимка| Плагин [Leaflet.imageTransform](https://github.com/ScanEx/Leaflet.imageTransform)
 
-#Плагины [ГеоМиксер контролов](https://github.com/ScanEx/gmxControls)
+##Плагины [контролов](https://github.com/ScanEx/gmxControls) ГеоМиксера
 Пользователь сам выбирает набор необходимых ему контролов.
 
-Пример|Описание
+Пример|Описание|Примечание
 ------|---------|-----------
 [ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Установка контролов ГеоМиксера| 
