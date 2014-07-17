@@ -31,4 +31,7 @@
 [L.Control.gmxZoom.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxZoom.html)| Контрол зуммирования|
 [L.Control.gmxBottom.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxBottom.html)| Подкладка нижних контролов|
 [L.Control.gmxCopyright.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Контрол копирайтов|
+[L.Control.gmxLocation.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxLocation.html)| Контрол текущего масштаба и положения карты|
+[L.Control.gmxIcon.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxIcon.html)| Контрол иконок|
+[L.Control.L.Control.gmxHide.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Контрол видимости верхних контролов|
 [ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов ГеоМиксера| 
