@@ -50,24 +50,20 @@
         L.gmx.loadLayers([
             {mapID: 'H2DUP', layerID: 'B2CC196063834EF48A163EC14C392FAE'}
         ]).then(function(testLayer) {
-            testLayer.setFilter(function(ev) {
-                return ev.properties[23] /* photo */? true : false;
-            });
             testLayer.bindPopup(
                 '',
                 {
                     maxWidth: 560,
-                    'popupopen': function(ev) {
+                    popupopen: function(ev) {
                         var popup = ev.popup,
-                            gmx = ev.gmx,
-                            prop = gmx.properties,
-                            txt = '<img width="560" height="315" src="' + prop['Фото1'] + '"/><br>';
+                            props = ev.gmx.properties,
+                            txt = '<img width="560" src="' + props['Фото1'] + '"/><br>';
                             keys = ['Наименование', 'Адрес современный', 'Категория', 'Подробнее'];
 
-                        ['Наименование', 'Адрес современный', 'Категория', 'Подробнее'].map(function(key) {
-                            if (prop[key]) txt += '<br>' + prop[key];
+                        keys.forEach(function(key) {
+                            if (props[key]) txt += '<br>' + props[key];
                         });
-                        popup.setContent(L.DomUtil.create('div').innerHTML = txt);
+                        popup.setContent(txt);
                     }
                 }
             );
