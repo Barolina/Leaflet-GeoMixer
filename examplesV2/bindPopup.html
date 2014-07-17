@@ -36,7 +36,7 @@
 	<div id="map" style="width: 100%; height: 100%"></div>
     <div id="infoPanel">
         <span id="info">
-                Add layer with <b>`historical places of Moscow region with photo`</b> from a <a href="http://maps.kosmosnimki.ru/api/index.html?H2DUP" target="_blank">GeoMixer map</a>
+                Add layer with <b>`historical places of Moscow region`</b> with photo from a <a href="http://maps.kosmosnimki.ru/api/index.html?H2DUP" target="_blank">GeoMixer map</a>
         </span>
     </div>
 	<script>
@@ -58,11 +58,16 @@
                 {
                     maxWidth: 560,
                     'popupopen': function(ev) {
-                        var key = 'Фото1',
+                        var popup = ev.popup,
                             gmx = ev.gmx,
-                            properties = gmx.properties,
-                            spanKeys = ev.gmx.spanKeys;
-                        spanKeys[key].innerHTML = '<img width="560" height="315" src="' + properties[key] + '"/>';
+                            prop = gmx.properties,
+                            txt = '<img width="560" height="315" src="' + prop['Фото1'] + '"/><br>';
+                            keys = ['Наименование', 'Адрес современный', 'Категория', 'Подробнее'];
+
+                        ['Наименование', 'Адрес современный', 'Категория', 'Подробнее'].map(function(key) {
+                            if (prop[key]) txt += '<br>' + prop[key];
+                        });
+                        popup.setContent(L.DomUtil.create('div').innerHTML = txt);
                     }
                 }
             );
