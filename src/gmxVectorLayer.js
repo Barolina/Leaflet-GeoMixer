@@ -222,8 +222,6 @@
         var gmx = this._gmx,
             map = this._map,
             pos = map.getCenter(),
-            merc = L.Projection.Mercator.project(pos),
-            currProject = map.options.crs.project(pos),
             deltaY = map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
 
         gmx.shiftX = gmx.mInPixel * (gmx.shiftXlayer || 0);
