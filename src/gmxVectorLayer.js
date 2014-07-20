@@ -220,18 +220,18 @@
 
     _updateShiftY: function() {
         var gmx = this._gmx,
-            map = this._map;
+            map = this._map,
+            pos = map.getCenter(),
+            merc = L.Projection.Mercator.project(pos),
+            currProject = map.options.crs.project(pos),
+            deltaY = map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
 
-        var pos = map.getCenter();
-        var lat = L.Projection.Mercator.unproject({x: 0, y: gmxAPIutils.y_ex(pos.lat)}).lat;
-        var p1 = map.project(new L.LatLng(lat, pos.lng), gmx.currentZoom);
-        var point = map.project(pos);
-        gmx.shiftX = gmx.shiftXlayer ? gmx.shiftXlayer * gmx.mInPixel : 0;
-        gmx.shiftY = point.y - p1.y + (gmx.shiftYlayer ? gmx.shiftYlayer * gmx.mInPixel : 0);
+        gmx.shiftX = gmx.mInPixel * (gmx.shiftXlayer || 0);
+        gmx.shiftY = gmx.mInPixel * (deltaY + (gmx.shiftYlayer || 0));
 
         for (var t in this._tiles) {
-            var tile = this._tiles[t];
-            var pos = this._getTilePos(tile._tilePoint);
+            var tile = this._tiles[t],
+                pos = this._getTilePos(tile._tilePoint);
             pos.x += gmx.shiftX;
             pos.y -= gmx.shiftY;
             L.DomUtil.setPosition(tile, pos, L.Browser.chrome || L.Browser.android23);

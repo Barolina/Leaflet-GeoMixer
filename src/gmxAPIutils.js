@@ -663,14 +663,6 @@
 	}
 	,'worldWidthMerc': 20037508
 	,'r_major': 6378137.000
-	,'y_ex': function(lat)	{				// Вычисление y_ex 
-		if (lat > 89.5)		lat = 89.5;
-		if (lat < -89.5) 	lat = -89.5;
-		var phi = gmxAPIutils.deg_rad(lat);
-		var ts = Math.tan(0.5*((Math.PI*0.5) - phi));
-		var y = -gmxAPIutils.r_major * Math.log(ts);
-		return y;
-	}	
 	,
 	deg_rad: function(ang)
 	{
