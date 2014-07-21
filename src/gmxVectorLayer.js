@@ -130,23 +130,21 @@
         this._gmx.styleHook = null;
     },
 
+    //TODO: remove
     setPropertiesHook: function (func) {
-        //this._gmx.vectorTilesManager.setPropertiesHook.bind(this._gmx.vectorTilesManager, 'userHook', func);
-        this._gmx.vectorTilesManager.setPropertiesHook('userHook', func);
+        this._gmx.vectorTilesManager.addFilter('userHook', func);
         return this;
     },
 
     setFilter: function (func) {
-        this._gmx.vectorTilesManager.setPropertiesHook('userFilter', function(item) {
+        this._gmx.vectorTilesManager.addFilter('userFilter', function(item) {
             return !func || func(item) ? item.properties : null;
         });
-        this._redrawTiles();
         return this;
     },
 
     removeFilter: function () {
-        this._gmx.vectorTilesManager.removePropertiesHook('userFilter');
-        this._redrawTiles();
+        this._gmx.vectorTilesManager.removeFilter('userFilter');
         return this;
     },
 
@@ -155,24 +153,7 @@
         gmx.beginDate = beginDate;
         gmx.endDate = endDate;
         gmx.vectorTilesManager.setDateInterval(beginDate, endDate);
-        this._redrawTiles();
         return this;
-    },
-
-    _redrawTiles: function () {
-        gmxImageLoader.clearLayer(this._gmx.layerID);
-
-        if (this._map) {
-            var zoom = this._map._zoom;
-            for (var key in this._tiles) {
-                var tile = this._tiles[key],
-                    tilePoint = tile._tilePoint,
-                    zkey = zoom + ':' + tilePoint.x + ':' + tilePoint.y;
-                delete this._gmx.tileSubscriptions[zkey];
-                this._addTile(tilePoint);
-            }
-            this._update();
-        }
     },
 
     addTo: function (map) {
@@ -629,24 +610,27 @@
         }
         return gmxTiles;
     },
+    
     redrawItem: function (id) {    // redraw Item
         var gmx = this._gmx,
             item = gmx.vectorTilesManager.getItem(id),
             gmxTiles = this._getTilesByBounds(item.bounds);
         this._redrawTilesHash(gmxTiles);    // reset hover
     },
+    
     _redrawTilesHash: function (gmxTiles) {    // Перерисовать список gmxTiles тайлов на экране
-        var zoom = this._map._zoom;
-        for (var key in this._tiles) {
-            var tile = this._tiles[key],
-                tilePoint = tile._tilePoint,
-                zkey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
+        var redrawTiles = 
+            zoom = this._map._zoom,
+            gmx = this._gmx;
+        for (var key in gmx.screenTiles) {
+            var screenTile = gmx.screenTiles[key],
+                keyElems = key.split(':'),
+                tilePoint = L.point(keyElems[1], keyElems[2]),
                 gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
                 hashKey = zoom + '_' + gtp.x + '_' + gtp.y;
                 
             if (hashKey in gmxTiles) {
-                delete this._gmx.tileSubscriptions[zkey];
-                this._addTile(tilePoint);
+                this._drawTileAsync(tilePoint, zoom);
             }
         }
     },

@@ -226,26 +226,38 @@
     }
 
     initTileList();
+    
+    //TODO: optimize this by storing current number of not loaded tiles for subscriptions
+    this._triggerAllSubscriptions = function() {
+        for (var subscrID in subscriptions) {
+            var s = subscriptions[subscrID];
+            this.loadTiles(s.tilePoint) || s.callback();
+        }
+    }
 
     this.setDateInterval = function(newBeginDate, newEndDate) {
-        if (!isTemporalLayer || (newBeginDate == beginDate && newBeginDate == endDate)) { return; };
+        if (!isTemporalLayer || (newBeginDate == beginDate && newBeginDate == endDate)) {
+            return;
+        };
 
         activeTileKeys = tilesTree.selectTiles(newBeginDate, newEndDate);
         beginDate = newBeginDate;
         endDate = newEndDate;
+        
+        this._triggerAllSubscriptions();
     }
 
-    this.setPropertiesHook = function(filterName, filterFunc) {
+    this.addFilter = function(filterName, filterFunc) {
         
         filters[filterName] = filterFunc;
-        
-        for (var subscrID in subscriptions) {
-            subscriptions[subscrID].callback();
-        }
+        this._triggerAllSubscriptions();
     }
 
-    this.removePropertiesHook = function(filterName) {
-        delete filters[filterName];
+    this.removeFilter = function(filterName) {
+        if (filters[filterName]) {
+            delete filters[filterName];
+            this._triggerAllSubscriptions();
+        }
     }
 
     this.getItems = function(bounds, hover) {
@@ -254,7 +266,7 @@
             var tile = tiles[key].tile,
                 data = tile.data;
             if (!data || !bounds.intersects(tile.bounds)) {
-                // VectorTile not loaded or not on screen
+                // VectorTile is not loaded or is not on a screen
                 continue;
             }
 
@@ -371,9 +383,12 @@ if (zn === null) it[j] = '';
             if (!bounds.intersects(tile.bounds)) return;
 
             if (tile.state === 'notLoaded') {
-                leftToLoad++;
                 tile.load().then(function() {
                     gmx.itemCount += _updateItemsFromTile(tile);
+                    
+                    var treeNode = tilesTree.getNode(tile.d, tile.s);
+                    treeNode && treeNode.count--; //decrease number of tiles to load inside this node
+                    
                     for (var key in subscriptions) {
                         if (tile.bounds.intersects(subscriptions[key].styleBounds)
                             && _this.getNotLoadedTileCount(subscriptions[key].tilePoint) == 0) 
@@ -381,22 +396,25 @@ if (zn === null) it[j] = '';
                             subscriptions[key].callback();
                         }
                     }
-                    var treeNode = tilesTree.getNode(tile.d, tile.s);
-                    treeNode && treeNode.count--; //decrease number of tiles to load inside this node
                 })
             }
+            
+            if (tile.state !== 'loaded') {
+                leftToLoad++;
+            }
         })(tiles[key].tile);
+        
         return leftToLoad;
     }
 
     //'callback' will be called at least once:
-    // - immediately, if all data for a given bbox is already loaded
-    // - after next chunk of data will be loaded
+    // - immediately, if all the data for a given bbox is already loaded
+    // - after all the data for a given bbox will be loaded
     this.on = function(gmxTilePoint, callback) {
         var id = 's'+(freeSubscrID++);
         subscriptions[id] = {
-            tilePoint: gmxTilePoint, 
-            callback: callback, 
+            tilePoint: gmxTilePoint,
+            callback: callback,
             styleBounds: getStyleBounds(gmxTilePoint)
         };
 
@@ -409,10 +427,6 @@ if (zn === null) it[j] = '';
 
     this.off = function(id) {
         delete subscriptions[id];
-    }
-
-    this.getTile = function(tileKey) {
-        return tiles[tileKey];
     }
 
     this.getItem = function(id) {
@@ -476,7 +490,7 @@ if (zn === null) it[j] = '';
 	}
 
     if (isTemporalLayer) {
-        this.setPropertiesHook('TemporalFilter', function(item) {
+        this.addFilter('TemporalFilter', function(item) {
             var unixTimeStamp = item.options.unixTimeStamp;
             return unixTimeStamp >= beginDate.valueOf() && unixTimeStamp <= endDate.valueOf();
         })
