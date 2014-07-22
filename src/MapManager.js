@@ -61,7 +61,7 @@ gmxMapManager.iterateLayers = function(treeInfo, callback) {
     treeInfo && iterate(treeInfo.children);
 }
 
-var gmxMap = function(mapInfo) {
+var gmxMap = function(mapInfo, commonLayerOptions) {
     this.layers = [];
     this.layersByTitle = {};
     this.layersByID = {};
@@ -70,10 +70,10 @@ var gmxMap = function(mapInfo) {
 	
 	gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
         var props = layerInfo.properties,
-            layerOptions = {
+            layerOptions = L.extend({
                 mapName: mapInfo.properties.name, 
                 layerID: props.name
-            },
+            }, commonLayerOptions),
             layer;
         
         if (props.type === 'Vector') {

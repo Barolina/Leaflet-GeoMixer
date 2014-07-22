@@ -63,7 +63,7 @@ L.gmx.loadMap = function(mapID, options) {
 	options = options || {};
 	
 	gmxMapManager.getMap(hostName, options.apiKey, mapID).then(function(mapInfo) {
-		var loadedMap = new gmxMap(mapInfo);
+		var loadedMap = new gmxMap(mapInfo, options);
 		
 		if (options.leafletMap) {
 			for (var l = 0; l < loadedMap.layers.length; l++) {

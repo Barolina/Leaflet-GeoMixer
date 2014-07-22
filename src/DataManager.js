@@ -3,15 +3,15 @@
         freeSubscrID = 0,
         tiles = {},
         activeTileKeys = {},
-        activeIntervals = [],
-        beginDate, endDate,
+        // activeIntervals = [],
+        beginDate = gmx.beginDate,
+        endDate = gmx.endDate,
         isTemporalLayer = layerDescription.properties.Temporal,
         filters = {},
         styleHook = null,
         items = {},
-        maxStyleSize = 0;
-
-	var tilesTree = new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT);
+        maxStyleSize = 0,
+        tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
 
     var getStyleBounds = function(gmxTilePoint) {
         if (maxStyleSize === 0) {
@@ -33,42 +33,6 @@
         }
     }
 
-    var initTileList = function() {
-        var props = layerDescription.properties,
-            arr, vers;
-
-        if (isTemporalLayer) {
-            arr = props.TemporalTiles || [];
-            vers = props.TemporalVers || [];
-
-            for (var i = 0, len = arr.length; i < len; i++) {
-                var arr1 = arr[i];
-                var z = Number(arr1[4]),
-                    y = Number(arr1[3]),
-                    x = Number(arr1[2]),
-                    s = Number(arr1[1]),
-                    d = Number(arr1[0]),
-                    v = Number(vers[i]),
-                    tile = new gmxVectorTile(vectorTileDataProvider, x, y, z, v, s, d);
-
-                tiles[tile.gmxTileKey] = {tile: tile};
-            }
-
-            tilesTree.initFromTiles(tiles);
-
-        } else {
-            arr = props.tiles || [];
-            vers = props.tilesVers;
-            for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-                var tile = new gmxVectorTile(vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
-                tiles[tile.gmxTileKey] = {tile: tile};
-                activeTileKeys[tile.gmxTileKey] = true;
-            }
-        }
-    }
-
-    initTileList();
-    
     //TODO: optimize this by storing current number of not loaded tiles for subscriptions
     this._triggerAllSubscriptions = function(subscriptionIDs) {
         for (var subscrID in subscriptionIDs) {
@@ -84,10 +48,11 @@
 
         var selection = tilesTree.selectTiles(newBeginDate, newEndDate);
         activeTileKeys = selection.tiles;
-        activeIntervals = selection.nodes;
+        // activeIntervals = selection.nodes;
         beginDate = newBeginDate;
         endDate = newEndDate;
         
+        //trigger all subscriptions because temporal filter will be changed
         this._triggerAllSubscriptions(subscriptions);
     }
 
@@ -228,10 +193,12 @@ if (zn === null) it[j] = '';
 
             if (tile.state === 'notLoaded') {
                 tile.load().then(function() {
-                    gmx.itemCount += _updateItemsFromTile(tile);
-                    
-                    var treeNode = tilesTree.getNode(tile.d, tile.s);
-                    treeNode && treeNode.count--; //decrease number of tiles to load inside this node
+                    _updateItemsFromTile(tile);
+              
+                    if (tilesTree) {
+                        var treeNode = tilesTree.getNode(tile.d, tile.s);
+                        treeNode && treeNode.count--; //decrease number of tiles to load inside this node
+                    }
                     
                     for (var key in subscriptions) {
                         if (tile.bounds.intersects(subscriptions[key].styleBounds)
@@ -306,7 +273,7 @@ if (zn === null) it[j] = '';
     }
 
 	this.preloadTiles = function(dateBegin, dateEnd, bounds) {
-		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd).tiles,
+		var tileKeys = isTemporalLayer ? tilesTree.selectTiles(dateBegin, dateEnd).tiles : activeTileKeys,
             loadingDefs = [];
 		for (var key in tileKeys) {
 			var tile = tiles[key].tile;
@@ -322,9 +289,12 @@ if (zn === null) it[j] = '';
 			var loadDef = tile.load();
 			(function(tile) {
 				loadDef.then(function() {
-					gmx.itemCount += _updateItemsFromTile(tile);
-					var treeNode = tilesTree.getNode(tile.d, tile.s);
-					treeNode && treeNode.count--; //decrease number of tiles to load inside this node
+					_updateItemsFromTile(tile);
+                    
+                    if (tilesTree) {
+                        var treeNode = tilesTree.getNode(tile.d, tile.s);
+                        treeNode && treeNode.count--; //decrease number of tiles to load inside this node
+                    }
 				})
 			})(tile);
 			loadingDefs.push(loadDef);
@@ -333,7 +303,13 @@ if (zn === null) it[j] = '';
 		return gmxDeferred.all.apply(null, loadingDefs);
 	}
     
-    this.updateTilesList = function(newTilesList) {
+    this._updateActiveTilesList = function(newTilesList) {
+    
+        if (!activeTileKeys) {
+            activeTileKeys = newTilesList;
+            return;
+        }
+        
         var changedTiles = [],
             subscriptionsToUpdate = {};
             
@@ -341,7 +317,7 @@ if (zn === null) it[j] = '';
             var bounds = gmxVectorTile.boundsFromTileKey(gmxTileKey);
             
             for (var sid in subscriptions) {
-                if (bounds.intersects(subscriptions.styleBounds)) {
+                if (bounds.intersects(subscriptions[sid].styleBounds)) {
                     subscriptionsToUpdate[sid] = true;
                 }
             }
@@ -363,14 +339,56 @@ if (zn === null) it[j] = '';
         
         this._triggerAllSubscriptions(subscriptionsToUpdate);
     }
+    
+    this.initTileList = function(layerProperties) {
+        var arr, vers;
+
+        if (isTemporalLayer) {
+            arr = layerProperties.TemporalTiles || [];
+            vers = layerProperties.TemporalVers || [];
+
+            for (var i = 0, len = arr.length; i < len; i++) {
+                var arr1 = arr[i];
+                var z = Number(arr1[4]),
+                    y = Number(arr1[3]),
+                    x = Number(arr1[2]),
+                    s = Number(arr1[1]),
+                    d = Number(arr1[0]),
+                    v = Number(vers[i]),
+                    tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
+                    
+                tiles[tileKey] = tiles[tileKey] || {
+                    tile: new gmxVectorTile(vectorTileDataProvider, x, y, z, v, s, d)
+                }
+            }
+
+            tilesTree.initFromTiles(tiles);
+            
+            if (beginDate && endDate) {
+                var selection = tilesTree.selectTiles(beginDate, endDate);
+                this._updateActiveTilesList(selection.tiles);
+            }
+            
+        } else {
+            arr = layerProperties.tiles || [];
+            vers = layerProperties.tilesVers;
+            var newActiveTileKeys = {};
+            for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
+                var tile = new gmxVectorTile(vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
+                tiles[tile.gmxTileKey] = tiles[tile.gmxTileKey] || {tile: tile};
+                newActiveTileKeys[tile.gmxTileKey] = true;
+            }
+            
+            this._updateActiveTilesList(newActiveTileKeys);
+        }
+    }
+
+    this.initTileList(layerDescription.properties);    
 
     if (isTemporalLayer) {
         this.addFilter('TemporalFilter', function(item) {
             var unixTimeStamp = item.options.unixTimeStamp;
             return unixTimeStamp >= beginDate.valueOf() && unixTimeStamp <= endDate.valueOf();
         })
-        if (gmx.beginDate && gmx.endDate) {
-            this.setDateInterval(gmx.beginDate, gmx.endDate);
-        }
     }
 }

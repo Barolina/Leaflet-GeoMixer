@@ -71,7 +71,7 @@
             beginDate: new Date(ddt2.valueOf() - oneDay),
             endDate: ddt2
         }).then(function(hotspotLayer) {
-			hotspotLayer._gmx.vectorTilesManager.preloadTiles(ddt1, ddt2).then(function() {
+			hotspotLayer._gmx.dataManager.preloadTiles(ddt1, ddt2).then(function() {
 				updateInfo(new Date(ddt2.valueOf() - oneDay));
 				hotspotLayer.addTo(map);
 				$('#slider').slider({

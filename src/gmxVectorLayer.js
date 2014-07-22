@@ -1,7 +1,8 @@
 ﻿L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
-        clickable: true
+        clickable: true,
+        updateInterval: 0
     },
 
     initialize: function(options) {
@@ -111,6 +112,20 @@
         this._update();
 
         this.initPromise.resolve();
+        
+        if (gmx.properties.LayerVersion && this.options.updateInterval) {
+            setInterval(function() {
+                gmxAPIutils.requestJSONP('http://' + gmx.hostName + '/Layer/CheckVersion.ashx', {
+                    layers: JSON.stringify([{Name: gmx.properties.name, Version: gmx.properties.LayerVersion}])
+                }).then(function(response) {
+                    if (response.Status === 'ok' && response.Result.length) {
+                        var newProps = response.Result[0].properties;
+                        gmx.dataManager.initTileList(newProps);
+                        gmx.properties.LayerVersion = newProps.LayerVersion;
+                    }
+                });
+            }, this.options.updateInterval)
+        }
     },
 
     setStyle: function (style, num) {
@@ -637,11 +652,12 @@
 
     initLayerData: function(layerDescription) {     // обработка описания слоя
         var gmx = this._gmx,
-            res = {items:{}, tileCount:0, itemCount:0},
             prop = layerDescription.properties,
             type = prop.type + (prop.Temporal ? 'Temporal' : '');
 
-        gmx.items = {}, gmx.tileCount = 0, gmx.itemCount = 0;
+        gmx.items = {};
+        gmx.tileCount = 0;
+        
 		var cnt;
 		if(type === 'VectorTemporal') {
             cnt = prop.TemporalTiles;
@@ -721,7 +737,5 @@
             }
             gmx.tileAttributeIndexes = tileAttributeIndexes;
         }
-
-		return res;
 	}
 });

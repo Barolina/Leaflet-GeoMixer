@@ -104,8 +104,12 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.s = s;
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
-    this.gmxTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
+    this.gmxTileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
     this.state = 'notLoaded'; //notLoaded, loading, loaded
+}
+
+gmxVectorTile.makeTileKey = function(x, y, z, v, s, d) {
+    return z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
 }
 
 gmxVectorTile.parseTileKey = function(gmxTileKey) {
