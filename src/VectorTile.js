@@ -10,14 +10,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
             loadDef = new gmxDeferred();
             this.state = 'loading';
             dataProvider.load(x, y, z, v, s, d, function(data) {
-            
-                //clone data to avoid conflicts between multiple maps
-                //TODO: fixme!
-                // _this.data = new Array(data.length);
-                // for (var i = 0; i < data.length; i++) {
-                    // _this.data[i] = data[i].slice();
-                // }
-                
+
                 _this.data = data;
                 _this.dataOptions = new Array(data.length);
                 
@@ -113,4 +106,14 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
     this.gmxTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
     this.state = 'notLoaded'; //notLoaded, loading, loaded
+}
+
+gmxVectorTile.parseTileKey = function(gmxTileKey) {
+    var p = gmxTileKey.split('_');
+    return {z: p[0], x: p[1], y: p[2], v: p[3], s: p[4], d: p[5]};
+}
+
+gmxVectorTile.boundsFromTileKey = function(gmxTileKey) {
+    var p = gmxVectorTile.parseTileKey(gmxTileKey);
+    return gmxAPIutils.getTileBounds(p.x, p.y, p.z);
 }

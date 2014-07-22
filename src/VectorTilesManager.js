@@ -3,6 +3,7 @@
         freeSubscrID = 0,
         tiles = {},
         activeTileKeys = {},
+        activeIntervals = [],
         beginDate, endDate,
         isTemporalLayer = layerDescription.properties.Temporal,
         filters = {},
@@ -85,13 +86,14 @@
 			// --------------------
 			var selectTilesForNode = function(node, t1, t2) {
 				if (t1 >= node.t2 || t2 <= node.t1) {
-					return {count: 0, tiles: {}};
+					return {count: 0, tiles: {}, nodes: []};
 				}
 
 				if (node.d === 0) {
 					return {
 						tiles: node.tiles,
-						count: node.count
+						count: node.count,
+                        nodes: [node]
 					}
 				}
 
@@ -101,42 +103,50 @@
 					if (node.children[ds]) {
 						childrenRes[ds] = selectTilesForNode(node.children[ds], Math.max(t1, node.t1), Math.min(t2, node.t2));
 					} else {
-						childrenRes[ds] = {count: 0, tiles: {}};
+						childrenRes[ds] = {count: 0, tiles: {}, nodes: []};
 					}
 					childrenCount += childrenRes[ds].count;
 				}
 
 				if (childrenCount < node.count) {
-					var resTiles = {};
+					var resTiles = {},
+                        resNodesArr = [];
 					for (var ds = 0; ds < childrenRes.length; ds++) {
 						for (var key in childrenRes[ds].tiles) {
 							resTiles[key] = childrenRes[ds].tiles[key];
+                            resNodesArr.push(resNodesArr);
 						}
 					}
 
 					return {
 						tiles: resTiles,
-						count: childrenCount
+						count: childrenCount,
+                        nodes: [].concat.apply([], resNodesArr)
 					}
 				} else {
 					return {
 						tiles: node.tiles,
-						count: node.count
+						count: node.count,
+                        nodes: [node]
 					} 
 				}
 			}
 
-			var res = {};
+			var resTiles = {};
+			var resNodes = [];
 			for (var ds = 0; ds < this._rootNodes.length; ds++) {
 				if (this._rootNodes[ds]) {
-					var tiles = selectTilesForNode(this._rootNodes[ds], t1Val, t2Val).tiles;
-					for (var key in tiles) {
-						res[key] = tiles[key];
+                    var nodeSelection = selectTilesForNode(this._rootNodes[ds], t1Val, t2Val),
+                        selectedTiles = nodeSelection.tiles;
+					for (var key in selectedTiles) {
+						resTiles[key] = selectedTiles[key];
 					}
+                    
+                    resNodes = resNodes.concat(nodeSelection.nodes);
 				}
 			}
 
-			return res;
+			return {tiles: resTiles, nodes: resNodes};
 		},
 
 		getNode: function(d, s) {
@@ -228,8 +238,8 @@
     initTileList();
     
     //TODO: optimize this by storing current number of not loaded tiles for subscriptions
-    this._triggerAllSubscriptions = function() {
-        for (var subscrID in subscriptions) {
+    this._triggerAllSubscriptions = function(subscriptionIDs) {
+        for (var subscrID in subscriptionIDs) {
             var s = subscriptions[subscrID];
             this.loadTiles(s.tilePoint) || s.callback();
         }
@@ -240,23 +250,25 @@
             return;
         };
 
-        activeTileKeys = tilesTree.selectTiles(newBeginDate, newEndDate);
+        var selection = tilesTree.selectTiles(newBeginDate, newEndDate);
+        activeTileKeys = selection.tiles;
+        activeIntervals = selection.nodes;
         beginDate = newBeginDate;
         endDate = newEndDate;
         
-        this._triggerAllSubscriptions();
+        this._triggerAllSubscriptions(subscriptions);
     }
 
     this.addFilter = function(filterName, filterFunc) {
         
         filters[filterName] = filterFunc;
-        this._triggerAllSubscriptions();
+        this._triggerAllSubscriptions(subscriptions);
     }
 
     this.removeFilter = function(filterName) {
         if (filters[filterName]) {
             delete filters[filterName];
-            this._triggerAllSubscriptions();
+            this._triggerAllSubscriptions(subscriptions);
         }
     }
 
@@ -462,7 +474,7 @@ if (zn === null) it[j] = '';
     }
 
 	this.preloadTiles = function(dateBegin, dateEnd, bounds) {
-		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd),
+		var tileKeys = tilesTree.selectTiles(dateBegin, dateEnd).tiles,
             loadingDefs = [];
 		for (var key in tileKeys) {
 			var tile = tiles[key].tile;
@@ -488,6 +500,37 @@ if (zn === null) it[j] = '';
 
 		return gmxDeferred.all.apply(null, loadingDefs);
 	}
+    
+    this.updateTilesList = function(newTilesList) {
+        var changedTiles = [],
+            subscriptionsToUpdate = {};
+            
+        var checkSubscription = function(gmxTileKey) {
+            var bounds = gmxVectorTile.boundsFromTileKey(gmxTileKey);
+            
+            for (var sid in subscriptions) {
+                if (bounds.intersects(subscriptions.styleBounds)) {
+                    subscriptionsToUpdate[sid] = true;
+                }
+            }
+        }
+            
+        for (var key in newTilesList) {
+            if (!activeTileKeys[key]) {
+                checkSubscription(key);
+            }
+        }
+
+        for (var key in activeTileKeys) {
+            if (!newTilesList[key]) {
+                checkSubscription(key);
+            }
+        }
+        
+        activeTileKeys = newTilesList;
+        
+        this._triggerAllSubscriptions(subscriptionsToUpdate);
+    }
 
     if (isTemporalLayer) {
         this.addFilter('TemporalFilter', function(item) {
