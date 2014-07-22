@@ -33,7 +33,7 @@
                 screenTiles = gmx.screenTiles;
 
             if (key in gmx.tileSubscriptions) {
-                gmx.vectorTilesManager.off(gmx.tileSubscriptions[key].id);
+                gmx.dataManager.off(gmx.tileSubscriptions[key].id);
                 delete gmx.tileSubscriptions[key];
             }
 
@@ -105,7 +105,7 @@
         gmx.geometry = ph.geometry;
 
         this.initLayerData(ph);
-        gmx.vectorTilesManager = new gmxVectorTilesManager(gmx, ph);
+        gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
         gmx.ProjectiveImage = new ProjectiveImage();
         this._update();
@@ -132,19 +132,19 @@
 
     //TODO: remove
     setPropertiesHook: function (func) {
-        this._gmx.vectorTilesManager.addFilter('userHook', func);
+        this._gmx.dataManager.addFilter('userHook', func);
         return this;
     },
 
     setFilter: function (func) {
-        this._gmx.vectorTilesManager.addFilter('userFilter', function(item) {
+        this._gmx.dataManager.addFilter('userFilter', function(item) {
             return !func || func(item) ? item.properties : null;
         });
         return this;
     },
 
     removeFilter: function () {
-        this._gmx.vectorTilesManager.removeFilter('userFilter');
+        this._gmx.dataManager.removeFilter('userFilter');
         return this;
     },
 
@@ -152,7 +152,7 @@
         var gmx = this._gmx;
         gmx.beginDate = beginDate;
         gmx.endDate = endDate;
-        gmx.vectorTilesManager.setDateInterval(beginDate, endDate);
+        gmx.dataManager.setDateInterval(beginDate, endDate);
         return this;
     },
 
@@ -236,7 +236,7 @@
 
         for (var key in subscriptions) {
             if (subscriptions[key].gtp.z !== zoom) {
-                this._gmx.vectorTilesManager.off(subscriptions[key].id);
+                this._gmx.dataManager.off(subscriptions[key].id);
                 delete subscriptions[key];
             }
         }
@@ -299,7 +299,7 @@
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false;
             var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            var subscrID = gmx.vectorTilesManager.on(gmxTilePoint, function() {
+            var subscrID = gmx.dataManager.on(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom).then(function() {
                     if (!isDrawnFirstTime) {
                         gmx._tilesToLoad--;
@@ -424,7 +424,7 @@
             var geoItem = geoItems[i].arr,
                 idr = geoItem[0],
                 dataOption = geoItems[i].dataOption || {},
-                item = gmx.vectorTilesManager.getItem(idr),
+                item = gmx.dataManager.getItem(idr),
                 parsedStyle = gmx.styleManager.getObjStyle(item),
                 lineWidth = parsedStyle.lineWidth || 0,
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
@@ -544,7 +544,7 @@
                 delta = 5 / gmx.mInPixel,
                 bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
             bounds = bounds.addBuffer(delta, delta, delta, delta);
-            var geoItems = gmx.vectorTilesManager.getItems(bounds, true);
+            var geoItems = gmx.dataManager.getItems(bounds, true);
 
             if (geoItems && geoItems.length) {
                 var arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
@@ -613,7 +613,7 @@
     
     redrawItem: function (id) {    // redraw Item
         var gmx = this._gmx,
-            item = gmx.vectorTilesManager.getItem(id),
+            item = gmx.dataManager.getItem(id),
             gmxTiles = this._getTilesByBounds(item.bounds);
         this._redrawTilesHash(gmxTiles);    // reset hover
     },

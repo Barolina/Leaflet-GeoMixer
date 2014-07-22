@@ -53,7 +53,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var getItemRasters = function(geo) {
         var properties = geo.arr,
             idr = properties[0],
-            item = gmx.vectorTilesManager.getItem(idr),
+            item = gmx.dataManager.getItem(idr),
             def = new gmxDeferred();
         if (idr in rasters) return def;
 
@@ -242,7 +242,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 if (gmx.styleHook) {
                     var idr = geo.arr[0];
                     geo.styleExtend = gmx.styleHook(
-                        gmx.vectorTilesManager.getItem(idr),
+                        gmx.dataManager.getItem(idr),
                         gmx.lastHover && idr === gmx.lastHover.id
                     );
                     skipRasters = geo.styleExtend.skipRasters;
@@ -334,7 +334,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         };
         
         var bounds = getStyleBounds(gmxTilePoint),
-            geoItems = gmx.vectorTilesManager.getItems(bounds), //call each time because of possible items updates
+            geoItems = gmx.dataManager.getItems(bounds), //call each time because of possible items updates
             itemsLength = geoItems.length;
         if(itemsLength === 0) {
             if (tKey in layer._tiles) {
@@ -361,7 +361,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 var arr = geoItem.arr,
                     dataOption = geoItem.dataOption,
                     idr = arr[0],
-                    item = gmx.vectorTilesManager.getItem(idr),
+                    item = gmx.dataManager.getItem(idr),
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
                 if (gmx.styleHook && !geoItem.styleExtend) {

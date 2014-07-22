@@ -55,10 +55,10 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 			callback([[777, ph.geometry]]);
 		}}
 		
-		//there are no z=0 tile in GeoMixer - use 4 tiles with z=1
-		gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, 0,   0, 1, 0, -1, -1));
-		gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, 0,  -1, 1, 0, -1, -1));
-		gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, -1,  0, 1, 0, -1, -1));
-		gmx.vectorTilesManager.addTile(new gmxVectorTile(vectorDataProvider, -1, -1, 1, 0, -1, -1));
+		//there is no z=0 tile in GeoMixer - use 4 tiles with z=1
+		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, 0,   0, 1, 0, -1, -1));
+		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, 0,  -1, 1, 0, -1, -1));
+		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, -1,  0, 1, 0, -1, -1));
+		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, -1, -1, 1, 0, -1, -1));
 	}
 });

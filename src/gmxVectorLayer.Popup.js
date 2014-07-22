@@ -79,7 +79,7 @@
             var key = matches[1],
                 res = key in properties ? properties[key] : '';
             if (key === 'SUMMARY' && !res) {
-                var geometries = this._gmx.vectorTilesManager.getItemGeometries(gmx.id);
+                var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
                 res = L.Util.getGeometriesSummary(geometries, this._gmx.units);
             }
             var hookID = gmxAPIutils.newId(),

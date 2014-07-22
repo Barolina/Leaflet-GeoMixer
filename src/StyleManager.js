@@ -359,7 +359,7 @@
         return false;
     }
 
-    gmx.vectorTilesManager.addFilter('styleFilter', chkStyleFilter);
+    gmx.dataManager.addFilter('styleFilter', chkStyleFilter);
  
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {

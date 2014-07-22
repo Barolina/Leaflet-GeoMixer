@@ -1,4 +1,4 @@
-﻿var gmxVectorTilesManager = function(gmx, layerDescription) {
+﻿var gmxDataManager = function(gmx, layerDescription) {
     var subscriptions = {},
         freeSubscrID = 0,
         tiles = {},
