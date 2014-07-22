@@ -6,6 +6,7 @@
     "StyleManager.js",
     "ScreenVectorTile.js",
     "VectorTile.js",
+    "TilesTree.js",
     "DataManager.js",
     "gmxAPIutils.js",
     "gmxImageTransform.js",
