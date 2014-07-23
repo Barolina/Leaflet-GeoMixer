@@ -5,7 +5,11 @@
 Пример|Описание|Примечание
 ------|---------|-----------
 [GeoMixerMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html)| Загрузка карты с сервера ГеоМиксера| Загружаются все видимые слои заданной карты
-[satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)|Загрузка базовой подложки - снимки|
+[satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)| Загрузка базовой подложки - снимки|
+[GMXLayerLeaflet.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html)| Загрузка слоя с сервера ГеоМиксера. Демонстрируется работа с мультивременным слоем.
+[Animation.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html)| Предварительная загрузка данных слоя точек пожаров - показ точек за любой день при помощи ползунка.
+[Plugins.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Интеграция с другими Leaflet плагинами
+[MultipleMaps.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
 [bindPopup.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Добавление пользовательского контента в тело балуна.
 
 ##Плагин [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
@@ -35,3 +39,10 @@
 [L.Control.gmxIcon.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxIcon.html)| Контрол иконок|
 [L.Control.gmxHide.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Контрол видимости верхних контролов|
 [ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов ГеоМиксера| 
+
+##Плагин [L.GmxDrawing.js](https://github.com/ScanEx/gmxDrawing)
+
+Пример|Описание
+------|---------
+[addDrawingObjects.html](http://scanex.github.io/gmxDrawing/examples/addDrawingObjects.html)| Добавление редактируемых объектов на карту
+[useDrawingControls.html](http://scanex.github.io/gmxDrawing/examples/useDrawingControls.html)| Использование контролов рисования
