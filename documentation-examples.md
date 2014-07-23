@@ -27,7 +27,6 @@ Name|Description
 [Editing.html](http://scanex.github.io/Leaflet.imageTransform/examples/Editing.html)| Edit anchor points and clip polygon
 
 ##GeoMixer control [plugins](https://github.com/ScanEx/gmxControls)
-Пользователь сам выбирает набор необходимых ему контролов.
 
 Name|Description
 ------|---------
