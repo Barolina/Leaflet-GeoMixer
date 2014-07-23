@@ -113,18 +113,26 @@
 
         this.initPromise.resolve();
         
-        if (gmx.properties.LayerVersion && this.options.updateInterval) {
-            setInterval(function() {
-                gmxAPIutils.requestJSONP('http://' + gmx.hostName + '/Layer/CheckVersion.ashx', {
-                    layers: JSON.stringify([{Name: gmx.properties.name, Version: gmx.properties.LayerVersion}])
-                }).then(function(response) {
-                    if (response.Status === 'ok' && response.Result.length) {
-                        var newProps = response.Result[0].properties;
-                        gmx.dataManager.initTileList(newProps);
-                        gmx.properties.LayerVersion = newProps.LayerVersion;
-                    }
-                });
-            }, this.options.updateInterval)
+        // if (gmx.properties.LayerVersion && this.options.updateInterval) {
+            // setInterval(function() {
+                // gmxAPIutils.requestJSONP('http://' + gmx.hostName + '/Layer/CheckVersion.ashx', {
+                    // layers: JSON.stringify([{Name: gmx.properties.name, Version: gmx.properties.LayerVersion}])
+                // }).then(function(response) {
+                    // if (response.Status === 'ok' && response.Result.length) {
+                        // var newProps = response.Result[0].properties;
+                        // gmx.dataManager.initTileList(newProps);
+                        // gmx.properties.LayerVersion = newProps.LayerVersion;
+                    // }
+                // });
+            // }, this.options.updateInterval)
+        // }
+    },
+
+    updateVersion: function (newProps) {
+        if (newProps) {
+            var gmx = this._gmx;
+            gmx.dataManager.initTileList(newProps);
+            gmx.properties.LayerVersion = newProps.LayerVersion;
         }
     },
 
