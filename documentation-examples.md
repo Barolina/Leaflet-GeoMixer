@@ -36,6 +36,7 @@ Name|Description
 [L.Control.gmxCopyright.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Copyrights control
 [L.Control.gmxLocation.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxLocation.html)| Location control
 [L.Control.gmxIcon.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxIcon.html)| Icon control
+[L.Control.boxZoom.html](http://scanex.github.io/gmxControls/examples/L.Control.boxZoom.html)| BoxZoom control
 [L.Control.gmxHide.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Hide control
 [ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| All GeoMixer's controls
 
