@@ -88,7 +88,7 @@
                     dataOption = dataOptions[j] || {},
                     isFiltered = false;
                 for (var filterName in filters) {
-                    if (filters[filterName] && !filters[filterName](item)) {
+                    if (filters[filterName] && !filters[filterName](item, tile)) {
                         isFiltered = true;
                         break;
                     }
@@ -100,8 +100,6 @@
                     var b = gmxAPIutils.geoItemBounds(geom);
                     dataOption.bounds = b.bounds;
                     if (b.boundsArr.length) dataOption.boundsArr = b.boundsArr;
-                    var arr = [[dataOption.bounds.min.x, dataOption.bounds.min.y], [dataOption.bounds.max.x, dataOption.bounds.max.y]];
-                    item.bounds = (item.bounds ? item.bounds.extendArray(arr) : gmxAPIutils.bounds(arr));
                     if (!dataOptions[j]) dataOptions[j] = dataOption;
                 }
 
@@ -147,7 +145,6 @@ if (zn === null) it[j] = '';
                 item = {
                     id: id
                     ,type: geom.type
-                    ,properties: it
                     ,options: {
                         fromTiles: {}
                     }
@@ -155,6 +152,7 @@ if (zn === null) it[j] = '';
                 items[id] = item;
             }
             //it.item = item;
+            item.properties = it;
             item.options.fromTiles[gmxTileKey] = i;
             if(layerProp.TemporalColumnName) {
                 var zn = it[gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];
@@ -241,7 +239,17 @@ if (zn === null) it[j] = '';
     }
 
     this.getItem = function(id) {
-        return items[id];
+        var item = items[id];
+        if (item && !item.bounds) {
+            var fromTiles = item.options.fromTiles,
+                bounds = gmxAPIutils.bounds();
+            for (var key in fromTiles) {
+                var dataOptions = tiles[key].tile.dataOptions;
+                bounds.extendBounds(dataOptions[fromTiles[key]].bounds);
+            }
+            item.bounds = bounds;
+        }
+        return item;
     }
 
     this.getItemGeometries = function(id) {
@@ -339,6 +347,49 @@ if (zn === null) it[j] = '';
         
         this._triggerAllSubscriptions(subscriptionsToUpdate);
     }
+
+    this._propertiesToArray = function(it) {
+        var prop = it.properties,
+            indexes = gmx.tileAttributeIndexes,
+            arr = [];
+        for (var key in indexes) {
+            arr[indexes[key]] = prop[key];
+        }
+        arr[arr.length] = it.geometry;
+        arr[0] = it.id;
+        return arr;
+    }
+
+    this._chkProcessing = function(processing) {
+        var skip = {};
+        if (processing.Deleted)
+            processing.Deleted.forEach(function(id) {
+                skip[id] = true;
+                items[id].processing = true;
+            });
+
+        var out = {};
+        if (processing.Inserted)
+            processing.Inserted.forEach(function(it) { if (!skip[it.id]) out[it.id] = it; });
+
+        if (processing.Updated)
+            processing.Updated.forEach(function(it) { if (!skip[it.id]) out[it.id] = it; });
+
+        var data = [];
+        for (var id in out) {
+            if (items[id]) items[id].processing = true;
+            data.push(this._propertiesToArray(out[id]));
+        }
+        
+        if (data.length && !this.processingTiles) {
+            this.processingTile = this.addTile(new gmxVectorTile({load: function(x, y, z, v, s, d, callback) {
+                callback(data);
+            }}, -0.5, -0.5, 0, 0, -1, -1));
+            this.addFilter('processingFilter', function(item, tile) {
+                return tile.z === 0 || !item.processing;
+            });
+        }
+	}
     
     this.initTileList = function(layerProperties) {
         var arr, vers;
@@ -380,6 +431,10 @@ if (zn === null) it[j] = '';
             }
             
             this._updateActiveTilesList(newActiveTileKeys);
+        }
+
+        if (layerProperties.Processing) {
+            this._chkProcessing(layerProperties.Processing);
         }
     }
 

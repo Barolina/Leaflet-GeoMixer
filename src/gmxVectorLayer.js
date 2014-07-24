@@ -128,11 +128,17 @@
         // }
     },
 
-    updateVersion: function (newProps) {
-        if (newProps) {
+    updateVersion: function (layerDescription) {
+        if (layerDescription) {
             var gmx = this._gmx;
-            gmx.dataManager.initTileList(newProps);
-            gmx.properties.LayerVersion = newProps.LayerVersion;
+            if (layerDescription.properties) {
+                var prop = layerDescription.properties;
+                gmx.dataManager.initTileList(prop);
+                gmx.properties.LayerVersion = prop.LayerVersion;
+            }
+            if (layerDescription.geometry) {
+                // todo: update layer geometry
+            }
         }
     },
 
@@ -635,8 +641,7 @@
     },
     
     redrawItem: function (id) {    // redraw Item
-        var gmx = this._gmx,
-            item = gmx.dataManager.getItem(id),
+        var item = this._gmx.dataManager.getItem(id),
             gmxTiles = this._getTilesByBounds(item.bounds);
         this._redrawTilesHash(gmxTiles);    // reset hover
     },
