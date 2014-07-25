@@ -5,17 +5,20 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         isCalcHiddenPoints = false,
         _this = this;
 
+    this.addData = function(data) {
+        this.data = this.data ? this.data.concat(data) : data;
+        this.dataOptions = new Array(this.data.length);
+        this.state = 'loaded';
+        if (loadDef)
+            loadDef.resolve(this.data);
+    }
+
     this.load = function() {
         if (!loadDef) {
             loadDef = new gmxDeferred();
             this.state = 'loading';
             dataProvider.load(x, y, z, v, s, d, function(data) {
-
-                _this.data = data;
-                _this.dataOptions = new Array(data.length);
-                
-                _this.state = 'loaded';
-                loadDef.resolve(_this.data);
+                _this.addData(data);
             })
         }
 

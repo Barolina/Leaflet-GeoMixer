@@ -1,8 +1,9 @@
 ﻿L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
-        clickable: true,
-        updateInterval: 0
+        clickable: true
+        // ,
+        // updateInterval: 0
     },
 
     initialize: function(options) {
@@ -126,20 +127,6 @@
                 // });
             // }, this.options.updateInterval)
         // }
-    },
-
-    updateVersion: function (layerDescription) {
-        if (layerDescription) {
-            var gmx = this._gmx;
-            if (layerDescription.properties) {
-                var prop = layerDescription.properties;
-                gmx.dataManager.initTileList(prop);
-                gmx.properties.LayerVersion = prop.LayerVersion;
-            }
-            if (layerDescription.geometry) {
-                // todo: update layer geometry
-            }
-        }
     },
 
     setStyle: function (style, num) {
