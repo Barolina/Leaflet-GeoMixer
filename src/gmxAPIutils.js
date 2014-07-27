@@ -271,32 +271,6 @@
         
         var dz = tk1.z - tk2.z
         return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
-	}
-	,
-	parseXML: function(str)
-	{
-		var xmlDoc;
-		try
-		{
-			if (window.DOMParser)
-			{
-				parser = new DOMParser();
-				xmlDoc = parser.parseFromString(str,"text/xml");
-			}
-			else // Internet Explorer
-			{
-				xmlDoc = new ActiveXObject("MSXML2.DOMDocument.3.0");
-				xmlDoc.validateOnParse = false;
-				xmlDoc.async = false;
-				xmlDoc.loadXML(str);
-			}
-		}
-		catch(e)
-		{
-			console.log({'func': 'parseXML', 'str': str, 'event': e, 'alert': e});
-		}
-		
-		return xmlDoc;
 	},
 
     rotatePoints: function(arr, angle, scale, center) {			// rotate - массива точек
@@ -472,30 +446,15 @@
                     ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
                     ctx.drawImage(style.image, px1 - sx, sy - py1, 2 * sx, 2 * sy);
                     ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
+                } else if(style.rotateRes) {
+                    ctx.translate(px1 - sx, py1 - sy);
+                    ctx.rotate(gmxAPIutils.deg_rad(style.rotateRes));
+                    ctx.drawImage(style.image, 0, 0, 2 * sx, 2 * sy);
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
                 } else {
                     ctx.drawImage(style.image, px1 - sx, py1 - sy, 2 * sx, 2 * sy);
                 }
                 if('opacity' in style) ctx.globalAlpha = 1;
-            } else if(style.polygons) {
-                for (var i = 0, len = style.polygons.length; i < len; i++) {
-                    var p = style.polygons[i];
-                    ctx.save();
-                    ctx.lineWidth = p['stroke-width'] || 0;
-                    ctx.fillStyle = p.fill_rgba || 'rgba(0, 0, 255, 1)';
-                    
-                    ctx.beginPath();
-                    var arr = gmxAPIutils.rotatePoints(p.points, style.rotateRes, style.scale, {x: sx, y: sy});
-                    for (var j = 0, len1 = arr.length; j < len1; j++)
-                    {
-                        var t = arr[j];
-                        if(j == 0)
-                            ctx.moveTo(px1 + t.x, py1 + t.y);
-                        else
-                            ctx.lineTo(px1 + t.x, py1 + t.y);
-                    }
-                    ctx.fill();
-                    ctx.restore();
-                }
             }
         } else if(style.strokeStyle) {
             ctx.beginPath();

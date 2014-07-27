@@ -241,14 +241,10 @@
 		needLoadIcons++;
 		var ph = {
 			src: url
-			,callback: function(it, svgFlag) {
+			,callback: function(it) {
 				pt.sx = it.width / 2;
 				pt.sy = it.height / 2;
-				if(svgFlag) {
-					pt.polygons = it.polygons;
-				} else {
-					if(flag) pt.image = it;
-				}
+				if(flag) pt.image = it;
 				imagesSize[url] = pt;
 				needLoadIcons--;
                 me.chkReady();
@@ -277,6 +273,7 @@
     var itemStyleParser = function(item, pt) {
         var itemOptions = getItemOptions(item),
             out = {},
+            indexes = gmx.tileAttributeIndexes,
             prop = item.properties,
             color = 255, opacity = 1;
 
@@ -288,14 +285,14 @@
             if (pt.rotate) {
                 var rotateRes = pt.rotate || 0;
                 if(rotateRes && typeof(rotateRes) == 'string') {
-                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop) : 0);
+                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
                 }
                 out.rotate = rotateRes || 0;
             }
         }
 
         if(pt.size) {
-            out.size = ('sizeFunction' in pt ? pt.sizeFunction(prop) : pt.size);
+            out.size = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.size);
             out.sx = out.size;
             out.sy = out.size;
         }
@@ -304,8 +301,8 @@
             out.stroke = pt.stroke;
             out.strokeStyle = pt.strokeStyle;
             if('colorFunction' in pt || 'opacityFunction' in pt) {
-                color = 'colorFunction' in pt ? pt.colorFunction(prop) : 'color' in pt ? pt.color : 255;
-                opacity = 'opacityFunction' in pt ? pt.opacityFunction(prop)/100 : 'opacity' in pt ? pt.opacity : 1;
+                color = 'colorFunction' in pt ? pt.colorFunction(prop, indexes) : 'color' in pt ? pt.color : 255;
+                opacity = 'opacityFunction' in pt ? pt.opacityFunction(prop, indexes)/100 : 'opacity' in pt ? pt.opacity : 1;
                 out.strokeStyle = gmxAPIutils.dec2rgba(color, opacity);
             }
             out.lineWidth = 'lineWidth' in pt ? pt.lineWidth : 1;
@@ -318,8 +315,8 @@
             } else {
                 out.fillStyle = pt.fillStyle;
                 if('fillColorFunction' in pt || 'fillOpacityFunction' in pt) {
-                    color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop) : pt.fillColor || 255);
-                    opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop)/100 : pt.fillOpacity || 1);
+                    color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : pt.fillColor || 255);
+                    opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes)/100 : pt.fillOpacity || 1);
                     out.fillStyle = gmxAPIutils.dec2rgba(color, opacity);
                 }
             }
@@ -342,12 +339,13 @@
     }
 
     var chkStyleFilter = function(item) {
-        var itemOptions = getItemOptions(item);
+        var itemOptions = getItemOptions(item),
+            indexes = gmx.tileAttributeIndexes;
         
         for (var i = 0, len = styles.length; i < len; i++) {
             var st = styles[i];
             if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-            if ('FilterFunction' in st && !st.FilterFunction(item.properties, gmx.tileAttributeIndexes)) continue;
+            if ('FilterFunction' in st && !st.FilterFunction(item.properties, indexes)) continue;
             if(itemOptions.currentFilter !== i) {
                 itemStyleParser(item, st.RenderStyle);
                 if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);

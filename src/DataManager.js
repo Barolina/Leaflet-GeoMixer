@@ -84,8 +84,6 @@
                 var it = data[j],
                     id = it[0],
                     item = items[id],
-                    geom = it[it.length-1],
-                    dataOption = dataOptions[j] || {},
                     isFiltered = false;
                 for (var filterName in filters) {
                     if (filters[filterName] && !filters[filterName](item, tile)) {
@@ -96,6 +94,9 @@
 
                 if (isFiltered) {continue;}
 
+                var geom = it[it.length - 1],
+                    type = item.type,
+                    dataOption = dataOptions[j] || {};
                 if(!dataOption.bounds) {
                     var b = gmxAPIutils.geoItemBounds(geom);
                     dataOption.bounds = b.bounds;
@@ -108,7 +109,7 @@
                     continue;
                 }
 
-                if (item.type === 'POLYGON' || item.type === 'MULTIPOLYGON') {
+                if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
                     tile.calcHiddenPoints();
                 }
 
