@@ -22,7 +22,8 @@ var gmxVectorTileLoader = {
         var key = gmxVectorTileLoader._getKey(tileInfo);
         
         if (!this._loadedTiles[key]) {
-            this._loadedTiles[key] = new gmxDeferred();
+            var def = new gmxDeferred();
+            this._loadedTiles[key] = def;
             
             var requestParams = {
                 ModeKey: 'tile',
@@ -39,7 +40,9 @@ var gmxVectorTileLoader = {
                 requestParams.Span = tileInfo.s;
             }
             
-            gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams);
+            gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams).then(null, function() {
+                def.reject();
+            });            
         }
         
         return this._loadedTiles[key];

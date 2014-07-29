@@ -18,6 +18,7 @@
     "gmxVectorLayer.Popup.js",
     "gmxRasterLayer.js",
     "gmxLayerFactory.js",
+    "gmxLayersVersion.js ",
     "L.gmxLocale.js",
     "lang_ru.js",
     "lang_en.js"

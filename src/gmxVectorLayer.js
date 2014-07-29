@@ -35,7 +35,7 @@
                 screenTiles = gmx.screenTiles;
 
             if (key in gmx.tileSubscriptions) {
-                gmx.dataManager.off(gmx.tileSubscriptions[key].id);
+                gmx.dataManager.offSubscription(gmx.tileSubscriptions[key].id);
                 delete gmx.tileSubscriptions[key];
             }
 
@@ -127,6 +127,10 @@
                 // });
             // }, this.options.updateInterval)
         // }
+        if (gmx.properties.type === 'Vector') {
+            if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
+            L.gmx.layersVersion.add(this);
+        }
     },
 
     setStyle: function (style, num) {
@@ -252,7 +256,7 @@
 
         for (var key in subscriptions) {
             if (subscriptions[key].gtp.z !== zoom) {
-                this._gmx.dataManager.off(subscriptions[key].id);
+                this._gmx.dataManager.offSubscription(subscriptions[key].id);
                 delete subscriptions[key];
             }
         }
@@ -315,7 +319,7 @@
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false;
             var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            var subscrID = gmx.dataManager.on(gmxTilePoint, function() {
+            var subscrID = gmx.dataManager.onSubscription(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom).then(function() {
                     if (!isDrawnFirstTime) {
                         gmx._tilesToLoad--;

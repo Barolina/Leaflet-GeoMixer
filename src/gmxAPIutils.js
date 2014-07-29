@@ -97,7 +97,7 @@
       }
     }
     ,
-    
+
     tileSizes: [] // Размеры тайла по zoom
     ,
     
@@ -1035,3 +1035,186 @@ L.Util.formatCoordinates = function (latlng, type) {
 L.Util.geoArea = gmxAPIutils.geoArea;
 L.Util.getGeometrySummary = gmxAPIutils.getGeometrySummary;
 L.Util.getGeometriesSummary = gmxAPIutils.getGeometriesSummary;
+
+!function() {
+
+    //скопирована из API для обеспечения независимости от него
+    function parseUri(str)
+    {
+        var	o   = parseUri.options,
+            m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+            uri = {},
+            i   = 14;
+
+        while (i--) uri[o.key[i]] = m[i] || "";
+
+        uri[o.q.name] = {};
+        uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+            if ($1) uri[o.q.name][$1] = $2;
+        });
+
+        uri.hostOnly = uri.host;
+        uri.host = uri.authority; // HACK
+
+        return uri;
+    };
+
+    parseUri.options = {
+        strictMode: false,
+        key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+        q:   {
+            name:   "queryKey",
+            parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+        },
+        parser: {
+            strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+            loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+        }
+    };
+
+    var requests = {};
+    var lastRequestId = 0;
+    
+    var processMessage = function(e) {
+
+        if (!(e.origin in requests)) {
+            return;
+        }
+        
+        var dataStr = decodeURIComponent(e.data.replace(/\n/g,'\n\\'));
+        try {
+            var dataObj = JSON.parse(dataStr);
+        } catch (e) {
+            request.callback && request.callback({Status:"error", ErrorInfo: {ErrorMessage: "JSON.parse exeption", ExceptionType: "JSON.parse", StackTrace: dataStr}});
+        }
+        var request = requests[e.origin][dataObj.CallbackName];
+        if(!request) return;    // message от других запросов
+        
+        delete request[dataObj.CallbackName];
+        delete dataObj.CallbackName;
+
+        if(request.iframe.parentNode) request.iframe.parentNode.removeChild(request.iframe);
+        request.callback && request.callback(dataObj);
+    }
+    
+    L.DomEvent.on(window, 'message', processMessage);
+
+    function createPostIframe2(id, callback, url)
+    {
+        var uniqueId = 'gmxAPIutils_id'+(lastRequestId++);
+        
+        iframe = L.DomUtil.create('iframe');
+        iframe.style.display = 'none';
+        iframe.setAttribute('id', id);
+        iframe.setAttribute('name', id);
+        iframe.src = 'javascript:true';
+        iframe.callbackName = uniqueId;
+        
+        var parsedURL = parseUri(url);
+        var origin = (parsedURL.protocol ? (parsedURL.protocol + ':') : window.location.protocol) + '//' + (parsedURL.host || window.location.host);
+        
+        requests[origin] = requests[origin] || {};
+        requests[origin][uniqueId] = {callback: callback, iframe: iframe};
+
+        return iframe;
+    }
+    
+	//расширяем namespace
+    gmxAPIutils.createPostIframe2 = createPostIframe2;
+
+}();
+
+// кроссдоменный POST запрос
+(function()
+{
+	/** Посылает кроссдоменный POST запрос
+	* @namespace utilities
+    * @ignore
+	* @function
+	* 
+	* @param url {string} - URL запроса
+	* @param params {object} - хэш параметров-запросов
+	* @param callback {function} - callback, который вызывается при приходе ответа с сервера. Единственный параметр ф-ции - собственно данные
+	* @param baseForm {DOMElement} - базовая форма запроса. Используется, когда нужно отправить на сервер файл. 
+	*                                В функции эта форма будет модифицироваться, но после отправления запроса будет приведена к исходному виду.
+	*/
+	function sendCrossDomainPostRequest(url, params, callback, baseForm)
+	{
+        var form,
+            id = '$$iframe_' + gmxAPIutils.newId();
+
+        var iframe = gmxAPIutils.createPostIframe2(id, callback, url),
+            originalFormAction;
+            
+        if (baseForm)
+        {
+            form = baseForm;
+            originalFormAction = form.getAttribute('action');
+            form.setAttribute('action', url);
+            form.target = id;
+        }
+        else
+        {
+            if(L.Browser.ielt9) {
+                var str = '<form id=' + id + '" enctype="multipart/form-data" style="display:none" target="' + id + '" action="' + url + '" method="post"></form>';
+                form = document.createElement(str);
+            } else {
+                form = document.createElement("form");
+                form.style.display = 'none';
+                form.setAttribute('enctype', 'multipart/form-data');
+                form.target = id;
+                form.setAttribute('method', 'POST');
+                form.setAttribute('action', url);
+                form.id = id;
+            }
+        }
+        
+        var hiddenParamsDiv = document.createElement("div");
+        hiddenParamsDiv.style.display = 'none';
+        
+        if (params.WrapStyle === 'window') {
+            params.WrapStyle = 'message';
+        }
+        
+        if (params.WrapStyle === 'message') {
+            params.CallbackName = iframe.callbackName;
+        }
+        
+        for (var paramName in params)
+        {
+            var input = document.createElement("input");
+            
+            var value = typeof params[paramName] !== 'undefined' ? params[paramName] : '';
+            
+            input.setAttribute('type', 'hidden');
+            input.setAttribute('name', paramName);
+            input.setAttribute('value', value);
+            
+            hiddenParamsDiv.appendChild(input)
+        }
+        
+        form.appendChild(hiddenParamsDiv);
+        
+        if (!baseForm)
+            document.body.appendChild(form);
+            
+        document.body.appendChild(iframe);
+        
+        form.submit();
+        
+        if (baseForm)
+        {
+            form.removeChild(hiddenParamsDiv);
+            if (originalFormAction !== null)
+                form.setAttribute('action', originalFormAction);
+            else
+                form.removeAttribute('action');
+        }
+        else
+        {
+            form.parentNode.removeChild(form);
+        }
+	}
+	//расширяем namespace
+	gmxAPIutils.sendCrossDomainPostRequest = sendCrossDomainPostRequest;
+})();
