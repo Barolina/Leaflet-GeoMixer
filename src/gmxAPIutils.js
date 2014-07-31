@@ -260,8 +260,12 @@
 		var g = (i >> 8) & 255;
 		var b = i & 255;
 		return 'rgba('+r+', '+g+', '+b+', '+a+')';
-	}
-	,
+	},
+
+    dec2hex: function(i)	{					// convert decimal to hex
+        return (i+0x1000000).toString(16).substr(-6).toUpperCase();
+    },
+
 	'oneDay': 60*60*24			// один день
 	,
     'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам двух тайлов
