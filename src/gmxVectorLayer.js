@@ -35,7 +35,7 @@
                 screenTiles = gmx.screenTiles;
 
             if (key in gmx.tileSubscriptions) {
-                gmx.dataManager.offSubscription(gmx.tileSubscriptions[key].id);
+                gmx.dataManager.unsubscribe(gmx.tileSubscriptions[key].id);
                 delete gmx.tileSubscriptions[key];
             }
 
@@ -256,7 +256,7 @@
 
         for (var key in subscriptions) {
             if (subscriptions[key].gtp.z !== zoom) {
-                this._gmx.dataManager.offSubscription(subscriptions[key].id);
+                this._gmx.dataManager.unsubscribe(subscriptions[key].id);
                 delete subscriptions[key];
             }
         }
@@ -319,7 +319,7 @@
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false;
             var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            var subscrID = gmx.dataManager.onSubscription(gmxTilePoint, function() {
+            var subscrID = gmx.dataManager.subscribe(gmxTilePoint, function() {
                 myLayer._drawTileAsync(tilePoint, zoom).then(function() {
                     if (!isDrawnFirstTime) {
                         gmx._tilesToLoad--;

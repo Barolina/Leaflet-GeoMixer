@@ -238,7 +238,7 @@
     //'callback' will be called at least once:
     // - immediately, if all the data for a given bbox is already loaded
     // - after all the data for a given bbox will be loaded
-    onSubscription: function(gmxTilePoint, callback) {
+    subscribe: function(gmxTilePoint, callback) {
         var id = 's'+(this._freeSubscrID++);
         this._subscriptions[id] = {
             tilePoint: gmxTilePoint,
@@ -253,7 +253,7 @@
         return id;
     },
 
-    offSubscription: function(id) {
+    unsubscribe: function(id) {
         delete this._subscriptions[id];
     },
 
