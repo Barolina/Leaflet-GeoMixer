@@ -1,16 +1,5 @@
 ﻿var gmxDataManager = L.Class.extend({
 	includes: L.Mixin.Events,
-    _tiles: {},
-    _tilesTree: null,
-    _activeTileKeys: {},
-    _subscriptions: {},
-    _filters: {},
-    _freeSubscrID: 0,
-    _maxStyleSize: 0,
-    _gmx: null,
-    _beginDate: null,
-    _endDate: null,
-    _items: {},
     initialize: function(gmx, layerDescription) {
         var _this = this,
             isTemporalLayer = layerDescription.properties.Temporal;
@@ -20,6 +9,13 @@
         this._endDate = gmx.endDate;
         this._gmx = gmx;
         this._isTemporalLayer = isTemporalLayer;
+        this._tiles = {};
+        this._activeTileKeys = {};
+        this._subscriptions = {};
+        this._filters = {};
+        this._freeSubscrID = 0;
+        this._maxStyleSize = 0;
+        this._items = {};
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -96,11 +92,10 @@
                 continue;
             }
 
-            var dataOptions = tile.dataOptions || [];
             for (var j = 0, len1 = data.length; j < len1; j++) {
                 var it = data[j],
                     id = it[0],
-                    item = this._items[id],
+                    item = this.getItem(id),
                     filters = this._filters,
                     isFiltered = false;
                 for (var filterName in filters) {
@@ -113,14 +108,8 @@
                 if (isFiltered) {continue;}
 
                 var geom = it[it.length - 1],
-                    type = item.type,
-                    dataOption = dataOptions[j] || {};
-                if(!dataOption.bounds) {
-                    var b = gmxAPIutils.geoItemBounds(geom);
-                    dataOption.bounds = b.bounds;
-                    if (b.boundsArr.length) dataOption.boundsArr = b.boundsArr;
-                    if (!dataOptions[j]) dataOptions[j] = dataOption;
-                }
+                    type = geom.type,
+                    dataOption = tile.dataOptions[j];
 
                 if (!bounds.intersects(dataOption.bounds)) {
                     // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
@@ -128,11 +117,12 @@
                 }
 
                 if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
-                    tile.calcHiddenPoints();
+                    tile.calcEdgeLines(j);
                 }
-
-                var out = {arr: it, dataOption: dataOptions[j]};
-                resItems.push(out);
+                resItems.push({
+                    arr: it,
+                    dataOption: dataOption
+                });
             }
         }
         return resItems;
@@ -171,6 +161,7 @@
                 this._items[id] = item;
             }
             //it.item = item;
+            delete item.bounds;
             item.properties = it;
             item.options.fromTiles[gmxTileKey] = i;
             if(layerProp.TemporalColumnName) {
@@ -263,8 +254,18 @@
             var fromTiles = item.options.fromTiles,
                 bounds = gmxAPIutils.bounds();
             for (var key in fromTiles) {
-                var dataOptions = this._tiles[key].tile.dataOptions;
-                bounds.extendBounds(dataOptions[fromTiles[key]].bounds);
+                var tile = this._tiles[key].tile,
+                    dataOptions = tile.dataOptions,
+                    num = fromTiles[key];
+                var dataOption = dataOptions[num];
+                if (!dataOption) dataOption = dataOptions[num] = {};
+                if (!dataOption.bounds) {
+                    var geoItem = tile.data[num];
+                    var b = gmxAPIutils.geoItemBounds(geoItem[geoItem.length - 1]);
+                    dataOption.bounds = b.bounds;
+                    if (b.boundsArr.length) dataOption.boundsArr = b.boundsArr;
+                }
+                bounds.extendBounds(dataOption.bounds);
             }
             item.bounds = bounds;
         }

@@ -144,7 +144,7 @@
                 return this;
 			},
 			extendBounds: function(bounds) {
-				this.extendArray([[bounds.min.x, bounds.min.y], [bounds.max.x, bounds.max.y]]);
+				return this.extendArray([[bounds.min.x, bounds.min.y], [bounds.max.x, bounds.max.y]]);
 			},
 			extendArray: function(arr) {
                 if (!arr) { return this };
@@ -155,9 +155,9 @@
 			},
             addBuffer: function(dxmin, dymin, dxmax, dymax) {
                 this.min.x -= dxmin;
-                this.min.y -= dymin;
-                this.max.x += dxmax;
-                this.max.y += dymax;
+                this.min.y -= dymin || dxmin;
+                this.max.x += dxmax || dxmin;
+                this.max.y += dymax || dxmin;
                 return this;
             },
 			contains: function (point) { // ([x, y]) -> Boolean

@@ -2,7 +2,6 @@
 //"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
 var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     var loadDef = null,
-        isCalcHiddenPoints = false,
         _this = this;
 
     this.addData = function(data) {
@@ -29,7 +28,6 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         this.state = 'notLoaded';
         this.data = this.dataOptions = null;
         
-        isCalcHiddenPoints = false;
         loadDef = null;
     }
 
@@ -37,53 +35,42 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         return gmxAPIutils.isTileKeysIntersects(this.gmxTilePoint, gmxTilePoint);
     }
 
-    this.calcHiddenPoints = function() {
-        if (!this.data || isCalcHiddenPoints) {
-            return;
-        }
-
-        isCalcHiddenPoints = true;
-
-        var bounds = this.bounds,
-            d = (bounds.max.x - bounds.min.x)/10000,
-            tbDelta = { // границы тайла для определения onEdge отрезков
-                minX: bounds.min.x + d
-                ,maxX: bounds.max.x - d
-                ,minY: bounds.min.y + d
-                ,maxY: bounds.max.y - d
-            };
-        var chkOnEdge = function(p1, p2, ext) { // отрезок на границе
-            if ((p1[0] < ext.minX && p2[0] < ext.minX) || (p1[0] > ext.maxX && p2[0] > ext.maxX)) return true;
-            if ((p1[1] < ext.minY && p2[1] < ext.minY) || (p1[1] > ext.maxY && p2[1] > ext.maxY)) return true;
-            return false;
-        }
-        var getHidden = function(coords, tb) {  // массив точек на границах тайлов
-            var hideLines = [],
-                prev = null;
-            for (var i = 0, len = coords.length; i < len; i++) {
-                var p = coords[i];
-                if(prev && chkOnEdge(p, prev, tb)) {
-                    hideLines.push(i);
-                }
-                prev = p;
+    var chkOnEdge = function(p1, p2, ext) { // отрезок на границе
+        if ((p1[0] < ext.min.x && p2[0] < ext.min.x) || (p1[0] > ext.max.x && p2[0] > ext.max.x)) return true;
+        if ((p1[1] < ext.min.y && p2[1] < ext.min.y) || (p1[1] > ext.max.y && p2[1] > ext.max.y)) return true;
+        return false;
+    }
+    var getHidden = function(coords, tb) {  // массив точек на границах тайлов
+        var hideLines = [],
+            prev = null;
+        for (var i = 0, len = coords.length; i < len; i++) {
+            var p = coords[i];
+            if(prev && chkOnEdge(p, prev, tb)) {
+                hideLines.push(i);
             }
-            return hideLines;
+            prev = p;
         }
-        
-        var geomIndex = this.data[0] && (this.data[0].length - 1); //geometry is always the last attribute
-        for (var i = 0, len = this.data.length; i < len; i++) {
-            var geom = this.data[i][geomIndex];
+        return hideLines;
+    }
+    this.calcEdgeLines = function(num) {
+        if (!this.data || !this.data[num]) return null;
+        if (!this.dataOptions[num]) this.dataOptions[num] = {};
+        var hideLines = this.dataOptions[num].hiddenLines || null;
+        if (!hideLines) {
+            var it = this.data[num],
+                geomIndex = it.length - 1, //geometry is always the last attribute
+                geom = it[geomIndex];
+
             if(geom.type.indexOf('POLYGON') !== -1) {
-                var hideLines = null, // индексы точек лежащих на границе тайла
-                    coords = geom.coordinates;
+                var coords = geom.coordinates;
                 if(geom.type === 'POLYGON') {
                     coords = [coords];
                 }
-                for (var j = 0, len1 = coords.length; j < len1; j++) {
+                for (var j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j],
                         hideLines1 = [];
-                    for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-                        hideLines1.push(getHidden(coords1[j1], tbDelta));
+                    for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
+                        hideLines1.push(getHidden(coords1[j1], this.edgeBounds));
                     }
                     if (hideLines1.length) {
                         if (!hideLines) hideLines = [];
@@ -91,14 +78,18 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                     }
                 }
                 if (hideLines) {
-                    if (!this.dataOptions[i]) this.dataOptions[i] = {};
-                    this.dataOptions[i].hiddenLines = hideLines;
+                    if (!this.dataOptions[num]) this.dataOptions[num] = {};
+                    this.dataOptions[num].hiddenLines = hideLines;
                 }
             }
         }
+        return hideLines;
     }
 
-    this.bounds = gmxAPIutils.getTileBounds(x, y, z);
+    var bounds = gmxAPIutils.getTileBounds(x, y, z),
+        edgeBounds = gmxAPIutils.bounds().extendBounds(bounds);
+    this.bounds = bounds;
+    this.edgeBounds = edgeBounds.addBuffer((bounds.min.x - bounds.max.x)/10000);
     this.data = null;
     this.dataOptions = null;
     this.x = x;

@@ -369,6 +369,9 @@
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
         }
+        if (!style) {
+            return null;
+        }
         itemStyleParser(item, style.RenderStyle);
         return style.RenderStyle;
     }
