@@ -1,5 +1,4 @@
-﻿// todo: need 404 response from server for old vector tiles
-var delay = 20000,
+﻿var delay = 20000,
     layers = {},
     script = '/Layer/CheckVersion.ashx',
     intervalID = null,
@@ -17,12 +16,11 @@ var getRequestParams = function(layer) {
     } else {
         for (var id in layers) {
             var obj = layers[id];
-            if (!obj.options.notVersion) {
+            if (obj.options.chkUpdate) {
                 var _gmx = obj._gmx,
                     hostName = _gmx.hostName;
                     pt = {Name: id, Version: _gmx.properties.LayerVersion};
-                if (hosts[hostName]) hosts[hostName].push(pt);
-                else hosts[hostName] = [pt];
+                hosts[hostName] = hosts[hostName] ? hosts[hostName].push(pt) : [pt];
             }
         }
     }

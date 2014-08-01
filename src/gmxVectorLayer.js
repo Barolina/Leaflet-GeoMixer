@@ -35,7 +35,7 @@
                 screenTiles = gmx.screenTiles;
 
             if (key in gmx.tileSubscriptions) {
-                gmx.dataManager.unsubscribe(gmx.tileSubscriptions[key].id);
+                gmx.dataManager.removeObserver(gmx.tileSubscriptions[key].id);
                 delete gmx.tileSubscriptions[key];
             }
 
@@ -66,21 +66,26 @@
         if (map.options.crs !== L.CRS.EPSG3857 && map.options.crs !== L.CRS.EPSG3395) {
             throw "GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer";
         }
+        var gmx = this._gmx;
 
-        this._gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
+        gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
 
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
-        if (this._gmx.applyShift) {
+        if (gmx.applyShift) {
             map.on('moveend', this._updateShiftY, this);
             this._updateShiftY();
         } else {
-            this._gmx.shiftY = 0;
+            gmx.shiftY = 0;
         }
-        if (this._gmx.balloonEnable && !this._popup) this.bindPopup();
+        if (gmx.balloonEnable && !this._popup) this.bindPopup();
         //if (this._gmx._observer) this._gmx._observer.setActive(true);
+        if (gmx.properties.type === 'Vector') {
+            if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
+            L.gmx.layersVersion.add(this);
+        }
     },
 
     onRemove: function(map) {
@@ -88,8 +93,12 @@
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
 
-        if (this._gmx.applyShift) {
+        var gmx = this._gmx;
+        if (gmx.applyShift) {
             map.off('moveend', this._updateShiftY, this);
+        }
+        if (gmx.properties.type === 'Vector') {
+            L.gmx.layersVersion.remove(this);
         }
     },
 
@@ -113,24 +122,6 @@
         this._update();
 
         this.initPromise.resolve();
-        
-        // if (gmx.properties.LayerVersion && this.options.updateInterval) {
-            // setInterval(function() {
-                // gmxAPIutils.requestJSONP('http://' + gmx.hostName + '/Layer/CheckVersion.ashx', {
-                    // layers: JSON.stringify([{Name: gmx.properties.name, Version: gmx.properties.LayerVersion}])
-                // }).then(function(response) {
-                    // if (response.Status === 'ok' && response.Result.length) {
-                        // var newProps = response.Result[0].properties;
-                        // gmx.dataManager.initTileList(newProps);
-                        // gmx.properties.LayerVersion = newProps.LayerVersion;
-                    // }
-                // });
-            // }, this.options.updateInterval)
-        // }
-        if (gmx.properties.type === 'Vector') {
-            if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
-            L.gmx.layersVersion.add(this);
-        }
     },
 
     setStyle: function (style, num) {
@@ -256,7 +247,7 @@
 
         for (var key in subscriptions) {
             if (subscriptions[key].gtp.z !== zoom) {
-                this._gmx.dataManager.unsubscribe(subscriptions[key].id);
+                this._gmx.dataManager.removeObserver(subscriptions[key].id);
                 delete subscriptions[key];
             }
         }
@@ -319,17 +310,21 @@
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false;
             var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            var subscrID = gmx.dataManager.subscribe(gmxTilePoint, function() {
-                myLayer._drawTileAsync(tilePoint, zoom).then(function() {
-                    if (!isDrawnFirstTime) {
+            var subscrID = gmx.dataManager.addObserver({
+                type: 'resend',
+                gmxTilePoint: gmxTilePoint,
+                callback: function() {
+                    myLayer._drawTileAsync(tilePoint, zoom).then(function() {
+                        if (!isDrawnFirstTime) {
+                            gmx._tilesToLoad--;
+                            myLayer._tileLoaded();
+                            isDrawnFirstTime = true;
+                        }
+                    }, function() {
                         gmx._tilesToLoad--;
                         myLayer._tileLoaded();
-                        isDrawnFirstTime = true;
-                    }
-                }, function() {
-                    gmx._tilesToLoad--;
-                    myLayer._tileLoaded();
-                });
+                    });
+                }
             });
             gmx.tileSubscriptions[key] = {id: subscrID, gtp: gmxTilePoint};
         }

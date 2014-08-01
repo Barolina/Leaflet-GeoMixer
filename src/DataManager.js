@@ -11,11 +11,22 @@
         this._isTemporalLayer = isTemporalLayer;
         this._tiles = {};
         this._activeTileKeys = {};
-        this._subscriptions = {};
+        //this._subscriptions = {};
         this._filters = {};
         this._freeSubscrID = 0;
         this._maxStyleSize = 0;
         this._items = {};
+        this._observers = {};
+        /* observers collection  {
+                type: 'resend | update',    // `resend` - send all data (like screen tile observer)
+                                            // `update` - send only changed data
+                callback: Func,     // will be called at least once:
+                                    // - immediately, if all the data for a given bbox is already loaded
+                                    // - after all the data for a given bbox will be loaded
+                temporal: Func,             // temporal filter
+                spatial: Func,              // bounds filter
+                tilePoint: gmxTilePoint,    // this is for screen tile observer
+        */
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -50,8 +61,8 @@
     //TODO: optimize this by storing current number of not loaded tiles for subscriptions
     _triggerAllSubscriptions: function(subscriptionIDs) {
         for (var subscrID in subscriptionIDs) {
-            var s = this._subscriptions[subscrID];
-            this._loadTiles(s.tilePoint) || s.callback();
+            var s = this._observers[subscrID];
+            this._loadTiles(s.gmxTilePoint) || s.callback();
         }
     },
 
@@ -67,18 +78,18 @@
         this._endDate = newEndDate;
         
         //trigger all subscriptions because temporal filter will be changed
-        this._triggerAllSubscriptions(this._subscriptions);
+        this._triggerAllSubscriptions(this._observers);
     },
 
     addFilter: function(filterName, filterFunc) {
         this._filters[filterName] = filterFunc;
-        this._triggerAllSubscriptions(this._subscriptions);
+        this._triggerAllSubscriptions(this._observers);
     },
 
     removeFilter: function(filterName) {
         if (this._filters[filterName]) {
             delete this._filters[filterName];
-            this._triggerAllSubscriptions(this._subscriptions);
+            this._triggerAllSubscriptions(this._observers);
         }
     },
 
@@ -138,14 +149,12 @@
         for (var i = 0; i < len; i++) {
             var it = data[i],
                 geom = it[geomIndex],
-                //prop = it.properties,
                 id = it[0],
                 item = this._items[id];
             // TODO: old properties null = ''
             it.forEach(function(zn, j) {
                 if (zn === null) it[j] = '';
             });
-            //delete it.properties;
             if(item) {
                 if(item.type.indexOf('MULTI') == -1) {
                     item.type = 'MULTI' + item.type;
@@ -160,19 +169,12 @@
                 };
                 this._items[id] = item;
             }
-            //it.item = item;
             delete item.bounds;
             item.properties = it;
             item.options.fromTiles[gmxTileKey] = i;
             if(layerProp.TemporalColumnName) {
                 var zn = it[this._gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];
                 item.options.unixTimeStamp = zn*1000;
-                
-                // var zn = prop[layerProp.TemporalColumnName] || '';
-                // zn = zn.replace(/(\d+)\.(\d+)\.(\d+)/g, '$2/$3/$1');
-                // var vDate = new Date(zn);
-                // var offset = vDate.getTimezoneOffset();
-                // item.options.unixTimeStamp = vDate.getTime() - offset*60*1000;
             }
         }
         return len;
@@ -208,11 +210,13 @@
                         treeNode && treeNode.count--; //decrease number of tiles to load inside this node
                     }
                     
-                    for (var key in _this._subscriptions) {
-                        if (tile.bounds.intersects(_this._subscriptions[key].styleBounds)
-                            && _this._getNotLoadedTileCount(_this._subscriptions[key].tilePoint) == 0) 
+                    var observers = _this._observers;
+                    for (var key in observers) {
+                        var observer = observers[key];
+                        if (tile.bounds.intersects(observer.styleBounds)
+                            && _this._getNotLoadedTileCount(observer.gmxTilePoint) == 0) 
                         {
-                            _this._subscriptions[key].callback();
+                            observer.callback();
                         }
                     }
                 })
@@ -229,23 +233,24 @@
     //'callback' will be called at least once:
     // - immediately, if all the data for a given bbox is already loaded
     // - after all the data for a given bbox will be loaded
-    subscribe: function(gmxTilePoint, callback) {
-        var id = 's'+(this._freeSubscrID++);
-        this._subscriptions[id] = {
-            tilePoint: gmxTilePoint,
-            callback: callback,
-            styleBounds: this._getStyleBounds(gmxTilePoint)
-        };
+    addObserver: function(observer) {
+        var id = 's'+(this._freeSubscrID++),
+            callback = observer.callback,
+            gmxTilePoint = observer.gmxTilePoint;
+        this._observers[id] = observer;
+        if (gmxTilePoint) {
+            this._observers[id].styleBounds = this._getStyleBounds(gmxTilePoint);
+            var leftToLoad = this._loadTiles(gmxTilePoint);
 
-        var leftToLoad = this._loadTiles(gmxTilePoint);
-
-        leftToLoad || callback();
-
+            leftToLoad || callback();
+        } else {
+            callback();
+        }
         return id;
     },
 
-    unsubscribe: function(id) {
-        delete this._subscriptions[id];
+    removeObserver: function(id) {
+        delete this._observers[id];
     },
 
     getItem: function(id) {
@@ -291,11 +296,12 @@
     addTile: function(tile) {
         this._tiles[tile.gmxTileKey] = {tile: tile};
         this._activeTileKeys[tile.gmxTileKey] = true;
-        for (var subscrID in this._subscriptions) {
-            var tp = this._subscriptions[subscrID].tilePoint;
+        var observers = this._observers;
+        for (var subscrID in observers) {
+            var tp = observers[subscrID].gmxTilePoint;
             this._loadTiles(tp);
             if (this._getNotLoadedTileCount(tp) == 0) {
-                this._subscriptions[subscrID].callback();
+                observers[subscrID].callback();
             }
         }
     },
@@ -340,15 +346,16 @@
         }
         
         var changedTiles = [],
-            subscriptionsToUpdate = {},
+            observersToUpdate = {},
             _this = this;
             
         var checkSubscription = function(gmxTileKey) {
-            var bounds = gmxVectorTile.boundsFromTileKey(gmxTileKey);
-            
-            for (var sid in _this._subscriptions) {
-                if (bounds.intersects(_this._subscriptions[sid].styleBounds)) {
-                    subscriptionsToUpdate[sid] = true;
+            var bounds = gmxVectorTile.boundsFromTileKey(gmxTileKey),
+                observers = _this._observers;
+
+            for (var sid in observers) {
+                if (bounds.intersects(observers[sid].styleBounds)) {
+                    observersToUpdate[sid] = true;
                 }
             }
         }
@@ -367,7 +374,7 @@
         
         this._activeTileKeys = newTilesList;
         
-        this._triggerAllSubscriptions(subscriptionsToUpdate);
+        this._triggerAllSubscriptions(observersToUpdate);
     },
 
     _propertiesToArray: function(it) {
