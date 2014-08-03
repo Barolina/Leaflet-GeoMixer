@@ -18,7 +18,7 @@ var getRequestParams = function(layer) {
             var obj = layers[id];
             if (obj.options.chkUpdate) {
                 var _gmx = obj._gmx,
-                    hostName = _gmx.hostName;
+                    hostName = _gmx.hostName,
                     pt = {Name: id, Version: _gmx.properties.LayerVersion};
                 hosts[hostName] = hosts[hostName] ? hosts[hostName].push(pt) : [pt];
             }

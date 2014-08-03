@@ -339,7 +339,7 @@
     }
 
     var chkStyleFilter = function(item) {
-        var itemOptions = getItemOptions(item),
+        var itemOptions = getItemOptions(item) || {},
             indexes = gmx.tileAttributeIndexes;
         
         for (var i = 0, len = styles.length; i < len; i++) {

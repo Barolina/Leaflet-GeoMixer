@@ -175,11 +175,11 @@
 			intersectsWithDelta: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
 				var min = this.min,
 					max = this.max,
-					dx = dx || 0,
-					dy = dy || 0,
+					x = dx || 0,
+					y = dy || 0,
 					min2 = bounds.min,
 					max2 = bounds.max;
-				return max2.x + dx > min.x && min2.x - dx < max.x && max2.y + dy > min.y && min2.y - dy < max.y;
+				return max2.x + x > min.x && min2.x - x < max.x && max2.y + y > min.y && min2.y - y < max.y;
 			}
 		};
         
@@ -521,7 +521,7 @@
 	},
 
     polygonToCanvas: function(attr) {       // Полигон в canvas
-        if(attr.coords.length === 0) return;
+        if(attr.coords.length === 0) return null;
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
             flagPixels = attr.flagPixels || false,
@@ -1105,9 +1105,9 @@ L.Util.getGeometriesSummary = gmxAPIutils.getGeometriesSummary;
 
     function createPostIframe2(id, callback, url)
     {
-        var uniqueId = 'gmxAPIutils_id'+(lastRequestId++);
-        
-        iframe = L.DomUtil.create('iframe');
+        var uniqueId = 'gmxAPIutils_id'+(lastRequestId++),
+            iframe = L.DomUtil.create('iframe');
+
         iframe.style.display = 'none';
         iframe.setAttribute('id', id);
         iframe.setAttribute('name', id);

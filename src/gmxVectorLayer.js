@@ -339,8 +339,8 @@
             return def;
         };
 
+        if (!zoom) zoom = this._map._zoom;
         var screenTiles = gmx.screenTiles,
-            zoom = this._map._zoom,
             zkey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
             screenTile = null,
             _this = this;
@@ -633,8 +633,7 @@
     },
     
     _redrawTilesHash: function (gmxTiles) {    // Перерисовать список gmxTiles тайлов на экране
-        var redrawTiles = 
-            zoom = this._map._zoom,
+        var zoom = this._map._zoom,
             gmx = this._gmx;
         for (var key in gmx.screenTiles) {
             var screenTile = gmx.screenTiles[key],
