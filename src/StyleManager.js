@@ -364,13 +364,14 @@
         var itemOptions = getItemOptions(item),
             style = styles[itemOptions.currentFilter];
 
-        if (!style) { chkStyleFilter(item); style = styles[itemOptions.currentFilter]; }
+        if (!style) {
+            chkStyleFilter(item);
+            style = styles[itemOptions.currentFilter];
+            if (!style) return null;
+        }
         if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
-        }
-        if (!style) {
-            return null;
         }
         itemStyleParser(item, style.RenderStyle);
         return style.RenderStyle;

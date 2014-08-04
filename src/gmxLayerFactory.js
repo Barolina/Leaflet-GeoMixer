@@ -1,13 +1,14 @@
 ﻿L.gmx = L.gmx || {};
 
+var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
+
 L.gmx.loadLayer = function(mapID, layerID, options) {
 
-    var promise = new gmxDeferred();
-    
-    var layerParams = {
-        mapID: mapID,
-        layerID: layerID
-    }
+    var promise = new gmxDeferred(),
+        layerParams = {
+            mapID: mapID,
+            layerID: layerID
+        };
     
     options = options || {};
     
@@ -15,9 +16,10 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
         layerParams[p] = options[p];
     }
     
-    var hostName = options.hostName || 'maps.kosmosnimki.ru';
+    var hostName = options.hostName || DEFAULT_HOSTNAME,
+        apiKey = options.apiKey || '';
     
-    gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
+    gmxMapManager.getMap(hostName, apiKey, mapID).then(
         function() {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID),
                 layer;
@@ -57,12 +59,13 @@ L.gmx.loadLayers = function(layers, globalOptions) {
 }
 
 L.gmx.loadMap = function(mapID, options) {
-	var def = new gmxDeferred();
-	var hostName = 'maps.kosmosnimki.ru';
-	
 	options = options || {};
-	
-	gmxMapManager.getMap(hostName, options.apiKey || '', mapID).then(function(mapInfo) {
+
+	var def = new gmxDeferred(),
+        hostName = options.hostName || DEFAULT_HOSTNAME,
+        apiKey = options.apiKey || '';
+
+	gmxMapManager.getMap(hostName, apiKey, mapID).then(function(mapInfo) {
 		var loadedMap = new gmxMap(mapInfo, options);
 		
 		if (options.leafletMap) {

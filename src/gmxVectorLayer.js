@@ -506,13 +506,17 @@
                     coords = pixels_map.coords;
                     chkPoint = pixelPoint;
                 }
+                if(chktype === 'POLYGON') boundsArr = [boundsArr];
                 for (var j = 0, len = coords.length; j < len; j++) {
-                    var b = boundsArr[j];
-                    if(chktype === 'MULTIPOLYGON') b = b[0];
-                    if (b.intersects(bounds)) {
-                        if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j])) {
-                            flag = true;
-                            break;
+                    var arr = coords[j],
+                        bbox = boundsArr[j];
+                    for (var j1 = 0, len1 = arr.length; j1 < len1; j1++) {
+                        var b = bbox[j1];
+                        if (b.intersects(bounds)) {
+                            if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, arr)) {
+                                flag = j1 === 0 ? true : false;
+                                break;
+                            }
                         }
                     }
                 }
