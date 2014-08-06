@@ -502,11 +502,14 @@
                     chkPoint = mercPoint,
                     pixels_map = dataOption.pixels || null,
                     flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
+                if(chktype === 'POLYGON') {
+                    coords = [geom.coordinates];
+                    boundsArr = [dataOption.boundsArr];
+                }
                 if(flagPixels) {
                     coords = pixels_map.coords;
                     chkPoint = pixelPoint;
                 }
-                if(chktype === 'POLYGON') boundsArr = [boundsArr];
                 for (var j = 0, len = coords.length; j < len; j++) {
                     var arr = coords[j],
                         bbox = boundsArr[j];
