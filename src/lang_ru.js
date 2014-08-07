@@ -3,6 +3,7 @@ L.extend(L.gmxLocale, {
         Coordinates : "Координаты",
         Length : "Длина",
         Area : "Площадь",
+        Perimeter : "Периметр",
         units: {
             m: "м",
             km: "км",
