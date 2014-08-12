@@ -2,8 +2,6 @@
 {
     options: {
         clickable: true
-        // ,
-        // updateInterval: 0
     },
 
     initialize: function(options) {
@@ -24,7 +22,7 @@
             styles: options.styles || [],
             units: options.units || {square: 'km2', distance: 'km', coordinates: 0},
             screenTiles: {},
-            tileSubscriptions: []
+            tileSubscriptions: {}
         };
 
         this.on('tileunload', function(e) {
@@ -62,6 +60,12 @@
         this._prpZoomData(this._map._zoom);
     },
 
+    _moveEnd: function() {
+        if ('dataManager' in this._gmx) {
+            this._gmx.dataManager.fire('moveend');
+        }
+    },
+
     onAdd: function(map) {
         if (map.options.crs !== L.CRS.EPSG3857 && map.options.crs !== L.CRS.EPSG3395) {
             throw "GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer";
@@ -85,6 +89,8 @@
         if (gmx.properties.type === 'Vector') {
             if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
             L.gmx.layersVersion.add(this);
+            map.on('moveend', this._moveEnd, this);
+
         }
     },
 
@@ -99,6 +105,7 @@
         }
         if (gmx.properties.type === 'Vector') {
             L.gmx.layersVersion.remove(this);
+            map.off('moveend', this._moveEnd, this);
         }
     },
 
@@ -165,6 +172,10 @@
         gmx.endDate = endDate;
         gmx.dataManager.setDateInterval(beginDate, endDate);
         return this;
+    },
+
+    addObserver: function (options) {
+        return this._gmx.dataManager.addObserver(options);
     },
 
     addTo: function (map) {
@@ -236,6 +247,7 @@
         gmx.mInPixel = 256 / gmx.tileSize;
         gmx._tilesToLoad = 0;
         gmx.currentZoom = map._zoom;
+        gmx.dataManager._triggerObservers();
     },
 
     _initContainer: function () {
@@ -268,6 +280,7 @@
         if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
             this._removeOtherTiles(tileBounds);
         }
+        //this._gmx.dataManager.fire('checkObservers');
     },
 
     _getScreenTileBounds: function () {
@@ -305,14 +318,21 @@
             return;
         }
 
-        var key = zoom + ':' + tilePoint.x + ':' + tilePoint.y;
-        if (!gmx.tileSubscriptions[key]) {
+        var zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y;
+        if (!gmx.tileSubscriptions[zKey]) {
             gmx._tilesToLoad++;
-            var isDrawnFirstTime = false;
-            var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
-            var subscrID = gmx.dataManager.addObserver({
+            var isDrawnFirstTime = false,
+                gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
+                dateInterval = gmx.dataManager.getDateInterval();
+                styleBounds = gmx.dataManager.getStyleBounds(gmxTilePoint);
+            var observer = myLayer.addObserver({
+            //var observer = new gmxObserver(myLayer, {
                 type: 'resend',
+                bbox: styleBounds,
+                dateInterval: dateInterval,
+                filters: gmx.dataManager._filters,
                 gmxTilePoint: gmxTilePoint,
+                zKey: zKey,
                 callback: function() {
                     myLayer._drawTileAsync(tilePoint, zoom).then(function() {
                         if (!isDrawnFirstTime) {
@@ -326,7 +346,7 @@
                     });
                 }
             });
-            gmx.tileSubscriptions[key] = {id: subscrID, gtp: gmxTilePoint};
+            gmx.tileSubscriptions[zKey] = {id: observer.id, gtp: gmxTilePoint};
         }
     },
 
@@ -552,51 +572,55 @@
                     layer._redrawTilesHash(lastHover.gmxTiles);    // reset hover
                 }
             };
-        if (!skipOver &&
+        if (!skipOver && ev.originalEvent &&
             (type === 'mousemove'
             || this.hasEventListeners('mouseover')
             || this.hasEventListeners('mouseout')
             || this.hasEventListeners(type)
             )) {
-            var lng = ev.latlng.lng % 360,
-                latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
-                mercatorPoint = L.Projection.Mercator.project(latlng),
-                shiftXlayer = gmx.shiftXlayer || 0,
-                shiftYlayer = gmx.shiftYlayer || 0,
-                delta = 5 / gmx.mInPixel,
-                bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
-            bounds = bounds.addBuffer(delta, delta, delta, delta);
-            var geoItems = gmx.dataManager.getItems(bounds, true);
+            var zKey = ev.originalEvent.target.id,
+                observer = gmx.dataManager.getObserver(zKey);
+            if (observer) {
+                var lng = ev.latlng.lng % 360,
+                    latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
+                    mercatorPoint = L.Projection.Mercator.project(latlng),
+                    shiftXlayer = gmx.shiftXlayer || 0,
+                    shiftYlayer = gmx.shiftYlayer || 0,
+                    delta = 5 / gmx.mInPixel,
+                    bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
+                bounds = bounds.addBuffer(delta);
+                var geoItems = gmx.dataManager.getItems(zKey, bounds);
 
-            if (geoItems && geoItems.length) {
-                var arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
-                if (arr && arr.length) {
-                    var target = arr[0],
-                        changed = !lastHover || lastHover.id !== target.id;
-                    if (type === 'mousemove' && lastHover) {
-                        if (!changed) return target.id;
-                        gmx.lastHover = null;
-                        chkHover('mouseout');
-                    }
-                    var itemOptions = gmx.styleManager.getItemOptions(target),
-                        filter = gmx.properties.styles[itemOptions.currentFilter],
-                        templateBalloon = filter ? filter.Balloon : null;
+                if (geoItems && geoItems.length) {
+                    var arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
+                    if (arr && arr.length) {
+                        var target = arr[0],
+                            changed = !lastHover || lastHover.id !== target.id;
+                        if (type === 'mousemove' && lastHover) {
+                            if (!changed) return target.id;
+                            gmx.lastHover = null;
+                            chkHover('mouseout');
+                        }
+                        var itemOptions = gmx.styleManager.getItemOptions(target),
+                            filter = gmx.properties.styles[itemOptions.currentFilter],
+                            templateBalloon = filter ? filter.Balloon : null;
 
-                    ev.gmx = {
-                        targets: arr
-                        ,target: target
-                        ,templateBalloon: templateBalloon
-                        ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
-                        ,id: target.id
-                    };
-                    if (this.hasEventListeners(type)) this.fire(type, ev);
-                    if (type === 'mousemove' && changed) {
-                        lastHover = gmx.lastHover = ev.gmx;
-                        lastHover.gmxTiles = layer._getTilesByBounds(target.bounds);
-                        chkHover('mouseover');
+                        ev.gmx = {
+                            targets: arr
+                            ,target: target
+                            ,templateBalloon: templateBalloon
+                            ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
+                            ,id: target.id
+                        };
+                        if (this.hasEventListeners(type)) this.fire(type, ev);
+                        if (type === 'mousemove' && changed) {
+                            lastHover = gmx.lastHover = ev.gmx;
+                            lastHover.gmxTiles = layer._getTilesByBounds(target.bounds);
+                            chkHover('mouseover');
+                        }
+                        this._map.doubleClickZoom.disable();
+                        return target.id;
                     }
-                    this._map.doubleClickZoom.disable();
-                    return target.id;
                 }
             }
         }

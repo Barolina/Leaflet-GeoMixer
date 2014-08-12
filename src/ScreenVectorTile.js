@@ -2,12 +2,13 @@
 var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var gmx = layer._gmx,
         tKey = tilePoint.x + ':' + tilePoint.y,
-        showRaster = 'rasterBGfunc' in gmx && (zoom >= gmx.minZoomRasters),
-        rasters = {},
-        tileRastersPromise = null,
+        zKey = zoom + ':' + tKey,
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
         tbounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z),
-        gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y;
+        gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y,
+        showRaster = 'rasterBGfunc' in gmx && (zoom >= gmx.minZoomRasters),
+        rasters = {},
+        tileRastersPromise = null;
 
     var loadRasterRecursion = function(gtp, urlFunction, callback) {
         var rUrl = urlFunction(gtp);
@@ -322,19 +323,17 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     var getStyleBounds = function(gmxTilePoint) {
         var maxStyleSize = gmx.styleManager.getMaxStyleSize(),
             mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
-        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize, mercSize, mercSize, mercSize);
+        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
     }
 
     this.drawTile = function() {
         var def = new gmxDeferred();
-        
+
         if (!layer._map) {
             def.resolve();
             return def;
         };
-        
-        var bounds = getStyleBounds(gmxTilePoint),
-            geoItems = gmx.dataManager.getItems(bounds), //call each time because of possible items updates
+        var geoItems = gmx.dataManager.getItems(zKey), //call each time because of possible items updates
             itemsLength = geoItems.length;
         if(itemsLength === 0) {
             if (tKey in layer._tiles) {
@@ -352,7 +351,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 ctx: ctx
             };
             
-        tile.id = gmxTileKey;
+        tile.id = zKey;
         if (gmx.sortItems) geoItems = geoItems.sort(gmx.sortItems);
 
         var doDraw = function() {
