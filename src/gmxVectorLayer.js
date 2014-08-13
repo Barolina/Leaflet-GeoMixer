@@ -28,25 +28,25 @@
         this.on('tileunload', function(e) {
             var tile = e.tile,
                 tp = tile._tilePoint,
-                key = tile._zoom + ':' + tp.x + ':' + tp.y,
+                zKey = tile.id,
                 gmx = this._gmx,
                 screenTiles = gmx.screenTiles;
 
-            if (key in gmx.tileSubscriptions) {
-                gmx.dataManager.removeObserver(gmx.tileSubscriptions[key].id);
-                delete gmx.tileSubscriptions[key];
+            if (zKey in gmx.tileSubscriptions) {
+                gmx.dataManager.removeObserver(zKey);
+                delete gmx.tileSubscriptions[zKey];
             }
 
             for (var k = this._drawQueue.length-1; k >= 0; k--) {
                 var elem = this._drawQueue[k];
-                if (elem.key === key) {
+                if (elem.zKey === zKey) {
                     this._drawQueue.splice(k, 1);
                 }
             }
-            delete this._drawQueueHash[key];
-            if (screenTiles[key]) {
-                screenTiles[key].cancel();
-                delete screenTiles[key];
+            delete this._drawQueueHash[zKey];
+            if (screenTiles[zKey]) {
+                screenTiles[zKey].cancel();
+                delete screenTiles[zKey];
             }
         });
     },
@@ -90,8 +90,8 @@
             if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
             L.gmx.layersVersion.add(this);
             map.on('moveend', this._moveEnd, this);
-
         }
+        this._prpZoomData(this._map._zoom);
     },
 
     onRemove: function(map) {
@@ -183,14 +183,14 @@
         return this;
     },
 
-    _drawTileAsync: function (tilePoint, zoom) {
+    _drawTileAsync: function (tilePoint, zoom, data) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
-            key = zoom + '_' + tilePoint.x + '_' + tilePoint.y,
+            zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
             _this = this;
 
-        if ( key in this._drawQueueHash ) {
-            return this._drawQueueHash[key];
+        if ( zKey in this._drawQueueHash ) {
+            return this._drawQueueHash[zKey];
         }
 
         var drawNextTile = function() {
@@ -200,18 +200,22 @@
             }
             
             var bbox = queue.shift();
-            delete _this._drawQueueHash[bbox.key];
-            _this.gmxDrawTile(bbox.tp, bbox.z).then(
-                bbox.def.resolve.bind(bbox.def),
-                bbox.def.reject.bind(bbox.def)
-            );
+            delete _this._drawQueueHash[bbox.zKey];
+            if (bbox.z === _this._map._zoom) {
+                _this.gmxDrawTile(bbox.tp, bbox.z, bbox.data).then(
+                    bbox.def.resolve.bind(bbox.def, bbox.data),
+                    bbox.def.reject.bind(bbox.def)
+                );
+            } else {
+                bbox.def.reject.bind(bbox.def);
+            }
             setTimeout(drawNextTile, 0);
         }
         
         var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var def = new gmxDeferred();
-        queue.push({gtp: gtp, tp: tilePoint, z: zoom, key: key, def: def});
-        this._drawQueueHash[key] = def;
+        queue.push({gtp: gtp, tp: tilePoint, z: zoom, zKey: zKey, data: data, def: def});
+        this._drawQueueHash[zKey] = def;
         
         if (isEmpty) {
             this.fire('startDraw');
@@ -324,17 +328,16 @@
             var isDrawnFirstTime = false,
                 gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
                 dateInterval = gmx.dataManager.getDateInterval();
-                styleBounds = gmx.dataManager.getStyleBounds(gmxTilePoint);
             var observer = myLayer.addObserver({
             //var observer = new gmxObserver(myLayer, {
                 type: 'resend',
-                bbox: styleBounds,
+                bbox: gmx.dataManager.getStyleBounds(gmxTilePoint),
                 dateInterval: dateInterval,
                 filters: gmx.dataManager._filters,
                 gmxTilePoint: gmxTilePoint,
                 zKey: zKey,
-                callback: function() {
-                    myLayer._drawTileAsync(tilePoint, zoom).then(function() {
+                callback: function(data) {
+                    myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
                         if (!isDrawnFirstTime) {
                             gmx._tilesToLoad--;
                             myLayer._tileLoaded();
@@ -350,30 +353,30 @@
         }
     },
 
-    gmxDrawTile: function (tilePoint, zoom) {
+    gmxDrawTile: function (tilePoint, zoom, data) {
         var gmx = this._gmx,
             def = new gmxDeferred();
             
         if(gmx.zoomstart || !this._map) {
-            def.resolve();
+            def.reject.bind(def);
             return def;
         };
 
         if (!zoom) zoom = this._map._zoom;
         var screenTiles = gmx.screenTiles,
-            zkey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
+            zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
             screenTile = null,
             _this = this;
 
-        if (!screenTiles[zkey]) {
-            screenTiles[zkey] = screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
+        if (!screenTiles[zKey]) {
+            screenTiles[zKey] = screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
         } else {
-            screenTile = screenTiles[zkey];
+            screenTile = screenTiles[zKey];
             screenTile.cancel();
         }
         
         gmx.styleManager.deferred.then(function () {
-            screenTile.drawTile().then(def.resolve.bind(def), def.reject.bind(def));
+            screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject.bind(def));
         });
         
         return def;
@@ -569,7 +572,7 @@
                         ev.gmx = lastHover;
                         layer.fire(evType, ev);
                     }
-                    layer._redrawTilesHash(lastHover.gmxTiles);    // reset hover
+                    layer._redrawTilesHash(lastHover.observersToUpdate);    // reset hover
                 }
             };
         if (!skipOver && ev.originalEvent &&
@@ -615,7 +618,7 @@
                         if (this.hasEventListeners(type)) this.fire(type, ev);
                         if (type === 'mousemove' && changed) {
                             lastHover = gmx.lastHover = ev.gmx;
-                            lastHover.gmxTiles = layer._getTilesByBounds(target.bounds);
+                            lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds);
                             chkHover('mouseover');
                         }
                         this._map.doubleClickZoom.disable();
@@ -650,8 +653,8 @@
             gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
-                var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet({x: x, y: y}, zoom);
-                gmxTiles[zoom + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y] = true;
+                var zKey = zoom + ':' + x + ':' + y;
+                gmxTiles[zKey] = true;
             }
         }
         return gmxTiles;
@@ -659,23 +662,15 @@
     
     redrawItem: function (id) {    // redraw Item
         var item = this._gmx.dataManager.getItem(id),
-            gmxTiles = this._getTilesByBounds(item.bounds);
-        this._redrawTilesHash(gmxTiles);    // reset hover
+            observersToUpdate = this._getTilesByBounds(item.bounds);
+        this._redrawTilesHash(observersToUpdate);
     },
     
-    _redrawTilesHash: function (gmxTiles) {    // Перерисовать список gmxTiles тайлов на экране
-        var zoom = this._map._zoom,
-            gmx = this._gmx;
-        for (var key in gmx.screenTiles) {
-            var screenTile = gmx.screenTiles[key],
-                keyElems = key.split(':'),
-                tilePoint = L.point(keyElems[1], keyElems[2]),
-                gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
-                hashKey = zoom + '_' + gtp.x + '_' + gtp.y;
-                
-            if (hashKey in gmxTiles) {
-                this._drawTileAsync(tilePoint, zoom);
-            }
+    _redrawTilesHash: function (observersToUpdate) {    // Перерисовать список gmxTiles тайлов на экране
+        var dataManager = this._gmx.dataManager;        
+        for (var key in observersToUpdate) {
+            var observer = dataManager.getObserver(key);
+            if (observer) observer.callback();
         }
     },
 

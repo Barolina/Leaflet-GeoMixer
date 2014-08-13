@@ -326,14 +326,14 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
     }
 
-    this.drawTile = function() {
+    this.drawTile = function(data) {
         var def = new gmxDeferred();
 
         if (!layer._map) {
             def.resolve();
             return def;
         };
-        var geoItems = gmx.dataManager.getItems(zKey), //call each time because of possible items updates
+        var geoItems = data.added,
             itemsLength = geoItems.length;
         if(itemsLength === 0) {
             if (tKey in layer._tiles) {

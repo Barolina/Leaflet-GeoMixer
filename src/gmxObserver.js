@@ -22,12 +22,12 @@ var gmxObserver = function(dataManager, options) {
         //callback = options.callback || null,
         items = {},
         callback = function() {
-            var out = null;
+            var geoItems = dataManager.getItems(_this.id),
+                out = {};
             if (type === 'update') {
                 if (_this.bboxFunction) _this.bbox = _this.bboxFunction();
             
-                var geoItems = dataManager.getItems(_this.id),
-                    addedFlag = false,
+                var addedFlag = false,
                     added = {};
                 for (var i = 0, len = geoItems.length; i < len; i++) {
                     var it = geoItems[i],
@@ -52,9 +52,10 @@ var gmxObserver = function(dataManager, options) {
                     }
                 }
                 if (!addedFlag && !removedFlag) return;
-                out = {};
                 if (addedFlag) out.added = added;
                 if (removedFlag) out.removed = removed;
+            } else {
+                out.added = geoItems;
             }
             options.callback(out);
         };
@@ -64,15 +65,14 @@ var gmxObserver = function(dataManager, options) {
         var w = gmxAPIutils.worldWidthMerc;
         this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
     }
-    if (options.bboxFunction) {
-        this.bboxFunction = options.bboxFunction;
+    // if (options.bboxFunction) {
+        // this.bboxFunction = options.bboxFunction;
         
-        dataManager.on('moveend', function() {
-            this.active = true;
-//console.log('moveend', _this.active, this);
-            callback();
-        }, this);
-    }
+        // dataManager.on('moveend', function() {
+            // this.active = true;
+            // callback();
+        // }, this);
+    // }
     
     this.dateInterval = options.dateInterval || null;
     this.filters = options.filters || null;
@@ -82,4 +82,11 @@ var gmxObserver = function(dataManager, options) {
     this.callback = callback;
     this.type = type;
     this.zKey = options.zKey;
+    this.setBounds = function(bounds) {
+        _this.bbox = bounds;
+        _this.active = true;
+console.log('setBounds', _this.active, this);
+        _this.callback();
+    };
+    
 }

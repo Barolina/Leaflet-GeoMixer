@@ -55,10 +55,12 @@
 
     //TODO: optimize this by storing current number of not loaded tiles for subscriptions
     _triggerObservers: function(oKeys) {
-        var keys = oKeys || this._observers;
+        var keys = oKeys || this._observers,
+            zoom = this._gmx.currentZoom;
         for (var id in keys) {
             var s = this._observers[id];
-            s.active = true;
+            if (zoom === s.zoom) s.active = true;
+//console.log('_triggerObservers', id);
         }
         this.checkObservers();
     },
@@ -259,9 +261,10 @@
         var observer = new gmxObserver(this, options);
         observer.id = id;
         observer.active = true;
+        observer.zoom = this._gmx.currentZoom;
         this._observers[id] = observer;
         this.fire('checkObservers');
-        return id;
+        return observer;
     },
 
     getObserver: function(id) {
@@ -356,7 +359,7 @@
 
         return gmxDeferred.all.apply(null, loadingDefs);
     },
-    
+
     _updateActiveTilesList: function(newTilesList) {
     
         if (!this._activeTileKeys) {
@@ -373,12 +376,12 @@
                 observers = _this._observers;
 
             for (var sid in observers) {
-                if (bounds.intersects(observers[sid].styleBounds)) {
+                if (bounds.intersects(observers[sid].bbox)) {
                     observersToUpdate[sid] = true;
                 }
             }
         }
-            
+
         for (var key in newTilesList) {
             if (!this._activeTileKeys[key]) {
                 checkSubscription(key);

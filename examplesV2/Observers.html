@@ -123,23 +123,27 @@
             modisLayer.setDateInterval(ddt1, ddt2);
             var observer = modisLayer.addObserver({
                 callback: function(data) {
-console.log('observer', data);
-                }
-                /*,bboxFunction: function() {     // for map center observer
-                    var mercCenter = L.Projection.Mercator.project(map.getCenter());
-                    return gmxAPIutils.bounds([[mercCenter.x, mercCenter.y]]).addBuffer(1);
-                }*/
-                ,bboxFunction: function() {     // for map screen observer
-                    var screenBounds = map.getBounds();
-                    var p1 = screenBounds.getNorthWest();
-                    var p2 = screenBounds.getSouthEast();
-                    var m1 = L.Projection.Mercator.project(p1);
-                    var m2 = L.Projection.Mercator.project(p2);
-                    var bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
-                    bbox.normalize(gmxAPIutils.worldWidthMerc);
-                    return bbox;
+                    console.log('observer', data);
                 }
             });
+            // var updateBbox = function() {
+                // var screenBounds = map.getBounds(),
+                    // p1 = screenBounds.getNorthWest(),
+                    // p2 = screenBounds.getSouthEast(),
+                    // m1 = L.Projection.Mercator.project(p1),
+                    // m2 = L.Projection.Mercator.project(p2),
+                    // bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
+                // bbox.normalize(gmxAPIutils.worldWidthMerc);
+                // observer.setBounds(bbox);
+            // };
+            var updateBbox = function() {
+                var mercCenter = L.Projection.Mercator.project(map.getCenter()),
+                    bbox = gmxAPIutils.bounds([[mercCenter.x, mercCenter.y]]).addBuffer(1);
+                observer.setBounds(bbox);
+            };
+            map.on('moveend', updateBbox);
+            updateBbox();
+            
             modisLayer.addTo(map);
 
             var result = document.getElementById("result");
