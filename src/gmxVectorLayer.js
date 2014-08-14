@@ -328,14 +328,11 @@
             var isDrawnFirstTime = false,
                 gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
                 dateInterval = gmx.dataManager.getDateInterval();
-            var observer = myLayer.addObserver({
-            //var observer = new gmxObserver(myLayer, {
+            var observer = gmx.dataManager.addObserver({
                 type: 'resend',
                 bbox: gmx.dataManager.getStyleBounds(gmxTilePoint),
                 dateInterval: dateInterval,
                 filters: gmx.dataManager._filters,
-                gmxTilePoint: gmxTilePoint,
-                zKey: zKey,
                 callback: function(data) {
                     myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
                         if (!isDrawnFirstTime) {
@@ -348,7 +345,9 @@
                         myLayer._tileLoaded();
                     });
                 }
-            });
+            }, zKey);
+            observer.zoom = zoom;
+            observer.gmxTilePoint = gmxTilePoint;
             gmx.tileSubscriptions[zKey] = {id: observer.id, gtp: gmxTilePoint};
         }
     },

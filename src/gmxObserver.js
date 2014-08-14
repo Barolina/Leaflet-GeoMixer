@@ -8,28 +8,20 @@ var gmxObserver = function(dataManager, options) {
                                         // - after all the data for a given bbox will be loaded
             dateInterval: [date1,date2],    // temporal Interval
             bbox: bbox,                     // static bbox observer
-            bboxFunction: bboxFunction,     // dynamic bbox
-
-            zKey: z:x:y,                    // leaflet ID for screen tile observer
-            gmxTilePoint: gmxTilePoint,     // Geomixer tile point
-            //temporal: Func,             // temporal filter
-            //spatial: Func,              // bounds filter
+            filters: {}                     // hash filters
         }
     */
     var type = options.type || 'update',
         _this = this,
-        //gmx = layer._gmx,
-        //callback = options.callback || null,
         items = {},
         callback = function() {
             var geoItems = dataManager.getItems(_this.id),
+                len = geoItems.length,
                 out = {};
             if (type === 'update') {
-                if (_this.bboxFunction) _this.bbox = _this.bboxFunction();
-            
                 var addedFlag = false,
                     added = {};
-                for (var i = 0, len = geoItems.length; i < len; i++) {
+                for (var i = 0; i < len; i++) {
                     var it = geoItems[i],
                         prop = it.arr,
                         id = prop[0];
@@ -39,6 +31,7 @@ var gmxObserver = function(dataManager, options) {
                         addedFlag = true;
                     }
                 }
+                len = 0;
                 var removed = {},
                     removedFlag = false;
                 for (var id in items) {
@@ -49,6 +42,8 @@ var gmxObserver = function(dataManager, options) {
                         removed[id] = prop;
                         delete items[id];
                         removedFlag = true;
+                    } else {
+                        len++;
                     }
                 }
                 if (!addedFlag && !removedFlag) return;
@@ -57,6 +52,7 @@ var gmxObserver = function(dataManager, options) {
             } else {
                 out.added = geoItems;
             }
+            out.count = len;
             options.callback(out);
         };
 
@@ -65,28 +61,47 @@ var gmxObserver = function(dataManager, options) {
         var w = gmxAPIutils.worldWidthMerc;
         this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
     }
-    // if (options.bboxFunction) {
-        // this.bboxFunction = options.bboxFunction;
-        
-        // dataManager.on('moveend', function() {
-            // this.active = true;
-            // callback();
-        // }, this);
-    // }
     
-    this.dateInterval = options.dateInterval || null;
-    this.filters = options.filters || null;
     this.active = true;
 
-    this.gmxTilePoint = options.gmxTilePoint || null;
     this.callback = callback;
     this.type = type;
-    this.zKey = options.zKey;
     this.setBounds = function(bounds) {
-        _this.bbox = bounds;
-        _this.active = true;
-console.log('setBounds', _this.active, this);
-        _this.callback();
+        this.bbox = bounds;
+        this.active = true;
+        //console.log('setBounds', _this.active, this);
+        this.callback();
+        return this;
+    };
+
+    this.filters = options.filters || null;
+    this.setDateInterval = function(beginDate, endDate) {
+        if (!this.filters) this.filters = {};
+        var beginValue = beginDate.valueOf(),
+            endValue = endDate.valueOf();
+        this.dateInterval = {
+            beginDate: beginDate,
+            endDate: endDate
+        };
+        this.filters.TemporalFilter = function(item) {
+            var unixTimeStamp = item.options.unixTimeStamp;
+            return unixTimeStamp >= beginValue && unixTimeStamp <= endValue;
+        };
+        this.active = true;
+        //console.log('setDateInterval', beginDate, endDate);
+        dataManager.chkMaxDateInterval();
+        return this;
+    };
+
+    this.setFilter = function (func) {
+        if (!this.filters) this.filters = {};
+        this.filters.userFilter = func;
+        return this;
+    };
+
+    this.removeFilter = function () {
+        if (this.filters) delete this.filters.userFilter;
+        return this;
     };
     
 }

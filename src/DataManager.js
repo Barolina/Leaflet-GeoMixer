@@ -60,7 +60,6 @@
         for (var id in keys) {
             var s = this._observers[id];
             if (zoom === s.zoom) s.active = true;
-//console.log('_triggerObservers', id);
         }
         this.checkObservers();
     },
@@ -117,7 +116,7 @@
                 var tile = this._tiles[key].tile,
                     data = tile.data;
                 if (!data || !bounds.intersects(tile.bounds)) {
-                    // VectorTile is not loaded or is not on a screen
+                    // VectorTile is not loaded or is not on bounds
                     continue;
                 }
 
@@ -254,17 +253,34 @@
     //'callback' will be called at least once:
     // - immediately, if all the data for a given bbox is already loaded
     // - after all the data for a given bbox will be loaded
-    addObserver: function(options) {
-        var id = options.zKey || 's'+(this._freeSubscrID++),
-            callback = options.callback,
-            gmxTilePoint = options.gmxTilePoint;
+    addObserver: function(options, id) {
+        if (!id) id = 's'+(this._freeSubscrID++);
         var observer = new gmxObserver(this, options);
         observer.id = id;
         observer.active = true;
-        observer.zoom = this._gmx.currentZoom;
         this._observers[id] = observer;
         this.fire('checkObservers');
         return observer;
+    },
+
+    chkMaxDateInterval: function() {
+        var observers = this._observers,
+            newBeginDate = this._beginDate,
+            newEndDate = this._endDate;
+        for (var oId in observers) {
+            var observer = observers[oId],
+                dateInterval = observer.dateInterval,
+                beg = dateInterval.beginDate,
+                end = dateInterval.endDate;
+            if (dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
+            if (dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
+        }
+
+        var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
+        this._activeTileKeys = selection.tiles;
+        
+        //trigger all subscriptions because temporal filter will be changed
+        this._triggerObservers(this._observers);
     },
 
     getObserver: function(id) {
