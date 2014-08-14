@@ -47,7 +47,8 @@
             _this.curCount--;
             item.imageObj = imageObj;
             delete item.loaderObj;
-            _this._callCacheItems(item);
+			if (L.Browser.ie) setTimeout(function() { _this._callCacheItems(item); } , 0); //IE9 bug - black tiles appear randomly if call setPattern() without timeout
+            else _this._callCacheItems(item);
         };
         imageObj.onerror = function() {
             _this.curCount--;
