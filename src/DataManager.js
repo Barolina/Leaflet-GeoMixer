@@ -38,10 +38,6 @@
                 return unixTimeStamp >= _this._beginDate.valueOf() && unixTimeStamp <= _this._endDate.valueOf();
             })
         }
-        this.on('checkObservers', function() {
-            if (this._checkObserversTimer) clearTimeout(this._checkObserversTimer);
-            this._checkObserversTimer = setTimeout(L.bind(this.checkObservers, this), 0);
-        }, this);
     },
 
     getStyleBounds: function(gmxTilePoint) {
@@ -51,17 +47,6 @@
         }
         var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
-    },
-
-    //TODO: optimize this by storing current number of not loaded tiles for subscriptions
-    _triggerObservers: function(oKeys) {
-        var keys = oKeys || this._observers,
-            zoom = this._gmx.currentZoom;
-        for (var id in keys) {
-            var s = this._observers[id];
-            if (zoom === s.zoom) s.active = true;
-        }
-        this.checkObservers();
     },
 
     setDateInterval: function(newBeginDate, newEndDate) {
@@ -92,16 +77,6 @@
         if (this._filters[filterName]) {
             delete this._filters[filterName];
             this._triggerObservers(this._observers);
-        }
-    },
-
-    checkObservers: function() {
-        for (var subscrID in this._observers) {
-            var s = this._observers[subscrID];
-            if (s.active) {
-                s.active = false;
-                this._loadTiles(s.gmxTilePoint) || s.callback();
-            }
         }
     },
 
@@ -197,9 +172,8 @@
         return len;
     },
 
-    _getNotLoadedTileCount: function(gmxTilePoint) {
-        var count = 0,
-            bounds = this.getStyleBounds(gmxTilePoint);
+    _getNotLoadedTileCount: function(bounds) {
+        var count = 0;
         for (var key in this._activeTileKeys) {
             var tile = this._tiles[key].tile;
             if (tile.state !== 'loaded' && bounds.intersects(tile.bounds)) {
@@ -209,9 +183,8 @@
         return count;
     },
 
-    _loadTiles: function(gmxTilePoint) {
-        var bounds = this.getStyleBounds(gmxTilePoint),
-            leftToLoad = 0,
+    _loadTiles: function(bounds) {
+        var leftToLoad = 0,
             _this = this;
 
         for (var key in this._activeTileKeys) (function(tile) {
@@ -228,14 +201,14 @@
                     }
                     
                     var observers = _this._observers;
-                    for (var key in observers) {
-                        var observer = observers[key];
+                    for (var id in observers) {
+                        var observer = observers[id];
                         if (tile.bounds.intersects(observer.bbox)) {
-                            if (!observer.gmxTilePoint) {
-                                observer.active = true;
-                                _this.fire('checkObservers');
-                            } else if (_this._getNotLoadedTileCount(observer.gmxTilePoint) == 0) { 
-                                observer.callback();
+                            var bbox = observer.gmxTilePoint ?
+                                _this.getStyleBounds(observer.gmxTilePoint)
+                                : observer.bbox;
+                            if (_this._getNotLoadedTileCount(bbox) == 0) { 
+                                observer.callback(_this.getItems(id));
                             }
                         }
                     }
@@ -248,19 +221,6 @@
         })(this._tiles[key].tile);
         
         return leftToLoad;
-    },
-
-    //'callback' will be called at least once:
-    // - immediately, if all the data for a given bbox is already loaded
-    // - after all the data for a given bbox will be loaded
-    addObserver: function(options, id) {
-        if (!id) id = 's'+(this._freeSubscrID++);
-        var observer = new gmxObserver(this, options);
-        observer.id = id;
-        observer.active = true;
-        this._observers[id] = observer;
-        this.fire('checkObservers');
-        return observer;
     },
 
     chkMaxDateInterval: function() {
@@ -281,6 +241,25 @@
         
         //trigger all subscriptions because temporal filter will be changed
         this._triggerObservers(this._observers);
+    },
+
+    //'callback' will be called at least once:
+    // - immediately, if all the data for a given bbox is already loaded
+    // - after all the data for a given bbox will be loaded
+    addObserver: function(options, id) {
+        if (!id) id = 's'+(this._freeSubscrID++);
+        var _this = this,
+            observer = new gmxObserver(options);
+        observer.id = id;
+        observer.on('update', function(ev) {
+            observer.active = true;
+            if (ev.temporalFilter) _this.chkMaxDateInterval();
+            _this.checkObserver(observer);
+        });
+        observer.active = true;
+        this._observers[id] = observer;
+        this._waitCheckObservers();
+        return observer;
     },
 
     getObserver: function(id) {
@@ -334,14 +313,43 @@
     addTile: function(tile) {
         this._tiles[tile.gmxTileKey] = {tile: tile};
         this._activeTileKeys[tile.gmxTileKey] = true;
-        var observers = this._observers;
-        for (var subscrID in observers) {
-            var tp = observers[subscrID].gmxTilePoint;
-            this._loadTiles(tp);
-            if (this._getNotLoadedTileCount(tp) == 0) {
-                observers[subscrID].callback();
+        checkObservers();
+    },
+
+    checkObserver: function(observer) {
+        if (observer.active) {
+            observer.active = false;
+            var bbox = observer.gmxTilePoint ?
+                this.getStyleBounds(observer.gmxTilePoint)
+                : observer.bbox;
+            if (this._loadTiles(bbox) == 0) {
+                var data = this.getItems(observer.id);
+                observer.callback(data);
             }
         }
+    },
+
+    checkObservers: function() {
+        var observers = this._observers;
+        for (var id in this._observers) {
+            this.checkObserver(observers[id]);
+        }
+    },
+
+    _waitCheckObservers: function() {
+        if (this._checkObserversTimer) clearTimeout(this._checkObserversTimer);
+        this._checkObserversTimer = setTimeout(L.bind(this.checkObservers, this), 0);
+    },
+
+    //TODO: optimize this by storing current number of not loaded tiles for subscriptions
+    _triggerObservers: function(oKeys) {
+        var keys = oKeys || this._observers,
+            zoom = this._gmx.currentZoom;
+        for (var id in keys) {
+            var observer = this._observers[id];
+            if (zoom === observer.zoom) observer.active = true;
+        }
+        this.checkObservers();
     },
 
     preloadTiles: function(dateBegin, dateEnd, bounds) {

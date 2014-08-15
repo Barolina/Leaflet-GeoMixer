@@ -669,7 +669,7 @@
         var dataManager = this._gmx.dataManager;        
         for (var key in observersToUpdate) {
             var observer = dataManager.getObserver(key);
-            if (observer) observer.callback();
+            if (observer) observer.callback(dataManager.getItems(key));
         }
     },
 
