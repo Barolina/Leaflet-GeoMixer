@@ -37,10 +37,10 @@
                 delete gmx.tileSubscriptions[zKey];
             }
 
-            for (var k = this._drawQueue.length-1; k >= 0; k--) {
-                var elem = this._drawQueue[k];
+            for (var i = this._drawQueue.length-1; i >= 0; i--) {
+                var elem = this._drawQueue[i];
                 if (elem.zKey === zKey) {
-                    this._drawQueue.splice(k, 1);
+                    this._drawQueue.splice(i, 1);
                 }
             }
             delete this._drawQueueHash[zKey];
@@ -148,12 +148,6 @@
         this._gmx.styleHook = null;
     },
 
-    //TODO: remove
-    setPropertiesHook: function (func) {
-        this._gmx.dataManager.addFilter('userHook', func);
-        return this;
-    },
-
     setFilter: function (func) {
         this._gmx.dataManager.addFilter('userFilter', function(item) {
             return !func || func(item) ? item.properties : null;
@@ -202,7 +196,7 @@
             var bbox = queue.shift();
             delete _this._drawQueueHash[bbox.zKey];
             if (bbox.z === _this._map._zoom) {
-                _this.gmxDrawTile(bbox.tp, bbox.z, bbox.data).then(
+                _this._gmxDrawTile(bbox.tp, bbox.z, bbox.data).then(
                     bbox.def.resolve.bind(bbox.def, bbox.data),
                     bbox.def.reject.bind(bbox.def)
                 );
@@ -352,7 +346,7 @@
         }
     },
 
-    gmxDrawTile: function (tilePoint, zoom, data) {
+    _gmxDrawTile: function (tilePoint, zoom, data) {
         var gmx = this._gmx,
             def = new gmxDeferred();
             
@@ -447,7 +441,7 @@
         this._tileOnLoad(tile);
     },
 
-    gmxObjectsByPoint: function (geoItems, point) {    // Получить верхний обьект по координатам mouseClick
+    _gmxObjectsByPoint: function (geoItems, point) {    // Получить верхний обьект по координатам mouseClick
         var gmx = this._gmx,
             out = [],
             mInPixel = gmx.mInPixel,
@@ -594,7 +588,7 @@
                 var geoItems = gmx.dataManager.getItems(zKey, bounds);
 
                 if (geoItems && geoItems.length) {
-                    var arr = this.gmxObjectsByPoint(geoItems, mercatorPoint);
+                    var arr = this._gmxObjectsByPoint(geoItems, mercatorPoint);
                     if (arr && arr.length) {
                         var target = arr[0],
                             changed = !lastHover || lastHover.id !== target.id;
@@ -658,13 +652,7 @@
         }
         return gmxTiles;
     },
-    
-    redrawItem: function (id) {    // redraw Item
-        var item = this._gmx.dataManager.getItem(id),
-            observersToUpdate = this._getTilesByBounds(item.bounds);
-        this._redrawTilesHash(observersToUpdate);
-    },
-    
+
     _redrawTilesHash: function (observersToUpdate) {    // Перерисовать список gmxTiles тайлов на экране
         var dataManager = this._gmx.dataManager;        
         for (var key in observersToUpdate) {
@@ -739,9 +727,9 @@
         if(prop.Quicklook) {
 			var template = gmx.Quicklook = prop.Quicklook;
 			gmx.quicklookBGfunc = function(item) {
-				var url = template;
-				var reg = /\[([^\]]+)\]/;
-				var matches = reg.exec(url);
+				var url = template,
+                    reg = /\[([^\]]+)\]/,
+                    matches = reg.exec(url);
 				while(matches && matches.length > 1) {
 					url = url.replace(matches[0], item.properties[gmx.tileAttributeIndexes[matches[1]]]);
 					matches = reg.exec(url);

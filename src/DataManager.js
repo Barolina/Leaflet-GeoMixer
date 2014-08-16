@@ -84,13 +84,16 @@
         var resItems = [],
             observer = this._observers[oId];
         if (observer) {
-            var bounds = bboxActive || observer.bbox || [],
-                filters = observer.filters || {};
+            var filters = observer.filters || {},
+                isIntersects = function(bounds) {
+                    return (bboxActive && bboxActive.intersects(bounds))
+                        || observer.intersects(bounds);
+                };
 
             for (var key in this._activeTileKeys) {
                 var tile = this._tiles[key].tile,
                     data = tile.data;
-                if (!data || !bounds.intersects(tile.bounds)) {
+                if (!data || !isIntersects(tile.bounds)) {
                     // VectorTile is not loaded or is not on bounds
                     continue;
                 }
@@ -113,7 +116,7 @@
                         type = geom.type,
                         dataOption = tile.dataOptions[j];
 
-                    if (!bounds.intersects(dataOption.bounds)) {
+                    if (!isIntersects(dataOption.bounds)) {
                         // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
                         continue;
                     }
@@ -203,10 +206,10 @@
                     var observers = _this._observers;
                     for (var id in observers) {
                         var observer = observers[id];
-                        if (tile.bounds.intersects(observer.bbox)) {
+                        if (observer.intersects(tile.bounds)) {
                             var bbox = observer.gmxTilePoint ?
                                 _this.getStyleBounds(observer.gmxTilePoint)
-                                : observer.bbox;
+                                : observer;
                             if (_this._getNotLoadedTileCount(bbox) == 0) { 
                                 observer.callback(_this.getItems(id));
                             }
@@ -313,7 +316,7 @@
     addTile: function(tile) {
         this._tiles[tile.gmxTileKey] = {tile: tile};
         this._activeTileKeys[tile.gmxTileKey] = true;
-        checkObservers();
+        this.checkObservers();
     },
 
     checkObserver: function(observer) {
@@ -321,7 +324,7 @@
             observer.active = false;
             var bbox = observer.gmxTilePoint ?
                 this.getStyleBounds(observer.gmxTilePoint)
-                : observer.bbox;
+                : observer;
             if (this._loadTiles(bbox) == 0) {
                 var data = this.getItems(observer.id);
                 observer.callback(data);

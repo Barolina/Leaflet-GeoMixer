@@ -123,16 +123,8 @@
 			,x: size * (dx < 0 ? dz + dx : dx)
 			,y: size * (dy < 0 ? 1 + dy : dz - 1 - dy)
 		};
-    }
-    ,
-    getCenterShift: function(x1, x2, size) {
-        var size2 = 2 * size,
-            center = (x1 + x2) / 2,
-            shift = size2 * Math.floor(center / size2);
-        if (center - shift > size) shift += size;
-        return shift;
-    }
-    ,
+    },
+
     //TODO: use L.Bounds? test performance?
 	'bounds': function(arr) {							// получить bounds массива точек
 		var res = {
@@ -166,12 +158,6 @@
                 this.min.y -= dymin || dxmin;
                 this.max.x += dxmax || dxmin;
                 this.max.y += dymax || dxmin;
-                return this;
-            },
-            normalize: function(size) {
-                var shift = gmxAPIutils.getCenterShift(this.min.x, this.max.x, size);
-                this.min.x -= shift;
-                this.max.x -= shift;
                 return this;
             },
 			contains: function (point) { // ([x, y]) -> Boolean

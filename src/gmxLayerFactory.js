@@ -21,21 +21,13 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
     
     gmxMapManager.getMap(hostName, apiKey, mapID).then(
         function() {
-            var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID),
-                layer;
+            var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID);
             
             if (!layerInfo) {
                 promise.reject("There are no layer " + layerID + " in map " + mapID);
                 return;
             }
-            
-            if (layerInfo.properties.type === 'Vector') {
-                layer = new L.gmx.VectorLayer(layerParams);
-            } else {
-                layer = new L.gmx.RasterLayer(layerParams);
-            }
-            
-			layer.initFromDescription(layerInfo);
+            var layer = L.gmx.createLayer(layerInfo, layerParams);
             layer.initPromise.then(function() {
                 promise.resolve(layer);
             })
@@ -79,4 +71,18 @@ L.gmx.loadMap = function(mapID, options) {
 		def.resolve(loadedMap);
 	})
 	return def;
+}
+
+
+L.gmx.createLayer = function(layerInfo, options) {
+    if (!layerInfo) layerInfo = {};
+    if (!layerInfo.properties) layerInfo.properties = { type: 'Vector'};
+    if (layerInfo.properties.type === 'Vector') {
+        layer = new L.gmx.VectorLayer(options);
+    } else {
+        layer = new L.gmx.RasterLayer(options);
+    }
+    
+    layer.initFromDescription(layerInfo);
+    return layer;
 }

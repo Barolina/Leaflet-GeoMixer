@@ -38,7 +38,7 @@ var gmxObserver = L.Class.extend({
                         var it = items[id],
                             prop = it.arr,
                             bounds = it.dataOption.bounds;
-                        if (!added[id] && !_this.bbox.intersects(bounds)) {
+                        if (!added[id] && !_this.intersects(bounds)) {
                             removed[id] = prop;
                             delete items[id];
                             removedFlag = true;
@@ -82,10 +82,45 @@ var gmxObserver = L.Class.extend({
     },
 
     setBounds: function(bounds) {
-        this.bbox = bounds;
+        var min = bounds.min,
+            max = bounds.max,
+            minX = min.x, maxX = max.x,
+            minY = min.y, maxY = max.y,
+            w = (maxX - minX) / 2,
+            minX1 = null,
+            maxX1 = null;
+
+        if (w >= 180) minX = -180, maxX = 180;
+        else if (maxX > 180 || minX < -180) {
+            var center = ((maxX + minX) / 2) % 360;
+            if (center > 180) center -= 360;
+            else if (center < -180) center += 360;
+            minX = center - w, maxX = center + w;
+            if (minX < -180) {
+                minX1 = minX + 360, maxX1 = 180, minX = -180;
+            } else if (maxX > 180) {
+                minX1 = -180, maxX1 = maxX - 360, maxX = 180;
+            }
+        }
+        var m1 = L.Projection.Mercator.project(new L.latLng([minY, minX])),
+            m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX]));
+
+        this.bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
+        this.bbox1 = null;
+        if (minX1) {
+            m1 = L.Projection.Mercator.project(new L.latLng([minY, minX1])),
+            m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX1]));
+            this.bbox1 = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
+        }
+        
         this.active = true;
         this.fire('update');
         return this;
+    },
+
+    intersects: function(bounds) {
+        return this.bbox.intersects(bounds)
+            || (this.bbox1 && this.bbox1.intersects(bounds));
     },
 
     setDateInterval: function(beginDate, endDate) {
