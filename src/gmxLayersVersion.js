@@ -19,8 +19,9 @@ var getRequestParams = function(layer) {
             if (obj.options.chkUpdate) {
                 var _gmx = obj._gmx,
                     hostName = _gmx.hostName,
-                    pt = {Name: id, Version: _gmx.properties.LayerVersion};
-                hosts[hostName] = hosts[hostName] ? hosts[hostName].push(pt) : [pt];
+                    pt = {Name: id, Version: _gmx.properties.LayerVersion || 0};
+                if (hosts[hostName]) hosts[hostName].push(pt);
+                else hosts[hostName] = [pt];
             }
         }
     }
@@ -65,13 +66,15 @@ var layersVersion = {
         var _gmx = layer._gmx,
             layerID = _gmx.layerID;
         
-        layers[layerID] = layer;
-        _gmx._chkVersion = function () {
-            chkVersion(layer);
+        if (layerID) {
+            layers[layerID] = layer;
+            _gmx._chkVersion = function () {
+                chkVersion(layer);
+            }
+            _gmx.dataManager.on('chkLayerUpdate', _gmx._chkVersion);
+            
+            layersVersion.start();
         }
-        _gmx.dataManager.on('chkLayerUpdate', _gmx._chkVersion);
-        
-        layersVersion.start();
     },
 
     chkVersion: chkVersion,
