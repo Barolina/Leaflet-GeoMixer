@@ -14,7 +14,7 @@
 
         this._gmx = {
             hostName: options.hostName || 'maps.kosmosnimki.ru',
-            mapName: options.mapName,
+            mapName: options.mapID,
             layerID: options.layerID,
             beginDate: options.beginDate,
             endDate: options.endDate,
@@ -25,30 +25,61 @@
             tileSubscriptions: {}
         };
 
+        var _this = this;
         this.on('tileunload', function(e) {
             var tile = e.tile,
-                tp = tile._tilePoint,
-                zKey = tile.id,
-                gmx = this._gmx,
-                screenTiles = gmx.screenTiles;
-
-            if (zKey in gmx.tileSubscriptions) {
-                gmx.dataManager.removeObserver(zKey);
-                delete gmx.tileSubscriptions[zKey];
-            }
-
-            for (var i = this._drawQueue.length-1; i >= 0; i--) {
-                var elem = this._drawQueue[i];
-                if (elem.zKey === zKey) {
-                    this._drawQueue.splice(i, 1);
-                }
-            }
-            delete this._drawQueueHash[zKey];
-            if (screenTiles[zKey]) {
-                screenTiles[zKey].cancel();
-                delete screenTiles[zKey];
-            }
+                zKey = tile.id;
+            _this._clearTileSubscription(zKey);
         });
+    },
+
+    _clearTileSubscription: function(zKey) {
+        var gmx = this._gmx,
+            screenTiles = gmx.screenTiles;
+
+        if (zKey in gmx.tileSubscriptions) {
+            gmx.dataManager.removeObserver(zKey);
+            delete gmx.tileSubscriptions[zKey];
+        }
+
+        for (var i = this._drawQueue.length-1; i >= 0; i--) {
+            var elem = this._drawQueue[i];
+            if (elem.zKey === zKey) {
+                elem.def.reject();
+                this._drawQueue.splice(i, 1);
+            }
+        }
+        if (zKey in this._drawQueueHash) {
+            this._drawQueueHash[zKey].reject();
+            delete this._drawQueueHash[zKey];
+        }
+        if (screenTiles[zKey]) {
+            screenTiles[zKey].cancel();
+            delete screenTiles[zKey];
+        }
+    },
+
+    _clearAllSubscriptions: function() {
+        for (var i = 0, len = this._drawQueue.length; i < len; i++) {
+            this._drawQueue[i].def.reject();
+        }
+        this._drawQueue = [];
+
+        var gmx = this._gmx,
+            subscriptions = gmx.tileSubscriptions;
+
+        for (var zKey in subscriptions) {
+            gmx.dataManager.removeObserver(subscriptions[zKey].id);
+            delete subscriptions[zKey];
+            if (zKey in this._drawQueueHash) {
+                this._drawQueueHash[zKey].reject();
+            }
+            if (gmx.screenTiles[zKey]) {
+                gmx.screenTiles[zKey].cancel();
+                delete gmx.screenTiles[zKey];
+            }
+        }
+        this._drawQueueHash = {};
     },
 
     _zoomStart: function() {
@@ -597,14 +628,11 @@
                             gmx.lastHover = null;
                             chkHover('mouseout');
                         }
-                        var itemOptions = gmx.styleManager.getItemOptions(target),
-                            filter = gmx.properties.styles[itemOptions.currentFilter],
-                            templateBalloon = filter ? filter.Balloon : null;
 
                         ev.gmx = {
                             targets: arr
                             ,target: target
-                            ,templateBalloon: templateBalloon
+                            ,templateBalloon: gmx.styleManager.getItemBalloon(target)
                             ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
                             ,id: target.id
                         };
@@ -668,7 +696,7 @@
 
         gmx.items = {};
         gmx.tileCount = 0;
-        
+
 		var cnt;
 		if(type === 'VectorTemporal') {
             cnt = prop.TemporalTiles;
@@ -709,20 +737,33 @@
             }
         }
 
+        var tileAttributeIndexes = {};
+        if (prop.attributes) {
+            var attrs = prop.attributes;
+            if (gmx.identityField) tileAttributeIndexes[gmx.identityField] = 0;
+            for (var a = 0; a < attrs.length; a++) {
+                tileAttributeIndexes[attrs[a]] = a + 1;
+            }
+        }
+        gmx.tileAttributeIndexes = tileAttributeIndexes;
+
         if(prop.IsRasterCatalog) {
             gmx.IsRasterCatalog = prop.IsRasterCatalog;
-            gmx.rasterBGfunc = function(x, y, z, item) {
-                var properties = item.properties;
-                return 'http://' + gmx.hostName
-                    +'/TileSender.ashx?ModeKey=tile'
-                    +'&x=' + x
-                    +'&y=' + y
-                    +'&z=' + z
-                    +'&LayerName=' + properties[gmx.tileAttributeIndexes['GMX_RasterCatalogID']]
-                    +'&MapName=' + gmx.mapName
-                    +'&key=' + encodeURIComponent(gmx.sessionKey);
-            };
-            gmx.imageQuicklookProcessingHook = gmxImageTransform;
+            var layerLink = gmx.tileAttributeIndexes['GMX_RasterCatalogID'];
+            if(layerLink) {
+                gmx.rasterBGfunc = function(x, y, z, item) {
+                    var properties = item.properties;
+                    return 'http://' + gmx.hostName
+                        +'/TileSender.ashx?ModeKey=tile'
+                        +'&x=' + x
+                        +'&y=' + y
+                        +'&z=' + z
+                        +'&LayerName=' + properties[layerLink]
+                        +'&MapName=' + gmx.mapName
+                        +'&key=' + encodeURIComponent(gmx.sessionKey);
+                };
+                gmx.imageQuicklookProcessingHook = gmxImageTransform;
+            }
         }
         if(prop.Quicklook) {
 			var template = gmx.Quicklook = prop.Quicklook;
@@ -738,15 +779,14 @@
 			};
 			gmx.imageProcessingHook = gmxImageTransform;
 		}
+    },
 
-        if (prop.attributes) {
-            var tileAttributeIndexes = {},
-                attrs = prop.attributes;
-            if (gmx.identityField) tileAttributeIndexes[gmx.identityField] = 0;
-            for (var a = 0; a < attrs.length; a++) {
-                tileAttributeIndexes[attrs[a]] = a + 1;
-            }
-            gmx.tileAttributeIndexes = tileAttributeIndexes;
+    addData: function(data, options) {
+        if (!this._gmx.mapName) {     // client side layer
+            this._clearAllSubscriptions();
+            this._gmx.dataManager.addData(data, options);
+            this._update();
         }
+        return this;
 	}
 });

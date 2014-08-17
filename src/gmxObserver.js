@@ -58,6 +58,7 @@ var gmxObserver = L.Class.extend({
         if (!this.bbox) {
             var w = gmxAPIutils.worldWidthMerc;
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
+            this.world = true;
         }
         
         this.active = true;
@@ -119,7 +120,7 @@ var gmxObserver = L.Class.extend({
     },
 
     intersects: function(bounds) {
-        return this.bbox.intersects(bounds)
+        return this.world || this.bbox.intersects(bounds)
             || (this.bbox1 && this.bbox1.intersects(bounds));
     },
 

@@ -1,20 +1,22 @@
 ﻿var gmxStyleManager = function(gmx) {
     var MAX_STYLE_SIZE = 256,
+        DEFAULT_STYLE = { outline: { color: 255, thickness: 1}},
         needLoadIcons = 0,
         styles = [],
         items = {},
         imagesSize = {},
-        me = this;
+        _this = this;
 
     this.deferred = new gmxDeferred()
     var initStyles = function() {
         var props = gmx.properties,
             balloonEnable = false,
-            arr = props.styles,
+            arr = props.styles || [{RenderStyle: DEFAULT_STYLE}],
             len = Math.max(arr.length, gmx.styles.length);
 
         for (var i = 0; i < len; i++) {
             var gmxStyle = gmx.styles[i] || arr[i];
+            if (!gmxStyle.RenderStyle) gmxStyle.RenderStyle = DEFAULT_STYLE;
             if (gmxStyle.HoverStyle === undefined && gmxStyle.RenderStyle) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
                 if (hoveredStyle.marker && hoveredStyle.marker.size) hoveredStyle.marker.size += 1;
@@ -42,11 +44,12 @@
     var parseItem = function(style) {			// Style Scanex->leaflet
         var pt = {
 			common: true					// true, false (true - if style without object property keys)
-			,MinZoom: style.MinZoom
-			,MaxZoom: style.MaxZoom
+			,MinZoom: style.MinZoom || 0
+			,MaxZoom: style.MaxZoom || 50
 			,Filter: style.Filter || null
 			,onMouseOver: !style.DisableBalloonOnMouseMove
 			,onMouseClick: !style.DisableBalloonOnClick
+			,Balloon: style.Balloon || ''
 			,BalloonEnable: style.BalloonEnable || false
 			,RenderStyle: (style.RenderStyle ? parseStyle(style.RenderStyle) : null)
 			,HoverStyle: (style.HoverStyle ? parseStyle(style.HoverStyle) : null)
@@ -75,7 +78,7 @@
 			,fill: false
 			,stroke: false
 		};
-        if(typeof(st.label) === 'object') {					//  label style
+        if(typeof(st.label) === 'object') {     //  label style
             pt.label = {};
             chkStyleKey(pt.label, st.label, ['color', 'haloColor', 'size', 'spacing', 'align', 'dx', 'dy', 'field']);
             pt.common = false;
@@ -247,7 +250,7 @@
 				if(flag) pt.image = it;
 				imagesSize[url] = pt;
 				needLoadIcons--;
-                me.chkReady();
+                _this.chkReady();
 			}
 			,onerror: function(){
 				pt.sx = 1;
@@ -255,7 +258,7 @@
 				pt.image = null;
 				imagesSize[url] = pt;
 				needLoadIcons--;
-				me.chkReady();
+				_this.chkReady();
 				console.log({url: url, func: 'getImageSize', Error: 'image not found'});
 			}
 		};
@@ -338,27 +341,40 @@
         return out;
     }
 
+    this._lastZoom = null;
     var chkStyleFilter = function(item) {
         var itemOptions = getItemOptions(item) || {},
             indexes = gmx.tileAttributeIndexes;
         
-        for (var i = 0, len = styles.length; i < len; i++) {
-            var st = styles[i];
-            if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-            if ('FilterFunction' in st && !st.FilterFunction(item.properties, indexes)) continue;
-            if(itemOptions.currentFilter !== i) {
-                itemStyleParser(item, st.RenderStyle);
-                if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
-            }
+        if (_this._lastZoom !== gmx.currentZoom || !('currentFilter' in itemOptions)) {
+            _this._lastZoom = gmx.currentZoom;
+            for (var i = 0, len = styles.length; i < len; i++) {
+                var st = styles[i];
+                if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
+                if ('FilterFunction' in st && !st.FilterFunction(item.properties, indexes)) continue;
+                if(itemOptions.currentFilter !== i) {
+                    itemStyleParser(item, st.RenderStyle);
+                    if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
+                }
 
-            itemOptions.currentFilter = i;
+                itemOptions.currentFilter = i;
+                return true;
+            }
+        } else if (styles[itemOptions.currentFilter]) {
             return true;
         }
+        delete itemOptions.currentFilter;
         return false;
     }
 
     gmx.dataManager.addFilter('styleFilter', chkStyleFilter);
  
+    this.getItemBalloon = function(item) {
+        var itemOptions = getItemOptions(item),
+            style = styles[itemOptions.currentFilter];
+        return style ? style.Balloon : null;
+    }
+    
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
         var itemOptions = getItemOptions(item),

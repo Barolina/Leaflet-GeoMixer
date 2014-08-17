@@ -11,7 +11,7 @@
         this._isTemporalLayer = isTemporalLayer;
         this._tiles = {};
         this._activeTileKeys = {};
-        //this._subscriptions = {};
+        this._addTileKeys = {};
         this._filters = {};
         this._freeSubscrID = 0;
         this._maxStyleSize = 0;
@@ -56,7 +56,6 @@
 
         var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
         this._activeTileKeys = selection.tiles;
-        // activeIntervals = selection.nodes;
         this._beginDate = newBeginDate;
         this._endDate = newEndDate;
         
@@ -88,48 +87,50 @@
                 isIntersects = function(bounds) {
                     return (bboxActive && bboxActive.intersects(bounds))
                         || observer.intersects(bounds);
-                };
+                },
+                _this = this,
+                putData = function(key) {
+                    var tile = _this._tiles[key].tile,
+                        data = tile.data;
+                    if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
+                        // VectorTile is not loaded or is not on bounds
+                        return;
+                    }
 
-            for (var key in this._activeTileKeys) {
-                var tile = this._tiles[key].tile,
-                    data = tile.data;
-                if (!data || !isIntersects(tile.bounds)) {
-                    // VectorTile is not loaded or is not on bounds
-                    continue;
-                }
-
-                for (var j = 0, len1 = data.length; j < len1; j++) {
-                    var it = data[j],
-                        id = it[0],
-                        item = this.getItem(id),
-                        isFiltered = false;
-                    for (var filterName in filters) {
-                        if (filters[filterName] && !filters[filterName](item, tile)) {
-                            isFiltered = true;
-                            break;
+                    for (var j = 0, len1 = data.length; j < len1; j++) {
+                        var it = data[j],
+                            id = it[0],
+                            item = _this.getItem(id),
+                            isFiltered = false;
+                        for (var filterName in filters) {
+                            if (filters[filterName] && !filters[filterName](item, tile)) {
+                                isFiltered = true;
+                                break;
+                            }
                         }
+
+                        if (isFiltered) continue;
+
+                        var geom = it[it.length - 1],
+                            type = geom.type,
+                            dataOption = tile.dataOptions[j];
+
+                        if (!isIntersects(dataOption.bounds)) {
+                            // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
+                            continue;
+                        }
+
+                        if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+                            tile.calcEdgeLines(j);
+                        }
+                        resItems.push({
+                            arr: it,
+                            dataOption: dataOption
+                        });
                     }
-
-                    if (isFiltered) {continue;}
-
-                    var geom = it[it.length - 1],
-                        type = geom.type,
-                        dataOption = tile.dataOptions[j];
-
-                    if (!isIntersects(dataOption.bounds)) {
-                        // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
-                        continue;
-                    }
-
-                    if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
-                        tile.calcEdgeLines(j);
-                    }
-                    resItems.push({
-                        arr: it,
-                        dataOption: dataOption
-                    });
-                }
-            }
+                };
+            for (var tkey in this._activeTileKeys) putData(tkey);
+            for (var tkey in this._addTileKeys) putData(tkey);
         }
         return resItems;
     },
@@ -440,11 +441,12 @@
     },
 
     _chkProcessing: function(processing) {
-        var tile = this.processingTile;
+        var tile = this.processingTile,
+            _items = this._items;
         if (tile) {
             if (tile.data)
                 tile.data.forEach(function(it) {
-                    this._items[it[0]].processing = false;
+                    _items[it[0]].processing = false;
                 });
             tile.clear();
         }
@@ -452,7 +454,7 @@
         if (processing.Deleted)
             processing.Deleted.forEach(function(id) {
                 skip[id] = true;
-                if (this._items[id]) this._items[id].processing = true;
+                if (_items[id]) _items[id].processing = true;
             });
 
         var out = {};
@@ -470,23 +472,60 @@
         
         if (data.length > 0) {
             if (!tile) {
-                this.processingTile = tile = new gmxVectorTile({load: function(x, y, z, v, s, d, callback) {
-                    callback([]);
-                }}, -0.5, -0.5, 0, 0, -1, -1);
+                this.processingTile = this.addData(data);
                 this.addFilter('processingFilter', function(item, tile) {
                     return tile.z === 0 || !item.processing;
                 });
             }
-            tile.addData(data);
-            this._updateItemsFromTile(tile);
-            this.addTile(tile);
         }
+    },
+
+    addData: function(data, options) {
+        var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
+        if (options) {
+            if ('x' in options) x = options.x;
+            if ('y' in options) y = options.y;
+            if ('z' in options) z = options.z;
+            if ('v' in options) v = options.v;
+            if ('s' in options) s = options.s;
+            if ('d' in options) d = options.d;
+        }
+        var tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d),
+            tileLink = this._tiles[tileKey];
+
+        this._addTileKeys[tileKey] = true;
+        if (!tileLink) {
+            tileLink = this._tiles[tileKey] = {
+                tile: new gmxVectorTile({load: function(x, y, z, v, s, d, callback) {
+                            callback([]);
+                        }}, x, y, z, v, s, d)
+            };
+        } else {
+            var chkKeys = {},
+                id = 0;
+            for (var i = 0, len = data.length; i < len; i++) {
+                id = data[i][0];
+                if (this._items[id]) chkKeys[id] = true;
+            }
+            for (var arr = tileLink.tile.data, i = arr.length - 1; i >= 0; i--) {
+                id = arr[i][0];
+                if (chkKeys[id]) {
+                    arr.splice(i, 1);
+                    delete this._items[id];
+                }
+            }
+        }
+        var vTile = tileLink.tile;
+        vTile.addData(data);
+        this._updateItemsFromTile(vTile);
+        this.addTile(vTile);
+        return vTile;
     },
     
     initTileList: function(layerProperties) {
         var arr, vers;
 
-        if (this._isTemporalLayer) {
+        if (this._isTemporalLayer && this._gmx.TemporalPeriods) {
             arr = layerProperties.TemporalTiles || [];
             vers = layerProperties.TemporalVers || [];
 
