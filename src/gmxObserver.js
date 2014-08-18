@@ -91,8 +91,11 @@ var gmxObserver = L.Class.extend({
             minX1 = null,
             maxX1 = null;
 
-        if (w >= 180) minX = -180, maxX = 180;
-        else if (maxX > 180 || minX < -180) {
+        this.world = false;
+        if (w >= 180) {
+            minX = -180, maxX = 180;
+            this.world = true;
+        } else if (maxX > 180 || minX < -180) {
             var center = ((maxX + minX) / 2) % 360;
             if (center > 180) center -= 360;
             else if (center < -180) center += 360;
