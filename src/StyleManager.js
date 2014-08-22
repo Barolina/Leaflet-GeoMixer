@@ -161,7 +161,9 @@
                             ,(typeof(arr[2]) === 'string' ? gmxParsers.parseExpression(arr[2]) : null)
                         ]);
                     }
-                    pt.size = pt.circle = Math.max(pt.radialGradient.r1, pt.radialGradient.r2);
+                    if (pt.common) {
+                        pt.size = pt.circle = Math.max(pt.radialGradient.r1, pt.radialGradient.r2);
+                    }
                 } else if(typeof(ph.linearGradient) === 'object') {
                     pt.linearGradient = ph.linearGradient;
                     //	x1,y1 — координаты начальной точки
@@ -194,7 +196,7 @@
                     }
                 }
                 if('fillColor' in pt) {
-                    pt.fillStyle = gmxAPIutils.dec2rgba(pt.fillColor, pt.fillOpacity);
+                    pt.fillStyle = gmxAPIutils.dec2color(pt.fillColor, pt.fillOpacity);
                 }
             }
 
@@ -208,7 +210,7 @@
                     pt.common = false;
                 } else {
                     var opacity = ('opacity' in ph ? ph.opacity/100 : 1);
-                    pt.strokeStyle = gmxAPIutils.dec2rgba(ph.color || 255, opacity);
+                    pt.strokeStyle = gmxAPIutils.dec2color(ph.color || 255, opacity);
                 }
             }
         }
@@ -306,7 +308,7 @@
             if('colorFunction' in pt || 'opacityFunction' in pt) {
                 color = 'colorFunction' in pt ? pt.colorFunction(prop, indexes) : 'color' in pt ? pt.color : 255;
                 opacity = 'opacityFunction' in pt ? pt.opacityFunction(prop, indexes)/100 : 'opacity' in pt ? pt.opacity : 1;
-                out.strokeStyle = gmxAPIutils.dec2rgba(color, opacity);
+                out.strokeStyle = gmxAPIutils.dec2color(color, opacity);
             }
             out.lineWidth = 'lineWidth' in pt ? pt.lineWidth : 1;
         }
@@ -315,12 +317,34 @@
             out.fill = pt.fill;
             if(pt.pattern) {
                 out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt));
+            } else if(pt.radialGradient) {
+                var rgr = pt.radialGradient,
+                    r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
+                    r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
+                    x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
+                    y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
+                    x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
+                    y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
+                var colorStop = [];
+                for (var i = 0, len = rgr.addColorStop.length; i < len; i++) {
+                    var arr = rgr.addColorStop[i],
+                        arrFunc = rgr.addColorStopFunctions[i],
+                        p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
+                        p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2])),
+                        p3 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], p2/100);
+                    colorStop.push([p0, p3]);
+                }
+                out.size = r2;
+                out._radialGradientParsed = {
+                    create: [x1, y1, r1, x2, y2, r2]
+                    ,colorStop: colorStop
+                };
             } else {
                 out.fillStyle = pt.fillStyle;
                 if('fillColorFunction' in pt || 'fillOpacityFunction' in pt) {
                     color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : pt.fillColor || 255);
                     opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes)/100 : pt.fillOpacity || 1);
-                    out.fillStyle = gmxAPIutils.dec2rgba(color, opacity);
+                    out.fillStyle = gmxAPIutils.dec2color(color, opacity);
                 }
             }
         }

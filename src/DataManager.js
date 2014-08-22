@@ -233,9 +233,7 @@
             newEndDate = this._endDate;
         for (var oId in observers) {
             var observer = observers[oId],
-                dateInterval = observer.dateInterval,
-                beg = dateInterval.beginDate,
-                end = dateInterval.endDate;
+                dateInterval = observer.dateInterval || {beginDate: this._beginDate, endDate: this._endDate};
             if (dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
             if (dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
         }

@@ -313,7 +313,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     arrFunc = style.linearGradient.addColorStopFunctions[i],
                     p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]),
                     p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2])),
-                    p1 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
+                    p1 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
                 lineargrad.addColorStop(p0, p1);
             }
             ctx.fillStyle = lastStyles.fillStyle = lineargrad; 

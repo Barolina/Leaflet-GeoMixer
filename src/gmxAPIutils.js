@@ -266,6 +266,10 @@
         return (i+0x1000000).toString(16).substr(-6).toUpperCase();
     },
 
+    dec2color: function(i, a)   {   // convert decimal to canvas color
+        return a < 1 ? this.dec2rgba(i, a) : '#' + this.dec2hex(i);
+    },
+
 	'oneDay': 60*60*24			// один день
 	,
     'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам двух тайлов
@@ -382,9 +386,7 @@
 
         for (var i = 0; i < count; i++) {
             ptx.beginPath();
-            var col = resColors[i];
-            var fillStyle = gmxAPIutils.dec2rgba(col, 1);
-            fillStyle = fillStyle.replace(/1\)/, op + ')');
+            var fillStyle = gmxAPIutils.dec2color(resColors[i], op);
             ptx.fillStyle = fillStyle;
 
             if (flagRotate) {
@@ -428,6 +430,8 @@
             itemOptions = attr.itemOptions,
             parsedStyleKeys = itemOptions.parsedStyleKeys,
             coords = attr.coords,
+            indexes = gmx.tileAttributeIndexes,
+            prop = attr.item.properties,
             px = attr.tpx,
             py = attr.tpy,
             sx = attr.sx || style.sx || 4,
@@ -471,24 +475,24 @@
         }
         if(style.fill) {
             ctx.beginPath();
-            if(style.circle) {
+            if(style.circle || style.radialGradient) {
                 if(style.radialGradient) {
-                    var rgr = style.radialGradient;
-                    var r1 = (rgr.r1Function ? rgr.r1Function(prop) : rgr.r1);
-                    var r2 = (rgr.r2Function ? rgr.r2Function(prop) : rgr.r2);
-                    var x1 = (rgr.x1Function ? rgr.x1Function(prop) : rgr.x1);
-                    var y1 = (rgr.y1Function ? rgr.y1Function(prop) : rgr.y1);
-                    var x2 = (rgr.x2Function ? rgr.x2Function(prop) : rgr.x2);
-                    var y2 = (rgr.y2Function ? rgr.y2Function(prop) : rgr.y2);
-
+                    var rgr = style.radialGradient,
+                        r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
+                        r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
+                        x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
+                        y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
+                        x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
+                        y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
+                    style.circle = r2;
                     var radgrad = ctx.createRadialGradient(px1+x1, py1+y1, r1, px1+x2, py1+y2,r2);  
                     for (var i = 0, len = style.radialGradient.addColorStop.length; i < len; i++)
                     {
-                        var arr = style.radialGradient.addColorStop[i];
-                        var arrFunc = style.radialGradient.addColorStopFunctions[i];
-                        var p0 = (arrFunc[0] ? arrFunc[0](prop) : arr[0]);
-                        var p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr[2]));
-                        var p3 = gmxAPIutils.dec2rgba(arrFunc[1] ? arrFunc[1](prop) : arr[1], p2/100);
+                        var arr = style.radialGradient.addColorStop[i],
+                            arrFunc = style.radialGradient.addColorStopFunctions[i],
+                            p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
+                            p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2])),
+                            p3 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], p2/100);
                         radgrad.addColorStop(p0, p3);
                     }
                     ctx.fillStyle = radgrad;
