@@ -87,6 +87,7 @@
                             geo = item[item.length - 1],
                             p = geo.coordinates,
                             latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]});
+                        latlng.alt = item[2] * 4;
                         latlngs.push(latlng);
                     }
                     heat.setLatLngs(latlngs);

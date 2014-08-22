@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet debug page</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+	<link rel="stylesheet" href="http://leaflet.github.io/Leaflet.markercluster/dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="http://leaflet.github.io/Leaflet.markercluster/dist/MarkerCluster.Default.css" />
+	<script src="http://leaflet.github.io/Leaflet.markercluster/dist/leaflet.markercluster-src.js"></script>
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+        #controls {
+            position: absolute;
+			left: 54px;
+			top: 11px;
+			z-index: 1;
+			background-color: #ffffff;
+			padding: 13px 15px 13px 13px;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        #controls {
+            position: absolute;
+			left: 54px;
+			top: 11px;
+			z-index: 1;
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        
+        #controls button {
+            border-radius: 5px;
+            
+        }
+        
+        #controls > div{
+            padding: 6px;
+        }
+    </style>
+
+</head>
+<body>
+
+	<div id="map"></div>
+	<div id="controls">
+		<div>
+            <button id="prev">Prev day</button>
+            <button id="next">Next day</button>
+            <span id="timeInfo"></span>
+        </div>
+	</div>
+	<script type="text/javascript">
+
+		var map = L.map('map').setView([60, 50], 3);
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+
+		var startDate = new Date('2013/03/21');
+		var oneDay = 1000*60*60*24,	// milliseconds in one day
+            now = startDate.getTime(),
+            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
+            ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
+
+        var updateInfo = function(currentDate) {
+			var zz = function(x) { return x < 10 ? "0" + x : x}
+			var dateStr = zz(currentDate.getUTCDate()) + '.' + zz(currentDate.getUTCMonth() + 1) + '.' + zz(currentDate.getUTCFullYear());
+			document.getElementById('timeInfo').innerHTML = dateStr;
+		}
+        
+        updateInfo(ddt1);
+
+		var markers = new L.MarkerClusterGroup();
+		map.addLayer(markers);
+
+        L.gmx.loadLayers([
+            {mapID: 'AZR6A', layerID: 'C13B4D9706F7491EBC6DC70DFFA988C0'}
+        ]).then(function(hotspotLayer) {
+            hotspotLayer.setDateInterval(ddt1, ddt2);
+            var observer = hotspotLayer.addObserver({
+                callback: function(data) {
+                    markers.clearLayers();
+                    var latlngs = [];
+                    for (var i = 0, len = data.added.length; i < len; i++) {
+                        var item = data.added[i].arr,
+                            geo = item[item.length - 1],
+                            title = item[0],
+                            p = geo.coordinates,
+                            latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]});
+                        var marker = new L.Marker(latlng, { title: title });
+                        marker.bindPopup(title);
+                        markers.addLayer(marker);
+                        //latlngs.push(latlng);
+                    }
+                    //heat.setLatLngs(latlngs);
+                    //heat.redraw();
+                    //map.addLayer(markers);
+                    console.log('observer', data);
+                }
+                ,type: 'resend'
+              });
+            //map.addLayer(hotspotLayer);
+            //controls
+            document.getElementById("prev").onclick = function() {
+                ddt1 = new Date(ddt1.getTime() - oneDay);
+                ddt2 = new Date(ddt2.getTime() - oneDay);
+                hotspotLayer.setDateInterval(ddt1, ddt2);
+                updateInfo(ddt1);
+            }
+            
+            document.getElementById("next").onclick = function() {
+                ddt1 = new Date(ddt1.getTime() + oneDay);
+                ddt2 = new Date(ddt2.getTime() + oneDay);
+                hotspotLayer.setDateInterval(ddt1, ddt2);
+                updateInfo(ddt1);
+            }
+		});
+
+	</script>
+</body>
+</html>
