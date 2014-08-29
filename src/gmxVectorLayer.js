@@ -179,6 +179,10 @@
         this._gmx.styleHook = null;
     },
 
+    getFilters: function () {
+        return this._gmx.dataManager._filters;
+    },
+
     setFilter: function (func) {
         this._gmx.dataManager.addFilter('userFilter', function(item) {
             return !func || func(item) ? item.properties : null;
@@ -681,11 +685,17 @@
         return gmxTiles;
     },
 
+    redrawItem: function (id) {
+        var item = this._gmx.dataManager.getItem(id),
+        gmxTiles = this._getTilesByBounds(item.bounds);
+        this._redrawTilesHash(gmxTiles);
+    },
+
     _redrawTilesHash: function (observersToUpdate) {    // Перерисовать список gmxTiles тайлов на экране
         var dataManager = this._gmx.dataManager;        
         for (var key in observersToUpdate) {
             var observer = dataManager.getObserver(key);
-            if (observer) observer.callback(dataManager.getItems(key));
+            if (observer) observer.trigger(dataManager.getItems(key));
         }
     },
 
@@ -746,6 +756,9 @@
             }
         }
         gmx.tileAttributeIndexes = tileAttributeIndexes;
+        gmx.getPropItem = function(prop, key) {
+            return gmx.tileAttributeIndexes ? prop[gmx.tileAttributeIndexes[key]] : '';
+        }
 
         if(prop.IsRasterCatalog) {
             gmx.IsRasterCatalog = prop.IsRasterCatalog;

@@ -46,10 +46,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         });
     }
 
-    var getPropItem = function(prop, key) {
-        return gmx.tileAttributeIndexes ? prop[gmx.tileAttributeIndexes[key]] : '';
-    }
-
     //load missing rasters for one item
     var getItemRasters = function(geo) {
         var properties = geo.arr,
@@ -59,10 +55,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         if (idr in rasters) return def;
 
         var ww = gmxAPIutils.worldWidthMerc,
-            shiftX = Number(gmx.shiftXfield ? getPropItem(properties, gmx.shiftXfield) : 0) % ww,
-            shiftY = Number(gmx.shiftYfield ? getPropItem(properties, gmx.shiftYfield) : 0),
-            GMX_RasterCatalogID = getPropItem(properties, 'GMX_RasterCatalogID'),
-            urlBG = getPropItem(properties, 'urlBG'),
+            shiftX = Number(gmx.shiftXfield ? gmx.getPropItem(properties, gmx.shiftXfield) : 0) % ww,
+            shiftY = Number(gmx.shiftYfield ? gmx.getPropItem(properties, gmx.shiftYfield) : 0),
+            GMX_RasterCatalogID = gmx.getPropItem(properties, 'GMX_RasterCatalogID'),
+            urlBG = gmx.getPropItem(properties, 'urlBG'),
             url = '',
             itemImageProcessingHook = null,
             isTiles = false;
@@ -454,12 +450,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             ctx.restore();
                         }
                     }
-                    // if(dattr.style.label) {
-                        // labels[idr] = {
-                            // item: item
-                            // ,style: dattr.style
-                        // };
-                    // }
                 } else if (geom.type === 'LINESTRING' || geom.type === 'MULTILINESTRING') {	// Отрисовка геометрии линий
                     var coords = geom.coordinates;
                     if(geom.type === 'MULTILINESTRING') {
@@ -484,32 +474,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     }
                 }
             }
-            //var labels = {};
-            //var hoverItems = [];
             for (var i = 0; i < itemsLength; i++) {
                 drawItem(geoItems[i]);
-                // var it = geoItems[i],
-                    // idr = it.id;
-                // if (gmx.lastHover && gmx.lastHover.id === idr) hoverItems.push(it);
-                // else drawItem(it);
             }
-            
             def.resolve();
-            /*
-            for (var i = 0, len = hoverItems.length; i < len; i++) {
-                drawItem(hoverItems[i]);
-            }
-            // TODO: Need labels manager
-            for (var idr in labels) {
-                var label = labels[idr];
-                var item = label.item;
-                dattr.style = label.style;
-                dattr.coords = [(item.bounds.min.x + item.bounds.max.x)/2, (item.bounds.min.y + item.bounds.max.y)/2];
-                var txt = item.properties[dattr.style.label.field];
-                var parsedStyleKeys = item.options.parsedStyleKeys.label || {};
-                //dattr.extentLabel = gmxAPIutils.getLabelSize(txt, parsedStyleKeys);
-                gmxAPIutils.setLabel(txt, dattr, parsedStyleKeys);
-            }*/
         }
 
         if (showRaster) {

@@ -2,11 +2,13 @@
 	includes: L.Mixin.Events,
     initialize: function(gmx, layerDescription) {
         var _this = this,
+            oneDay = 1000*60*60*24, // milliseconds in one day
             isTemporalLayer = layerDescription.properties.Temporal;
 
         this._tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
-        this._beginDate = gmx.beginDate;
-        this._endDate = gmx.endDate;
+        this._endDate = gmx.endDate || new Date();
+        this._beginDate = gmx.beginDate || new Date(this._endDate.getTime() - oneDay);
+
         this._gmx = gmx;
         this._isTemporalLayer = isTemporalLayer;
         this._tiles = {};
@@ -42,9 +44,9 @@
 
     getStyleBounds: function(gmxTilePoint) {
         if (!gmxTilePoint) return gmxAPIutils.bounds();
-        if (this._maxStyleSize === 0) {
+        //if (this._maxStyleSize === 0) {
             this._maxStyleSize = this._gmx.styleManager.getMaxStyleSize();
-        }
+        //}
         var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
     },
@@ -125,6 +127,7 @@
                         }
                         resItems.push({
                             arr: it,
+                            item: item,
                             dataOption: dataOption
                         });
                     }
@@ -212,7 +215,7 @@
                                 _this.getStyleBounds(observer.gmxTilePoint)
                                 : observer;
                             if (_this._getNotLoadedTileCount(bbox) == 0) { 
-                                observer.callback(_this.getItems(id));
+                                observer.trigger(_this.getItems(id));
                             }
                         }
                     }
@@ -326,7 +329,7 @@
                 : observer;
             if (this._loadTiles(bbox) == 0) {
                 var data = this.getItems(observer.id);
-                observer.callback(data);
+                observer.trigger(data);
             }
         }
     },
@@ -349,7 +352,7 @@
             zoom = this._gmx.currentZoom;
         for (var id in keys) {
             var observer = this._observers[id];
-            if (zoom === observer.zoom) observer.active = true;
+            observer.active = !('zoom' in observer) || observer.zoom === zoom;
         }
         this.checkObservers();
     },

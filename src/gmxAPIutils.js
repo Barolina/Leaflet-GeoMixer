@@ -589,8 +589,7 @@
 
     labelCanvasContext: null 			// 2dContext canvas для определения размера Label
     ,
-    'getLabelSize': function(txt, style)	{			// Получить размер Label
-        var out = [0, 0];
+    getLabelWidth: function(txt, style)	{			// Получить размер Label
         if(style) {
             if(!gmxAPIutils.labelCanvasContext) {
                 var canvas = document.createElement('canvas');
@@ -600,41 +599,34 @@
             var ptx = gmxAPIutils.labelCanvasContext;
             ptx.clearRect(0, 0, 512, 512);
             
-            var size = style.size || 12;
-            ptx.font = size + 'px "Arial"';
-            ptx.strokeStyle = style.strokeStyle || 'rgba(0, 0, 255, 1)';
-            ptx.fillStyle = style.fillStyle || 'rgba(0, 0, 255, 1)';
+            if (ptx.font !== style.font) ptx.font = style.font;
+            //if (ptx.strokeStyle !== style.strokeStyle) ptx.strokeStyle = style.strokeStyle;
+            if (ptx.fillStyle !== style.fillStyle) ptx.fillStyle = style.fillStyle;
             ptx.fillText(txt, 0, 0);
-            
-            out = [ptx.measureText(txt).width, size + 2];
+            return ptx.measureText(txt).width;
         }
-        return out;
+        return 0;
     }
-	,
-	'setLabel': function(txt, attr, parsedStyleKeys) {				// Label в canvas
-		var gmx = attr.gmx,
-            size = attr.size || 12,
-            ctx = attr.ctx;
+    ,
+    setLabel: function(ctx, txt, coord, style) {
+        var x = coord[0],
+            y = coord[1];
 
-        ctx.font = size + 'px "Arial"';
-        ctx.strokeStyle = parsedStyleKeys.strokeStyle || 'rgba(0, 0, 255, 1)';
-		ctx.shadowColor = ctx.strokeStyle;
-        ctx.fillStyle = parsedStyleKeys.fillStyle || 'rgba(0, 0, 255, 1)';
-		if(ctx.shadowBlur != 4) ctx.shadowBlur = 4;
-        
-        var p1 = gmxAPIutils.toPixels(attr.coords, attr.tpx, attr.tpy, gmx.mInPixel);
-		var extentLabel = parsedStyleKeys.extentLabel;
-        ctx.strokeText(txt, p1[0] - extentLabel[0]/2, p1[1]);
-        ctx.fillText(txt, p1[0] - extentLabel[0]/2, p1[1]);
-        //console.log('setLabel', attr, parsedStyleKeys);
-	}
-	,'worldWidthMerc': 20037508
-	,'r_major': 6378137.000
-	,
-	deg_rad: function(ang)
-	{
-		return ang * (Math.PI/180.0);
-	},
+        if(ctx.shadowColor !== style.shadowColor) ctx.shadowColor = style.shadowColor;
+        if(ctx.shadowBlur !== style.shadowBlur) ctx.shadowBlur = style.shadowBlur;
+        if(ctx.font !== style.font) ctx.font = style.font;
+        if(ctx.strokeStyle !== style.strokeStyle) ctx.strokeStyle = style.strokeStyle;
+        if(ctx.fillStyle !== style.fillStyle) ctx.fillStyle = style.fillStyle;
+        ctx.strokeText(txt, x, y);
+        ctx.fillText(txt, x, y);
+    }
+    ,'worldWidthMerc': 20037508
+    ,'r_major': 6378137.000
+    ,
+    deg_rad: function(ang)
+    {
+        return ang * (Math.PI/180.0);
+    },
 
 	distVincenty: function(lon1, lat1, lon2, lat2) {
 		var p1 = {
@@ -719,7 +711,11 @@
 	formatCoordinates2: function(x, y) {
 		return  gmxAPIutils.LatLon_formatCoordinates2(x, y);
 	},
-    
+
+    getPixelScale: function(zoom) {
+        return 256 / gmxAPIutils.tileSizes[zoom];
+    },
+
     //x, y, z - GeoMixer tile coordinates
     getTileBounds: function(x, y, z) {
         var tileSize = gmxAPIutils.tileSizes[z],

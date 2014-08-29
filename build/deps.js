@@ -9,6 +9,7 @@
     "TilesTree.js",
     "DataManager.js",
     "gmxObserver.js",
+    "LabelsLayer.js",
     "gmxAPIutils.js",
     "gmxImageTransform.js",
     "SessionManager.js",

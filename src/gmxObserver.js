@@ -16,7 +16,7 @@ var gmxObserver = L.Class.extend({
             */
             type = options.type || 'update',
             items = {},
-            callback = function(data) {
+            _trigger = function(data) {
                 var len = data.length,
                     out = {};
                 if (type === 'update') {
@@ -28,25 +28,38 @@ var gmxObserver = L.Class.extend({
                             id = prop[0];
                         if (!items[id]) {
                             items[id] = it;
-                            added[id] = prop;
+                            added[id] = it;
                             addedFlag = true;
                         }
                     }
                     var removed = {},
+                        temporalFilter = _this.filters ? _this.filters.TemporalFilter : null,
                         removedFlag = false;
                     for (var id in items) {
                         var it = items[id],
                             prop = it.arr,
                             bounds = it.dataOption.bounds;
-                        if (!added[id] && !_this.intersects(bounds)) {
-                            removed[id] = prop;
+                        if (
+                            (temporalFilter && !temporalFilter(it.item))
+                         || (!added[id] && !_this.intersects(bounds))
+                         ) {
+                            removed[id] = it;
                             delete items[id];
                             removedFlag = true;
                         }
                     }
-                    if (!addedFlag && !removedFlag) return;
-                    if (addedFlag) out.added = added;
-                    if (removedFlag) out.removed = removed;
+                    if (addedFlag) {
+                        out.added = [];
+                        for (var id in added) {
+                            out.added.push(added[id]);
+                        }
+                    }
+                    if (removedFlag) {
+                        out.removed = [];
+                        for (var id in removed) {
+                            out.removed.push(removed[id]);
+                        }
+                    }
                 } else {
                     out.added = data;
                 }
@@ -63,7 +76,7 @@ var gmxObserver = L.Class.extend({
         
         this.active = true;
 
-        this.callback = callback;
+        this.trigger = _trigger;
         this.type = type;
 
         this.filters = options.filters || null;
@@ -124,7 +137,8 @@ var gmxObserver = L.Class.extend({
 
     intersects: function(bounds) {
         return this.world || this.bbox.intersects(bounds)
-            || (this.bbox1 && this.bbox1.intersects(bounds));
+            || (this.bbox1 && this.bbox1.intersects(bounds))
+            || false;
     },
 
     setDateInterval: function(beginDate, endDate) {

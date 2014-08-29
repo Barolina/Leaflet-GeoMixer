@@ -28,7 +28,8 @@
             }
             var pt = parseItem(gmxStyle);
             if (!balloonEnable && pt.BalloonEnable) balloonEnable = true;
-            styles.push(parseItem(gmxStyle));
+            styles.push(pt);
+            if (gmxStyle.RenderStyle.label) gmx.labelsLayer = true;
         }
         gmx.balloonEnable = balloonEnable;
     }
@@ -51,8 +52,8 @@
 			,onMouseClick: !style.DisableBalloonOnClick
 			,Balloon: style.Balloon || ''
 			,BalloonEnable: style.BalloonEnable || false
-			,RenderStyle: (style.RenderStyle ? parseStyle(style.RenderStyle) : null)
-			,HoverStyle: (style.HoverStyle ? parseStyle(style.HoverStyle) : null)
+			,RenderStyle: (style.RenderStyle ? parseStyle(style, 'RenderStyle') : null)
+			,HoverStyle: (style.HoverStyle ? parseStyle(style, 'HoverStyle') : null)
 		};
 		if('Filter' in style) {
             var ph = gmxParsers.parseSQL(style.Filter);
@@ -61,15 +62,16 @@
         return pt;
     }
 
-    var chkStyleKey = function(pt, st, keys) {			// Scanex Style type -> leaflet
+    var chkStyleKey = function(pt, st, keys) { // Scanex Style type -> leaflet
         for(var i = 0, len = keys.length; i < len; i++) {
             var key = keys[i];
             if(key in st) pt[key] = st[key];
         }
     }
 
-    var parseStyle = function(st) {			// перевод Style Scanex->leaflet
-        var pt = {
+    var parseStyle = function(style, type) {   // Style Scanex->leaflet
+        var st = style[type] || {},
+            pt = {
 			common: true					// true, false (true - depends from object properties)
 			,sx: 0
 			,sy: 0
@@ -77,6 +79,8 @@
 			,marker: false
 			,fill: false
 			,stroke: false
+			,MinZoom: style.MinZoom || 0
+			,MaxZoom: style.MaxZoom || 50
 		};
         if(typeof(st.label) === 'object') {     //  label style
             pt.label = {};
@@ -203,7 +207,7 @@
             if(typeof(st.outline) === 'object') {				//	Есть стиль контура
                 pt.stroke = true;
                 var ph = st.outline;
-                pt.lineWidth = ph.thickness || 0;
+                pt.lineWidth = pt.sx = pt.sy = ph.thickness || 0;
                 if('dashes' in ph) pt.dashes = ph.dashes;
                 if('opacity' in ph && typeof(ph.opacity) === 'string') {
                     pt.opacityFunction = gmxParsers.parseExpression(ph.opacity);
@@ -334,7 +338,7 @@
                         p3 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], p2/100);
                     colorStop.push([p0, p3]);
                 }
-                out.size = r2;
+                out.sx = out.sy = out.size = r2;
                 out._radialGradientParsed = {
                     create: [x1, y1, r1, x2, y2, r2]
                     ,colorStop: colorStop
@@ -369,7 +373,9 @@
     var chkStyleFilter = function(item) {
         var itemOptions = getItemOptions(item) || {},
             indexes = gmx.tileAttributeIndexes;
-        
+        if (itemOptions.parsedStyleKeys && itemOptions.parsedStyleKeys.size) {
+            item.options.size = itemOptions.parsedStyleKeys.size;
+        }
         if (_this._lastZoom !== gmx.currentZoom || !('currentFilter' in itemOptions)) {
             _this._lastZoom = gmx.currentZoom;
             for (var i = 0, len = styles.length; i < len; i++) {

@@ -39,7 +39,7 @@
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
 	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
 	<script>
-		var map = L.map('map').setView([55.73, 37.59], 8);
+		var map = L.map('map').setView([55.73, 37.59], 11);
 
 		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
@@ -47,7 +47,7 @@
 		}).addTo(map);
 
         L.gmx.loadMap('1CB019F36D024831972F3029B724D7CA', {leafletMap: map}).then(function() {
-            console.log(arguments);
+            //console.log(arguments);
             var layers = map._layers,
                 rastersView = {
                     '076EFE8A3D66461BBEC1234B006DE272': {}    // Каталог GeoEye, снимки 0.5 м
