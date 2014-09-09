@@ -354,9 +354,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             ctx.clearRect(0, 0, 256, 256);
             var drawItem = function(geoItem) {
                 var arr = geoItem.arr,
-                    dataOption = geoItem.dataOption,
                     idr = arr[0],
-                    item = gmx.dataManager.getItem(idr),
+                    item = gmx.dataManager.getItem(idr);
+                if (!item) return;
+                var dataOption = geoItem.dataOption,
                     style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
                 dattr.item = item;
                 if (gmx.styleHook && !geoItem.styleExtend) {

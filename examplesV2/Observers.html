@@ -122,9 +122,7 @@
 
         L.gmx.loadLayers([
             {mapID: 'AZR6A', layerID: 'EB271FC4D2AD425A9BAA78ADEA041AB9'}
-            ,{mapID: 'H2DUP', layerID: 'B2CC196063834EF48A163EC14C392FAE'}
-            
-        ]).then(function(modisLayer, pointsLayer) {
+        ]).then(function(modisLayer) {
             modisLayer.setDateInterval(ddt1, ddt2);
             var observer = modisLayer.addObserver({
                 filters: modisLayer.getFilters(),
@@ -170,7 +168,6 @@
                 OSM: osm
             }, {
                 MODIS: modisLayer
-                ,POINTS: pointsLayer
            }, {collapsed: false}).addTo(map);
             //controls
             document.getElementById("prev").onclick = function() {

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script src="spatial_query.js"></script>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxCenter.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxDrawing.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxIcon.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxHide.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxLayers.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxLocation.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxCopyright.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxBottom.css" />
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxZoom.css" />
+
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxCenter.js"></script>
+	<script src="http://scanex.github.io/gmxControls/build/L.Control.gmxDrawing-dev.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxIcon.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxHide.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxLayers.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxLocation.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxCopyright.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxZoom.js"></script>
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxBottom.js"></script>
+
+    <link rel="stylesheet" href="http://scanex.github.io/gmxDrawing/css/L.gmxDrawing.css" />
+	<script src="http://scanex.github.io/gmxDrawing/src/L.GmxDrawing.js"></script>
+	<script src="fires/fires.js"></script>
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+        .leaflet-gmx-icon-boxzoom {
+            background-image: url("http://scanex.github.io/gmxControls/src/img/gmxIcons.png");
+            background-position: -627px -33px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            clear: none;
+            float: left;
+            margin-left: 6px !important;
+        }
+        .leaflet-gmx-icon-boxzoom:hover, .leaflet-gmx-icon-boxzoom-active {
+            background-position: -627px -2px;
+        }
+        #controls {
+            position: absolute;
+			left: 190px;
+			top: 11px;
+			z-index: 1;
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        
+        #controls button {
+            border-radius: 5px;
+            
+        }
+        
+        #controls > div{
+            padding: 6px;
+        }
+    </style>
+	<title>GeoMixer API - примеры подключения оперативных данных по пожарам</title>
+</head>
+
+<body>
+	<div id="map"></div>
+	<div id="controls">
+		<div>
+            <button id="prev">Prev day</button>
+            <button id="next">Next day</button>
+            <span id="timeInfo"></span> - <span id="timeInfo2"></span>
+        </div>
+	</div>
+
+<script>
+        var map = new L.Map('map', {
+            layers: [],
+            //crs: L.CRS.EPSG3395,
+            center: new L.LatLng(53.1, 43.1),
+            attributionControl: false,
+            zoomControl: false,
+            zoom: 5
+        });
+        map.addControl(L.control.gmxZoom());       // default options = {zoomslider: true}
+        map.addControl(L.control.gmxBottom());
+        map.addControl(L.control.gmxLocation());   // default options = {position: 'bottomright'}
+        map.addControl(L.control.gmxCopyright());  // default options = {position: 'bottomleft'}
+        map.addControl(L.control.gmxHide());
+        map.addControl(L.control.gmxCenter());// default options = {color: '#216b9c'}
+        map.addControl(new L.Control.gmxIcon({
+            id: 'boxzoom',
+            toggle: true,
+            title: L.gmxLocale.addText({
+                'eng': {
+                    'boxZoom': 'BoxZoom'
+                },
+                'rus': {
+                    'boxZoom': 'Увеличение'
+                }
+            }).getText('boxZoom'),
+            onAdd: function (control) {
+                //console.log('onAdd', this, arguments);
+                var map = control._map,
+                    _onMouseDown = map.boxZoom._onMouseDown;
+                map.boxZoom._onMouseDown = function (e) {
+                    _onMouseDown.call(map.boxZoom, {
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                        which: 1,
+                        shiftKey: true
+                    });
+                }
+                map.on('boxzoomend', function () {
+                    map.dragging.enable();
+                    map.boxZoom.removeHooks();
+                    control.setActive(false);
+                });
+            },
+            stateChange: function (control) {
+                console.log('boxzoom', control.options.isActive);
+                var map = control._map;
+                if (control.options.isActive) {
+                    map.dragging.disable();
+                    map.boxZoom.addHooks();
+                } else {
+                    map.dragging.enable();
+                    map.boxZoom.removeHooks();
+                }
+            }
+        }));
+
+        map.addControl(new L.Control.gmxDrawing({
+            id: 'drawing',
+            stateChange: function (control, key, flag) {
+                //console.log('drawing', control.options.activeKey, key, flag);
+            }
+        }));
+
+		var mapLayer = L.tileLayer('http://{s}.tile.cart.kosmosnimki.ru/m/{z}/{x}/{y}.png', {
+			maxZoom: 21,
+            maxNativeZoom: 17,
+			attribution: '© <a href="http://maps.kosmosnimki.ru/Apikey/License.html" style="color: inherit;" target="_blank">«СканЭкс»</a>, 2007-2014'
+		}).addTo(map);
+
+        var LayersControl = null;
+        // L.gmx.loadLayers([
+            // {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'C9458F2DCB754CEEACC54216C7D1EB0A'}
+        // ]).then(function(satellite) {
+            // satellite.addTo(map);
+
+            LayersControl = L.control.gmxLayers({
+                    Map: mapLayer
+                    // ,
+                    // Satellite: satellite
+                }, {
+                }, {collapsed: false}).addTo(map);
+        // });
+        
+
+		var startDate = new Date('2014/07/10');
+		var oneDay = 1000*60*60*24,	// milliseconds in one day
+            period = oneDay * 1,
+            now = startDate.getTime(),
+            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
+            ddt2 = new Date(ddt1.getTime() + period); //beginning of the current UTC day
+
+        var updateInfo = function() {
+			var zz = function(x) { return x < 10 ? "0" + x : x}
+            document.getElementById('timeInfo').innerHTML = 
+                zz(ddt1.getUTCDate()) + '.' + zz(ddt1.getUTCMonth() + 1) + '.' + zz(ddt1.getUTCFullYear());
+            document.getElementById('timeInfo2').innerHTML = 
+                zz(ddt2.getUTCDate()) + '.' + zz(ddt2.getUTCMonth() + 1) + '.' + zz(ddt2.getUTCFullYear());
+		}
+        
+        updateInfo();
+       
+    var _params = {
+        minGeomZoom: 8,
+        minHotspotZoom: 11,
+        hotspotLayerName: 'C13B4D9706F7491EBC6DC70DFFA988C0',
+        dailyLayerName: '3E88643A8AC94AFAB4FD44941220B1CE',
+        hotspotTimeAttr: 'Timestamp',
+        hotspotIDAttr: 'SpotID',
+        clusterTimeAttr: 'ClusterDate',
+        mapName: 'NDFYK'
+    };
+    buildModisPixelDimensionsTable();
+
+    var layerInfo = {
+        properties: {
+            //type: 'Vector',
+            title: 'FireClusters',
+            name: 'fireClustersLayer' + _params.hotspotLayerName,
+            attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
+            styles: [{
+                Filter: '"isIndustrial"=0',
+                //Balloon: _gtxt('firesWidget.LayerClusterBalloon'),
+                MinZoom:1,
+                MaxZoom:_params.minGeomZoom - 1,
+                RenderStyle: {
+                    fill: {
+                        radialGradient: {
+                            r1: 0,
+                            r2: '[scale]*20',
+                            addColorStop: [
+                                [0, 0xffff00, 50],
+                                [1, 0xff0000, 50]
+                            ]
+                        }
+                    },
+                    label: {
+                        size: 12,
+                        color: 0xffffff,
+                        field: 'label',
+                        align: 'center'
+                    }
+                }
+            },
+            {
+                Filter: '"isIndustrial"=1',
+                //Balloon: _gtxt('firesWidget.LayerClusterBalloonIndustrial'),
+                MinZoom:1,
+                MaxZoom:_params.minGeomZoom - 1,
+                RenderStyle: {
+                    fill: {
+                        radialGradient: {
+                            r1: 0,
+                            r2: '[scale]*20',
+                            addColorStop: [
+                                [0, 0xffffff, 80],
+                                [1, 0xffaa00, 80]
+                            ]
+                        }
+                    }
+                }
+            }]
+        }
+    };
+    var clusterLayer = L.gmx.createLayer(layerInfo);
+    LayersControl.addOverlay(clusterLayer, layerInfo.properties.title);
+
+    var layerInfo1 = {
+        properties: {
+            type: 'Vector',
+            title: 'FirePolygons',
+            name: 'fireClustersGeomLayer' + _params.dailyLayerName,
+            attributes: ['scale', 'count', 'label', 'startDate', 'endDate', 'dateRange', 'isIndustrial'],
+            styles: [{
+                //Balloon: _gtxt('firesWidget.LayerGeometryBalloon'),
+                MinZoom: _params.minGeomZoom,
+                MaxZoom: 21,
+                RenderStyle: {
+                    outline: { color: 0xff0000, thickness: 2 }, 
+                    fill:    { color: 0xff0000, opacity: 15 }
+                },
+                HoverStyle: {
+                    outline: { color: 0xff0000, thickness: 3 }, 
+                    fill:    { color: 0xff0000, opacity: 45 }
+                }
+            }]
+        }
+    }
+    var clusterGeomLayer = L.gmx.createLayer(layerInfo1)
+        .addTo(map);
+    LayersControl.addOverlay(clusterGeomLayer, layerInfo1.properties.title);
+
+    L.gmx.loadLayers([
+        {mapID: _params.mapName, layerID: _params.hotspotLayerName}
+        ,
+        {mapID: _params.mapName, layerID: _params.dailyLayerName}
+    ]).then(function(hotspotLayer, dailyLayer) {
+        hotspotLayer.setDateInterval(ddt1, ddt2);
+        dailyLayer.setDateInterval(ddt1, ddt2);
+        LayersControl.addOverlay(hotspotLayer, hotspotLayer._gmx.properties.title);
+        LayersControl.addOverlay(dailyLayer, dailyLayer._gmx.properties.title);
+
+        var observerDailyClustersLayer = dailyLayer.addObserver({
+            type: 'update',
+            filters: dailyLayer.getFilters(),
+            callback: updateClustersByObject(clusterLayer, false, 'ParentClusterId', 'ClusterId', 'HotSpotCount', _params.clusterTimeAttr, dailyLayer)
+        });
+
+        var observerLayer = hotspotLayer.addObserver({
+            type: 'update',
+            filters: hotspotLayer.getFilters(),
+            callback: updateClustersByObject(clusterGeomLayer, true, 'ClusterID', _params.hotspotIDAttr, null, _params.hotspotTimeAttr, hotspotLayer)
+        });
+        var chkZoom = function() {
+            var zoom = map._zoom;
+            if (zoom < _params.minGeomZoom) {
+                if (!clusterLayer._map) map.addLayer(clusterLayer);
+                if (clusterGeomLayer._map) map.removeLayer(clusterGeomLayer);
+            } else {
+                if (!clusterGeomLayer._map) map.addLayer(clusterGeomLayer);
+                if (clusterLayer._map) map.removeLayer(clusterLayer);
+            }
+            if (zoom < _params.minHotspotZoom) {
+                if (hotspotLayer._map) map.removeLayer(hotspotLayer);
+            } else {
+                if (!hotspotLayer._map) map.addLayer(hotspotLayer);
+            }
+            
+        };
+        map.on('zoomend', chkZoom);
+        chkZoom();
+
+        var updateBbox = function() {
+            var screenBounds = map.getBounds(),
+                p1 = screenBounds.getNorthWest(),
+                p2 = screenBounds.getSouthEast(),
+                bbox = gmxAPIutils.bounds([[p1.lng, p1.lat], [p2.lng, p2.lat]]);
+            //console.log('22222222222', bbox);
+            observerDailyClustersLayer.setBounds(bbox);
+            observerLayer.setBounds(bbox);
+        };
+        map.on('moveend', updateBbox);
+        updateBbox();
+
+        //controls
+        document.getElementById("prev").onclick = function() {
+            ddt1 = new Date(ddt1.getTime() - period);
+            ddt2 = new Date(ddt2.getTime() - period);
+            observerLayer.setDateInterval(ddt1, ddt2);
+            observerDailyClustersLayer.setDateInterval(ddt1, ddt2);
+            updateInfo();
+        }
+        
+        document.getElementById("next").onclick = function() {
+            ddt1 = new Date(ddt1.getTime() + period);
+            ddt2 = new Date(ddt2.getTime() + period);
+            observerLayer.setDateInterval(ddt1, ddt2);
+            observerDailyClustersLayer.setDateInterval(ddt1, ddt2);
+            updateInfo();
+        }
+    });
+
+</script>
+
+</body>
+</html>

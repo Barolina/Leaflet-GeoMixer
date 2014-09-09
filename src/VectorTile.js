@@ -4,12 +4,37 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     var loadDef = null,
         _this = this;
 
-    this.addData = function(data) {
-        this.data = this.data ? this.data.concat(data) : data;
-        this.dataOptions = new Array(this.data.length);
+    this.addData = function(data, keys) {
+        if (this.data) {
+            this.removeData(keys, true);
+            this.data = this.data.concat(data);
+        } else {
+            this.data = data;
+        }
+        var len = this.data.length;
+        this.dataOptions = new Array(len);
+        for (var i = 0; i < len; i++) {
+            var it = this.data[i];
+            this.dataOptions[i] = gmxAPIutils.geoItemBounds(it[it.length - 1]);
+        }
+
         this.state = 'loaded';
         if (loadDef)
             loadDef.resolve(this.data);
+    }
+
+    this.removeData = function(keys, flag) {
+        for (var arr = this.data || [], i = arr.length - 1; i >= 0; i--) {
+            if (keys[arr[i][0]]) {
+                arr.splice(i, 1);
+            }
+        }
+        if (!flag) {
+            this.dataOptions = new Array(this.data.length);
+            this.state = 'loaded';
+            if (loadDef)
+                loadDef.resolve(this.data);
+        }
     }
 
     this.load = function() {

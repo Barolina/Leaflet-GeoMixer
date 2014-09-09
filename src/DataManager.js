@@ -13,7 +13,6 @@
         this._isTemporalLayer = isTemporalLayer;
         this._tiles = {};
         this._activeTileKeys = {};
-        this._addTileKeys = {};
         this._filters = {};
         this._freeSubscrID = 0;
         this._maxStyleSize = 0;
@@ -133,7 +132,6 @@
                     }
                 };
             for (var tkey in this._activeTileKeys) putData(tkey);
-            for (var tkey in this._addTileKeys) putData(tkey);
         }
         return resItems;
     },
@@ -256,6 +254,7 @@
         var _this = this,
             observer = new gmxObserver(options);
         observer.id = id;
+        //observer.getDeltaY = this._gmx.getDeltaY;
         observer.on('update', function(ev) {
             observer.active = true;
             if (ev.temporalFilter) _this.chkMaxDateInterval();
@@ -349,12 +348,24 @@
     //TODO: optimize this by storing current number of not loaded tiles for subscriptions
     _triggerObservers: function(oKeys) {
         var keys = oKeys || this._observers,
-            zoom = this._gmx.currentZoom;
+            zoom = this._gmx.currentZoom,
+            screenBbox = this._gmx.getScreenMercator();
+
         for (var id in keys) {
             var observer = this._observers[id];
+            if ('gmxTilePoint' in observer && (!this._gmx.map || !observer.intersects(screenBbox))) continue;
             observer.active = !('zoom' in observer) || observer.zoom === zoom;
         }
-        this.checkObservers();
+        this._waitCheckObservers();
+    },
+
+    _removeDataFromObservers: function(data) {
+        var keys = this._observers,
+            zoom = this._gmx.currentZoom;
+        for (var id in keys) {
+            this._observers[id].removeData(data);
+        }
+        this._waitCheckObservers();
     },
 
     preloadTiles: function(dateBegin, dateEnd, bounds) {
@@ -481,7 +492,15 @@
         }
     },
 
-    addData: function(data, options) {
+    _getDataKeys: function(data) {
+        var chkKeys = {};
+        for (var i = 0, len = data.length; i < len; i++) {
+            chkKeys[data[i][0]] = true;
+        }
+        return chkKeys;
+    },
+
+    _getTileLink: function(options) {
         var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
         if (options) {
             if ('x' in options) x = options.x;
@@ -493,36 +512,47 @@
         }
         var tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d),
             tileLink = this._tiles[tileKey];
-
-        this._addTileKeys[tileKey] = true;
         if (!tileLink) {
             tileLink = this._tiles[tileKey] = {
                 tile: new gmxVectorTile({load: function(x, y, z, v, s, d, callback) {
                             callback([]);
                         }}, x, y, z, v, s, d)
             };
-        } else {
-            var chkKeys = {},
-                id = 0;
-            for (var i = 0, len = data.length; i < len; i++) {
-                id = data[i][0];
-                if (this._items[id]) chkKeys[id] = true;
-            }
-            for (var arr = tileLink.tile.data, i = arr.length - 1; i >= 0; i--) {
-                id = arr[i][0];
-                if (chkKeys[id]) {
-                    arr.splice(i, 1);
-                    delete this._items[id];
-                }
-            }
+            this.addTile(tileLink.tile);
         }
-        var vTile = tileLink.tile;
-        vTile.addData(data);
+        return tileLink;
+    },
+
+    addData: function(data, options) {
+        var tileLink = this._getTileLink(options, true),
+            chkKeys = this._getDataKeys(data),
+            vTile = tileLink.tile;
+
+        vTile.addData(data, chkKeys);
         this._updateItemsFromTile(vTile);
-        this.addTile(vTile);
+        this._triggerObservers();
         return vTile;
     },
-    
+
+    removeData: function(data, options) {
+        var tileLink = this._getTileLink(options),
+            vTile = null;
+        if (tileLink) {
+            vTile = tileLink.tile;
+            var chkKeys = {};
+            for (var i = 0, len = data.length; i < len; i++) {
+                var id = data[i];
+                chkKeys[id] = true;
+                delete this._items[id];
+            }
+            this._removeDataFromObservers(chkKeys);
+            vTile.removeData(chkKeys);
+            this._updateItemsFromTile(vTile);
+        }
+        this._triggerObservers();
+        return vTile;
+    },
+
     initTileList: function(layerProperties) {
         var arr, vers;
 

@@ -11,6 +11,7 @@
 
         this._drawQueue = [];
         this._drawQueueHash = {};
+        var _this = this;
 
         this._gmx = {
             hostName: options.hostName || 'maps.kosmosnimki.ru',
@@ -22,14 +23,28 @@
             styles: options.styles || [],
             units: options.units || {square: 'km2', distance: 'km', coordinates: 0},
             screenTiles: {},
-            tileSubscriptions: {}
+            tileSubscriptions: {},
+            getDeltaY: function() {
+                var map = _this._map;
+                if (!map) return 0;
+                var pos = map.getCenter();
+                return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
+            },
+            getScreenMercator: function() {
+                var map = _this._map;
+                if (!map) return null;
+                var pos = map.getCenter(),
+                    getDeltaY = _this._gmx.getDeltaY(),
+                    screenBounds = map.getBounds(),
+                    p1 = map.options.crs.project(screenBounds.getNorthWest()),
+                    p2 = map.options.crs.project(screenBounds.getSouthEast()),
+                    bbox = gmxAPIutils.bounds([[p1.x, p1.y], [p2.x, p2.y]]);
+                return bbox;
+            }
         };
 
-        var _this = this;
         this.on('tileunload', function(e) {
-            var tile = e.tile,
-                zKey = tile.id;
-            _this._clearTileSubscription(zKey);
+            _this._clearTileSubscription(e.tile.id);
         });
     },
 
@@ -69,7 +84,6 @@
             subscriptions = gmx.tileSubscriptions;
 
         for (var zKey in subscriptions) {
-            gmx.dataManager.removeObserver(subscriptions[zKey].id);
             delete subscriptions[zKey];
             if (zKey in this._drawQueueHash) {
                 this._drawQueueHash[zKey].reject();
@@ -80,6 +94,7 @@
             }
         }
         this._drawQueueHash = {};
+        gmx._tilesToLoad = 0;
     },
 
     _zoomStart: function() {
@@ -88,7 +103,6 @@
 
     _zoomEnd: function() {
         this._gmx.zoomstart = false;
-        this._prpZoomData(this._map._zoom);
     },
 
     _moveEnd: function() {
@@ -103,6 +117,7 @@
         }
         var gmx = this._gmx;
 
+        gmx.map = map;
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
 
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
@@ -116,21 +131,22 @@
             gmx.shiftY = 0;
         }
         if (gmx.balloonEnable && !this._popup) this.bindPopup();
-        //if (this._gmx._observer) this._gmx._observer.setActive(true);
         if (gmx.properties.type === 'Vector') {
             if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
             L.gmx.layersVersion.add(this);
             map.on('moveend', this._moveEnd, this);
         }
-        this._prpZoomData(this._map._zoom);
     },
 
     onRemove: function(map) {
         L.TileLayer.Canvas.prototype.onRemove.call(this, map);
+        this._clearAllSubscriptions();
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
 
         var gmx = this._gmx;
+
+        delete gmx.map;
         if (gmx.applyShift) {
             map.off('moveend', this._updateShiftY, this);
         }
@@ -200,11 +216,16 @@
         gmx.beginDate = beginDate;
         gmx.endDate = endDate;
         gmx.dataManager.setDateInterval(beginDate, endDate);
+        this._update();
         return this;
     },
 
     addObserver: function (options) {
         return this._gmx.dataManager.addObserver(options);
+    },
+
+    removeObserver: function(observer) {
+        return this._gmx.dataManager.removeObserver(observer.id);
     },
 
     addTo: function (map) {
@@ -230,7 +251,7 @@
             
             var bbox = queue.shift();
             delete _this._drawQueueHash[bbox.zKey];
-            if (bbox.z === _this._map._zoom) {
+            if (_this._map && bbox.z === _this._map._zoom) {
                 _this._gmxDrawTile(bbox.tp, bbox.z, bbox.data).then(
                     bbox.def.resolve.bind(bbox.def, bbox.data),
                     bbox.def.reject.bind(bbox.def)
@@ -257,11 +278,10 @@
     _updateShiftY: function() {
         var gmx = this._gmx,
             map = this._map,
-            pos = map.getCenter(),
-            deltaY = map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
+            deltaY = gmx.getDeltaY();
 
-        gmx.shiftX = gmx.mInPixel * (gmx.shiftXlayer || 0);
-        gmx.shiftY = gmx.mInPixel * (deltaY + (gmx.shiftYlayer || 0));
+        gmx.shiftX = Math.floor(gmx.mInPixel * (gmx.shiftXlayer || 0));
+        gmx.shiftY = Math.floor(gmx.mInPixel * (deltaY + (gmx.shiftYlayer || 0)));
 
         for (var t in this._tiles) {
             var tile = this._tiles[t],
@@ -273,34 +293,24 @@
         this._update();
     },
 
-    _prpZoomData: function(zoom) {
+    _prpZoomData: function() {
         var gmx = this._gmx,
             map = this._map;
-        gmx.tileSize = gmxAPIutils.tileSizes[zoom];
-        gmx.mInPixel = 256 / gmx.tileSize;
-        gmx._tilesToLoad = 0;
         gmx.currentZoom = map._zoom;
+        gmx.tileSize = gmxAPIutils.tileSizes[gmx.currentZoom];
+        gmx.mInPixel = 256 / gmx.tileSize;
         gmx.dataManager._triggerObservers();
     },
 
     _initContainer: function () {
         L.TileLayer.Canvas.prototype._initContainer.call(this);
-
-        var subscriptions = this._gmx.tileSubscriptions,
-            zoom = this._map._zoom;
-        this._prpZoomData(zoom);
-
-        for (var key in subscriptions) {
-            if (subscriptions[key].gtp.z !== zoom) {
-                this._gmx.dataManager.removeObserver(subscriptions[key].id);
-                delete subscriptions[key];
-            }
-        }
+        this._prpZoomData();
     },
 
     _update: function () {
         if (!this._map || this._gmx.zoomstart) return;
 
+        this._clearAllSubscriptions();
         var zoom = this._map.getZoom();
         if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
             clearTimeout(this._clearBgBufferTimer);
@@ -313,7 +323,6 @@
         if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
             this._removeOtherTiles(tileBounds);
         }
-        //this._gmx.dataManager.fire('checkObservers');
     },
 
     _getScreenTileBounds: function () {
@@ -702,8 +711,9 @@
     initLayerData: function(layerDescription) {     // обработка описания слоя
         var gmx = this._gmx,
             prop = layerDescription.properties,
-            type = prop.type + (prop.Temporal ? 'Temporal' : '');
+            type = prop.type || 'Vector';
 
+        if (prop.Temporal) type += 'Temporal';
         gmx.items = {};
         gmx.tileCount = 0;
 
@@ -796,9 +806,16 @@
 
     addData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
-            this._clearAllSubscriptions();
             this._gmx.dataManager.addData(data, options);
-            this._update();
+            if (this._map) this._update();
+        }
+        return this;
+	},
+
+    removeData: function(data, options) {
+        if (!this._gmx.mapName) {     // client side layer
+            this._gmx.dataManager.removeData(data, options);
+            if (this._map) this._update();
         }
         return this;
 	}

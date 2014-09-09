@@ -14,24 +14,14 @@ L.LabelsLayer = L.Class.extend({
         this._labels = {};
         var _this = this;
 
-        //this.bbox = gmxAPIutils.bounds([[Number.MAX_VALUE, Number.MAX_VALUE]]);
         this.bbox = gmxAPIutils.bounds();
 
         var chkData = function (data, layer) {
-            var count = data.count,
+            if (!data.added && !data.removed) return;
+            var added = data.added || [],
                 layerId = '_' + layer._leaflet_id,
                 gmx = layer._gmx,
-                added = data.added || [],
-                removed = data.removed || [];
-
-            if (!_this._labels[layerId]) {
-                _this._labels[layerId] = {};
-            }
-            var labels = _this._labels[layerId];
-            for (var i = 0, len = removed.length; i < len; i++) {
-                var item = removed[i].item;
-                delete labels['_' + item.id];
-            }
+                labels = {};
             for (var i = 0, len = added.length; i < len; i++) {
                 var item = added[i].item,
                     style = gmx.styleManager.getObjStyle(item),
@@ -45,12 +35,15 @@ L.LabelsLayer = L.Class.extend({
                            : [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2]
                         ;
                     }
-                    if (!('label' in options)) {
+                    var txt = gmx.getPropItem(item.properties, style.label.field);
+                    if (!('label' in options) || options.label.txt !== txt) {
                         var size = style.label.size || 12;
                         style.font = size + 'px "Arial"';
-                        var txt = gmx.getPropItem(item.properties, style.label.field),
-                            width = gmxAPIutils.getLabelWidth(txt, style);
-                        if (!width) continue;
+                        var width = gmxAPIutils.getLabelWidth(txt, style);
+                        if (!width) {
+                            delete labels[id];
+                            continue;
+                        }
                         options.label = {
                             width: width,
                             MinZoom: style.MinZoom,
@@ -65,12 +58,14 @@ L.LabelsLayer = L.Class.extend({
                     }
                 }
             }
+            _this._labels[layerId] = labels;
         }
 
         var addObserver = function (layer) {
             var gmx = layer._gmx,
                 dataManager = gmx.dataManager;
             var observer = dataManager.addObserver({
+                type: 'resend',
                 bbox: _this.bbox,
                 filters: dataManager._filters,
                 callback: function(data) {
@@ -85,17 +80,25 @@ L.LabelsLayer = L.Class.extend({
                 id = layer._leaflet_id;
             if (layer._gmx && layer._gmx.labelsLayer) {
                 _this._updateBbox();
-                _this._observers[id] = addObserver(layer);
+                var observer = addObserver(layer);
+                _this._observers[id] = observer;
                 _this._labels['_' + id] = {};
                 _this.redraw();
+                layer.on('doneDraw', _this.redraw, _this);
+
             }
         }
         this._layerremove = function (ev) {
-            var id = ev.layer._leaflet_id;
+            var layer = ev.layer,
+                id = ev.layer._leaflet_id;
             if (_this._observers[id]) {
+                var gmx = layer._gmx,
+                    dataManager = gmx.dataManager;
+                dataManager.removeObserver(_this._observers[id].id);
                 delete _this._observers[id];
                 delete _this._labels['_' + id];
                 _this._reset();
+                ev.layer.off('doneDraw', _this.redraw, _this);
             }
         }
     },

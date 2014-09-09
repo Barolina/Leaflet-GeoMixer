@@ -41,7 +41,7 @@ var gmxObserver = L.Class.extend({
                             bounds = it.dataOption.bounds;
                         if (
                             (temporalFilter && !temporalFilter(it.item))
-                         || (!added[id] && !_this.intersects(bounds))
+                         || !_this.intersects(bounds)
                          ) {
                             removed[id] = it;
                             delete items[id];
@@ -67,13 +67,26 @@ var gmxObserver = L.Class.extend({
                 options.callback(out);
             };
 
+            this.removeData = function(keys) {
+                if (type === 'update') {
+                    var removed = [];
+                    for (var id in keys) {
+                        if (items[id]) {
+                            removed.push(items[id]);
+                            delete items[id];
+                        }
+                    }
+                    if (removed.length) options.callback({removed: removed});
+                }
+            }
+
         this.bbox = options.bbox;
         if (!this.bbox) {
             var w = gmxAPIutils.worldWidthMerc;
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
             this.world = true;
         }
-        
+
         this.active = true;
 
         this.trigger = _trigger;
@@ -122,6 +135,9 @@ var gmxObserver = L.Class.extend({
         var m1 = L.Projection.Mercator.project(new L.latLng([minY, minX])),
             m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX]));
 
+        //var deltaY = 'getDeltaY' in this ? this.getDeltaY() : 0;
+        //m1.y += deltaY; m2.y += deltaY;
+        //console.log('setBounds', this.id, this.type, deltaY, m1, m2);
         this.bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         this.bbox1 = null;
         if (minX1) {
