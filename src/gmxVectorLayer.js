@@ -195,9 +195,9 @@
         this._gmx.styleHook = null;
     },
 
-    getFilters: function () {
-        return this._gmx.dataManager._filters;
-    },
+    // getFilters: function () {
+        // return this._gmx.dataManager._filters;
+    // },
 
     setFilter: function (func) {
         this._gmx.dataManager.addFilter('userFilter', function(item) {
@@ -365,25 +365,27 @@
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false,
                 gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
-                dateInterval = gmx.dataManager.getDateInterval();
-            var observer = gmx.dataManager.addObserver({
-                type: 'resend',
-                bbox: gmx.dataManager.getStyleBounds(gmxTilePoint),
-                dateInterval: dateInterval,
-                filters: gmx.dataManager._filters,
-                callback: function(data) {
-                    myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
-                        if (!isDrawnFirstTime) {
+                attr = {
+                    type: 'resend',
+                    bbox: gmx.dataManager.getStyleBounds(gmxTilePoint),
+                    filters: gmx.dataManager._filters,
+                    callback: function(data) {
+                        myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
+                            if (!isDrawnFirstTime) {
+                                gmx._tilesToLoad--;
+                                myLayer._tileLoaded();
+                                isDrawnFirstTime = true;
+                            }
+                        }, function() {
                             gmx._tilesToLoad--;
                             myLayer._tileLoaded();
-                            isDrawnFirstTime = true;
-                        }
-                    }, function() {
-                        gmx._tilesToLoad--;
-                        myLayer._tileLoaded();
-                    });
-                }
-            }, zKey);
+                        });
+                    }
+                };
+            if (gmx.layerType === 'VectorTemporal') {
+                attr.dateInterval = gmx.dataManager.getDateInterval();
+            }
+            var observer = gmx.dataManager.addObserver(attr, zKey);
             observer.zoom = zoom;
             observer.gmxTilePoint = gmxTilePoint;
             gmx.tileSubscriptions[zKey] = {id: observer.id, gtp: gmxTilePoint};

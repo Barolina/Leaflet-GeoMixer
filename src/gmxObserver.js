@@ -11,7 +11,7 @@ var gmxObserver = L.Class.extend({
                                                 // - after all the data for a given bbox will be loaded
                     dateInterval: [date1,date2],    // temporal Interval
                     bbox: bbox,                     // static bbox observer
-                    filters: {}                     // hash filters
+                    filter: Func                     // user filter
                 }
             */
             type = options.type || 'update',
@@ -92,7 +92,11 @@ var gmxObserver = L.Class.extend({
         this.trigger = _trigger;
         this.type = type;
 
-        this.filters = options.filters || null;
+        this.filters = null;
+        if (options.filter) {
+            this.filters = { userFilter: func };
+        }
+        if (options.dateInterval) this._setDateInterval(options.dateInterval[0], options.dateInterval[1]);
     },    
 
     setFilter: function (func) {
@@ -157,7 +161,7 @@ var gmxObserver = L.Class.extend({
             || false;
     },
 
-    setDateInterval: function(beginDate, endDate) {
+    _setDateInterval: function(beginDate, endDate) {
         if (!this.filters) this.filters = {};
         var beginValue = beginDate.valueOf(),
             endValue = endDate.valueOf();
@@ -169,6 +173,10 @@ var gmxObserver = L.Class.extend({
             var unixTimeStamp = item.options.unixTimeStamp;
             return unixTimeStamp >= beginValue && unixTimeStamp <= endValue;
         };
+    },
+
+    setDateInterval: function(beginDate, endDate) {
+        this._setDateInterval(beginDate, endDate);
         this.active = true;
         this.fire('update', {temporalFilter: true});
         return this;

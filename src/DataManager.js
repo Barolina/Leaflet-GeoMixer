@@ -240,10 +240,7 @@
         }
 
         var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
-        this._activeTileKeys = selection.tiles;
-        
-        //trigger all subscriptions because temporal filter will be changed
-        this._triggerObservers(this._observers);
+        this._updateActiveTilesList(selection.tiles);
     },
 
     //'callback' will be called at least once:

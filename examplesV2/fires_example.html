@@ -286,13 +286,13 @@
 
         var observerDailyClustersLayer = dailyLayer.addObserver({
             type: 'update',
-            filters: dailyLayer.getFilters(),
+            dateInterval: [ddt1, ddt2],
             callback: updateClustersByObject(clusterLayer, false, 'ParentClusterId', 'ClusterId', 'HotSpotCount', _params.clusterTimeAttr, dailyLayer)
         });
 
         var observerLayer = hotspotLayer.addObserver({
             type: 'update',
-            filters: hotspotLayer.getFilters(),
+            dateInterval: [ddt1, ddt2],
             callback: updateClustersByObject(clusterGeomLayer, true, 'ClusterID', _params.hotspotIDAttr, null, _params.hotspotTimeAttr, hotspotLayer)
         });
         var chkZoom = function() {
@@ -314,14 +314,16 @@
         map.on('zoomend', chkZoom);
         chkZoom();
 
+        var outBbox = gmxAPIutils.bounds([[0, -91], [0, -91]]);
         var updateBbox = function() {
             var screenBounds = map.getBounds(),
                 p1 = screenBounds.getNorthWest(),
                 p2 = screenBounds.getSouthEast(),
-                bbox = gmxAPIutils.bounds([[p1.lng, p1.lat], [p2.lng, p2.lat]]);
+                bbox = gmxAPIutils.bounds([[p1.lng, p1.lat], [p2.lng, p2.lat]]),
+                zoom = map._zoom;
             //console.log('22222222222', bbox);
-            observerDailyClustersLayer.setBounds(bbox);
-            observerLayer.setBounds(bbox);
+            observerLayer.setBounds(clusterGeomLayer._map ? bbox : outBbox);
+            observerDailyClustersLayer.setBounds(clusterLayer._map ? bbox : outBbox);
         };
         map.on('moveend', updateBbox);
         updateBbox();
@@ -330,6 +332,8 @@
         document.getElementById("prev").onclick = function() {
             ddt1 = new Date(ddt1.getTime() - period);
             ddt2 = new Date(ddt2.getTime() - period);
+            hotspotLayer.setDateInterval(ddt1, ddt2);
+            dailyLayer.setDateInterval(ddt1, ddt2);
             observerLayer.setDateInterval(ddt1, ddt2);
             observerDailyClustersLayer.setDateInterval(ddt1, ddt2);
             updateInfo();
@@ -338,6 +342,8 @@
         document.getElementById("next").onclick = function() {
             ddt1 = new Date(ddt1.getTime() + period);
             ddt2 = new Date(ddt2.getTime() + period);
+            hotspotLayer.setDateInterval(ddt1, ddt2);
+            dailyLayer.setDateInterval(ddt1, ddt2);
             observerLayer.setDateInterval(ddt1, ddt2);
             observerDailyClustersLayer.setDateInterval(ddt1, ddt2);
             updateInfo();
