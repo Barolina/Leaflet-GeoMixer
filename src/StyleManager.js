@@ -143,6 +143,7 @@
                     //		position — положение цвета в градиенте. Значение должно быть в диапазоне 0.0 (начало) до 1.0 (конец);
                     //		color — код цвета или формула.
                     //		opacity — прозрачность
+                    //		canvasStyleColor — результрующий цвет в формате canvas
                     var arr = ['r1', 'x1', 'y1', 'r2', 'x2', 'y2'];
                     for (var i = 0, len = arr.length; i < len; i++)
                     {
@@ -159,11 +160,15 @@
                     for (var i = 0, len = pt.radialGradient.addColorStop.length; i < len; i++)
                     {
                         var arr = pt.radialGradient.addColorStop[i];
-                        pt.radialGradient.addColorStopFunctions.push([
-                            (typeof(arr[0]) === 'string' ? gmxParsers.parseExpression(arr[0]) : null)
-                            ,(typeof(arr[1]) === 'string' ? gmxParsers.parseExpression(arr[1]) : null)
-                            ,(typeof(arr[2]) === 'string' ? gmxParsers.parseExpression(arr[2]) : null)
-                        ]);
+                            resFunc = [
+                                (typeof(arr[0]) === 'string' ? gmxParsers.parseExpression(arr[0]) : null)
+                                ,(typeof(arr[1]) === 'string' ? gmxParsers.parseExpression(arr[1]) : null)
+                                ,(typeof(arr[2]) === 'string' ? gmxParsers.parseExpression(arr[2]) : null)
+                            ];
+                        pt.radialGradient.addColorStopFunctions.push(resFunc);
+                        if (resFunc[1] === null && resFunc[2] === null) {
+                            arr.push(gmxAPIutils.dec2color(arr[1], arr[2]/100));
+                        }
                     }
                     if (pt.common) {
                         pt.size = pt.circle = Math.max(pt.radialGradient.r1, pt.radialGradient.r2);
@@ -334,8 +339,11 @@
                     var arr = rgr.addColorStop[i],
                         arrFunc = rgr.addColorStopFunctions[i],
                         p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
-                        p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2])),
-                        p3 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], p2/100);
+                        p3 = arr.length < 4
+                            ? gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1],
+                                (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2]))/100)
+                            : arr[3]
+                        ;
                     colorStop.push([p0, p3]);
                 }
                 out.sx = out.sy = out.size = r2;

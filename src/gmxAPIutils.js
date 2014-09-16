@@ -491,8 +491,11 @@
                         var arr = style.radialGradient.addColorStop[i],
                             arrFunc = style.radialGradient.addColorStopFunctions[i],
                             p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
-                            p2 = (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2])),
-                            p3 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], p2/100);
+                            p3 = arr.length < 4
+                                ? gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1],
+                                    (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2]))/100)
+                                : arr[3]
+                            ;
                         radgrad.addColorStop(p0, p3);
                     }
                     ctx.fillStyle = radgrad;
