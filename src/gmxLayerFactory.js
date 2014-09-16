@@ -77,12 +77,11 @@ L.gmx.loadMap = function(mapID, options) {
 L.gmx.createLayer = function(layerInfo, options) {
     if (!layerInfo) layerInfo = {};
     if (!layerInfo.properties) layerInfo.properties = { type: 'Vector'};
-    if (layerInfo.properties.type === 'Raster') {
-        layer = new L.gmx.RasterLayer(options);
-    } else {
-        layer = new L.gmx.VectorLayer(options);
-    }
-    
+    var layer = layerInfo.properties.type === 'Raster'
+        ? new L.gmx.RasterLayer(options)
+        : new L.gmx.VectorLayer(options)
+    ;
+
     layer.initFromDescription(layerInfo);
     return layer;
 }
