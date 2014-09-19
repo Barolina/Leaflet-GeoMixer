@@ -6,8 +6,8 @@
             isTemporalLayer = layerDescription.properties.Temporal;
 
         this._tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
-        this._endDate = gmx.endDate || gmx.ZeroDate;// || new Date();
-        this._beginDate = gmx.beginDate || gmx.ZeroDate;// || new Date(this._endDate.getTime() - oneDay);
+        this._endDate = gmx.endDate || new Date();
+        this._beginDate = gmx.beginDate || new Date(this._endDate.getTime() - oneDay);
 
         this._gmx = gmx;
         this._isTemporalLayer = isTemporalLayer;
