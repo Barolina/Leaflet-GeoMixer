@@ -1,116 +1,121 @@
 ﻿//Single observer with vector data
 var gmxObserver = L.Class.extend({
-	includes: L.Mixin.Events,
+    includes: L.Mixin.Events,
+    
+    /* options : {
+            type: 'resend | update',     // `resend` - send all data (like screen tile observer)
+                                         // `update` - send only changed data
+            callback: Func,              // will be called when layer's data for this observer is changed
+            dateInterval: [dateBegin,dateEnd], // temporal interval
+            bbox: bbox,                  // bbox to observe
+            filter: Func                 // user filter
+        }
+    */    
     initialize: function(options) {
-        var _this = this,
-            /* options : {
-                    type: 'resend | update',    // `resend` - send all data (like screen tile observer)
-                                                // `update` - send only changed data
-                    callback: Func,             // will be called at least once:
-                                                // - immediately, if all the data for a given bbox is already loaded
-                                                // - after all the data for a given bbox will be loaded
-                    dateInterval: [date1,date2],    // temporal Interval
-                    bbox: bbox,                     // static bbox observer
-                    filter: Func                     // user filter
-                }
-            */
-            type = options.type || 'update',
-            items = {},
-            _trigger = function(data) {
-                var len = data.length,
-                    out = {};
-                if (type === 'update') {
-                    var addedFlag = false,
-                        added = {};
-                    for (var i = 0; i < len; i++) {
-                        var it = data[i],
-                            prop = it.arr,
-                            id = prop[0];
-                        if (!items[id]) {
-                            items[id] = it;
-                            added[id] = it;
-                            addedFlag = true;
-                        }
-                    }
-                    var removed = {},
-                        temporalFilter = _this.filters ? _this.filters.TemporalFilter : null,
-                        removedFlag = false;
-                    for (var id in items) {
-                        var it = items[id],
-                            prop = it.arr,
-                            bounds = it.dataOption.bounds;
-                        if (
-                            (temporalFilter && !temporalFilter(it.item))
-                         || !_this.intersects(bounds)
-                         ) {
-                            removed[id] = it;
-                            delete items[id];
-                            removedFlag = true;
-                        }
-                    }
-                    if (addedFlag) {
-                        out.added = [];
-                        for (var id in added) {
-                            out.added.push(added[id]);
-                        }
-                    }
-                    if (removedFlag) {
-                        out.removed = [];
-                        for (var id in removed) {
-                            out.removed.push(removed[id]);
-                        }
-                    }
-                } else {
-                    out.added = data;
-                }
-                out.count = len;
-                options.callback(out);
-            };
-
-            this.removeData = function(keys) {
-                if (type === 'update') {
-                    var removed = [];
-                    for (var id in keys) {
-                        if (items[id]) {
-                            removed.push(items[id]);
-                            delete items[id];
-                        }
-                    }
-                    if (removed.length) options.callback({removed: removed});
-                }
-            }
-
+    
+        this.type = options.type || 'update';
+        this._callback = options.callback;
+        this._items = {};
         this.bbox = options.bbox;
+        this.filters = options.filters || [];
+        
         if (!this.bbox) {
             var w = gmxAPIutils.worldWidthMerc;
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
             this.world = true;
         }
 
-        this.active = true;
-
-        this.trigger = _trigger;
-        this.type = type;
-
-        this.filters = null;
-        if (options.filter) {
-            this.filters = { userFilter: func };
+        //this._filters = options.filter ? {userFilter: func} : {};
+        
+        if (options.dateInterval) {
+            this._setDateInterval(options.dateInterval[0], options.dateInterval[1]);
         }
-        if (options.dateInterval) this._setDateInterval(options.dateInterval[0], options.dateInterval[1]);
-    },    
+    },
+    
+    updateData: function(data) {
+        var len = data.length,
+            out = {count: len};
+            
+            
+        if (this.type === 'update') {
+            //calculate difference with previous data
+            var prevItems = this._items,
+                newItems = {},
+                addedFlag = false,
+                removedFlag = false,
+                added = [],
+                removed = [];
+            
+            for (var i = 0; i < len; i++) {
+                var it = data[i],
+                    id = it.arr[0];
 
-    setFilter: function (func) {
-        if (!this.filters) this.filters = {};
-        this.filters.userFilter = func;
+                newItems[id] = it;
+                
+                if (!prevItems[id]) {
+                    added.push(it);
+                    addedFlag = true;
+                }
+            }
+                
+            for (var id in prevItems) {
+                if (!newItems[id]) {
+                    removed.push(prevItems[id]);
+                    removedFlag = true;
+                }
+            }
+            
+            if (addedFlag) {
+                out.added = added;
+            }
+            if (removedFlag) {
+                out.removed = removed;
+            }
+            
+            this._items = newItems;
+            
+        } else {
+            out.added = data;
+        }
+        
+        this._callback(out);
+        
+        return this;
+    },
+    
+    removeData: function(keys) {
+        if (this.type !== 'update') {
+            return;
+        }
+        
+        var items = this._items,
+            removed = [];
+            
+        for (var id in keys) {
+            if (items[id]) {
+                removed.push(items[id]);
+                delete items[id];
+            }
+        }
+        
+        if (removed.length) {
+            this._callback({removed: removed});
+        }
+        
+        return this;
+    },
+
+    /*setFilter: function (func) {
+        this._filters.userFilter = func;
         this.fire('update');
         return this;
     },
 
     removeFilter: function () {
-        if (this.filters) delete this.filters.userFilter;
+        delete this._filters.userFilter;
         this.fire('update');
         return this;
-    },
+    },*/
 
     setBounds: function(bounds) {
         var min = bounds.min,
@@ -139,9 +144,6 @@ var gmxObserver = L.Class.extend({
         var m1 = L.Projection.Mercator.project(new L.latLng([minY, minX])),
             m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX]));
 
-        //var deltaY = 'getDeltaY' in this ? this.getDeltaY() : 0;
-        //m1.y += deltaY; m2.y += deltaY;
-        //console.log('setBounds', this.id, this.type, deltaY, m1, m2);
         this.bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         this.bbox1 = null;
         if (minX1) {
@@ -150,34 +152,29 @@ var gmxObserver = L.Class.extend({
             this.bbox1 = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         }
         
-        this.active = true;
         this.fire('update');
         return this;
     },
 
     intersects: function(bounds) {
-        return this.world || this.bbox.intersects(bounds)
-            || (this.bbox1 && this.bbox1.intersects(bounds))
-            || false;
+        return this.world || this.bbox.intersects(bounds) || !!(this.bbox1 && this.bbox1.intersects(bounds));
     },
 
     _setDateInterval: function(beginDate, endDate) {
-        if (!this.filters) this.filters = {};
         var beginValue = beginDate.valueOf(),
             endValue = endDate.valueOf();
         this.dateInterval = {
             beginDate: beginDate,
             endDate: endDate
         };
-        this.filters.TemporalFilter = function(item) {
+        /*this._filters.TemporalFilter = function(item) {
             var unixTimeStamp = item.options.unixTimeStamp;
             return unixTimeStamp >= beginValue && unixTimeStamp <= endValue;
-        };
+        };*/
     },
 
     setDateInterval: function(beginDate, endDate) {
         this._setDateInterval(beginDate, endDate);
-        this.active = true;
         this.fire('update', {temporalFilter: true});
         return this;
     }

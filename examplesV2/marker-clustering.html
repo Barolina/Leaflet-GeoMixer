@@ -88,6 +88,7 @@
         ]).then(function(hotspotLayer) {
             hotspotLayer.setDateInterval(ddt1, ddt2);
             var observer = hotspotLayer.addObserver({
+                dateInterval: [ddt1, ddt2],
                 callback: function(data) {
                     markers.clearLayers();
                     var latlngs = [];
@@ -101,7 +102,6 @@
                         marker.bindPopup(title);
                         markers.addLayer(marker);
                     }
-                    //console.log('observer', data);
                 }
                 ,type: 'resend'
               });
@@ -119,6 +119,7 @@
                 ddt1 = new Date(ddt1.getTime() - oneDay);
                 ddt2 = new Date(ddt2.getTime() - oneDay);
                 hotspotLayer.setDateInterval(ddt1, ddt2);
+                observer.setDateInterval(ddt1, ddt2);
                 updateInfo(ddt1);
             }
             
@@ -126,6 +127,7 @@
                 ddt1 = new Date(ddt1.getTime() + oneDay);
                 ddt2 = new Date(ddt2.getTime() + oneDay);
                 hotspotLayer.setDateInterval(ddt1, ddt2);
+                observer.setDateInterval(ddt1, ddt2);
                 updateInfo(ddt1);
             }
 		});

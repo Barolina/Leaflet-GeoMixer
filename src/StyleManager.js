@@ -390,7 +390,7 @@
                 var st = styles[i];
                 if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
                 if ('FilterFunction' in st && !st.FilterFunction(item.properties, indexes)) continue;
-                if(itemOptions.currentFilter !== i) {
+                if (itemOptions.currentFilter !== i) {
                     itemStyleParser(item, st.RenderStyle);
                     if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
                 }
@@ -401,7 +401,7 @@
         } else if (styles[itemOptions.currentFilter]) {
             return true;
         }
-        delete itemOptions.currentFilter;
+        itemOptions.currentFilter = -1;
         return false;
     }
 

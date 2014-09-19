@@ -5,12 +5,10 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         _this = this;
 
     this.addData = function(data, keys) {
-        if (this.data) {
-            this.removeData(keys, true);
-            this.data = this.data.concat(data);
-        } else {
-            this.data = data;
-        }
+    
+        this.removeData(keys, true);
+        this.data = this.data.concat(data);
+        
         var len = this.data.length;
         this.dataOptions = new Array(len);
         for (var i = 0; i < len; i++) {
@@ -51,7 +49,8 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
 
     this.clear = function() {
         this.state = 'notLoaded';
-        this.data = this.dataOptions = null;
+        this.data = [];
+        this.dataOptions = [];
         
         loadDef = null;
     }
@@ -66,22 +65,22 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         return false;
     }
     var getHidden = function(coords, tb) {  // массив точек на границах тайлов
-        var hideLines = [],
+        var hiddenLines = [],
             prev = null;
         for (var i = 0, len = coords.length; i < len; i++) {
             var p = coords[i];
             if(prev && chkOnEdge(p, prev, tb)) {
-                hideLines.push(i);
+                hiddenLines.push(i);
             }
             prev = p;
         }
-        return hideLines;
+        return hiddenLines;
     }
     this.calcEdgeLines = function(num) {
-        if (!this.data || !this.data[num]) return null;
+        if (!this.data[num]) return null;
         if (!this.dataOptions[num]) this.dataOptions[num] = {};
-        var hideLines = this.dataOptions[num].hiddenLines || null;
-        if (!hideLines) {
+        var hiddenLines = this.dataOptions[num].hiddenLines || null;
+        if (!hiddenLines) {
             var it = this.data[num],
                 geomIndex = it.length - 1, //geometry is always the last attribute
                 geom = it[geomIndex];
@@ -93,30 +92,30 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                 }
                 for (var j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j],
-                        hideLines1 = [];
+                        hiddenLines1 = [];
                     for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
-                        hideLines1.push(getHidden(coords1[j1], this.edgeBounds));
+                        hiddenLines1.push(getHidden(coords1[j1], this.edgeBounds));
                     }
-                    if (hideLines1.length) {
-                        if (!hideLines) hideLines = [];
-                        hideLines.push(hideLines1);
+                    if (hiddenLines1.length) {
+                        if (!hiddenLines) hiddenLines = [];
+                        hiddenLines.push(hiddenLines1);
                     }
                 }
-                if (hideLines) {
+                if (hiddenLines) {
                     if (!this.dataOptions[num]) this.dataOptions[num] = {};
-                    this.dataOptions[num].hiddenLines = hideLines;
+                    this.dataOptions[num].hiddenLines = hiddenLines;
                 }
             }
         }
-        return hideLines;
+        return hiddenLines;
     }
 
     var bounds = gmxAPIutils.getTileBounds(x, y, z),
         edgeBounds = gmxAPIutils.bounds().extendBounds(bounds);
     this.bounds = bounds;
     this.edgeBounds = edgeBounds.addBuffer((bounds.min.x - bounds.max.x)/10000);
-    this.data = null;
-    this.dataOptions = null;
+    this.data = [];
+    this.dataOptions = [];
     this.x = x;
     this.y = y;
     this.z = z;

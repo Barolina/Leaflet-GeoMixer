@@ -24,6 +24,7 @@
             units: options.units || {square: 'km2', distance: 'km', coordinates: 0},
             screenTiles: {},
             tileSubscriptions: {},
+            _tilesToLoad: 0,
             getDeltaY: function() {
                 var map = _this._map;
                 if (!map) return 0;
@@ -65,7 +66,7 @@
             }
         }
         if (zKey in this._drawQueueHash) {
-            this._drawQueueHash[zKey].reject();
+            //this._drawQueueHash[zKey].reject();
             delete this._drawQueueHash[zKey];
         }
         if (screenTiles[zKey]) {
@@ -85,6 +86,7 @@
 
         for (var zKey in subscriptions) {
             delete subscriptions[zKey];
+            gmx.dataManager.removeObserver(zKey);
             if (zKey in this._drawQueueHash) {
                 this._drawQueueHash[zKey].reject();
             }
@@ -215,7 +217,14 @@
         var gmx = this._gmx;
         gmx.beginDate = beginDate;
         gmx.endDate = endDate;
-        gmx.dataManager.setDateInterval(beginDate, endDate);
+        
+        //gmx.dataManager.setDateInterval(beginDate, endDate);
+        
+        for (var key in gmx.tileSubscriptions) {
+            var observer = gmx.dataManager.getObserver(key);
+            observer.setDateInterval(beginDate, endDate);
+        }
+        
         this._update();
         return this;
     },
@@ -308,9 +317,10 @@
     },
 
     _update: function () {
-        if (!this._map || this._gmx.zoomstart) return;
+        var gmx = this._gmx;
+        if (!this._map || gmx.zoomstart) return;
 
-        this._clearAllSubscriptions();
+        //this._clearAllSubscriptions();
         var zoom = this._map.getZoom();
         if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
             clearTimeout(this._clearBgBufferTimer);
@@ -322,6 +332,15 @@
 
         if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
             this._removeOtherTiles(tileBounds);
+        }
+        
+        //L.TileVector will remove all tiles from other zooms.
+        //But it will not remove subscriptions without tiles - we should do it ourself
+        for (var key in gmx.tileSubscriptions) {
+            var parsedKey = key.split(':');
+            if (parsedKey[0] != zoom) {
+                this._clearTileSubscription(key);
+            }
         }
     },
 
@@ -368,7 +387,7 @@
                 attr = {
                     type: 'resend',
                     bbox: gmx.dataManager.getStyleBounds(gmxTilePoint),
-                    filters: gmx.dataManager._filters,
+                    filters: ['styleFilter', 'userFilter'],
                     callback: function(data) {
                         myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
                             if (!isDrawnFirstTime) {
@@ -377,18 +396,22 @@
                                 isDrawnFirstTime = true;
                             }
                         }, function() {
-                            gmx._tilesToLoad--;
-                            myLayer._tileLoaded();
+                            if (!isDrawnFirstTime) {
+                                gmx._tilesToLoad--;
+                                myLayer._tileLoaded();
+                                isDrawnFirstTime = true;
+                            }
                         });
                     }
                 };
             if (gmx.layerType === 'VectorTemporal') {
-                attr.dateInterval = gmx.dataManager.getDateInterval();
+                attr.dateInterval = [gmx.beginDate, gmx.endDate];
             }
-            var observer = gmx.dataManager.addObserver(attr, zKey);
-            observer.zoom = zoom;
-            observer.gmxTilePoint = gmxTilePoint;
-            gmx.tileSubscriptions[zKey] = {id: observer.id, gtp: gmxTilePoint};
+            
+            gmx.dataManager.addObserver(attr, zKey);
+            //observer.zoom = zoom;
+            //observer.gmxTilePoint = gmxTilePoint;
+            gmx.tileSubscriptions[zKey] = true;
         }
     },
 
@@ -397,7 +420,7 @@
             def = new gmxDeferred();
             
         if(gmx.zoomstart || !this._map) {
-            def.reject.bind(def);
+            def.reject();
             return def;
         };
 
@@ -698,15 +721,17 @@
 
     redrawItem: function (id) {
         var item = this._gmx.dataManager.getItem(id),
-        gmxTiles = this._getTilesByBounds(item.bounds);
+            gmxTiles = this._getTilesByBounds(item.bounds);
+            
         this._redrawTilesHash(gmxTiles);
     },
 
     _redrawTilesHash: function (observersToUpdate) {    // Перерисовать список gmxTiles тайлов на экране
-        var dataManager = this._gmx.dataManager;        
+        var dataManager = this._gmx.dataManager;
+        //TODO: just trigger observer, don't get and pass data directly
         for (var key in observersToUpdate) {
             var observer = dataManager.getObserver(key);
-            if (observer) observer.trigger(dataManager.getItems(key));
+            if (observer) observer.updateData(dataManager.getItems(key));
         }
     },
 

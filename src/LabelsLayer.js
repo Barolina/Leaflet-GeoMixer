@@ -67,7 +67,7 @@ L.LabelsLayer = L.Class.extend({
             var observer = dataManager.addObserver({
                 type: 'resend',
                 bbox: _this.bbox,
-                filters: dataManager._filters,
+                filters: ['styleFilter', 'userFilter'],
                 callback: function(data) {
                     chkData(data, layer);
                     _this.redraw();

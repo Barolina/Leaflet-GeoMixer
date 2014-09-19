@@ -6,8 +6,8 @@
             isTemporalLayer = layerDescription.properties.Temporal;
 
         this._tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
-        this._endDate = gmx.endDate || new Date();
-        this._beginDate = gmx.beginDate || new Date(this._endDate.getTime() - oneDay);
+        this._endDate = null;
+        this._beginDate = null;
 
         this._gmx = gmx;
         this._isTemporalLayer = isTemporalLayer;
@@ -34,105 +34,100 @@
         this.initTileList(layerDescription.properties);    
 
         if (isTemporalLayer) {
-            this.addFilter('TemporalFilter', function(item) {
-                var unixTimeStamp = item.options.unixTimeStamp;
-                return unixTimeStamp >= _this._beginDate.valueOf() && unixTimeStamp <= _this._endDate.valueOf();
+            this.addFilter('TemporalFilter', function(item, tile, observer) {
+                var unixTimeStamp = item.options.unixTimeStamp,
+                    dates = observer.dateInterval;
+                return unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
             })
         }
     },
 
     getStyleBounds: function(gmxTilePoint) {
         if (!gmxTilePoint) return gmxAPIutils.bounds();
-        //if (this._maxStyleSize === 0) {
-            this._maxStyleSize = this._gmx.styleManager.getMaxStyleSize();
-        //}
+
+        this._maxStyleSize = this._gmx.styleManager.getMaxStyleSize();
+
         var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
     },
 
-    setDateInterval: function(newBeginDate, newEndDate) {
-        if (!this._isTemporalLayer || (newBeginDate == this._beginDate && newBeginDate == this._endDate)) {
-            return;
-        };
-
-        var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
-        this._activeTileKeys = selection.tiles;
-        this._beginDate = newBeginDate;
-        this._endDate = newEndDate;
-        
-        //trigger all subscriptions because temporal filter will be changed
-        this._triggerObservers(this._observers);
-    },
-
-    getDateInterval: function() {
-        return [this._beginDate, this._endDate];
-    },
-
     addFilter: function(filterName, filterFunc) {
         this._filters[filterName] = filterFunc;
-        this._triggerObservers(this._observers);
+        this._triggerObservers(); //TODO: trigger only observers that use this filter
     },
 
     removeFilter: function(filterName) {
         if (this._filters[filterName]) {
             delete this._filters[filterName];
-            this._triggerObservers(this._observers);
+            this._triggerObservers(); //TODO: trigger only observers that use this filter
         }
     },
 
     getItems: function(oId, bboxActive) {
         var resItems = [],
             observer = this._observers[oId];
-        if (observer) {
-            var filters = observer.filters || {},
-                isIntersects = function(bounds) {
-                    return (bboxActive && bboxActive.intersects(bounds))
-                        || observer.intersects(bounds);
-                },
-                _this = this,
-                putData = function(key) {
-                    var tile = _this._tiles[key].tile,
-                        data = tile.data;
-                    if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
-                        // VectorTile is not loaded or is not on bounds
-                        return;
-                    }
-
-                    for (var j = 0, len1 = data.length; j < len1; j++) {
-                        var it = data[j],
-                            id = it[0],
-                            item = _this.getItem(id),
-                            isFiltered = false;
-                        for (var filterName in filters) {
-                            if (filters[filterName] && !filters[filterName](item, tile)) {
-                                isFiltered = true;
-                                break;
-                            }
-                        }
-
-                        if (isFiltered) continue;
-
-                        var geom = it[it.length - 1],
-                            type = geom.type,
-                            dataOption = tile.dataOptions[j];
-
-                        if (!isIntersects(dataOption.bounds)) {
-                            // TODO: есть лишние обьекты которые отрисовываются за пределами screenTile
-                            continue;
-                        }
-
-                        if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
-                            tile.calcEdgeLines(j);
-                        }
-                        resItems.push({
-                            arr: it,
-                            item: item,
-                            dataOption: dataOption
-                        });
-                    }
-                };
-            for (var tkey in this._activeTileKeys) putData(tkey);
+            
+        if (!observer) {
+            return [];
         }
+        
+        //add internal filters
+        var filters = observer.filters.concat('processingFilter');
+        this._isTemporalLayer && filters.push('TemporalFilter');
+        
+        var isIntersects = function(bounds) {
+                return (bboxActive && bboxActive.intersects(bounds))
+                    || observer.intersects(bounds);
+            },
+            _this = this,
+            putData = function(key) {
+                var tile = _this._tiles[key].tile,
+                    data = tile.data;
+                if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
+                    // VectorTile is not loaded or is not on bounds
+                    return;
+                }
+
+                for (var j = 0, len1 = data.length; j < len1; j++) {
+                    var it = data[j],
+                        id = it[0],
+                        item = _this.getItem(id),
+                        isFiltered = false;
+
+                    for (var f = 0; f < filters.length; f++) {
+                        var filterFunc = _this._filters[filters[f]];
+                        if (filterFunc && !filterFunc(item, tile, observer)) {
+                            isFiltered = true;
+                            break;
+                        }
+                    }
+
+                    if (isFiltered) continue;
+
+                    var geom = it[it.length - 1],
+                        type = geom.type,
+                        dataOption = tile.dataOptions[j];
+
+                    if (!isIntersects(dataOption.bounds)) {
+                        continue;
+                    }
+
+                    //TODO: remove from data manager
+                    if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+                        tile.calcEdgeLines(j);
+                    }
+                    
+                    resItems.push({
+                        arr: it,
+                        item: item,
+                        dataOption: dataOption
+                    });
+                }
+            };
+        for (var tkey in this._activeTileKeys) {
+            putData(tkey);
+        }
+        
         return resItems;
     },
 
@@ -177,24 +172,24 @@
         return len;
     },
 
-    _getNotLoadedTileCount: function(bounds) {
+    _getNotLoadedTileCount: function(observer) {
         var count = 0;
         for (var key in this._activeTileKeys) {
             var tile = this._tiles[key].tile;
-            if (tile.state !== 'loaded' && bounds.intersects(tile.bounds)) {
+            if (tile.state !== 'loaded' && observer.intersects(tile.bounds)) {
                 count++;
             }
         }
         return count;
     },
 
-    _loadTiles: function(bounds) {
+    _loadTiles: function(observer) {
         var leftToLoad = 0,
             _this = this;
 
         for (var key in this._activeTileKeys) (function(tile) {
 
-            if (!bounds.intersects(tile.bounds)) return;
+            if (!observer.intersects(tile.bounds)) return;
 
             if (tile.state === 'notLoaded') {
                 tile.load().then(function() {
@@ -209,11 +204,8 @@
                     for (var id in observers) {
                         var observer = observers[id];
                         if (observer.intersects(tile.bounds)) {
-                            var bbox = observer.gmxTilePoint ?
-                                _this.getStyleBounds(observer.gmxTilePoint)
-                                : observer;
-                            if (_this._getNotLoadedTileCount(bbox) == 0) { 
-                                observer.trigger(_this.getItems(id));
+                            if (_this._getNotLoadedTileCount(observer) == 0) { 
+                                observer.updateData(_this.getItems(id));
                             }
                         }
                     }
@@ -230,36 +222,49 @@
 
     chkMaxDateInterval: function() {
         var observers = this._observers,
-            newBeginDate = this._beginDate,
-            newEndDate = this._endDate;
+            newBeginDate = null,
+            newEndDate = null;
         for (var oId in observers) {
             var observer = observers[oId],
-                dateInterval = observer.dateInterval || {beginDate: this._beginDate, endDate: this._endDate};
-            if (dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
-            if (dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
+                dateInterval = observer.dateInterval;
+                
+            if (!dateInterval) continue;
+                
+            if (!newBeginDate || dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
+            if (!newEndDate || dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
         }
-
-        var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
-        this._updateActiveTilesList(selection.tiles);
+        
+        if (newBeginDate && newEndDate && (this._beginDate != newBeginDate || this._endDate != newEndDate)) {
+        
+            this._beginDate = newBeginDate;
+            this._endDate = newEndDate;
+            
+            var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
+            
+            this._updateActiveTilesList(selection.tiles);
+        }
     },
 
-    //'callback' will be called at least once:
-    // - immediately, if all the data for a given bbox is already loaded
-    // - after all the data for a given bbox will be loaded
     addObserver: function(options, id) {
         if (!id) id = 's'+(this._freeSubscrID++);
         var _this = this,
             observer = new gmxObserver(options);
+            
         observer.id = id;
-        //observer.getDeltaY = this._gmx.getDeltaY;
+        observer.active = true;
+        
         observer.on('update', function(ev) {
             observer.active = true;
             if (ev.temporalFilter) _this.chkMaxDateInterval();
             _this.checkObserver(observer);
         });
-        observer.active = true;
+        
         this._observers[id] = observer;
+        this.chkMaxDateInterval();
         this._waitCheckObservers();
+        
+        var count = 0; for (var k in this._observers) count++;
+        
         return observer;
     },
 
@@ -320,12 +325,9 @@
     checkObserver: function(observer) {
         if (observer.active) {
             observer.active = false;
-            var bbox = observer.gmxTilePoint ?
-                this.getStyleBounds(observer.gmxTilePoint)
-                : observer;
-            if (this._loadTiles(bbox) == 0) {
+            if (this._loadTiles(observer) == 0) {
                 var data = this.getItems(observer.id);
-                observer.trigger(data);
+                observer.updateData(data);
             }
         }
     },
@@ -350,8 +352,9 @@
 
         for (var id in keys) {
             var observer = this._observers[id];
-            if ('gmxTilePoint' in observer && (!this._gmx.map || !observer.intersects(screenBbox))) continue;
-            observer.active = !('zoom' in observer) || observer.zoom === zoom;
+            observer.active = true;
+            // if ('gmxTilePoint' in observer && (!this._gmx.map || !observer.intersects(screenBbox))) continue;
+            // observer.active = !('zoom' in observer) || observer.zoom === zoom;
         }
         this._waitCheckObservers();
     },
@@ -521,6 +524,10 @@
     },
 
     addData: function(data, options) {
+        if (!data || !data.length) {
+            return;
+        }
+        
         var tileLink = this._getTileLink(options, true),
             chkKeys = this._getDataKeys(data),
             vTile = tileLink.tile;
@@ -537,6 +544,11 @@
         if (tileLink) {
             vTile = tileLink.tile;
             var chkKeys = {};
+            
+            if (!data || !data.length) {
+                return vTile;
+            }
+            
             for (var i = 0, len = data.length; i < len; i++) {
                 var id = data[i];
                 chkKeys[id] = true;
@@ -545,8 +557,11 @@
             this._removeDataFromObservers(chkKeys);
             vTile.removeData(chkKeys);
             this._updateItemsFromTile(vTile);
+            
+            //TODO: trigger observers depending on tile position, not all observers
+            this._triggerObservers();
         }
-        this._triggerObservers();
+        
         return vTile;
     },
 
@@ -573,11 +588,6 @@
             }
 
             this._tilesTree.initFromTiles(this._tiles);
-            
-            if (this._beginDate && this._endDate) {
-                var selection = this._tilesTree.selectTiles(this._beginDate, this._endDate);
-                this._updateActiveTilesList(selection.tiles);
-            }
             
         } else {
             arr = layerProperties.tiles || [];

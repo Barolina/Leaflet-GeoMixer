@@ -83,96 +83,96 @@
 	</div>
 
 <script>
-        var map = new L.Map('map', {
-            layers: [],
-            //crs: L.CRS.EPSG3395,
-            center: new L.LatLng(53.1, 43.1),
-            attributionControl: false,
-            zoomControl: false,
-            zoom: 5
-        });
-        map.addControl(L.control.gmxZoom());       // default options = {zoomslider: true}
-        map.addControl(L.control.gmxBottom());
-        map.addControl(L.control.gmxLocation());   // default options = {position: 'bottomright'}
-        map.addControl(L.control.gmxCopyright());  // default options = {position: 'bottomleft'}
-        map.addControl(L.control.gmxHide());
-        map.addControl(L.control.gmxCenter());// default options = {color: '#216b9c'}
-        map.addControl(new L.Control.gmxIcon({
-            id: 'boxzoom',
-            toggle: true,
-            title: L.gmxLocale.addText({
-                'eng': {
-                    'boxZoom': 'BoxZoom'
-                },
-                'rus': {
-                    'boxZoom': 'Увеличение'
-                }
-            }).getText('boxZoom'),
-            onAdd: function (control) {
-                //console.log('onAdd', this, arguments);
-                var map = control._map,
-                    _onMouseDown = map.boxZoom._onMouseDown;
-                map.boxZoom._onMouseDown = function (e) {
-                    _onMouseDown.call(map.boxZoom, {
-                        clientX: e.clientX,
-                        clientY: e.clientY,
-                        which: 1,
-                        shiftKey: true
-                    });
-                }
-                map.on('boxzoomend', function () {
-                    map.dragging.enable();
-                    map.boxZoom.removeHooks();
-                    control.setActive(false);
-                });
+    var map = new L.Map('map', {
+        layers: [],
+        //crs: L.CRS.EPSG3395,
+        center: new L.LatLng(53.1, 43.1),
+        attributionControl: false,
+        zoomControl: false,
+        zoom: 5
+    });
+    map.addControl(L.control.gmxZoom());       // default options = {zoomslider: true}
+    map.addControl(L.control.gmxBottom());
+    map.addControl(L.control.gmxLocation());   // default options = {position: 'bottomright'}
+    map.addControl(L.control.gmxCopyright());  // default options = {position: 'bottomleft'}
+    map.addControl(L.control.gmxHide());
+    map.addControl(L.control.gmxCenter());// default options = {color: '#216b9c'}
+    map.addControl(new L.Control.gmxIcon({
+        id: 'boxzoom',
+        toggle: true,
+        title: L.gmxLocale.addText({
+            'eng': {
+                'boxZoom': 'BoxZoom'
             },
-            stateChange: function (control) {
-                console.log('boxzoom', control.options.isActive);
-                var map = control._map;
-                if (control.options.isActive) {
-                    map.dragging.disable();
-                    map.boxZoom.addHooks();
-                } else {
-                    map.dragging.enable();
-                    map.boxZoom.removeHooks();
-                }
+            'rus': {
+                'boxZoom': 'Увеличение'
             }
-        }));
-
-        map.addControl(new L.Control.gmxDrawing({
-            id: 'drawing',
-            stateChange: function (control, key, flag) {
-                //console.log('drawing', control.options.activeKey, key, flag);
+        }).getText('boxZoom'),
+        onAdd: function (control) {
+            //console.log('onAdd', this, arguments);
+            var map = control._map,
+                _onMouseDown = map.boxZoom._onMouseDown;
+            map.boxZoom._onMouseDown = function (e) {
+                _onMouseDown.call(map.boxZoom, {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    which: 1,
+                    shiftKey: true
+                });
             }
-        }));
+            map.on('boxzoomend', function () {
+                map.dragging.enable();
+                map.boxZoom.removeHooks();
+                control.setActive(false);
+            });
+        },
+        stateChange: function (control) {
+            console.log('boxzoom', control.options.isActive);
+            var map = control._map;
+            if (control.options.isActive) {
+                map.dragging.disable();
+                map.boxZoom.addHooks();
+            } else {
+                map.dragging.enable();
+                map.boxZoom.removeHooks();
+            }
+        }
+    }));
 
-		var mapLayer = L.tileLayer('http://{s}.tile.cart.kosmosnimki.ru/m/{z}/{x}/{y}.png', {
-			maxZoom: 21,
-            maxNativeZoom: 17,
-			attribution: '© <a href="http://maps.kosmosnimki.ru/Apikey/License.html" style="color: inherit;" target="_blank">«СканЭкс»</a>, 2007-2014'
-		}).addTo(map);
+    map.addControl(new L.Control.gmxDrawing({
+        id: 'drawing',
+        stateChange: function (control, key, flag) {
+            //console.log('drawing', control.options.activeKey, key, flag);
+        }
+    }));
 
-        var LayersControl = null;
-        // L.gmx.loadLayers([
-            // {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'C9458F2DCB754CEEACC54216C7D1EB0A'}
-        // ]).then(function(satellite) {
-            // satellite.addTo(map);
+    var mapLayer = L.tileLayer('http://{s}.tile.cart.kosmosnimki.ru/m/{z}/{x}/{y}.png', {
+        maxZoom: 21,
+        maxNativeZoom: 17,
+        attribution: '© <a href="http://maps.kosmosnimki.ru/Apikey/License.html" style="color: inherit;" target="_blank">«СканЭкс»</a>, 2007-2014'
+    }).addTo(map);
 
-            LayersControl = L.control.gmxLayers({
-                    Map: mapLayer
-                    // ,
-                    // Satellite: satellite
-                }, {
-                }, {collapsed: false}).addTo(map);
-        // });
-        
+    var LayersControl = null;
+    // L.gmx.loadLayers([
+        // {mapID: '1D30C72D02914C5FB90D1D448159CAB6', layerID: 'C9458F2DCB754CEEACC54216C7D1EB0A'}
+    // ]).then(function(satellite) {
+        // satellite.addTo(map);
 
-		var startDate = new Date('2014/07/10');
-		var oneDay = 1000*60*60*24,	// milliseconds in one day
-            period = oneDay * 1,
-            now = startDate.getTime(),
-            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
-            ddt2 = new Date(ddt1.getTime() + period); //beginning of the current UTC day
+        LayersControl = L.control.gmxLayers({
+                Map: mapLayer
+                // ,
+                // Satellite: satellite
+            }, {
+            }, {collapsed: false}).addTo(map);
+    // });
+    
+
+    var startDate = new Date('2014/07/10');
+    var oneDay = 1000*60*60*24,	// milliseconds in one day
+        period = oneDay * 1,
+        now = startDate.getTime(),
+        ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
+        ddt2 = new Date(ddt1.getTime() + period); //beginning of the current UTC day
 
         var updateInfo = function() {
 			var zz = function(x) { return x < 10 ? "0" + x : x}
@@ -321,7 +321,6 @@
                 p2 = screenBounds.getSouthEast(),
                 bbox = gmxAPIutils.bounds([[p1.lng, p1.lat], [p2.lng, p2.lat]]),
                 zoom = map._zoom;
-            //console.log('22222222222', bbox);
             observerLayer.setBounds(clusterGeomLayer._map ? bbox : outBbox);
             observerDailyClustersLayer.setBounds(clusterLayer._map ? bbox : outBbox);
         };
