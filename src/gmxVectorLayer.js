@@ -336,10 +336,19 @@
         
         //L.TileVector will remove all tiles from other zooms.
         //But it will not remove subscriptions without tiles - we should do it ourself
+        var dataManager = gmx.dataManager,
+            screenBbox = gmx.getScreenMercator();
         for (var key in gmx.tileSubscriptions) {
             var parsedKey = key.split(':');
             if (parsedKey[0] != zoom) {
                 this._clearTileSubscription(key);
+            } else {    // deactivate observers for invisible Tiles
+                var observer = dataManager.getObserver(key);
+                if (observer.intersects(screenBbox)) {
+                    observer.activate();
+                } else {
+                    observer.deactivate();
+                }
             }
         }
     },
@@ -437,9 +446,9 @@
             screenTile.cancel();
         }
         
-        gmx.styleManager.deferred.then(function () {
+       gmx.styleManager.deferred.then(function () {
             screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject.bind(def));
-        });
+       });
         
         return def;
     },

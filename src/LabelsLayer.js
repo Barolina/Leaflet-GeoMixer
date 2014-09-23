@@ -197,7 +197,7 @@ L.LabelsLayer = L.Class.extend({
 
         for (var id in this._observers) {
             var it = this._observers[id];
-            it.active = true;
+            it.needRefresh = true;
             //it.setBounds(bounds);
             it.fire('update');
         }

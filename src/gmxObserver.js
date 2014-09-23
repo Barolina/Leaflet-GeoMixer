@@ -18,7 +18,8 @@ var gmxObserver = L.Class.extend({
         this._items = {};
         this.bbox = options.bbox;
         this.filters = options.filters || [];
-        
+        this.active = true;
+
         if (!this.bbox) {
             var w = gmxAPIutils.worldWidthMerc;
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
@@ -30,6 +31,18 @@ var gmxObserver = L.Class.extend({
         if (options.dateInterval) {
             this._setDateInterval(options.dateInterval[0], options.dateInterval[1]);
         }
+    },
+
+    activate: function() {
+        this.active = true;
+    },
+
+    deactivate: function() {
+        this.active = false;
+    },
+
+    isactive: function() {
+        return this.active;
     },
     
     updateData: function(data) {

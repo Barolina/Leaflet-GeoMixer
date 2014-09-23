@@ -37,7 +37,7 @@
             this.addFilter('TemporalFilter', function(item, tile, observer) {
                 var unixTimeStamp = item.options.unixTimeStamp,
                     dates = observer.dateInterval;
-                return unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
+                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
             })
         }
     },
@@ -251,10 +251,10 @@
             observer = new gmxObserver(options);
             
         observer.id = id;
-        observer.active = true;
+        observer.needRefresh = true;
         
         observer.on('update', function(ev) {
-            observer.active = true;
+            observer.needRefresh = true;
             if (ev.temporalFilter) _this.chkMaxDateInterval();
             _this.checkObserver(observer);
         });
@@ -323,8 +323,8 @@
     },
 
     checkObserver: function(observer) {
-        if (observer.active) {
-            observer.active = false;
+        if (observer.needRefresh && observer.isactive()) {
+            observer.needRefresh = false;
             if (this._loadTiles(observer) == 0) {
                 var data = this.getItems(observer.id);
                 observer.updateData(data);
@@ -352,7 +352,7 @@
 
         for (var id in keys) {
             var observer = this._observers[id];
-            observer.active = true;
+            observer.needRefresh = true;
             // if ('gmxTilePoint' in observer && (!this._gmx.map || !observer.intersects(screenBbox))) continue;
             // observer.active = !('zoom' in observer) || observer.zoom === zoom;
         }
@@ -528,7 +528,7 @@
             return;
         }
         
-        var tileLink = this._getTileLink(options, true),
+        var tileLink = this._getTileLink(options),
             chkKeys = this._getDataKeys(data),
             vTile = tileLink.tile;
 
