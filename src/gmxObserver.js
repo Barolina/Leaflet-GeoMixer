@@ -35,13 +35,14 @@ var gmxObserver = L.Class.extend({
 
     activate: function() {
         this.active = true;
+        this.fire('activate');
     },
 
     deactivate: function() {
         this.active = false;
     },
 
-    isactive: function() {
+    isActive: function() {
         return this.active;
     },
     

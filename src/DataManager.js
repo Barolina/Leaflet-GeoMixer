@@ -253,12 +253,18 @@
         observer.id = id;
         observer.needRefresh = true;
         
-        observer.on('update', function(ev) {
-            observer.needRefresh = true;
-            if (ev.temporalFilter) _this.chkMaxDateInterval();
-            _this.checkObserver(observer);
+        observer
+            .on('update', function(ev) {
+                observer.needRefresh = true;
+                if (ev.temporalFilter) _this.chkMaxDateInterval();
+                _this.checkObserver(observer);
+            })
+            .on('activate', function(ev) {
+                if (observer.needRefresh) {
+                    _this.checkObserver(observer);
+                }
         });
-        
+
         this._observers[id] = observer;
         this.chkMaxDateInterval();
         this._waitCheckObservers();
@@ -323,7 +329,7 @@
     },
 
     checkObserver: function(observer) {
-        if (observer.needRefresh && observer.isactive()) {
+        if (observer.needRefresh && observer.isActive()) {
             observer.needRefresh = false;
             if (this._loadTiles(observer) == 0) {
                 var data = this.getItems(observer.id);

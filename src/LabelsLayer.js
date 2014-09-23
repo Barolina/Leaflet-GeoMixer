@@ -196,10 +196,7 @@ L.LabelsLayer = L.Class.extend({
         ctx.translate(this._ctxShift[0], this._ctxShift[1]);
 
         for (var id in this._observers) {
-            var it = this._observers[id];
-            it.needRefresh = true;
-            //it.setBounds(bounds);
-            it.fire('update');
+            this._observers[id].fire('update');
         }
         this.redraw();
     },

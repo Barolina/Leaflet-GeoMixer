@@ -843,7 +843,7 @@
     addData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
             this._gmx.dataManager.addData(data, options);
-            if (this._map) this._update();
+            this._update();
         }
         return this;
 	},
@@ -851,7 +851,7 @@
     removeData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
             this._gmx.dataManager.removeData(data, options);
-            if (this._map) this._update();
+            this._update();
         }
         return this;
 	}
