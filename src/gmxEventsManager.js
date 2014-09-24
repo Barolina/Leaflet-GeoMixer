@@ -65,7 +65,7 @@ var gmxEventsManager = L.Handler.extend({
             layerremove: function (ev) {
                 var id = ev.layer._leaflet_id,
                     arr = this._layers;
-                for (var i = 0, len = arr.length; i < len; i++) {
+                for (var i = 0, len = arr.length; i < len; i++) { //TODO: wrong direction iteration?
                     if(arr[i] === id) {
                         arr.splice(i, 1);
                         break;

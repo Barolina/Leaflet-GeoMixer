@@ -253,17 +253,18 @@
 		var url = pt.iconUrl;
 
 		needLoadIcons++;
-		var ph = {
-			src: url
-			,callback: function(it) {
+		gmxImageLoader.unshift(url, {
+            crossOrigin: 'anonymous'
+        }).def.then(
+            function(it) {
 				pt.sx = it.width / 2;
 				pt.sy = it.height / 2;
 				if(flag) pt.image = it;
 				imagesSize[url] = pt;
 				needLoadIcons--;
                 _this.chkReady();
-			}
-			,onerror: function(){
+			},
+			function(){
 				pt.sx = 1;
 				pt.sy = 0;
 				pt.image = null;
@@ -272,9 +273,7 @@
 				_this.chkReady();
 				console.log({url: url, func: 'getImageSize', Error: 'image not found'});
 			}
-		};
-        ph.crossOrigin = 'anonymous';
-		gmxImageLoader.unshift(ph);
+        );
 	}
 
     var getItemOptions = function(item) {

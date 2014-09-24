@@ -34,16 +34,16 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             return;
         }
 
-        gmxImageLoader.push({
-            src: rUrl
-            ,layerID: gmx.layerID
-            ,zoom: gtp.z
-            ,callback: function(imageObj) {
+        gmxImageLoader.push(rUrl, {
+            layerID: gmx.layerID,
+            zoom: gtp.z,
+            crossOrigin: 'anonymous'
+        }).def.then(
+            function(imageObj) {
                 callback(imageObj, gtp);
-            }
-            ,onerror: onError
-            ,crossOrigin: 'anonymous'
-        });
+            },
+            onError
+        )
     }
 
     //load missing rasters for one item
@@ -198,8 +198,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             });
         } else {
             // for quicklook
-            gmxImageLoader.push({
-                callback : function(img) {
+            gmxImageLoader.push(url, {
+                layerID: gmx.layerID,
+                crossOrigin: 'anonymous'
+            }).def.then(
+                function(img) {
                     if(itemImageProcessingHook) {
                         rasters[idr] = itemImageProcessingHook({
                             gmx: gmx,
@@ -212,14 +215,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         rasters[idr] = img;
                     }
                     def.resolve();
-                }
-                ,onerror : function() {
+                },
+                function() {
                     def.resolve();
                 }
-                ,layerID: gmx.layerID
-                ,src: url
-                ,crossOrigin: 'anonymous'
-            });
+            )
         }
         return def;
     }
