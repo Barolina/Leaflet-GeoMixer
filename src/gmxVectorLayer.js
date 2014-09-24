@@ -247,7 +247,7 @@
             isEmpty = queue.length === 0,
             zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
             _this = this;
-
+            
         if ( zKey in this._drawQueueHash ) {
             return this._drawQueueHash[zKey];
         }
@@ -417,9 +417,17 @@
                 attr.dateInterval = [gmx.beginDate, gmx.endDate];
             }
             
-            gmx.dataManager.addObserver(attr, zKey);
-            //observer.zoom = zoom;
-            //observer.gmxTilePoint = gmxTilePoint;
+            var observer = gmx.dataManager.addObserver(attr, zKey);
+            
+            observer.on('activate', function() {
+                //if observer is deactivated before drawing, 
+                //we can consider corresponding tile as already drawn
+                if (!observer.isActive() && !isDrawnFirstTime) {
+                    gmx._tilesToLoad--;
+                    myLayer._tileLoaded();
+                    isDrawnFirstTime = true;
+                }
+            })
             gmx.tileSubscriptions[zKey] = true;
         }
     },

@@ -40,6 +40,7 @@ var gmxObserver = L.Class.extend({
 
     deactivate: function() {
         this.active = false;
+        this.fire('activate');
     },
 
     isActive: function() {
