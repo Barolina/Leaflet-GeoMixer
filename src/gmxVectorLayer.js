@@ -35,11 +35,11 @@
                 var map = _this._map;
                 if (!map) return null;
                 var pos = map.getCenter(),
-                    getDeltaY = _this._gmx.getDeltaY(),
+                    deltaY = _this._gmx.getDeltaY(),
                     screenBounds = map.getBounds(),
                     p1 = map.options.crs.project(screenBounds.getNorthWest()),
                     p2 = map.options.crs.project(screenBounds.getSouthEast()),
-                    bbox = gmxAPIutils.bounds([[p1.x, p1.y], [p2.x, p2.y]]);
+                    bbox = gmxAPIutils.bounds([[p1.x, p1.y - deltaY], [p2.x, p2.y - deltaY]]);
                 return bbox;
             }
         };
