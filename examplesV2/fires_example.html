@@ -298,11 +298,23 @@
         var chkZoom = function() {
             var zoom = map._zoom;
             if (zoom < _params.minGeomZoom) {
-                if (!clusterLayer._map) map.addLayer(clusterLayer);
-                if (clusterGeomLayer._map) map.removeLayer(clusterGeomLayer);
+                if (!clusterLayer._map) {
+                    observerDailyClustersLayer.activate();
+                    map.addLayer(clusterLayer);
+                }
+                if (clusterGeomLayer._map) {
+                    observerLayer.deactivate();
+                    map.removeLayer(clusterGeomLayer);
+                }
             } else {
-                if (!clusterGeomLayer._map) map.addLayer(clusterGeomLayer);
-                if (clusterLayer._map) map.removeLayer(clusterLayer);
+                if (!clusterGeomLayer._map) {
+                    observerLayer.activate();
+                    map.addLayer(clusterGeomLayer);
+                }
+                if (clusterLayer._map) {
+                    observerDailyClustersLayer.deactivate();
+                    map.removeLayer(clusterLayer);
+                }
             }
             if (zoom < _params.minHotspotZoom) {
                 if (hotspotLayer._map) map.removeLayer(hotspotLayer);

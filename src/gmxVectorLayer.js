@@ -77,10 +77,9 @@
     },
 
     _clearAllSubscriptions: function() {
-        for (var i = 0, len = this._drawQueue.length; i < len; i++) {
-            this._drawQueue[i].def.cancel();
-        }
-        this._drawQueue = [];
+        while (this._drawQueue.length) {
+            this._drawQueue[0].def.cancel();
+        };        
 
         var gmx = this._gmx,
             subscriptions = gmx.tileSubscriptions;
@@ -338,7 +337,6 @@
         var gmx = this._gmx;
         if (!this._map || gmx.zoomstart) return;
 
-        //this._clearAllSubscriptions();
         var zoom = this._map.getZoom();
         if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
             clearTimeout(this._clearBgBufferTimer);
