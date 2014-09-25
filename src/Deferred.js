@@ -1,4 +1,4 @@
-﻿var gmxDeferred = function() {
+﻿var gmxDeferred = function(cancelFunc) {
     var resolveCallbacks = [],
         rejectCallbacks = [],
         isFulfilled = false,
@@ -47,8 +47,16 @@
         }
     }
     
+    this.always = function(callback) {
+        this.then(callback, callback);
+    }
+    
     this.getFulfilledData = function() {
         return fulfilledData;
+    }
+    
+    this.cancel = function() {
+        cancelFunc && cancelFunc();
     }
 }
 
