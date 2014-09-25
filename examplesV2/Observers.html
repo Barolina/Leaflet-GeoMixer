@@ -125,7 +125,7 @@
         ]).then(function(modisLayer) {
             modisLayer.setDateInterval(ddt1, ddt2);
             var observer = modisLayer.addObserver({
-                filters: modisLayer.getFilters(),
+                dateInterval: [ddt1, ddt2],
                 callback: function(data) {
                     console.log('observer', data);
                 }

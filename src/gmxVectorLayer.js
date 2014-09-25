@@ -718,8 +718,10 @@
                 }
             }
         }
-        gmx.lastHover = null;
-        chkHover('mouseout');
+        if (!skipOver && type !== 'mousedown' && type !== 'mouseup') {
+            gmx.lastHover = null;
+            chkHover('mouseout');
+        }
         this._map.doubleClickZoom.enable();
         return 0;
     },
