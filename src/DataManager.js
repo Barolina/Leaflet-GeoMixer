@@ -260,7 +260,7 @@
                 _this.checkObserver(observer);
             })
             .on('activate', function(ev) {
-                if (observer.needRefresh) {
+                if (observer.isActive() && observer.needRefresh) {
                     _this.checkObserver(observer);
                 }
         });

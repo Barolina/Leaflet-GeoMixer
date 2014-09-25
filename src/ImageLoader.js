@@ -1,12 +1,8 @@
 ﻿var gmxImageRequest = function(id, url, options) {
     this._id = id;
-    this.def = new gmxDeferred();
+    this.def = new gmxDeferred(gmxImageLoader._cancelRequest.bind(gmxImageLoader, this));
     this.url = url;
     this.options = options || {};
-}
-
-gmxImageRequest.prototype.cancel = function() {
-    gmxImageLoader._cancelRequest(this);
 }
 
 var gmxImageLoader = {
@@ -79,12 +75,12 @@ var gmxImageLoader = {
     },
     
     _cancelRequest: function(request) {
-        var id = requst.id;
+        var id = request._id;
         if (request.url in this.inProgress) {
             var loadingImg = this.inProgress[request.url];
             if (loadingImg.requests.length === 1 && loadingImg.requests[0]._id === id) {
-                delete this.inProgress[request.url];
                 this.curCount--;
+                delete this.inProgress[request.url];
                 loadingImg.image = this.emptyImageUrl;
                 this._nextLoad();
             } else {
@@ -134,7 +130,7 @@ var gmxImageLoader = {
             atBegin ? this.requests.unshift(request) : this.requests.push(request);
             this._nextLoad();
         }
-        return request;
+        return request.def;
     },
 
     push: function(url, options) {  // добавить запрос в конец очереди
@@ -143,9 +139,5 @@ var gmxImageLoader = {
     
     unshift: function(url, options) {   // добавить запрос в начало очереди
         return this._add(true, url, options);
-    },
-    
-    getCounts: function() { // получить размер очереди + колич.выполняющихся запросов
-        return this.requests.length + this.curCount;
     }
 }

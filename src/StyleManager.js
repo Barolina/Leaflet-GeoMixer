@@ -255,7 +255,7 @@
 		needLoadIcons++;
 		gmxImageLoader.unshift(url, {
             crossOrigin: 'anonymous'
-        }).def.then(
+        }).then(
             function(it) {
 				pt.sx = it.width / 2;
 				pt.sy = it.height / 2;
