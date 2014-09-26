@@ -441,6 +441,7 @@
         }
         
         this._activeTileKeys = newTilesList;
+        if (this.clientSideTile) this._activeTileKeys[this.clientSideTile] = true;
         
         this._triggerObservers(observersToUpdate);
     },
@@ -524,6 +525,9 @@
                             callback([]);
                         }}, x, y, z, v, s, d)
             };
+            if (!this._gmx.mapName) {     // client side layer
+                this.clientSideTile = tileKey;
+            }
             this.addTile(tileLink.tile);
         }
         return tileLink;
