@@ -64,6 +64,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     //load missing rasters for one item
     var getItemRasters = function(geo) {
         var properties = geo.arr,
+            dataOption = geo.dataOption || {},
             idr = properties[0],
             item = gmx.dataManager.getItem(idr),
             def = new gmxDeferred(function() {
@@ -101,7 +102,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         if(isTiles) {
             var arr = [[gmxTilePoint.x, gmxTilePoint.y]];
             if(shiftX || shiftY) {
-                var bounds = geo.bounds,
+                var bounds = dataOption.bounds,
                     tileSize = 256 / gmx.mInPixel,
                     px = shiftX * gmx.mInPixel,
                     py = shiftY * gmx.mInPixel,

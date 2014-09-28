@@ -20,25 +20,30 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                     HoverStyle: null
                 }]
             };
+        if (!ph.geometry) {
+            var worldSize = gmxAPIutils.tileSizes[1];
+            ph.geometry = {
+                type: 'POLYGON',
+                coordinates: [[[-worldSize, -worldSize], [worldSize, worldSize]]]
+            };
+        }
 
 		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
 		
-		var gmx = this._gmx;
-		
-		var bounds = gmxAPIutils.bounds(ph.geometry.coordinates[0]);
-		
-		gmx.rasterBGfunc = function(x, y, z) {
-		
-			var tileSize = gmxAPIutils.tileSizes[z];
-			var minx = x * tileSize;
-			var maxx = minx + tileSize;
-			if (maxx < bounds.min.x) {
-				x += Math.pow(2, z);
-			}
-			else if (minx > bounds.max.x) {
-				x -= Math.pow(2, z);
-			}
-		
+		var gmx = this._gmx,
+            bounds = gmxAPIutils.bounds(ph.geometry.coordinates[0]);
+
+        gmx.rasterBGfunc = function(x, y, z) {
+            var tileSize = gmxAPIutils.tileSizes[z],
+                minx = x * tileSize,
+                maxx = minx + tileSize;
+            if (maxx < bounds.min.x) {
+                x += Math.pow(2, z);
+            }
+            else if (minx > bounds.max.x) {
+                x -= Math.pow(2, z);
+            }
+
 			var tileSenderPrefix = "http://" + gmx.hostName + "/" + 
 				"TileSender.ashx?ModeKey=tile" + 
 				"&key=" + encodeURIComponent(gmx.sessionKey) +

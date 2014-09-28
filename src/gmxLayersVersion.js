@@ -64,10 +64,10 @@ var layersVersion = {
 
     add: function(layer) {
         var _gmx = layer._gmx,
-            layerID = _gmx.layerID;
+            prop = _gmx.properties;
         
-        if (layerID) {
-            layers[layerID] = layer;
+        if ('LayerVersion' in prop) {
+            layers[_gmx.layerID] = layer;
             _gmx._chkVersion = function () {
                 chkVersion(layer);
             }
