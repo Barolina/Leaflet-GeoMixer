@@ -139,6 +139,7 @@
             L.gmx.layersVersion.add(this);
             map.on('moveend', this._moveEnd, this);
         }
+        this.fire('add');
     },
 
     onRemove: function(map) {
@@ -157,6 +158,7 @@
             L.gmx.layersVersion.remove(this);
             map.off('moveend', this._moveEnd, this);
         }
+        this.fire('remove');
     },
 
     //public interface
@@ -691,7 +693,7 @@
                 if (geoItems && geoItems.length) {
                     var arr = this._gmxObjectsByPoint(geoItems, mercatorPoint);
                     if (arr && arr.length) {
-                        var target = arr[0],
+                        var target = 'getTopItem' in gmx ? gmx.getTopItem(arr) : arr[0],
                             changed = !lastHover || lastHover.id !== target.id;
                         if (type === 'mousemove' && lastHover) {
                             if (!changed) return target.id;
@@ -753,6 +755,10 @@
         return gmxTiles;
     },
 
+    redrawAll: function () {
+        this._gmx.dataManager._triggerObservers();
+    },
+
     redrawItem: function (id) {
         var item = this._gmx.dataManager.getItem(id),
             gmxTiles = this._getTilesByBounds(item.bounds);
@@ -801,6 +807,7 @@
 		gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
             gmx.sortItems = function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); };
+            gmx.getTopItem = function(arr) { return arr[0]; };
         }
 
         if('MetaProperties' in prop) {

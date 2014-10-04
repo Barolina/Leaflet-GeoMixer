@@ -1,5 +1,5 @@
 ﻿var deps = [
-    "Parsers.js", 
+    "Parsers.js",
     "Deferred.js",
     "ImageLoader.js",
     "ProjectiveImage.js",
@@ -21,6 +21,7 @@
     "gmxRasterLayer.js",
     "gmxLayerFactory.js",
     "gmxLayersVersion.js",
+    "ObjectsReorder.js",
     "L.gmxLocale.js",
     "lang_ru.js",
     "lang_en.js"

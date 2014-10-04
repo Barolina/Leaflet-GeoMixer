@@ -92,7 +92,6 @@ var gmxObserver = L.Class.extend({
         } else {
             out.added = data;
         }
-        
         this._callback(out);
         
         return this;
@@ -176,16 +175,14 @@ var gmxObserver = L.Class.extend({
     },
 
     _setDateInterval: function(beginDate, endDate) {
-        var beginValue = beginDate.valueOf(),
-            endValue = endDate.valueOf();
-        this.dateInterval = {
-            beginDate: beginDate,
-            endDate: endDate
-        };
-        /*this._filters.TemporalFilter = function(item) {
-            var unixTimeStamp = item.options.unixTimeStamp;
-            return unixTimeStamp >= beginValue && unixTimeStamp <= endValue;
-        };*/
+        if (beginDate && endDate) {
+            var beginValue = beginDate.valueOf(),
+                endValue = endDate.valueOf();
+            this.dateInterval = {
+                beginDate: beginDate,
+                endDate: endDate
+            };
+        }
     },
 
     setDateInterval: function(beginDate, endDate) {
