@@ -350,17 +350,11 @@
         this._checkObserversTimer = setTimeout(L.bind(this.checkObservers, this), 0);
     },
 
-    //TODO: optimize this by storing current number of not loaded tiles for subscriptions
     _triggerObservers: function(oKeys) {
-        var keys = oKeys || this._observers,
-            zoom = this._gmx.currentZoom,
-            screenBbox = this._gmx.getScreenMercator();
+        var keys = oKeys || this._observers;
 
         for (var id in keys) {
-            var observer = this._observers[id];
-            observer.needRefresh = true;
-            // if ('gmxTilePoint' in observer && (!this._gmx.map || !observer.intersects(screenBbox))) continue;
-            // observer.active = !('zoom' in observer) || observer.zoom === zoom;
+            this._observers[id].needRefresh = true;
         }
         this._waitCheckObservers();
     },

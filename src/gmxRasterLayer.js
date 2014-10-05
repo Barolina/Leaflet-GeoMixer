@@ -1,7 +1,7 @@
 ﻿//Raster layer is just vector layer with the single object and special background tiles
 L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 {
-	options: {
+    options: {
         clickable: false
     },
     initFromDescription: function(ph){
@@ -19,51 +19,67 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                     RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}},
                     HoverStyle: null
                 }]
-            };
+            },
+            gmx = this._gmx,
+            worldSize = gmxAPIutils.tileSizes[1];
+
         if (!ph.geometry) {
-            var worldSize = gmxAPIutils.tileSizes[1];
             ph.geometry = {
                 type: 'POLYGON',
                 coordinates: [[[-worldSize, -worldSize], [worldSize, worldSize]]]
             };
         }
 
+        var objects = [[777, ph.geometry]],
+            itemBounds = gmxAPIutils.geoItemBounds(ph.geometry),
+            bounds = itemBounds.bounds;
+
+        if (bounds.max.x > worldSize) {
+            // for old layers geometry
+            var ww2 = 2*worldSize,
+                id = 777,
+                objects = [],
+                coords = ph.geometry.coordinates;
+
+            if (ph.geometry.type === 'POLYGON') coords = [coords];
+            
+            for (var i = 0, len = coords.length; i < len; i++) {
+                var it = coords[i],
+                    bounds = itemBounds.boundsArr[i],
+                    arr = it;
+                objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
+                if (bounds.max.x > worldSize) {
+                    for (var j = 0, arr = [], len1 = it.length; j < len1; j++) {
+                        var it1 = it[j];
+                        for (var j1 = 0, arr1 = [], len2 = it1.length; j1 < len2; j1++) {
+                            var it2 = it1[j1];
+                            arr1.push([it2[0] - ww2, it2[1]]);
+                        }
+                        arr.push(arr1);
+                    }
+                    objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
+                }
+            }
+        }
+
 		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
-		
-		var gmx = this._gmx,
-            bounds = gmxAPIutils.bounds(ph.geometry.coordinates[0]);
 
         gmx.rasterBGfunc = function(x, y, z) {
-            var tileSize = gmxAPIutils.tileSizes[z],
-                minx = x * tileSize,
-                maxx = minx + tileSize;
-            if (maxx < bounds.min.x) {
-                x += Math.pow(2, z);
-            }
-            else if (minx > bounds.max.x) {
-                x -= Math.pow(2, z);
-            }
-
 			var tileSenderPrefix = "http://" + gmx.hostName + "/" + 
 				"TileSender.ashx?ModeKey=tile" + 
 				"&key=" + encodeURIComponent(gmx.sessionKey) +
 				"&MapName=" + gmx.mapName +
 				"&LayerName=" + gmx.layerID;
-		
+
 			return tileSenderPrefix + 
 				"&z=" + z + 
 				"&x=" + x + 
 				"&y=" + y;
 		}
-		
+
 		var vectorDataProvider = {load: function(x, y, z, v, s, d, callback) {
-			callback([[777, ph.geometry]]);
+			callback(objects);
 		}}
-		
-		//there is no z=0 tile in GeoMixer - use 4 tiles with z=1
-		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, 0,   0, 1, 0, -1, -1));
-		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, 0,  -1, 1, 0, -1, -1));
-		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, -1,  0, 1, 0, -1, -1));
-		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, -1, -1, 1, 0, -1, -1));
-	}
+		gmx.dataManager.addTile(new gmxVectorTile(vectorDataProvider, -0.5,   -0.5, 0, 0, -1, -1));
+    }
 });

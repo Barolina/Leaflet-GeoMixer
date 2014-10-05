@@ -31,16 +31,27 @@
                 var pos = map.getCenter();
                 return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
             },
-            getScreenMercator: function() {
+            getScreenBboxArr: function() {
                 var map = _this._map;
-                if (!map) return null;
+                if (!map) return [];
                 var pos = map.getCenter(),
                     deltaY = _this._gmx.getDeltaY(),
                     screenBounds = map.getBounds(),
                     p1 = map.options.crs.project(screenBounds.getNorthWest()),
                     p2 = map.options.crs.project(screenBounds.getSouthEast()),
-                    bbox = gmxAPIutils.bounds([[p1.x, p1.y - deltaY], [p2.x, p2.y - deltaY]]);
-                return bbox;
+                    ww2 = gmxAPIutils.tileSizes[0],
+                    bbox = gmxAPIutils.bounds([[p1.x % ww2, p1.y - deltaY], [p2.x % ww2, p2.y - deltaY]]),
+                    ww = gmxAPIutils.tileSizes[1];
+
+                var arr = [bbox];
+                if (bbox.max.x - bbox.min.x > ww2) {
+                    arr[0] = gmxAPIutils.bounds([[-ww, -ww], [ww, ww]]);
+                } else if (bbox.max.x > ww) {
+                    arr.push(gmxAPIutils.bounds([[bbox.min.x - ww2, bbox.min.y], [bbox.max.x - ww2, bbox.max.y]]));
+                } else if (bbox.min.x < -ww) {
+                    arr.push(gmxAPIutils.bounds([[bbox.min.x + ww2, bbox.min.y], [bbox.max.x + ww2, bbox.max.y]]));
+                }
+                return arr;
             }
         };
 
@@ -355,18 +366,23 @@
         //L.TileVector will remove all tiles from other zooms.
         //But it will not remove subscriptions without tiles - we should do it ourself
         var dataManager = gmx.dataManager,
-            screenBbox = gmx.getScreenMercator();
+            bboxArr = gmx.getScreenBboxArr();
+
         for (var key in gmx.tileSubscriptions) {
             var parsedKey = key.split(':');
             if (parsedKey[0] != zoom) {
                 this._clearTileSubscription(key);
             } else {    // deactivate observers for invisible Tiles
                 var observer = dataManager.getObserver(key);
-                if (observer.intersects(screenBbox)) {
-                    observer.activate();
-                } else {
-                    observer.deactivate();
+                var active = false;
+                for (var i = 0, len = bboxArr.length; i < len; i++) {
+                    if (observer.intersects(bboxArr[i])) {
+                        active = true;
+                        break;
+                    }
                 }
+                if (active) observer.activate();
+                else observer.deactivate();
             }
         }
     },
