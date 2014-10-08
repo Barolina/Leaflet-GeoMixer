@@ -6,7 +6,7 @@ var gmxMapManager = {
         if (!maps[serverHost] || !maps[serverHost][mapName]) {
             var def = new gmxDeferred();
             maps[serverHost] = maps[serverHost] || {};
-            maps[serverHost][mapName] = def;
+            maps[serverHost][mapName] = {promise: def};
             
             gmxSessionManager.requestSessionKey(serverHost, apiKey).then(function(sessionKey) {
                 gmxAPIutils.requestJSONP(
@@ -26,23 +26,36 @@ var gmxMapManager = {
                 });
             })
         }
-        return maps[serverHost][mapName];
+        return maps[serverHost][mapName].promise;
     },
+    
+    //we will (lazy) create index by layer name to speed up multiple function calls
     findLayerInfo: function(serverHost, mapID, layerID) {
-        var hostMaps = this._maps[serverHost];
-        var data = hostMaps && hostMaps[mapID] && hostMaps[mapID].getFulfilledData();
+        var hostMaps = this._maps[serverHost],
+            mapInfo = hostMaps && hostMaps[mapID];
+
+        if (!mapInfo) {
+            return;
+        }
+        
+        if (mapInfo.layers) {
+            return mapInfo.layers[layerID];
+        }
+        
+        var serverData = mapInfo.promise.getFulfilledData();
+        
+        if (!serverData) return;
+        
+        mapInfo.layers = {};
 		
-		var resLayerInfo;
-		
-		gmxMapManager.iterateLayers(data && data[0], function(layerInfo) {
-			if (layerInfo.properties.name === layerID) {
-				resLayerInfo = layerInfo;
-			}
+        //create index by layer name
+		gmxMapManager.iterateLayers(serverData[0], function(layerInfo) {
+            mapInfo.layers[layerInfo.properties.name] = layerInfo;
 		})
         
-        return resLayerInfo;
+        return mapInfo.layers[layerID];
     },
-    _maps: {} //Deferred for each map. Structure maps[serverHost][mapID]
+    _maps: {} //Deferred for each map. Structure maps[serverHost][mapID]: {promise:, layers:}
 }
 
 gmxMapManager.iterateLayers = function(treeInfo, callback) {
