@@ -560,14 +560,9 @@
         this._tileOnLoad(tile);
     },
 
-    _gmxObjectsByPoint: function (geoItems, point) {    // Получить верхний обьект по координатам mouseClick
+    _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // Получить верхний обьект по координатам mouseClick
         var gmx = this._gmx,
-            out = [],
             mInPixel = gmx.mInPixel,
-            shiftXlayer = gmx.shiftXlayer || 0,
-            shiftYlayer = gmx.shiftYlayer || 0,
-            mercPoint = [point.x - shiftXlayer, point.y - shiftYlayer],
-            pixelPoint = [mercPoint[0] * mInPixel, mercPoint[1] * mInPixel],
             bounds = gmxAPIutils.bounds([mercPoint]);
 
         for (var i = geoItems.length - 1; i >= 0; i--) {
@@ -634,16 +629,10 @@
                 }
             } else if(chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
                 var flag = false,
-                    chkPoint = mercPoint,
-                    pixels_map = dataOption.pixels || null,
-                    flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
+                    chkPoint = mercPoint;
                 if(chktype === 'POLYGON') {
                     coords = [geom.coordinates];
                     boundsArr = [dataOption.boundsArr];
-                }
-                if(flagPixels) {
-                    coords = pixels_map.coords;
-                    chkPoint = pixelPoint;
                 }
                 for (var j = 0, len = coords.length; j < len; j++) {
                     var arr = coords[j],
@@ -664,13 +653,13 @@
                 if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
             }
 
-            out.push({ id: idr
+            return { id: idr
                 ,properties: item.properties
                 ,geometry: geom
                 ,bounds: item.bounds
-            });
+            };
         }
-        return out;
+        return null;
     },
 
     gmxEventCheck: function (ev, skipOver) {
@@ -698,19 +687,21 @@
             if (observer) {
                 var lng = ev.latlng.lng % 360,
                     latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
-                    mercatorPoint = L.Projection.Mercator.project(latlng),
-                    shiftXlayer = gmx.shiftXlayer || 0,
-                    shiftYlayer = gmx.shiftYlayer || 0,
+                    point = L.Projection.Mercator.project(latlng)._subtract(
+                        {x: gmx.shiftXlayer || 0, y: gmx.shiftYlayer || 0}
+                    ),
                     delta = 5 / gmx.mInPixel,
-                    bounds = gmxAPIutils.bounds([[mercatorPoint.x - shiftXlayer, mercatorPoint.y - shiftYlayer]]);
+                    mercatorPoint = [point.x, point.y],
+                    bounds = gmxAPIutils.bounds([mercatorPoint]);
                 bounds = bounds.addBuffer(delta);
                 var geoItems = gmx.dataManager.getItems(zKey, bounds);
 
                 if (geoItems && geoItems.length) {
-                    var arr = this._gmxObjectsByPoint(geoItems, mercatorPoint);
-                    if (arr && arr.length) {
-                        var target = 'getTopItem' in gmx ? gmx.getTopItem(arr) : arr[0],
-                            changed = !lastHover || lastHover.id !== target.id;
+                    if (gmx.sortItems) geoItems = geoItems.sort(gmx.sortItems);
+                    
+                    var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
+                    if (target) {
+                        var changed = !lastHover || lastHover.id !== target.id;
                         if (type === 'mousemove' && lastHover) {
                             if (!changed) return target.id;
                             gmx.lastHover = null;
@@ -718,7 +709,7 @@
                         }
 
                         ev.gmx = {
-                            targets: arr
+                            targets: geoItems
                             ,target: target
                             ,templateBalloon: gmx.styleManager.getItemBalloon(target)
                             ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
@@ -822,8 +813,7 @@
 		gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
 		gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-            gmx.sortItems = function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); };
-            gmx.getTopItem = function(arr) { return arr[0]; };
+            gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); });
         }
 
         if('MetaProperties' in prop) {

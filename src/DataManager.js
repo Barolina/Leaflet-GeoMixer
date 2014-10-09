@@ -83,8 +83,7 @@
         this._isTemporalLayer && filters.push('TemporalFilter');
         
         var isIntersects = function(bounds) {
-                return (bboxActive && bboxActive.intersects(bounds))
-                    || observer.intersects(bounds);
+                return bboxActive ? bboxActive.intersects(bounds) : observer.intersects(bounds);
             },
             _this = this,
             putData = function(key) {
@@ -125,6 +124,7 @@
                     }
                     
                     resItems.push({
+                        id: id,
                         arr: it,
                         item: item,
                         dataOption: dataOption
@@ -232,29 +232,29 @@
 
     _chkMaxDateInterval: function() {
         if (this._isTemporalLayer) {
-        var observers = this._observers,
-            newBeginDate = null,
-            newEndDate = null;
-        for (var oId in observers) {
-            var observer = observers[oId],
-                dateInterval = observer.dateInterval;
-                
-            if (!dateInterval) continue;
-                
-            if (!newBeginDate || dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
-            if (!newEndDate || dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
-        }
-        
-        if (newBeginDate && newEndDate && (this._beginDate != newBeginDate || this._endDate != newEndDate)) {
-        
-            this._beginDate = newBeginDate;
-            this._endDate = newEndDate;
+            var observers = this._observers,
+                newBeginDate = null,
+                newEndDate = null;
+            for (var oId in observers) {
+                var observer = observers[oId],
+                    dateInterval = observer.dateInterval;
+                    
+                if (!dateInterval) continue;
+                    
+                if (!newBeginDate || dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
+                if (!newEndDate || dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
+            }
+            
+            if (newBeginDate && newEndDate && (this._beginDate != newBeginDate || this._endDate != newEndDate)) {
+            
+                this._beginDate = newBeginDate;
+                this._endDate = newEndDate;
                 this._activeTileKeys = null;
-            
-            var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
-            
-            this._updateActiveTilesList(selection.tiles);
-        }
+
+                var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
+                
+                this._updateActiveTilesList(selection.tiles);
+            }
         }
     },
 
@@ -417,7 +417,7 @@
     },
 
     _updateActiveTilesList: function(newTilesList) {
-    
+
         if (!this._activeTileKeys) {
             this._activeTileKeys = newTilesList;
             return;
@@ -608,7 +608,7 @@
             }
 
             this._tilesTree.initFromTiles(this._tiles);
-            
+
         } else {
             if (!this._activeTileKeys) this._activeTileKeys = {};
             arr = layerProperties.tiles || [];

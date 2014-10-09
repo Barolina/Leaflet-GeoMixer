@@ -441,8 +441,8 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if (!dataOption.pixels) dataOption.pixels = {};
                         var hiddenLines = dataOption.hiddenLines || [],
                             coords = geom.coordinates,
-                            pixels_map = dataOption.pixels,
-                            flagPixels = pixels_map && pixels_map.z === gmx.currentZoom;
+                            pixels_map = {},
+                            flagPixels = false;
 
                         if(geom.type === 'POLYGON') coords = [coords];
                         var coordsToCanvas = function(func, flagFill) {
