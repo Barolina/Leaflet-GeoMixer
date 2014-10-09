@@ -223,31 +223,22 @@
                 }
             }
         }
-        if('rotate' in pt && typeof(pt.rotate) === 'string') {
-            pt.rotateFunction = gmxParsers.parseExpression(pt.rotate);
-            pt.common = false;
-        }
-        if('scale' in pt && typeof(pt.scale) === 'string') {
-            pt.scaleFunction = gmxParsers.parseExpression(pt.scale);
-            pt.common = false;
-        }
-        if('color' in pt && typeof(pt.color) === 'string') {
-            pt.colorFunction = gmxParsers.parseExpression(pt.color);
-            pt.common = false;
-        }
-        if('fillColor' in pt && typeof(pt.fillColor) === 'string') {
-            pt.fillColorFunction = gmxParsers.parseExpression(pt.fillColor);
-            pt.common = false;
-        }
-        if('size' in pt) {
-            if(typeof(pt.size) === 'string') {
-                pt.sizeFunction = gmxParsers.parseExpression(pt.size);
-                pt.common = false;
-            } else {
-                pt.sx = pt.sy = pt.size || 4;
+        ['rotate', 'scale', 'color', 'fillColor', 'size'].map(function(it) {
+            if (it in pt) {
+                var zn = pt[it];
+                if (typeof(zn) === 'string') {
+                    if (zn.match(/[^\d\.]/) === null) pt[it] = Number(zn);
+                    else {
+                        pt[it+'Function'] = gmxParsers.parseExpression(zn);
+                        pt.common = false;
+                    }
+                }
             }
+        });
+        if (!pt.sizeFunction) {
+            pt.sx = pt.sy = pt.size || 4;
         }
-		return pt;
+        return pt;
     }
 	var getImageSize = function(pt, flag)	{				// определение размеров image
 		var url = pt.iconUrl;
@@ -302,6 +293,10 @@
                 }
                 out.rotate = rotateRes || 0;
             }
+        }
+
+        if(pt.scale) {
+            out.scale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.scale);
         }
 
         if(pt.size) {

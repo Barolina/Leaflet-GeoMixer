@@ -509,6 +509,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                             if(dattr.bgImage) {
                                 var pattern = ctx.createPattern(dattr.bgImage, "no-repeat");
                                 ctx.fillStyle = pattern;
+                                style.bgImage = true;
                             }
                             coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
                             ctx.restore();

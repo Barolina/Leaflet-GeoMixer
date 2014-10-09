@@ -434,10 +434,14 @@
             prop = attr.item.properties,
             px = attr.tpx,
             py = attr.tpy,
+            scale = attr.scale || style.scale,
             sx = attr.sx || style.sx || 4,
             sy = attr.sy || style.sy || 4,
             ctx = attr.ctx;
 
+        if(scale) {
+            sx *= scale, sy *= scale;
+        }
         if(gmx.transformFlag) {
             px /= gmx.mInPixel, py /= gmx.mInPixel;
             sx /= gmx.mInPixel, sy /= gmx.mInPixel;
@@ -557,7 +561,8 @@
                 lastX = p2[0], lastY = p2[1];
                 ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](p2[0], p2[1]);
                 if(!flagPixels) {
-                    pixels.push([L.Util.formatNum(p1[0], 2), L.Util.formatNum(p1[1], 2)]);
+                    //pixels.push([L.Util.formatNum(p1[0], 2), L.Util.formatNum(p1[1], 2)]);
+                    pixels.push([p1[0], p1[1]]);
                     if(lineIsOnEdge) hidden.push(cnt);
                 }
                 cnt++;

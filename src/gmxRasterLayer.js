@@ -39,13 +39,17 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
             var ww2 = 2*worldSize,
                 id = 777,
                 objects = [],
-                coords = ph.geometry.coordinates;
+                coords = ph.geometry.coordinates,
+                bboxArr = itemBounds.boundsArr;
 
-            if (ph.geometry.type === 'POLYGON') coords = [coords];
+            if (ph.geometry.type === 'POLYGON') {
+                coords = [coords];
+                bboxArr = [bboxArr];
+            }
             
             for (var i = 0, len = coords.length; i < len; i++) {
                 var it = coords[i],
-                    bounds = itemBounds.boundsArr[i],
+                    bounds = bboxArr[i][0],
                     arr = it;
                 objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
                 if (bounds.max.x > worldSize) {

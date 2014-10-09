@@ -1,18 +1,18 @@
 ﻿var gmxDataManager = L.Class.extend({
 	includes: L.Mixin.Events,
-    initialize: function(gmx, layerDescription) {
+    initialize: function(gmx) {
         var _this = this,
             oneDay = 1000*60*60*24, // milliseconds in one day
-            isTemporalLayer = layerDescription.properties.Temporal;
+            isTemporalLayer = gmx.properties.Temporal;
 
         this._tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
+        this._activeTileKeys = null;
         this._endDate = null;
         this._beginDate = null;
 
         this._gmx = gmx;
         this._isTemporalLayer = isTemporalLayer;
         this._tiles = {};
-        this._activeTileKeys = {};
         this._filters = {};
         this._freeSubscrID = 0;
         this._maxStyleSize = 0;
@@ -31,14 +31,21 @@
                 })
             }
         }
-        this.initTileList(layerDescription.properties);    
-
         if (isTemporalLayer) {
             this.addFilter('TemporalFilter', function(item, tile, observer) {
                 var unixTimeStamp = item.options.unixTimeStamp,
                     dates = observer.dateInterval;
                 return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
             })
+        }
+    },
+
+    _lazyInitActiveTileKeys: function() {
+        if (!this._activeTileKeys) {
+            this.initTileList(this._gmx.properties);
+        }
+        if (this._isTemporalLayer) {
+            this._chkMaxDateInterval();
         }
     },
 
@@ -89,6 +96,11 @@
                 }
 
                 for (var j = 0, len1 = data.length; j < len1; j++) {
+                    var dataOption = tile.dataOptions[j];
+
+                    if (!isIntersects(dataOption.bounds)) {
+                        continue;
+                    }
                     var it = data[j],
                         id = it[0],
                         item = _this.getItem(id),
@@ -105,12 +117,7 @@
                     if (isFiltered) continue;
 
                     var geom = it[it.length - 1],
-                        type = geom.type,
-                        dataOption = tile.dataOptions[j];
-
-                    if (!isIntersects(dataOption.bounds)) {
-                        continue;
-                    }
+                        type = geom.type;
 
                     //TODO: remove from data manager
                     if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
@@ -124,6 +131,7 @@
                     });
                 }
             };
+        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
         for (var tkey in this._activeTileKeys) {
             putData(tkey);
         }
@@ -187,6 +195,8 @@
         var leftToLoad = 0,
             _this = this;
 
+        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
+
         for (var key in this._activeTileKeys) (function(tile) {
 
             if (!observer.intersects(tile.bounds)) return;
@@ -220,7 +230,8 @@
         return leftToLoad;
     },
 
-    chkMaxDateInterval: function() {
+    _chkMaxDateInterval: function() {
+        if (this._isTemporalLayer) {
         var observers = this._observers,
             newBeginDate = null,
             newEndDate = null;
@@ -238,10 +249,12 @@
         
             this._beginDate = newBeginDate;
             this._endDate = newEndDate;
+                this._activeTileKeys = null;
             
             var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
             
             this._updateActiveTilesList(selection.tiles);
+        }
         }
     },
 
@@ -256,8 +269,11 @@
         observer
             .on('update', function(ev) {
                 observer.needRefresh = true;
-                if (ev.temporalFilter) _this.chkMaxDateInterval();
-                _this.checkObserver(observer);
+                if (ev.temporalFilter) {
+                    _this._beginDate = _this._endDate = null;
+                    _this._activeTileKeys = null;
+                }
+                _this._waitCheckObservers();
             })
             .on('activate', function(ev) {
                 if (observer.isActive() && observer.needRefresh) {
@@ -266,10 +282,9 @@
         });
 
         this._observers[id] = observer;
-        this.chkMaxDateInterval();
         this._waitCheckObservers();
         
-        var count = 0; for (var k in this._observers) count++;
+        //var count = 0; for (var k in this._observers) count++;
         
         return observer;
     },
@@ -323,6 +338,7 @@
     },
 
     addTile: function(tile) {
+        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
         this._tiles[tile.gmxTileKey] = {tile: tile};
         this._activeTileKeys[tile.gmxTileKey] = true;
         this.checkObservers();
@@ -594,6 +610,7 @@
             this._tilesTree.initFromTiles(this._tiles);
             
         } else {
+            if (!this._activeTileKeys) this._activeTileKeys = {};
             arr = layerProperties.tiles || [];
             vers = layerProperties.tilesVers;
             var newActiveTileKeys = {};

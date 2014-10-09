@@ -583,7 +583,7 @@
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) continue;
 
             var geom = geoItem[geoItem.length - 1],
-                fill = parsedStyle.fill,
+                fill = parsedStyle.fill || parsedStyle.bgImage,
                 marker = parsedStyle.marker,
                 type = geom.type,
                 chktype = type,
