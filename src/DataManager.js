@@ -297,6 +297,7 @@
         delete this._observers[id];
     },
 
+    //combine and return all parts of geometry
     getItem: function(id) {
         var item = this._items[id];
         if (item && !item.bounds) {
@@ -308,12 +309,6 @@
                     num = fromTiles[key];
                 var dataOption = dataOptions[num];
                 if (!dataOption) dataOption = dataOptions[num] = {};
-                if (!dataOption.bounds) {
-                    var geoItem = tile.data[num];
-                    var b = gmxAPIutils.geoItemBounds(geoItem[geoItem.length - 1]);
-                    dataOption.bounds = b.bounds;
-                    if (b.boundsArr.length) dataOption.boundsArr = b.boundsArr;
-                }
                 bounds.extendBounds(dataOption.bounds);
             }
             item.bounds = bounds;
@@ -576,7 +571,7 @@
                 delete this._items[id];
             }
             this._removeDataFromObservers(chkKeys);
-            vTile.removeData(chkKeys);
+            vTile.removeData(chkKeys, true);
             this._updateItemsFromTile(vTile);
             
             //TODO: trigger observers depending on tile position, not all observers
