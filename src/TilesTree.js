@@ -6,7 +6,7 @@ var gmxTilesTree = function(periods, dateZero) {
             var d = node.d;
             if (tile.d === periods[d]) {
                 node.count++;
-                node.tiles[key] = true;
+                node.tiles.push(key);
                 return;
             }
 
@@ -26,7 +26,7 @@ var gmxTilesTree = function(periods, dateZero) {
                     t1: sChild * periods[d-1] * gmxAPIutils.oneDay + dateZero,
                     t2: (sChild + 1) * periods[d-1] * gmxAPIutils.oneDay + dateZero,
                     count: 0,
-                    tiles: {}
+                    tiles: []
                 }
             }
 
@@ -46,8 +46,13 @@ var gmxTilesTree = function(periods, dateZero) {
         _rootNodes = [];
 
         for (var key in tiles) {
-            var t = tiles[key].tile,
-                ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
+            var t = tiles[key].tile;
+            
+            if (t.d < 0) {
+                continue;
+            }
+            
+            var ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
                 cs = ds + smin;
                 
             _rootNodes[ds] = _rootNodes[ds] || {
@@ -56,7 +61,7 @@ var gmxTilesTree = function(periods, dateZero) {
                 t1: cs * periods[dmax] * gmxAPIutils.oneDay + dateZero,
                 t2: (cs + 1) * periods[dmax] * gmxAPIutils.oneDay + dateZero,
                 count: 0,
-                tiles: {}
+                tiles: []
             }
 
             addTile(_rootNodes[ds], t, key);
@@ -70,7 +75,7 @@ var gmxTilesTree = function(periods, dateZero) {
         // --------------------
         var selectTilesForNode = function(node, t1, t2) {
             if (t1 >= node.t2 || t2 <= node.t1) {
-                return {count: 0, tiles: {}, nodes: []};
+                return {count: 0, tiles: [], nodes: []};
             }
 
             if (node.d === 0) {
@@ -87,23 +92,21 @@ var gmxTilesTree = function(periods, dateZero) {
                 if (node.children[ds]) {
                     childrenRes[ds] = selectTilesForNode(node.children[ds], Math.max(t1, node.t1), Math.min(t2, node.t2));
                 } else {
-                    childrenRes[ds] = {count: 0, tiles: {}, nodes: []};
+                    childrenRes[ds] = {count: 0, tiles: [], nodes: []};
                 }
                 childrenCount += childrenRes[ds].count;
             }
 
             if (childrenCount < node.count) {
-                var resTiles = {},
+                var resTilesArr = [],
                     resNodesArr = [];
                 for (var ds = 0; ds < childrenRes.length; ds++) {
-                    for (var key in childrenRes[ds].tiles) {
-                        resTiles[key] = childrenRes[ds].tiles[key];
-                        resNodesArr.push(resNodesArr);
-                    }
+                    resNodesArr.push(childrenRes[ds].nodes);
+                    resTilesArr.push(childrenRes[ds].tiles);
                 }
 
                 return {
-                    tiles: resTiles,
+                    tiles: [].concat.apply([], resTilesArr),
                     count: childrenCount,
                     nodes: [].concat.apply([], resNodesArr)
                 }
@@ -112,25 +115,26 @@ var gmxTilesTree = function(periods, dateZero) {
                     tiles: node.tiles,
                     count: node.count,
                     nodes: [node]
-                } 
+                }
             }
         }
 
-        var resTiles = {};
+        var resTiles = [];
         var resNodes = [];
         for (var ds = 0; ds < _rootNodes.length; ds++) {
             if (_rootNodes[ds]) {
-                var nodeSelection = selectTilesForNode(_rootNodes[ds], t1Val, t2Val),
-                    selectedTiles = nodeSelection.tiles;
-                for (var key in selectedTiles) {
-                    resTiles[key] = selectedTiles[key];
-                }
-                
+                var nodeSelection = selectTilesForNode(_rootNodes[ds], t1Val, t2Val);
+                resTiles = resTiles.concat(nodeSelection.tiles);
                 resNodes = resNodes.concat(nodeSelection.nodes);
             }
         }
+        
+        var resTilesHash = {};
+        for (var t = 0; t < resTiles.length; t++) {
+            resTilesHash[resTiles[t]] = true;
+        }
 
-        return {tiles: resTiles, nodes: resNodes};
+        return {tiles: resTilesHash, nodes: resNodes};
     };
 
     this.getNode = function(d, s) {
