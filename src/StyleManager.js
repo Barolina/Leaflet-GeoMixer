@@ -3,7 +3,6 @@
         DEFAULT_STYLE = { outline: { color: 255, thickness: 1}},
         needLoadIcons = 0,
         styles = [],
-        items = {},
         imagesSize = {},
         _this = this;
 
@@ -253,7 +252,7 @@
 				if(flag) pt.image = it;
 				imagesSize[url] = pt;
 				needLoadIcons--;
-                _this.chkReady();
+                _this._chkReady();
 			},
 			function(){
 				pt.sx = 1;
@@ -261,22 +260,14 @@
 				pt.image = null;
 				imagesSize[url] = pt;
 				needLoadIcons--;
-				_this.chkReady();
+				_this._chkReady();
 				console.log({url: url, func: 'getImageSize', Error: 'image not found'});
 			}
         );
 	}
 
-    var getItemOptions = function(item) {
-        var id = item.id;
-        if (!items[id]) items[id] = {}
-        return items[id];
-	}
-    this.getItemOptions = getItemOptions;
-
     var itemStyleParser = function(item, pt) {
-        var itemOptions = getItemOptions(item),
-            out = {},
+        var out = {},
             indexes = gmx.tileAttributeIndexes,
             prop = item.properties,
             color = 255, opacity = 1;
@@ -299,13 +290,12 @@
             out.scale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.scale);
         }
 
-        if(pt.size) {
-            out.size = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.size);
-            out.sx = out.size;
-            out.sy = out.size;
-        }
-
         if(pt.stroke) {
+            if(pt.size) {
+                out.size = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.size);
+                out.sx = out.size;
+                out.sy = out.size;
+            }
             out.stroke = pt.stroke;
             out.strokeStyle = pt.strokeStyle;
             if('colorFunction' in pt || 'opacityFunction' in pt) {
@@ -367,54 +357,51 @@
             out.sy = out.label.extentLabel[1];
         }
         */
-        itemOptions.parsedStyleKeys = out;
+        item.parsedStyleKeys = out;
         return out;
     }
 
-    this._lastZoom = null;
     var chkStyleFilter = function(item) {
-        var itemOptions = getItemOptions(item) || {},
-            indexes = gmx.tileAttributeIndexes;
-        if (itemOptions.parsedStyleKeys && itemOptions.parsedStyleKeys.size) {
-            item.options.size = itemOptions.parsedStyleKeys.size;
+        if (item.parsedStyleKeys && item.parsedStyleKeys.size) {
+            item.options.size = item.parsedStyleKeys.size;
         }
-        if (_this._lastZoom !== gmx.currentZoom || !('currentFilter' in itemOptions)) {
-            _this._lastZoom = gmx.currentZoom;
+        if (item._lastZoom !== gmx.currentZoom || !('currentFilter' in item)) {
+            item._lastZoom = gmx.currentZoom;
+            var indexes = gmx.tileAttributeIndexes;
             for (var i = 0, len = styles.length; i < len; i++) {
                 var st = styles[i];
                 if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
                 if ('FilterFunction' in st && !st.FilterFunction(item.properties, indexes)) continue;
-                if (itemOptions.currentFilter !== i) {
+                if (item.currentFilter !== i) {
                     itemStyleParser(item, st.RenderStyle);
                     if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
                 }
 
-                itemOptions.currentFilter = i;
+                item.currentFilter = i;
                 return true;
             }
-        } else if (styles[itemOptions.currentFilter]) {
+        } else if (styles[item.currentFilter]) {
             return true;
         }
-        itemOptions.currentFilter = -1;
+        item.currentFilter = -1;
         return false;
     }
 
     gmx.dataManager.addFilter('styleFilter', chkStyleFilter);
  
-    this.getItemBalloon = function(item) {
-        var itemOptions = getItemOptions(item),
-            style = styles[itemOptions.currentFilter];
+    this.getItemBalloon = function(id) {
+        var item = gmx.dataManager.getItem(id),
+            style = styles[item.currentFilter];
         return style ? style.Balloon : null;
     }
     
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
-        var itemOptions = getItemOptions(item),
-            style = styles[itemOptions.currentFilter];
+        var style = styles[item.currentFilter];
 
         if (!style) {
             chkStyleFilter(item);
-            style = styles[itemOptions.currentFilter];
+            style = styles[item.currentFilter];
             if (!style) return null;
         }
         if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
@@ -454,12 +441,17 @@
         return false;
     };
     
-    this.chkReady = function() {
+    this._chkReady = function() {
         if(needLoadIcons < 1) {
             this.deferred.resolve();
         }
     }
+    this.initStyles = function() {
+        if (initStyles) initStyles();
+        initStyles = null;
+        this._chkReady();
+    }
 
-    initStyles();
-    this.chkReady();
+    // initStyles();
+    // this.chkReady();
 }

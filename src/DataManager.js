@@ -385,6 +385,7 @@
     },
 
     preloadTiles: function(dateBegin, dateEnd, bounds) {
+        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
         var tileKeys = this._isTemporalLayer ? this._tilesTree.selectTiles(dateBegin, dateEnd).tiles : this._activeTileKeys,
             _this = this,
             loadingDefs = [];

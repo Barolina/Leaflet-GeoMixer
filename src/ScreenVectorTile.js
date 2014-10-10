@@ -314,11 +314,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         lastStyles = {};
     var setCanvasStyle = function(item, dattr) {				// Установка canvas стилей
         var ctx = dattr.ctx,
-            style = dattr.style,
-            itemOptions = dattr.itemOptions;
+            style = dattr.style;
             // styleExtend = dattr.styleExtend;
 
-        var parsedStyleKeys = itemOptions.parsedStyleKeys || {};
+        var parsedStyleKeys = item.parsedStyleKeys || {};
         for (var i = 0; i < styleCanvasKeysLen; i++) {
             var key = styleCanvasKeys[i],
                 valKey = parsedStyleKeys[key] || style[key];
@@ -428,10 +427,15 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 }
                 dattr.styleExtend = geoItem.styleExtend || {};
                 dattr.style = style;
-                dattr.itemOptions = gmx.styleManager.getItemOptions(item);
-                setCanvasStyle(item, dattr);
 
                 var geom = arr[arr.length-1];
+                if (geom.type === 'POINT') {
+                    dattr.pointAttr = gmxAPIutils.getPixelPoint(dattr, geom.coordinates);
+                    if (!dattr.pointAttr) return;   // point not in canvas tile
+                }
+
+                setCanvasStyle(item, dattr);
+
                 if (geom.type === 'POLYGON' || geom.type === 'MULTIPOLYGON') {	// Отрисовка геометрии полигона
                     if(dattr.style.image) { // отображение мультиполигона маркером
                         dattr.coords = [(dataOption.bounds.min.x + dataOption.bounds.max.x)/2, (dataOption.bounds.min.y + dataOption.bounds.max.y)/2];

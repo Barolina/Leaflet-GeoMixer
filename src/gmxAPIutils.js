@@ -424,31 +424,49 @@
         var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
         return [px1 - tpx, tpy - py1];
     },
-    pointToCanvas: function(attr) {				// Точку в canvas
+
+    getPixelPoint: function(attr, coords) {
         var gmx = attr.gmx,
+            mInPixel = gmx.mInPixel,
             style = attr.style,
-            itemOptions = attr.itemOptions,
-            parsedStyleKeys = itemOptions.parsedStyleKeys,
-            coords = attr.coords,
-            indexes = gmx.tileAttributeIndexes,
-            prop = attr.item.properties,
-            px = attr.tpx,
-            py = attr.tpy,
             scale = attr.scale || style.scale,
             sx = attr.sx || style.sx || 4,
             sy = attr.sy || style.sy || 4,
-            ctx = attr.ctx;
+            px = attr.tpx,
+            py = attr.tpy;
 
         if(scale) {
             sx *= scale, sy *= scale;
         }
-        if(gmx.transformFlag) {
-            px /= gmx.mInPixel, py /= gmx.mInPixel;
-            sx /= gmx.mInPixel, sy /= gmx.mInPixel;
-        }
-        // получить координату в px
-        var p1 = gmx.transformFlag ? [coords[0], coords[1]] : gmxAPIutils.toPixels(coords, px, py, gmx.mInPixel),
-            px1 = p1[0], py1 = p1[1];
+        var px1 = coords[0] * mInPixel - px,
+            py1 = py - coords[1] * mInPixel;
+        
+        return ((py1 - sy) > 255 || (px1 - sx) > 255 || (px1 + sx) < 0 || (py1 + sy) < 0) 
+            ? null
+            : {
+                sx: sx,
+                sy: sy,
+                px1: (0.5 + px1) << 0,
+                py1: (0.5 + py1) << 0
+            }
+        ;
+    },
+
+    pointToCanvas: function(attr) {				// Точку в canvas
+        var gmx = attr.gmx,
+            pointAttr = attr.pointAttr,
+            style = attr.style,
+            sx = pointAttr.sx,
+            sy = pointAttr.sy,
+            px1 = pointAttr.px1,
+            py1 = pointAttr.py1,
+            coords = attr.coords;
+
+        var item = attr.item,
+            parsedStyleKeys = item.parsedStyleKeys,
+            px1sx = px1 - sx, py1sy = py1 - sy;
+            sx2 = 2 * sx, sy2 = 2 * sy,
+            ctx = attr.ctx;
 
         if(style.marker) {
             style.rotateRes = parsedStyleKeys.rotate || 0;
@@ -456,15 +474,16 @@
                 if('opacity' in style) ctx.globalAlpha = style.opacity;
                 if(gmx.transformFlag) {
                     ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
-                    ctx.drawImage(style.image, px1 - sx, sy - py1, 2 * sx, 2 * sy);
+                    ctx.drawImage(style.image, px1sx, -py1sy, sx2, sy2);
                     ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
                 } else if(style.rotateRes) {
-                    ctx.translate(px1 - sx, py1 - sy);
+                    ctx.translate(px1, py1);
                     ctx.rotate(gmxAPIutils.deg_rad(style.rotateRes));
-                    ctx.drawImage(style.image, 0, 0, 2 * sx, 2 * sy);
+                    ctx.translate(-px1, -py1);
+                    ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
                 } else {
-                    ctx.drawImage(style.image, px1 - sx, py1 - sy, 2 * sx, 2 * sy);
+                    ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
                 }
                 if('opacity' in style) ctx.globalAlpha = 1;
             }
@@ -473,7 +492,7 @@
             if(style.circle) {
                 ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
             } else {
-                ctx.strokeRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
+                ctx.strokeRect(px1sx, py1sy, sx2, sy2);
             }
             ctx.stroke();
         }
@@ -481,6 +500,8 @@
             ctx.beginPath();
             if(style.circle || style.radialGradient) {
                 if(style.radialGradient) {
+                    var indexes = gmx.tileAttributeIndexes,
+                        prop = item.properties;
                     var rgr = style.radialGradient,
                         r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
                         r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
@@ -506,7 +527,7 @@
                 }
                 ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
             } else {
-                ctx.fillRect(px1 - sx, py1 - sy, 2*sx, 2*sy);
+                ctx.fillRect(px1sx, py1sy, sx2, sy2);
             }
             ctx.fill();
         }

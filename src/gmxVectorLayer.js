@@ -135,6 +135,7 @@
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
 
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
+        gmx.styleManager.initStyles();
 
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
@@ -575,6 +576,9 @@
                 dx = (parsedStyle.sx + lineWidth) / mInPixel,
                 dy = (parsedStyle.sy + lineWidth) / mInPixel;
 
+            if (dx > dy) dx = dy;
+            else dy = dx;
+
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) continue;
 
             var geom = geoItem[geoItem.length - 1],
@@ -711,7 +715,7 @@
                         ev.gmx = {
                             targets: geoItems
                             ,target: target
-                            ,templateBalloon: gmx.styleManager.getItemBalloon(target)
+                            ,templateBalloon: gmx.styleManager.getItemBalloon(target.id)
                             ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
                             ,id: target.id
                         };
