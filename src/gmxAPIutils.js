@@ -428,10 +428,12 @@
     getPixelPoint: function(attr, coords) {
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
+            item = attr.item,
+            parsedStyleKeys = item.parsedStyleKeys,
             style = attr.style,
             scale = attr.scale || style.scale,
-            sx = attr.sx || style.sx || 4,
-            sy = attr.sy || style.sy || 4,
+            sx = parsedStyleKeys.sx || style.sx || 4,
+            sy = parsedStyleKeys.sy || style.sy || 4,
             px = attr.tpx,
             py = attr.tpy;
 
