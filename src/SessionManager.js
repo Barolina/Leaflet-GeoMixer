@@ -52,7 +52,9 @@ var gmxSessionManager = {
     },
     //get already received session key
     getSessionKey: function(serverHost) {
-        return this._keys[serverHost] && this._keys[serverHost].getFulfilledData()[0];
+        var keyPromise = this._keys[serverHost];
+        
+        return keyPromise && keyPromise.getFulfilledData() && keyPromise.getFulfilledData()[0];
     },
     _keys: {} //deferred for each host
 }
