@@ -79,7 +79,7 @@ Returned promise if fulfilled when all the layers are loaded. Layers are passed 
 
 Loads all layers from the GeoMixer's map. 
 
-`options` is an optional hash. The following keys are possible.
+`options` is optional. It can contain all the options from `L.gmx.loadLayer` and the following additional keys.
 
 Option|Description|Type
 ------|-----------|:--:|-------------
