@@ -175,7 +175,8 @@
 
     //public interface
     initFromDescription: function(ph) {
-        var gmx = this._gmx,
+        var _this = this,
+            gmx = this._gmx,
             apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName,
             sk = gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.sessionKey = sk;
@@ -189,8 +190,9 @@
         this.initLayerData(ph);
         gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
-        gmx.ProjectiveImage = new ProjectiveImage();
-        this._update();
+        gmx.styleManager.deferred.then(function () {
+            _this._update();
+        });
 
         this.initPromise.resolve();
     },
@@ -463,7 +465,10 @@
                     isDrawnFirstTime = true;
                 }
             })
-            gmx.tileSubscriptions[zKey] = true;
+            gmx.tileSubscriptions[zKey] = {
+                px: 256 * gmxTilePoint.x,
+                py: 256 *(1 + gmxTilePoint.y)
+            };
         }
     },
 

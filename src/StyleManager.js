@@ -34,8 +34,8 @@
     }
 
     this.setStyle = function(st, num) {
-		var style = parseItem(st);
-		var i = Number(num) || 0;
+        var style = parseItem(st);
+        var i = Number(num) || 0;
         if(i > styles.length - 1) styles.push(style);
         else styles[i] = style;
         // TIDO: need redraw all visible tiles
@@ -43,18 +43,17 @@
 
     var parseItem = function(style) {			// Style Scanex->leaflet
         var pt = {
-			common: true					// true, false (true - if style without object property keys)
-			,MinZoom: style.MinZoom || 0
-			,MaxZoom: style.MaxZoom || 50
-			,Filter: style.Filter || null
-			,onMouseOver: !style.DisableBalloonOnMouseMove
-			,onMouseClick: !style.DisableBalloonOnClick
-			,Balloon: style.Balloon || ''
-			,BalloonEnable: style.BalloonEnable || false
-			,RenderStyle: (style.RenderStyle ? parseStyle(style, 'RenderStyle') : null)
-			,HoverStyle: (style.HoverStyle ? parseStyle(style, 'HoverStyle') : null)
-		};
-		if('Filter' in style) {
+            MinZoom: style.MinZoom || 0
+            ,MaxZoom: style.MaxZoom || 50
+            ,Filter: style.Filter || null
+            ,onMouseOver: !style.DisableBalloonOnMouseMove
+            ,onMouseClick: !style.DisableBalloonOnClick
+            ,Balloon: style.Balloon || ''
+            ,BalloonEnable: style.BalloonEnable || false
+            ,RenderStyle: (style.RenderStyle ? parseStyle(style, 'RenderStyle') : null)
+            ,HoverStyle: (style.HoverStyle ? parseStyle(style, 'HoverStyle') : null)
+        };
+        if('Filter' in style) {
             var ph = gmxParsers.parseSQL(style.Filter);
             if(ph) pt.FilterFunction = ph;
         }
@@ -71,16 +70,17 @@
     var parseStyle = function(style, type) {   // Style Scanex->leaflet
         var st = style[type] || {},
             pt = {
-			common: true					// true, false (true - depends from object properties)
-			,sx: 0
-			,sy: 0
-			,label: false
-			,marker: false
-			,fill: false
-			,stroke: false
-			,MinZoom: style.MinZoom || 0
-			,MaxZoom: style.MaxZoom || 50
-		};
+            common: true					// true, false (true - depends from object properties)
+            ,maxSize: MAX_STYLE_SIZE
+            ,sx: 0
+            ,sy: 0
+            ,label: false
+            ,marker: false
+            ,fill: false
+            ,stroke: false
+            ,MinZoom: style.MinZoom || 0
+            ,MaxZoom: style.MaxZoom || 50
+        };
         if(typeof(st.label) === 'object') {     //  label style
             pt.label = {};
             chkStyleKey(pt.label, st.label, ['color', 'haloColor', 'size', 'spacing', 'align', 'dx', 'dy', 'field']);
@@ -229,7 +229,7 @@
                     if (zn.match(/[^\d\.]/) === null) pt[it] = Number(zn);
                     else {
                         pt[it+'Function'] = gmxParsers.parseExpression(zn);
-                        pt.common = false;
+                        if (it !== 'rotate') pt.common = false;
                     }
                 }
             }
@@ -237,6 +237,7 @@
         if (!pt.sizeFunction) {
             pt.sx = pt.sy = pt.size || 4;
         }
+        pt.maxSize = 2 * Math.max(pt.sx, pt.sy);
         return pt;
     }
 	var getImageSize = function(pt, flag)	{				// определение размеров image
@@ -361,30 +362,64 @@
         return out;
     }
 
-    var chkStyleFilter = function(item) {
-        if (item.parsedStyleKeys && item.parsedStyleKeys.size) {
-            item.options.size = item.parsedStyleKeys.size;
+    var isGeoInTile = function(geom, parsedStyleKeys, observer) {
+        var out = null;
+        if (geom.type === 'POINT') {
+            var mInPixel = gmx.mInPixel,
+                tilePos = gmx.tileSubscriptions[observer.id],
+                coords = geom.coordinates,
+                scale = parsedStyleKeys.scale,
+                sx = parsedStyleKeys.sx || 4,
+                sy = parsedStyleKeys.sy || 4;
+
+            if(!tilePos) return true;
+            if(scale) {
+                sx *= scale, sy *= scale;
+            }
+            var px1 = coords[0] * mInPixel - tilePos.px,
+                py1 = tilePos.py - coords[1] * mInPixel;
+
+            if ((py1 - sy) <= 255 && (px1 - sx) <= 255 && (px1 + sx) >= 0 && (py1 + sy) >= 0) {
+                out = {
+                    sx: sx,
+                    sy: sy,
+                    px1: (0.5 + px1) << 0,
+                    py1: (0.5 + py1) << 0
+                };
+            }
+        } else {
+            out = true;
         }
+        return out;
+    }
+
+    var chkStyleFilter = function(item, tile, observer, geom) {
+        var zoom = gmx.currentZoom;
         if (item._lastZoom !== gmx.currentZoom || !('currentFilter' in item)) {
-            item._lastZoom = gmx.currentZoom;
-            var indexes = gmx.tileAttributeIndexes;
+            var fnum = item.currentFilter;
             for (var i = 0, len = styles.length; i < len; i++) {
                 var st = styles[i];
-                if (gmx.currentZoom > st.MaxZoom || gmx.currentZoom < st.MinZoom) continue;
-                if ('FilterFunction' in st && !st.FilterFunction(item.properties, indexes)) continue;
-                if (item.currentFilter !== i) {
+                if (zoom > st.MaxZoom || zoom < st.MinZoom) continue;
+                if ('FilterFunction' in st && !st.FilterFunction(item.properties, gmx.tileAttributeIndexes)) continue;
+                if (fnum !== i) {
                     itemStyleParser(item, st.RenderStyle);
                     if (st.HoverStyle) itemStyleParser(item, st.HoverStyle);
                 }
 
+                if (item.parsedStyleKeys && item.parsedStyleKeys.size) {
+                    item.options.size = item.parsedStyleKeys.size;
+                }
                 item.currentFilter = i;
-                return true;
+                break;
             }
-        } else if (styles[item.currentFilter]) {
-            return true;
+            item._lastZoom = zoom;
         }
-        item.currentFilter = -1;
-        return false;
+        if (styles[item.currentFilter]) {
+            return isGeoInTile(geom, item.parsedStyleKeys, observer);
+        } else {
+            item.currentFilter = -1;
+            return false;
+        }
     }
 
     gmx.dataManager.addFilter('styleFilter', chkStyleFilter);
@@ -424,7 +459,7 @@
 				maxSize = MAX_STYLE_SIZE;
 				break;
 			}
-			maxSize = Math.max(maxSize, 2 * RenderStyle.sx, 2 * RenderStyle.sy);
+			maxSize = RenderStyle.maxSize;
 		}
 		return maxSize;
     }

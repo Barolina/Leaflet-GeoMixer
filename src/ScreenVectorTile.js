@@ -10,6 +10,9 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         rasters = {},
         currentDrawDef = null;
 
+    this.tpx = 256 * gmxTilePoint.x;
+    this.tpy = 256 *(1 + gmxTilePoint.y);
+
     gmx.badTiles = gmx.badTiles || {};
         
     var loadTileRecursive = function(gtp, urlFunction) {

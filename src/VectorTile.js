@@ -52,10 +52,6 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         loadDef = null;
     }
 
-    this.isIntersects = function(gmxTilePoint) {
-        return gmxAPIutils.isTileKeysIntersects(this.gmxTilePoint, gmxTilePoint);
-    }
-
     var chkOnEdge = function(p1, p2, ext) { // отрезок на границе
         if ((p1[0] < ext.min.x && p2[0] < ext.min.x) || (p1[0] > ext.max.x && p2[0] > ext.max.x)) return true;
         if ((p1[1] < ext.min.y && p2[1] < ext.min.y) || (p1[1] > ext.max.y && p2[1] > ext.max.y)) return true;
@@ -87,11 +83,13 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                 if(geom.type === 'POLYGON') {
                     coords = [coords];
                 }
+                var edgeBounds = gmxAPIutils.bounds().extendBounds(this.bounds)
+                    .addBuffer((this.bounds.min.x - this.bounds.max.x)/10000);
                 for (var j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j],
                         hiddenLines1 = [];
                     for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
-                        hiddenLines1.push(getHidden(coords1[j1], this.edgeBounds));
+                        hiddenLines1.push(getHidden(coords1[j1], edgeBounds));
                     }
                     if (hiddenLines1.length) {
                         if (!hiddenLines) hiddenLines = [];
@@ -107,10 +105,13 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         return hiddenLines;
     }
 
-    var bounds = gmxAPIutils.getTileBounds(x, y, z),
-        edgeBounds = gmxAPIutils.bounds().extendBounds(bounds);
-    this.bounds = bounds;
-    this.edgeBounds = edgeBounds.addBuffer((bounds.min.x - bounds.max.x)/10000);
+    var vKey = z + '_' + x + '_' + y;
+    if (gmxAPIutils.vKeysBounds[vKey]) {
+        this.bounds = gmxAPIutils.vKeysBounds[vKey];
+    } else {
+        this.bounds = gmxAPIutils.vKeysBounds[vKey] = gmxAPIutils.getTileBounds(x, y, z);
+    }
+    vKey += '_' + v + '_' + s + '_' + d;
     this.data = [];
     this.dataOptions = [];
     this.x = x;
@@ -119,7 +120,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.s = s;
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
-    this.gmxTileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
+    this.vectorTileKey = vKey;
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 }
 

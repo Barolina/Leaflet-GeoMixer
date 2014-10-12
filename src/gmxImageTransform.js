@@ -76,6 +76,7 @@ var gmxImageTransform = function(hash) {
     var shiftPoints = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]];
     if(!ready) shiftPoints = chPoints(shiftPoints);
     
+    if (!gmx.ProjectiveImage) gmx.ProjectiveImage = new ProjectiveImage();
     var pt = gmx.ProjectiveImage.getCanvas({
         imageObj: img
         ,points: shiftPoints

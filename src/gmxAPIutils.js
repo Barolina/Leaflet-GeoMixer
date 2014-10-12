@@ -100,6 +100,7 @@
 
     tileSizes: [] // Размеры тайла по zoom
     ,
+    vKeysBounds: {},
     
     getTileNumFromLeaflet: function (tilePoint, zoom) {
         var pz = Math.pow(2, zoom),
@@ -418,8 +419,8 @@
         ptx1.drawImage(canvas, 0, 0, ww, hh);
         return { 'notFunc': notFunc, 'canvas': canvas1 };
     }
-	,
-	'toPixels': function(p, tpx, tpy, mInPixel) {				// получить координату в px
+    ,
+    'toPixels': function(p, tpx, tpy, mInPixel) {				// получить координату в px
         var px1 = p[0] * mInPixel; 	px1 = (0.5 + px1) << 0;
         var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
         return [px1 - tpx, tpy - py1];

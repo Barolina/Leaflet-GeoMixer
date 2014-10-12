@@ -2,7 +2,6 @@
 	includes: L.Mixin.Events,
     initialize: function(gmx) {
         var _this = this,
-            oneDay = 1000*60*60*24, // milliseconds in one day
             isTemporalLayer = gmx.properties.Temporal;
 
         this._tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
@@ -102,12 +101,13 @@
                     }
                     var it = data[j],
                         id = it[0],
+                        geom = it[it.length - 1],
                         item = _this.getItem(id),
                         isFiltered = false;
 
                     for (var f = 0; f < filters.length; f++) {
                         var filterFunc = _this._filters[filters[f]];
-                        if (filterFunc && !filterFunc(item, tile, observer)) {
+                        if (filterFunc && !filterFunc(item, tile, observer, geom)) {
                             isFiltered = true;
                             break;
                         }
@@ -115,8 +115,7 @@
 
                     if (isFiltered) continue;
 
-                    var geom = it[it.length - 1],
-                        type = geom.type;
+                    var type = geom.type;
 
                     //TODO: remove from data manager
                     if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
@@ -140,7 +139,7 @@
     },
 
     _updateItemsFromTile: function(tile) {
-        var gmxTileKey = tile.gmxTileKey,
+        var vectorTileKey = tile.vectorTileKey,
             layerProp = this._gmx.properties,
             data = tile.data,
             len = data.length,
@@ -171,7 +170,7 @@
             }
             delete item.bounds;
             item.properties = it;
-            item.options.fromTiles[gmxTileKey] = i;
+            item.options.fromTiles[vectorTileKey] = i;
             if(layerProp.TemporalColumnName) {
                 var zn = it[this._gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];
                 item.options.unixTimeStamp = zn*1000;
@@ -334,8 +333,8 @@
 
     addTile: function(tile) {
         if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
-        this._tiles[tile.gmxTileKey] = {tile: tile};
-        this._activeTileKeys[tile.gmxTileKey] = true;
+        this._tiles[tile.vectorTileKey] = {tile: tile};
+        this._activeTileKeys[tile.vectorTileKey] = true;
         this.checkObservers();
     },
 
@@ -423,8 +422,8 @@
             observersToUpdate = {},
             _this = this;
             
-        var checkSubscription = function(gmxTileKey) {
-            var bounds = gmxVectorTile.boundsFromTileKey(gmxTileKey),
+        var checkSubscription = function(vKey) {
+            var bounds = gmxVectorTile.boundsFromTileKey(vKey),
                 observers = _this._observers;
 
             for (var sid in observers) {
@@ -597,11 +596,12 @@
                     d = Number(arr1[0]),
                     v = Number(vers[i]),
                     tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
-                    
+
                 this._tiles[tileKey] = this._tiles[tileKey] || {
                     tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
                 }
             }
+            gmxAPIutils.vKeysBounds = {};
 
             this._tilesTree.initFromTiles(this._tiles);
 
@@ -611,9 +611,10 @@
             vers = layerProperties.tilesVers;
             var newActiveTileKeys = {};
             for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-                var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1);
-                this._tiles[tile.gmxTileKey] = this._tiles[tile.gmxTileKey] || {tile: tile};
-                newActiveTileKeys[tile.gmxTileKey] = true;
+                var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1),
+                    vKey = tile.vectorTileKey;
+                this._tiles[vKey] = this._tiles[vKey] || {tile: tile};
+                newActiveTileKeys[vKey] = true;
             }
             
             this._updateActiveTilesList(newActiveTileKeys);
