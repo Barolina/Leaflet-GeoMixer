@@ -19,6 +19,7 @@
         this._observers = {};
         
         this._needCheckDateInterval = false;
+        this._needCheckActiveTiles = true;
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -45,16 +46,19 @@
     
         this._chkMaxDateInterval();
         
-        if (this._activeTileKeys) {
+        if (!this._needCheckActiveTiles) {
             return this._activeTileKeys;
         }
+        
+        this._needCheckActiveTiles = false;
         
         if (this._isTemporalLayer) {
             if (!this._tilesTree) {
                 this.initTilesTree(this._gmx.properties);
             }
             
-            this._activeTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
+            var newTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
+            this._updateActiveTilesList(newTileKeys);
         } else {
             this.initTilesList(this._gmx.properties);
         }
@@ -262,7 +266,7 @@
             
                 this._beginDate = newBeginDate;
                 this._endDate = newEndDate;
-                this._activeTileKeys = null;
+                this._needCheckActiveTiles = true;
             }
         }
     },
@@ -420,10 +424,7 @@
 
     _updateActiveTilesList: function(newTilesList) {
 
-        if (!this._activeTileKeys) {
-            this._activeTileKeys = newTilesList;
-            return;
-        }
+        var oldTilesList = this._activeTileKeys || {};
         
         var changedTiles = [],
             observersToUpdate = {},
@@ -441,12 +442,12 @@
         }
 
         for (var key in newTilesList) {
-            if (!this._activeTileKeys[key]) {
+            if (!oldTilesList[key]) {
                 checkSubscription(key);
             }
         }
 
-        for (var key in this._activeTileKeys) {
+        for (var key in oldTilesList) {
             if (!newTilesList[key]) {
                 checkSubscription(key);
             }
@@ -615,7 +616,6 @@
         }
     },
     initTilesList: function(layerProperties) {
-        if (!this._activeTileKeys) this._activeTileKeys = {};
         var arr = layerProperties.tiles || [];
         var vers = layerProperties.tilesVers;
         var newActiveTileKeys = {};

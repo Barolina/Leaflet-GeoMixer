@@ -101,7 +101,10 @@ L.gmx.VectorLayer.include({
             if (layerDescription.properties) {
                 var prop = layerDescription.properties;
                 gmx.dataManager.initTileList(prop);
-                gmx.properties.LayerVersion = prop.LayerVersion;
+                gmx.properties = layerDescription.properties;
+                this._tilesTree = null;
+                this._needCheckActiveTiles = true;
+                this._getActiveTileKeys(); //force list update
             }
             if (layerDescription.geometry) {
                 // todo: update layer geometry
