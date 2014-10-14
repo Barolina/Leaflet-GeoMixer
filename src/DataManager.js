@@ -4,7 +4,7 @@
         var _this = this,
             isTemporalLayer = gmx.properties.Temporal;
 
-        this._tilesTree = isTemporalLayer ? new gmxTilesTree(gmx.TemporalPeriods, gmx.ZeroUT) : null;
+        this._tilesTree = null;
         this._activeTileKeys = null;
         this._endDate = null;
         this._beginDate = null;
@@ -17,6 +17,8 @@
         this._maxStyleSize = 0;
         this._items = {};
         this._observers = {};
+        
+        this._needCheckDateInterval = false;
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -39,13 +41,25 @@
         }
     },
 
-    _lazyInitActiveTileKeys: function() {
-        if (!this._activeTileKeys) {
-            this.initTileList(this._gmx.properties);
+    _getActiveTileKeys: function() {
+    
+        this._chkMaxDateInterval();
+        
+        if (this._activeTileKeys) {
+            return this._activeTileKeys;
         }
+        
         if (this._isTemporalLayer) {
-            this._chkMaxDateInterval();
+            if (!this._tilesTree) {
+                this.initTilesTree(this._gmx.properties);
+            }
+            
+            this._activeTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
+        } else {
+            this.initTilesList(this._gmx.properties);
         }
+        
+        return this._activeTileKeys;
     },
 
     getStyleBounds: function(gmxTilePoint) {
@@ -130,8 +144,8 @@
                     });
                 }
             };
-        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
-        for (var tkey in this._activeTileKeys) {
+        var activeTileKeys =  this._getActiveTileKeys();
+        for (var tkey in activeTileKeys) {
             putData(tkey);
         }
         
@@ -181,7 +195,8 @@
 
     _getNotLoadedTileCount: function(observer) {
         var count = 0;
-        for (var key in this._activeTileKeys) {
+        var activeTileKeys = this._getActiveTileKeys();
+        for (var key in activeTileKeys) {
             var tile = this._tiles[key].tile;
             if (tile.state !== 'loaded' && observer.intersects(tile.bounds)) {
                 count++;
@@ -194,9 +209,8 @@
         var leftToLoad = 0,
             _this = this;
 
-        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
-
-        for (var key in this._activeTileKeys) (function(tile) {
+        var activeTileKeys = this._getActiveTileKeys();
+        for (var key in activeTileKeys) (function(tile) {
 
             if (!observer.intersects(tile.bounds)) return;
 
@@ -230,7 +244,8 @@
     },
 
     _chkMaxDateInterval: function() {
-        if (this._isTemporalLayer) {
+        if (this._isTemporalLayer && this._needCheckDateInterval) {
+            this._needCheckDateInterval = false;
             var observers = this._observers,
                 newBeginDate = null,
                 newEndDate = null;
@@ -243,16 +258,11 @@
                 if (!newBeginDate || dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
                 if (!newEndDate || dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
             }
-            
             if (newBeginDate && newEndDate && (this._beginDate != newBeginDate || this._endDate != newEndDate)) {
             
                 this._beginDate = newBeginDate;
                 this._endDate = newEndDate;
                 this._activeTileKeys = null;
-
-                var selection = this._tilesTree.selectTiles(newBeginDate, newEndDate);
-                
-                this._updateActiveTilesList(selection.tiles);
             }
         }
     },
@@ -269,9 +279,9 @@
             .on('update', function(ev) {
                 observer.needRefresh = true;
                 if (ev.temporalFilter) {
-                    _this._beginDate = _this._endDate = null;
-                    _this._activeTileKeys = null;
+                    _this._needCheckDateInterval = true;
                 }
+                
                 _this._waitCheckObservers();
             })
             .on('activate', function(ev) {
@@ -280,10 +290,9 @@
                 }
         });
 
+        _this._needCheckDateInterval = true;
         this._observers[id] = observer;
         this._waitCheckObservers();
-        
-        //var count = 0; for (var k in this._observers) count++;
         
         return observer;
     },
@@ -332,9 +341,8 @@
     },
 
     addTile: function(tile) {
-        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
         this._tiles[tile.vectorTileKey] = {tile: tile};
-        this._activeTileKeys[tile.vectorTileKey] = true;
+        this._getActiveTileKeys()[tile.vectorTileKey] = true;
         this.checkObservers();
     },
 
@@ -379,8 +387,7 @@
     },
 
     preloadTiles: function(dateBegin, dateEnd, bounds) {
-        if (!this._activeTileKeys) this._lazyInitActiveTileKeys();
-        var tileKeys = this._isTemporalLayer ? this._tilesTree.selectTiles(dateBegin, dateEnd).tiles : this._activeTileKeys,
+        var tileKeys = this._isTemporalLayer ? this._tilesTree.selectTiles(dateBegin, dateEnd).tiles : this._getActiveTileKeys(),
             _this = this,
             loadingDefs = [];
         for (var key in tileKeys) {
@@ -580,46 +587,47 @@
         return vTile;
     },
 
-    initTileList: function(layerProperties) {
-        var arr, vers;
+    initTilesTree: function(layerProperties) {
+        var arr = layerProperties.TemporalTiles || [];
+        var vers = layerProperties.TemporalVers || [];
 
-        if (this._isTemporalLayer && this._gmx.TemporalPeriods) {
-            arr = layerProperties.TemporalTiles || [];
-            vers = layerProperties.TemporalVers || [];
+        for (var i = 0, len = arr.length; i < len; i++) {
+            var arr1 = arr[i];
+            var z = Number(arr1[4]),
+                y = Number(arr1[3]),
+                x = Number(arr1[2]),
+                s = Number(arr1[1]),
+                d = Number(arr1[0]),
+                v = Number(vers[i]),
+                tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
 
-            for (var i = 0, len = arr.length; i < len; i++) {
-                var arr1 = arr[i];
-                var z = Number(arr1[4]),
-                    y = Number(arr1[3]),
-                    x = Number(arr1[2]),
-                    s = Number(arr1[1]),
-                    d = Number(arr1[0]),
-                    v = Number(vers[i]),
-                    tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
-
-                this._tiles[tileKey] = this._tiles[tileKey] || {
-                    tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
-                }
+            this._tiles[tileKey] = this._tiles[tileKey] || {
+                tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
             }
-            gmxAPIutils.vKeysBounds = {};
-
-            this._tilesTree.initFromTiles(this._tiles);
-
-        } else {
-            if (!this._activeTileKeys) this._activeTileKeys = {};
-            arr = layerProperties.tiles || [];
-            vers = layerProperties.tilesVers;
-            var newActiveTileKeys = {};
-            for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-                var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1),
-                    vKey = tile.vectorTileKey;
-                this._tiles[vKey] = this._tiles[vKey] || {tile: tile};
-                newActiveTileKeys[vKey] = true;
-            }
-            
-            this._updateActiveTilesList(newActiveTileKeys);
         }
+        gmxAPIutils.vKeysBounds = {};
 
+        this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
+        this._tilesTree.initFromTiles(this._tiles);
+
+        if (layerProperties.Processing) {
+            this._chkProcessing(layerProperties.Processing);
+        }
+    },
+    initTilesList: function(layerProperties) {
+        if (!this._activeTileKeys) this._activeTileKeys = {};
+        var arr = layerProperties.tiles || [];
+        var vers = layerProperties.tilesVers;
+        var newActiveTileKeys = {};
+        for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
+            var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1),
+                vKey = tile.vectorTileKey;
+            this._tiles[vKey] = this._tiles[vKey] || {tile: tile};
+            newActiveTileKeys[vKey] = true;
+        }
+        
+        this._updateActiveTilesList(newActiveTileKeys);
+        
         if (layerProperties.Processing) {
             this._chkProcessing(layerProperties.Processing);
         }
