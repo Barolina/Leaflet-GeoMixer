@@ -57,7 +57,9 @@
                 this.initTilesTree(this._gmx.properties);
             }
             
-            var newTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
+            var newTileKeys = this._beginDate && this._endDate
+                ? this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles
+                : {};
             this._updateActiveTilesList(newTileKeys);
         } else {
             this.initTilesList(this._gmx.properties);

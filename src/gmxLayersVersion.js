@@ -100,7 +100,6 @@ L.gmx.VectorLayer.include({
             var gmx = this._gmx;
             if (layerDescription.properties) {
                 var prop = layerDescription.properties;
-                gmx.dataManager.initTileList(prop);
                 gmx.properties = layerDescription.properties;
                 this._tilesTree = null;
                 this._needCheckActiveTiles = true;
