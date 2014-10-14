@@ -467,7 +467,7 @@
 
         var item = attr.item,
             parsedStyleKeys = item.parsedStyleKeys,
-            px1sx = px1 - sx, py1sy = py1 - sy;
+            px1sx = px1 - sx, py1sy = py1 - sy,
             sx2 = 2 * sx, sy2 = 2 * sy,
             ctx = attr.ctx;
 
