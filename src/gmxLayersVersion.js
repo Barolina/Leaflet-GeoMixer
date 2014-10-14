@@ -99,11 +99,11 @@ L.gmx.VectorLayer.include({
         if (layerDescription) {
             var gmx = this._gmx;
             if (layerDescription.properties) {
-                var prop = layerDescription.properties;
+                // todo: relocate to dataManager
                 gmx.properties = layerDescription.properties;
-                this._tilesTree = null;
-                this._needCheckActiveTiles = true;
-                this._getActiveTileKeys(); //force list update
+                gmx.dataManager._tilesTree = null;
+                gmx.dataManager._needCheckActiveTiles = true;
+                gmx.dataManager._getActiveTileKeys(); //force list update
             }
             if (layerDescription.geometry) {
                 // todo: update layer geometry
