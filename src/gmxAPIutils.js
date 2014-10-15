@@ -100,7 +100,6 @@
 
     tileSizes: [] // Размеры тайла по zoom
     ,
-    vKeysBounds: {},
     
     getTileNumFromLeaflet: function (tilePoint, zoom) {
         var pz = Math.pow(2, zoom),
@@ -748,15 +747,6 @@
         return 256 / gmxAPIutils.tileSizes[zoom];
     },
 
-    //x, y, z - GeoMixer tile coordinates
-    getTileBounds: function(x, y, z) {
-        var tileSize = gmxAPIutils.tileSizes[z],
-            minx = x * tileSize, 
-            miny = y * tileSize;
-
-        return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
-    }
-	,
 	forEachPoint: function(coords, callback)
 	{
 		if (!coords || coords.length == 0) return [];
@@ -1055,6 +1045,23 @@ gmxAPIutils.lambertCoefY = 100*gmxAPIutils.distVincenty(0, 0, 0, 0.01)*180/Math.
     //pre-calculate tile sizes
     for (var z = 0; z < 30; z++) {
         gmxAPIutils.tileSizes[z] = 40075016.685578496 / Math.pow(2, z);
+    }
+}()
+
+!function() {
+    var vKeysBounds = {};
+    //x, y, z - GeoMixer tile coordinates
+    gmxAPIutils.getTileBounds = function(x, y, z) {
+        var tKey = z + '_' + x + '_' + y,
+            res = vKeysBounds[tKey];
+        if (!res) {
+            var tileSize = gmxAPIutils.tileSizes[z],
+                minx = x * tileSize, 
+                miny = y * tileSize;
+            res = gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
+            vKeysBounds[tKey] = res;
+        }
+        return res;
     }
 }()
 

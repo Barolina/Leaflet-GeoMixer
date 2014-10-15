@@ -45,7 +45,7 @@
     _getActiveTileKeys: function() {
     
         this._chkMaxDateInterval();
-        
+
         if (!this._needCheckActiveTiles) {
             return this._activeTileKeys;
         }
@@ -53,13 +53,14 @@
         this._needCheckActiveTiles = false;
         
         if (this._isTemporalLayer) {
-            if (!this._tilesTree) {
-                this.initTilesTree(this._gmx.properties);
+            var newTileKeys = {};
+            if (this._beginDate && this._endDate) {
+                if (!this._tilesTree) {
+                    this.initTilesTree(this._gmx.properties);
+                }
+                
+                newTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
             }
-            
-            var newTileKeys = this._beginDate && this._endDate
-                ? this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles
-                : {};
             this._updateActiveTilesList(newTileKeys);
         } else {
             this.initTilesList(this._gmx.properties);
@@ -105,9 +106,8 @@
                 return bboxActive ? bboxActive.intersects(bounds) : observer.intersects(bounds);
             },
             _this = this,
-            putData = function(key) {
-                var tile = _this._tiles[key].tile,
-                    data = tile.data;
+            putData = function(tile) {
+                var data = tile.data;
                 if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
                     // VectorTile is not loaded or is not on bounds
                     return;
@@ -152,9 +152,10 @@
             };
         var activeTileKeys =  this._getActiveTileKeys();
         for (var tkey in activeTileKeys) {
-            putData(tkey);
+            putData(_this._tiles[tkey].tile);
         }
-        
+        if (this.processingTile) putData(this.processingTile);
+
         return resItems;
     },
 
@@ -506,12 +507,15 @@
         
         if (data.length > 0) {
             if (!tile) {
-                this.processingTile = this.addData(data);
+                this.processingTile = tile = this.addData(data);
                 this.addFilter('processingFilter', function(item, tile) {
                     return tile.z === 0 || !item.processing;
                 });
+            } else {
+                tile.addData(data);
             }
         }
+        if (tile) this._triggerObservers();
     },
 
     _getDataKeys: function(data) {
@@ -608,7 +612,6 @@
                 tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
             }
         }
-        gmxAPIutils.vKeysBounds = {};
 
         this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);

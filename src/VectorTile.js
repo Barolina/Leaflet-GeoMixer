@@ -105,13 +105,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         return hiddenLines;
     }
 
-    var vKey = z + '_' + x + '_' + y;
-    if (gmxAPIutils.vKeysBounds[vKey]) {
-        this.bounds = gmxAPIutils.vKeysBounds[vKey];
-    } else {
-        this.bounds = gmxAPIutils.vKeysBounds[vKey] = gmxAPIutils.getTileBounds(x, y, z);
-    }
-    vKey += '_' + v + '_' + s + '_' + d;
+    this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = [];
     this.dataOptions = [];
     this.x = x;
@@ -120,7 +114,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.s = s;
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
-    this.vectorTileKey = vKey;
+    this.vectorTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 }
 

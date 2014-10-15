@@ -7,19 +7,7 @@ L.gmx.VectorLayer.addInitHook(function () {
         var count = 0, max = 1000000,
             all = {},
             gmx = layer._gmx,
-            sortFunc = gmx.sortItems;
-
-        gmx.sortItems = function(a, b) {
-            var ap = all[a.arr[0]],
-                bp = all[b.arr[0]];
-
-            if (ap || bp) {
-                ap = ap ? ap + (ap > 0 ? max : -max) : 0;
-                bp = bp ? bp + (bp > 0 ? max : -max) : 0;
-                return ap - bp;
-            }
-            return sortFunc ? sortFunc(a, b) : 0;
-        };
+            sortFunc = null;
 
         var addToReorder = function (id, botoomFlag) {
             count++;
@@ -64,8 +52,18 @@ L.gmx.VectorLayer.addInitHook(function () {
 
             setSortFunc: function (func) {
                 sortFunc = func;
-            }
+                gmx.sortItems = function(a, b) {
+                    var ap = all[a.arr[0]],
+                        bp = all[b.arr[0]];
 
+                    if (ap || bp) {
+                        ap = ap ? ap + (ap > 0 ? max : -max) : 0;
+                        bp = bp ? bp + (bp > 0 ? max : -max) : 0;
+                        return ap - bp;
+                    }
+                    return sortFunc ? sortFunc(a, b) : 0;
+                };
+            }
         };
     };
     if (!this._gmx.objectsReorder) {
