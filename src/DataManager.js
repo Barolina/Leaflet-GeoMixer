@@ -394,8 +394,18 @@
     },
 
     preloadTiles: function(dateBegin, dateEnd, bounds) {
-        var tileKeys = this._isTemporalLayer ? this._tilesTree.selectTiles(dateBegin, dateEnd).tiles : this._getActiveTileKeys(),
-            _this = this,
+        var tileKeys = {};
+        if (this._isTemporalLayer) {
+            if (!this._tilesTree) {
+                this.initTilesTree(this._gmx.properties);
+            }
+            tileKeys = this._tilesTree.selectTiles(dateBegin, dateEnd).tiles;
+        } else {
+            this._needCheckActiveTiles = true;
+            tileKeys = this._getActiveTileKeys();
+        }
+
+        var _this = this,
             loadingDefs = [];
         for (var key in tileKeys) {
             var tile = this._tiles[key].tile;

@@ -8,6 +8,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
         var props = ph.properties,
             vectorProperties = {
                 type: 'Vector',
+                fromType: props.type,
                 identityField: 'ogc_fid',
                 GeometryType: 'POLYGON',
                 IsRasterCatalog: true,

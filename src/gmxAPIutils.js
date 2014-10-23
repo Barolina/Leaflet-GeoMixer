@@ -125,67 +125,6 @@
 		};
     },
 
-    //TODO: use L.Bounds? test performance?
-	'bounds': function(arr) {							// получить bounds массива точек
-		var res = {
-			min: {
-				x: Number.MAX_VALUE,
-                y: Number.MAX_VALUE
-			},
-			max: {
-				x: -Number.MAX_VALUE,
-                y: -Number.MAX_VALUE
-			},
-			extend: function(x, y) {
-				if (x < this.min.x) this.min.x = x;
-				if (x > this.max.x) this.max.x = x;
-				if (y < this.min.y) this.min.y = y;
-				if (y > this.max.y) this.max.y = y;
-                return this;
-			},
-			extendBounds: function(bounds) {
-				return this.extendArray([[bounds.min.x, bounds.min.y], [bounds.max.x, bounds.max.y]]);
-			},
-			extendArray: function(arr) {
-                if (!arr) { return this };
-				for(var i=0, len=arr.length; i<len; i++) {
-					this.extend(arr[i][0], arr[i][1]);
-				}
-                return this;
-			},
-            addBuffer: function(dxmin, dymin, dxmax, dymax) {
-                this.min.x -= dxmin;
-                this.min.y -= dymin || dxmin;
-                this.max.x += dxmax || dxmin;
-                this.max.y += dymax || dxmin;
-                return this;
-            },
-			contains: function (point) { // ([x, y]) -> Boolean
-				var min = this.min, max = this.max,
-					x = point[0], y = point[1];
-				return x > min.x && x < max.x && y > min.y && y < max.y;
-            },
-			intersects: function (bounds) { // (Bounds) -> Boolean
-				var min = this.min,
-					max = this.max,
-					min2 = bounds.min,
-					max2 = bounds.max;
-				return max2.x > min.x && min2.x < max.x && max2.y > min.y && min2.y < max.y;
-            },
-			intersectsWithDelta: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
-				var min = this.min,
-					max = this.max,
-					x = dx || 0,
-					y = dy || 0,
-					min2 = bounds.min,
-					max2 = bounds.max;
-				return max2.x + x > min.x && min2.x - x < max.x && max2.y + y > min.y && min2.y - y < max.y;
-			}
-		};
-        
-		return res.extendArray(arr);
-    },
-
     geoItemBounds: function(geo) {  // get bounds by geometry
         var type = geo.type,
             coords = geo.coordinates,
@@ -1035,6 +974,25 @@
 
     getGeometrySummary: function(geom, units) {
         return gmxAPIutils.getGeometriesSummary([geom], units);
+    },
+
+    chkOnEdge: function(p1, p2, ext) { // отрезок на границе
+        if ((p1[0] < ext.min.x && p2[0] < ext.min.x) || (p1[0] > ext.max.x && p2[0] > ext.max.x)) return true;
+        if ((p1[1] < ext.min.y && p2[1] < ext.min.y) || (p1[1] > ext.max.y && p2[1] > ext.max.y)) return true;
+        return false;
+    },
+
+    getHidden: function(coords, tb) {  // массив точек на границах тайлов
+        var hiddenLines = [],
+            prev = null;
+        for (var i = 0, len = coords.length; i < len; i++) {
+            var p = coords[i];
+            if(prev && gmxAPIutils.chkOnEdge(p, prev, tb)) {
+                hiddenLines.push(i);
+            }
+            prev = p;
+        }
+        return hiddenLines;
     }
 }
 
@@ -1063,7 +1021,70 @@ gmxAPIutils.lambertCoefY = 100*gmxAPIutils.distVincenty(0, 0, 0, 0.01)*180/Math.
         }
         return res;
     }
-}()
+}();
+
+gmxAPIutils.Bounds = function(arr) {
+    this.min = {
+        x: Number.MAX_VALUE,
+        y: Number.MAX_VALUE
+    };
+    this.max = {
+        x: -Number.MAX_VALUE,
+        y: -Number.MAX_VALUE
+    };
+    this.extendArray(arr);
+};
+gmxAPIutils.Bounds.prototype = {
+    extend: function(x, y) {
+        if (x < this.min.x) this.min.x = x;
+        if (x > this.max.x) this.max.x = x;
+        if (y < this.min.y) this.min.y = y;
+        if (y > this.max.y) this.max.y = y;
+        return this;
+    },
+    extendBounds: function(bounds) {
+        return this.extendArray([[bounds.min.x, bounds.min.y], [bounds.max.x, bounds.max.y]]);
+    },
+    extendArray: function(arr) {
+        if (!arr) { return this };
+        for(var i=0, len=arr.length; i<len; i++) {
+            this.extend(arr[i][0], arr[i][1]);
+        }
+        return this;
+    },
+    addBuffer: function(dxmin, dymin, dxmax, dymax) {
+        this.min.x -= dxmin;
+        this.min.y -= dymin || dxmin;
+        this.max.x += dxmax || dxmin;
+        this.max.y += dymax || dxmin;
+        return this;
+    },
+    contains: function (point) { // ([x, y]) -> Boolean
+        var min = this.min, max = this.max,
+            x = point[0], y = point[1];
+        return x > min.x && x < max.x && y > min.y && y < max.y;
+    },
+    intersects: function (bounds) { // (Bounds) -> Boolean
+        var min = this.min,
+            max = this.max,
+            min2 = bounds.min,
+            max2 = bounds.max;
+        return max2.x > min.x && min2.x < max.x && max2.y > min.y && min2.y < max.y;
+    },
+    intersectsWithDelta: function (bounds, dx, dy) { // (Bounds, dx, dy) -> Boolean
+        var min = this.min,
+            max = this.max,
+            x = dx || 0,
+            y = dy || 0,
+            min2 = bounds.min,
+            max2 = bounds.max;
+        return max2.x + x > min.x && min2.x - x < max.x && max2.y + y > min.y && min2.y - y < max.y;
+    }
+};
+
+gmxAPIutils.bounds = function(arr) {
+    return new gmxAPIutils.Bounds(arr);
+};
 
 L.LineUtil.getLength = gmxAPIutils.getLength;
 L.LineUtil.prettifyDistance = gmxAPIutils.prettifyDistance;

@@ -52,23 +52,6 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
         loadDef = null;
     }
 
-    var chkOnEdge = function(p1, p2, ext) { // отрезок на границе
-        if ((p1[0] < ext.min.x && p2[0] < ext.min.x) || (p1[0] > ext.max.x && p2[0] > ext.max.x)) return true;
-        if ((p1[1] < ext.min.y && p2[1] < ext.min.y) || (p1[1] > ext.max.y && p2[1] > ext.max.y)) return true;
-        return false;
-    }
-    var getHidden = function(coords, tb) {  // массив точек на границах тайлов
-        var hiddenLines = [],
-            prev = null;
-        for (var i = 0, len = coords.length; i < len; i++) {
-            var p = coords[i];
-            if(prev && chkOnEdge(p, prev, tb)) {
-                hiddenLines.push(i);
-            }
-            prev = p;
-        }
-        return hiddenLines;
-    }
     this.calcEdgeLines = function(num) {
         if (!this.data[num]) return null;
         if (!this.dataOptions[num]) this.dataOptions[num] = {};
@@ -89,7 +72,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                     var coords1 = coords[j],
                         hiddenLines1 = [];
                     for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
-                        hiddenLines1.push(getHidden(coords1[j1], edgeBounds));
+                        hiddenLines1.push(gmxAPIutils.getHidden(coords1[j1], edgeBounds));
                     }
                     if (hiddenLines1.length) {
                         if (!hiddenLines) hiddenLines = [];
