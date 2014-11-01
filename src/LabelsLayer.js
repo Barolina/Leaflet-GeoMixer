@@ -45,7 +45,7 @@ L.LabelsLayer = L.Class.extend({
                             continue;
                         }
                         options.label = {
-                            width: width,
+                            width: width + 3,
                             MinZoom: style.MinZoom,
                             MaxZoom: style.MaxZoom,
                             txt: txt,
@@ -215,9 +215,9 @@ L.LabelsLayer = L.Class.extend({
                 var style = label.style,
                     width = label.width,
                     size = style.size || 12,
-                    iconRadius = 2*(label.iconRadius || 0),
-                    ww = Math.max(width, iconRadius) / this.mInPixel2,
-                    hh = Math.max(size, iconRadius) / this.mInPixel2,
+                    //iconRadius = 2*(label.iconRadius || 0),
+                    ww = width / this.mInPixel2,
+                    hh = size / this.mInPixel2,
                     center = options.center,
                     bbox = gmxAPIutils.bounds([
                         [center[0] - ww, center[1] - hh],
