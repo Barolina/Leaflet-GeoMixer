@@ -23,7 +23,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
             loadDef.resolve(this.data);
     }
 
-    this.removeData = function(keys, flag) {
+    this.removeData = function(keys) {
         for (var arr = this.data || [], i = arr.length - 1; i >= 0; i--) {
             if (keys[arr[i][0]]) {
                 arr.splice(i, 1);

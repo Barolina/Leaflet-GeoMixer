@@ -5,7 +5,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         zKey = zoom + ':' + tKey,
         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
         tbounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z),
-        gmxTileKey = gmxTilePoint.z + '_' + gmxTilePoint.x + '_' + gmxTilePoint.y,
         showRaster = 'rasterBGfunc' in gmx && (zoom >= gmx.minZoomRasters),
         rasters = {},
         currentDrawDef = null;
@@ -364,11 +363,11 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         }
     }
 
-    var getStyleBounds = function(gmxTilePoint) {
-        var maxStyleSize = gmx.styleManager.getMaxStyleSize(),
-            mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
-        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
-    }
+    // var getStyleBounds = function(gmxTilePoint) {
+        // var maxStyleSize = gmx.styleManager.getMaxStyleSize(),
+            // mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
+        // return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
+    // }
 
     this.drawTile = function(data) {
     

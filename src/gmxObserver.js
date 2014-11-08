@@ -182,8 +182,8 @@ var gmxObserver = L.Class.extend({
 
     _setDateInterval: function(beginDate, endDate) {
         if (beginDate && endDate) {
-            var beginValue = beginDate.valueOf(),
-                endValue = endDate.valueOf();
+            // var beginValue = beginDate.valueOf(),
+                // endValue = endDate.valueOf();
             this.dateInterval = {
                 beginDate: beginDate,
                 endDate: endDate

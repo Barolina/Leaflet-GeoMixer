@@ -34,8 +34,7 @@
             getScreenBboxArr: function() {
                 var map = _this._map;
                 if (!map) return [];
-                var pos = map.getCenter(),
-                    deltaY = _this._gmx.getDeltaY(),
+                var deltaY = _this._gmx.getDeltaY(),
                     screenBounds = map.getBounds(),
                     p1 = map.options.crs.project(screenBounds.getNorthWest()),
                     p2 = map.options.crs.project(screenBounds.getSouthEast()),
@@ -319,7 +318,6 @@
 
     _updateShiftY: function() {
         var gmx = this._gmx,
-            map = this._map,
             deltaY = gmx.getDeltaY();
 
         gmx.shiftX = Math.floor(gmx.mInPixel * (gmx.shiftXlayer || 0));
@@ -484,8 +482,7 @@
         if (!zoom) zoom = this._map._zoom;
         var screenTiles = gmx.screenTiles,
             zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
-            screenTile = null,
-            _this = this;
+            screenTile = null;
 
         if (!screenTiles[zKey]) {
             screenTiles[zKey] = screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
@@ -746,7 +743,6 @@
     
     _getTilesByBounds: function (bounds) {    // Получить список gmxTiles по bounds
         var gmx = this._gmx,
-            tileSize = gmx.tileSize,
             zoom = this._map._zoom,
             shiftX = gmx.shiftX || 0,   // Сдвиг слоя
             shiftY = gmx.shiftY || 0,   // Сдвиг слоя + OSM

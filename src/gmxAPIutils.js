@@ -129,8 +129,7 @@
         var type = geo.type,
             coords = geo.coordinates,
             bounds = null,
-            boundsArr = [],
-            arr = [];
+            boundsArr = [];
         if (type === 'MULTIPOLYGON') {
             bounds = gmxAPIutils.bounds();
             for (var i = 0, len = coords.length; i < len; i++) {
@@ -400,8 +399,7 @@
             sx = pointAttr.sx,
             sy = pointAttr.sy,
             px1 = pointAttr.px1,
-            py1 = pointAttr.py1,
-            coords = attr.coords;
+            py1 = pointAttr.py1;
 
         var item = attr.item,
             parsedStyleKeys = item.parsedStyleKeys,

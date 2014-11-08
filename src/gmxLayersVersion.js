@@ -1,8 +1,7 @@
 ﻿var delay = 20000,
     layers = {},
     script = '/Layer/CheckVersion.ashx',
-    intervalID = null,
-    notActive = false;
+    intervalID = null;
 
 var getRequestParams = function(layer) {
     var hosts = {};

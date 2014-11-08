@@ -291,7 +291,7 @@
                 
                 _this._waitCheckObservers();
             })
-            .on('activate', function(ev) {
+            .on('activate', function() {
                 if (observer.isActive() && observer.needRefresh) {
                     _this.checkObserver(observer);
                 }
@@ -385,8 +385,7 @@
     },
 
     _removeDataFromObservers: function(data) {
-        var keys = this._observers,
-            zoom = this._gmx.currentZoom;
+        var keys = this._observers;
         for (var id in keys) {
             this._observers[id].removeData(data);
         }
@@ -439,8 +438,7 @@
 
         var oldTilesList = this._activeTileKeys || {};
         
-        var changedTiles = [],
-            observersToUpdate = {},
+        var observersToUpdate = {},
             _this = this;
             
         var checkSubscription = function(vKey) {
