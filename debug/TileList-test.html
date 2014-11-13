@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>TileList test</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0px;
+        }
+        #controls {
+            position: absolute;
+			left: 54px;
+			top: 11px;
+			z-index: 1;
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        
+        #controls button {
+            border-radius: 5px;
+            
+        }
+        
+        #controls > div{
+            padding: 6px;
+        }
+
+        #info {
+			z-index: 1;
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            position: relative;
+            margin-left: 60px;
+            padding: 10px;
+        }
+        
+        #infoPanel {
+            position: absolute;
+			left: 280px;
+			top: 11px;
+            text-align: center;
+        }
+        #infoResult {
+            text-align: left;
+        }
+        .leaflet-popup-content {
+            word-wrap: break-word;
+        }
+    </style>
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+</head>
+<body>
+	<div id="map"></div>
+	<div id="controls">
+		<div>
+            <button id="prev">Prev day</button>
+            <button id="next">Next day</button>
+            <span id="timeInfo"></span>
+        </div>
+	</div>
+    
+    <div id="infoPanel">
+        <div id="info">
+                Проверка списка тайлов слоев карты: <input id="mapName" value="H2DUP"> <button id="viewMap">Загрузить</button><br>
+                Разбивка: <input id="levels" value="1,4,16">
+                <div id="infoResult">
+                </div>
+        </div>
+    </div>
+
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+	<script src="TileList-test.js"></script>
+	<script>
+        var map = L.map('map').setView([55.73, 37.59], 8);
+
+        var startDate = new Date('2013/03/21');
+        var oneDay = 1000*60*60*24,	// milliseconds in one day
+            now = startDate.getTime(),
+            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the previous UTC day
+            ddt2 = new Date(ddt1.getTime() + oneDay); //beginning of the current UTC day
+
+        var updateInfo = function(currentDate) {
+            var zz = function(x) { return x < 10 ? "0" + x : x}
+            var dateStr = zz(currentDate.getUTCDate()) + '.' + zz(currentDate.getUTCMonth() + 1) + '.' + zz(currentDate.getUTCFullYear());
+            document.getElementById('timeInfo').innerHTML = dateStr;
+        }
+        
+        updateInfo(ddt1);
+
+        var mapName = 'AZR6A';
+        document.getElementById('mapName').value = mapName;
+        var viewMap = false;
+        var tileListManager = new TileListManager();
+        
+        var layersHash = null;
+        
+        var getNewTileLists = function() {
+            if (!layersHash) return;
+            var levels = document.getElementById("levels").value;
+            if (levels) levels = levels.split(',');
+            for (var id in layersHash.layersByID) {
+                var layer = layersHash.layersByID[id],
+                    gmx = layer._gmx,
+                    ZeroUT = gmx.ZeroUT,
+                    prop = gmx.properties;
+
+                if (prop.fromType === 'Raster') {
+                } else {
+                    var pt = null;
+                    if (gmx.layerType === 'Vector') {
+                        pt = {
+                            "skipTiles": false
+                        };
+                    } else if (gmx.layerType === 'VectorTemporal') {
+                        pt = {
+                            "dateBegin": ddt1,
+                            "dateEnd": ddt2,
+                            "ZeroDate": gmx.ZeroDate,
+                            "DateBegin": prop.DateBegin,
+                            "DateEnd": prop.DateEnd,
+                            "levels": levels || gmx.TemporalPeriods
+                            // ,
+                            // "skipTiles": false
+                        };
+                    }
+                    if (pt) tileListManager.addLayer(id, pt);
+                }
+            }
+            var arr = [];
+            tileListManager.update().then(function(layersTiles) {
+                for (var title in layersHash.layersByTitle) {
+                    var layer = layersHash.layersByTitle[title],
+                        gmx = layer._gmx,
+                        prop = gmx.properties,
+                        layerID = gmx.layerID;
+                        tilesCount = 0,
+                        allTilesCount = 0,
+                        str = '',
+                        str1 = '';
+                    if (layersTiles[layerID]) {
+                        if (gmx.layerType === 'VectorTemporal') {
+                            tilesCount = layersTiles[layerID].TemporalTiles.length;
+                            allTilesCount = prop.TemporalTiles.length;
+                            str1 = ' TemporalPeriods: <b>' + JSON.stringify(prop.TemporalPeriods) + '</b>';
+                        } else {
+                            tilesCount = layersTiles[layerID].tiles.length / 3;
+                            allTilesCount = prop.tiles.length / 3;
+                        }
+                        str = '<b>' + title + '</b> - tilesCount: <b>' + tilesCount + '</b> from: <b>' + allTilesCount + '</b>';
+                        arr.push(str + str1);
+                    }
+                }
+                infoResult.innerHTML = arr.join('<br>');
+                //console.log('___ update ___', arguments);
+            });
+        }
+
+        var runMe = function() {
+            var opt = {
+                apiKey: 'U92596WMIH'
+            };
+            if (viewMap) {
+                opt.leafletMap = map;
+                var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                    maxZoom: 18,
+                    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+                }).addTo(map);
+            }
+            var timeStamp = new Date().valueOf();
+            L.gmx.loadMap(mapName, opt).then(function(loadedLayers, mapInfo) {
+                layersHash = loadedLayers;
+                getNewTileLists();
+            });
+            //controls
+            document.getElementById("prev").onclick = function() {
+                ddt1 = new Date(ddt1.getTime() - oneDay);
+                ddt2 = new Date(ddt2.getTime() - oneDay);
+                updateInfo(ddt1);
+                getNewTileLists();
+            }
+            
+            document.getElementById("next").onclick = function() {
+                ddt1 = new Date(ddt1.getTime() + oneDay);
+                ddt2 = new Date(ddt2.getTime() + oneDay);
+                updateInfo(ddt1);
+                getNewTileLists();
+            }
+        };
+        var mapNameInfo = document.getElementById("mapName");
+        var viewMapInfo = document.getElementById("viewMap");
+        viewMapInfo.onclick = function() {
+            mapName = mapNameInfo.value;
+            runMe();
+        }
+	</script>
+</body>
+</html>
