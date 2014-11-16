@@ -430,7 +430,7 @@
                 gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
                 attr = {
                     type: 'resend',
-                    bbox: gmx.dataManager.getStyleBounds(gmxTilePoint),
+                    bbox: gmx.styleManager.getStyleBounds(gmxTilePoint),
                     filters: ['styleFilter', 'userFilter'],
                     callback: function(data) {
                         myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {

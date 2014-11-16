@@ -14,7 +14,6 @@
         this._tiles = {};
         this._filters = {};
         this._freeSubscrID = 0;
-        this._maxStyleSize = 0;
         this._items = {};
         this._observers = {};
         
@@ -67,15 +66,6 @@
         }
         
         return this._activeTileKeys;
-    },
-
-    getStyleBounds: function(gmxTilePoint) {
-        if (!gmxTilePoint) return gmxAPIutils.bounds();
-
-        this._maxStyleSize = this._gmx.styleManager.getMaxStyleSize();
-
-        var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
-        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
     },
 
     addFilter: function(filterName, filterFunc) {

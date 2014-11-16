@@ -271,7 +271,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
     //load all missing rasters for items we are going to render
     var getTileRasters = function(geoItems) {
         var def = new gmxDeferred(function() {
-                
                 itemPromises.forEach(function(promise) {
                     promise && promise.cancel();
                 });
@@ -297,13 +296,19 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                needLoadRasters++;
-                var itemRasterPromise = getItemRasters(geo);
-                itemRasterPromise.then(function() {
-                    needLoadRasters--;
-                    chkReadyRasters();
-                });
-                return itemRasterPromise;
+                var geom = geo.arr[geo.arr.length-1];
+                    coords = geom.coordinates[0];
+                if (geom.type === 'MULTIPOLYGON') coords = coords[0];
+                var clip = tbounds.clipPolygon(coords);
+                if (clip.length) {
+                    needLoadRasters++;
+                    var itemRasterPromise = getItemRasters(geo);
+                    itemRasterPromise.then(function() {
+                        needLoadRasters--;
+                        chkReadyRasters();
+                    });
+                    return itemRasterPromise;
+                }
             }
         });
         chkReadyRasters();
@@ -362,12 +367,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             ctx.fillStyle = lastStyles.fillStyle = lineargrad; 
         }
     }
-
-    // var getStyleBounds = function(gmxTilePoint) {
-        // var maxStyleSize = gmx.styleManager.getMaxStyleSize(),
-            // mercSize = 2 * maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
-        // return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
-    // }
 
     this.drawTile = function(data) {
     

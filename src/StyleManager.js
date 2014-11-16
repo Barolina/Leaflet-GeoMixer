@@ -397,6 +397,7 @@
         var zoom = gmx.currentZoom;
         if (item._lastZoom !== gmx.currentZoom || !('currentFilter' in item)) {
             var fnum = item.currentFilter;
+            item.currentFilter = -1;
             for (var i = 0, len = styles.length; i < len; i++) {
                 var st = styles[i];
                 if (zoom > st.MaxZoom || zoom < st.MinZoom) continue;
@@ -448,7 +449,7 @@
     }
 
     // estimete style size for arbitrary object
-    this.getMaxStyleSize = function(zoom) {
+    var getMaxStyleSize = function(zoom) {
 		if (!zoom) zoom = gmx.currentZoom;
 		var maxSize = 0;
 		for (var i = 0, len = styles.length; i < len; i++) {
@@ -463,7 +464,17 @@
 		}
 		return maxSize;
     }
-    
+
+    this._maxStyleSize = 0;
+    this.getStyleBounds = function(gmxTilePoint) {
+        if (!gmxTilePoint) return gmxAPIutils.bounds();
+
+        this._maxStyleSize = getMaxStyleSize();
+
+        var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
+        return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
+    },
+
     //is any style is visible at given zoom?
     this.isVisibleAtZoom = function(zoom) {
         for (var i = 0, len = styles.length; i < len; i++) {

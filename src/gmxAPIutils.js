@@ -991,6 +991,13 @@
             prev = p;
         }
         return hiddenLines;
+    },
+
+    getTileBounds: function(x, y, z) {  //x, y, z - GeoMixer tile coordinates
+        var tileSize = gmxAPIutils.tileSizes[z],
+            minx = x * tileSize, 
+            miny = y * tileSize;
+        return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
     }
 }
 
@@ -1003,23 +1010,6 @@ gmxAPIutils.lambertCoefY = 100*gmxAPIutils.distVincenty(0, 0, 0, 0.01)*180/Math.
         gmxAPIutils.tileSizes[z] = 40075016.685578496 / Math.pow(2, z);
     }
 }()
-
-!function() {
-    var vKeysBounds = {};
-    //x, y, z - GeoMixer tile coordinates
-    gmxAPIutils.getTileBounds = function(x, y, z) {
-        var tKey = z + '_' + x + '_' + y,
-            res = vKeysBounds[tKey];
-        if (!res) {
-            var tileSize = gmxAPIutils.tileSizes[z],
-                minx = x * tileSize, 
-                miny = y * tileSize;
-            res = gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
-            vKeysBounds[tKey] = res;
-        }
-        return res;
-    }
-}();
 
 gmxAPIutils.Bounds = function(arr) {
     this.min = {
@@ -1077,6 +1067,44 @@ gmxAPIutils.Bounds.prototype = {
             min2 = bounds.min,
             max2 = bounds.max;
         return max2.x + x > min.x && min2.x - x < max.x && max2.y + y > min.y && min2.y - y < max.y;
+    },
+    clipPolygon: function (coords) { // (coords) -> clip coords
+        var min = this.min,
+            max = this.max,
+            clip = [[min.x, min.y], [max.x, min.y], [max.x, max.y], [min.x, max.y]],
+            cp1, cp2, s, e,
+            inside = function (p) {
+                return (cp2[0]-cp1[0])*(p[1]-cp1[1]) > (cp2[1]-cp1[1])*(p[0]-cp1[0]);
+            },
+            intersection = function () {
+                var dc = [ cp1[0] - cp2[0], cp1[1] - cp2[1] ],
+                    dp = [ s[0] - e[0], s[1] - e[1] ],
+                    n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0],
+                    n2 = s[0] * e[1] - s[1] * e[0], 
+                    n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0]);
+                return [(n1*dp[0] - n2*dc[0]) * n3, (n1*dp[1] - n2*dc[1]) * n3];
+            };
+
+        var outputList = coords;
+        cp1 = clip[clip.length-1];
+        for (j in clip) {
+            var cp2 = clip[j],
+                inputList = outputList;
+            outputList = [];
+            s = inputList[inputList.length - 1]; //last on the input list
+            for (i in inputList) {
+                var e = inputList[i];
+                if (inside(e)) {
+                    if (!inside(s)) outputList.push(intersection());
+                    outputList.push(e);
+                } else if (inside(s)) {
+                    outputList.push(intersection());
+                }
+                s = e;
+            }
+            cp1 = cp2;
+        }
+        return outputList
     }
 };
 
