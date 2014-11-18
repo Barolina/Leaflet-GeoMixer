@@ -573,10 +573,13 @@
                 idr = geoItem[0],
                 dataOption = geoItems[i].dataOption || {},
                 item = gmx.dataManager.getItem(idr),
+                parsedStyleKeys = item.parsedStyleKeys || {},
+                sx = parsedStyleKeys.sx || 0,
+                sy = parsedStyleKeys.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
                 lineWidth = parsedStyle.lineWidth || 0,
-                dx = (parsedStyle.sx + lineWidth) / mInPixel,
-                dy = (parsedStyle.sy + lineWidth) / mInPixel;
+                dx = (sx + lineWidth) / mInPixel,
+                dy = (sy + lineWidth) / mInPixel;
 
             if (dx > dy) dx = dy;
             else dy = dx;
@@ -800,7 +803,7 @@
 		if(type === 'VectorTemporal') {
             cnt = prop.TemporalTiles;
 			gmx.TemporalColumnName = prop.TemporalColumnName;
-			gmx.TemporalPeriods = prop.TemporalPeriods;
+			gmx.TemporalPeriods = prop.TemporalPeriods || [];
 			var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
 			var arr = ZeroDateString.split('.');
 			var zn = new Date(					// Начальная дата

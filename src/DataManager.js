@@ -92,10 +92,14 @@
         var filters = observer.filters.concat('processingFilter');
         this._isTemporalLayer && filters.push('TemporalFilter');
         
-        var isIntersects = function(bounds) {
-                return bboxActive ? bboxActive.intersects(bounds) : observer.intersects(bounds);
+        var _this = this,
+            isIntersects = function(bounds, dx, dy) {
+                return bboxActive ? bboxActive.intersectsWithDelta(bounds, dx, dy) : observer.intersects(bounds);
             },
-            _this = this,
+            isItemIntersects = function(bounds, item) {
+                var style = item.parsedStyleKeys || {};
+                return isIntersects(bounds, style.sx / _this._gmx.mInPixel, style.sy / _this._gmx.mInPixel);
+            },
             putData = function(tile) {
                 var data = tile.data;
                 if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
@@ -104,15 +108,15 @@
                 }
 
                 for (var j = 0, len1 = data.length; j < len1; j++) {
-                    var dataOption = tile.dataOptions[j];
+                    var dataOption = tile.dataOptions[j],
+                        it = data[j],
+                        id = it[0],
+                        item = _this.getItem(id);
 
-                    if (!isIntersects(dataOption.bounds)) {
+                    if (!isItemIntersects(dataOption.bounds, item)) {
                         continue;
                     }
-                    var it = data[j],
-                        id = it[0],
-                        geom = it[it.length - 1],
-                        item = _this.getItem(id),
+                    var geom = it[it.length - 1],
                         isFiltered = false;
 
                     for (var f = 0; f < filters.length; f++) {
