@@ -342,9 +342,20 @@
         gmx.dataManager._triggerObservers();
     },
 
+    setZIndexOffset: function (offset) {
+        if (arguments.length) this.options.zIndexOffset = offset;
+        var options = this.options,
+            zIndex = options.zIndex,
+            zIndexOffset = options.zIndexOffset;
+        if (zIndexOffset) {
+            this.setZIndex(zIndexOffset + zIndex);
+        }
+    },
+
     _initContainer: function () {
         L.TileLayer.Canvas.prototype._initContainer.call(this);
         this._prpZoomData();
+        this.setZIndexOffset();
     },
 
     _update: function () {
