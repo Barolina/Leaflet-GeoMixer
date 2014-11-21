@@ -213,9 +213,16 @@
         this._gmx.styleHook = null;
     },
 
-    // getFilters: function () {
-        // return this._gmx.dataManager._filters;
-    // },
+    setImageProcessingHook: function (func) {
+        this._gmx.imageProcessingHook = func;
+        this.repaint();
+        return this;
+    },
+
+    removeImageProcessingHook: function () {
+        this._gmx.imageProcessingHook = null;
+        this.repaint();
+    },
 
     setFilter: function (func) {
         this._gmx.dataManager.addFilter('userFilter', function(item) {
@@ -339,7 +346,7 @@
         gmx.currentZoom = map._zoom;
         gmx.tileSize = gmxAPIutils.tileSizes[gmx.currentZoom];
         gmx.mInPixel = 256 / gmx.tileSize;
-        gmx.dataManager._triggerObservers();
+        this.repaint();
     },
 
     setZIndexOffset: function (offset) {
@@ -762,14 +769,31 @@
             shiftY = gmx.shiftY || 0,   // Сдвиг слоя + OSM
             minLatLng = L.Projection.Mercator.unproject(new L.Point(bounds.min.x, bounds.min.y)),
             maxLatLng = L.Projection.Mercator.unproject(new L.Point(bounds.max.x, bounds.max.y)),
-            minPoint = this._map.project(minLatLng),
+            screenBounds = this._map.getBounds(),
+            sw = screenBounds.getSouthWest(),
+            ne = screenBounds.getNorthEast(),
+            dx = 0;
+
+        if (ne.lng - sw.lng < 360) {
+            if (maxLatLng.lng < sw.lng) {
+                var sx = sw.lng - maxLatLng.lng;
+                dx = 360 * (1 + Math.floor(sx / 360));
+            } else if (minLatLng.lng > ne.lng) {
+                var sx = ne.lng - minLatLng.lng;
+                dx = 360 * Math.floor(sx / 360);
+            }
+        }
+        minLatLng.lng += dx;
+        maxLatLng.lng += dx;
+
+        var minPoint = this._map.project(minLatLng),
             maxPoint = this._map.project(maxLatLng),
-            screenBounds = this._map.getPixelBounds(),
-            minY = Math.floor((Math.max(maxPoint.y, screenBounds.min.y) + shiftY)/256),
-            maxY = 1 + Math.floor((Math.min(minPoint.y, screenBounds.max.y) + shiftY)/256),
-            minX = maxLatLng.lng < -179 ? screenBounds.min.x : Math.max(minPoint.x, screenBounds.min.x),
+            pixelBounds = this._map.getPixelBounds(),
+            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY)/256),
+            maxY = 1 + Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY)/256),
+            minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x),
             minX = Math.floor((minX + shiftX)/256),
-            maxX = maxLatLng.lng > 179 ? screenBounds.max.x : Math.min(maxPoint.x, screenBounds.max.x),
+            maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x),
             maxX = Math.floor((maxX + shiftX)/256),
             gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
@@ -781,7 +805,7 @@
         return gmxTiles;
     },
 
-    redrawAll: function () {
+    repaint: function () {
         this._gmx.dataManager._triggerObservers();
     },
 
@@ -810,27 +834,27 @@
         gmx.items = {};
         gmx.tileCount = 0;
 
-		var cnt;
-		if(type === 'VectorTemporal') {
+        var cnt;
+        if(type === 'VectorTemporal') {
             cnt = prop.TemporalTiles;
-			gmx.TemporalColumnName = prop.TemporalColumnName;
-			gmx.TemporalPeriods = prop.TemporalPeriods || [];
-			var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
-			var arr = ZeroDateString.split('.');
-			var zn = new Date(					// Начальная дата
-				(arr.length > 2 ? arr[2] : 2008),
-				(arr.length > 1 ? arr[1] - 1 : 0),
-				(arr.length > 0 ? arr[0] : 1)
-				);
-			gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
-			gmx.ZeroUT = gmx.ZeroDate.getTime() / 1000;
-		}
+            gmx.TemporalColumnName = prop.TemporalColumnName;
+            gmx.TemporalPeriods = prop.TemporalPeriods || [];
+            var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
+            var arr = ZeroDateString.split('.');
+            var zn = new Date(					// Начальная дата
+                (arr.length > 2 ? arr[2] : 2008),
+                (arr.length > 1 ? arr[1] - 1 : 0),
+                (arr.length > 0 ? arr[0] : 1)
+                );
+            gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
+            gmx.ZeroUT = gmx.ZeroDate.getTime() / 1000;
+        }
         
-		gmx.tileCount = cnt;
-		gmx.layerType = type;   // VectorTemporal Vector
-		gmx.identityField = prop.identityField; // ogc_fid
-		gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
-		gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
+        gmx.tileCount = cnt;
+        gmx.layerType = type;   // VectorTemporal Vector
+        gmx.identityField = prop.identityField; // ogc_fid
+        gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
+        gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
             gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); });
         }
@@ -882,19 +906,18 @@
             }
         }
         if(prop.Quicklook) {
-			var template = gmx.Quicklook = prop.Quicklook;
-			gmx.quicklookBGfunc = function(item) {
-				var url = template,
+            var template = gmx.Quicklook = prop.Quicklook;
+            gmx.quicklookBGfunc = function(item) {
+                var url = template,
                     reg = /\[([^\]]+)\]/,
                     matches = reg.exec(url);
-				while(matches && matches.length > 1) {
-					url = url.replace(matches[0], item.properties[gmx.tileAttributeIndexes[matches[1]]]);
-					matches = reg.exec(url);
-				}
-				return url;
-			};
-			gmx.imageProcessingHook = gmxImageTransform;
-		}
+                while(matches && matches.length > 1) {
+                    url = url.replace(matches[0], item.properties[gmx.tileAttributeIndexes[matches[1]]]);
+                    matches = reg.exec(url);
+                }
+                return url;
+            };
+        }
     },
 
     addData: function(data, options) {
@@ -903,7 +926,7 @@
             this._update();
         }
         return this;
-	},
+    },
 
     removeData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer

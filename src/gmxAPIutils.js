@@ -554,6 +554,9 @@
             ctx.lineTo(p2[0], p2[1]);
         }
     },
+    isPatternNode: function(it) {
+        return it instanceof HTMLCanvasElement || it instanceof HTMLImageElement;
+    },
 
     labelCanvasContext: null 			// 2dContext canvas для определения размера Label
     ,

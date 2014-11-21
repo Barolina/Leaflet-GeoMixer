@@ -483,7 +483,7 @@
         if (tile) {
             if (tile.data)
                 tile.data.forEach(function(it) {
-                    _items[it[0]].processing = false;
+                    if (_items[it[0]]) _items[it[0]].processing = false;
                 });
             tile.clear();
         }

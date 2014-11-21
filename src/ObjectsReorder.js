@@ -85,12 +85,12 @@ L.gmx.VectorLayer.addInitHook(function () {
 
             setReorderArrays: function (top, bottom) {
                 if (this._gmx.objectsReorder) this._gmx.objectsReorder.setReorderArrays(top, bottom);
-                if (this._map) this.redrawAll();
+                if (this._map) this.repaint();
             },
 
             setSortFunc: function (func) {
                 if (this._gmx.objectsReorder) this._gmx.objectsReorder.setSortFunc(func);
-                if (this._map) this.redrawAll();
+                if (this._map) this.repaint();
             }
         });        
     }

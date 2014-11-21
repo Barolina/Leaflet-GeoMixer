@@ -1,5 +1,5 @@
 ﻿// трансформация снимка
-var gmxImageTransform = function(hash) {
+var gmxImageTransform = function(img, hash) {
     var ready = false,
         gmx = hash.gmx,
         gmxTilePoint = hash.gmxTilePoint,
@@ -11,7 +11,6 @@ var gmxImageTransform = function(hash) {
         begx = mInPixel * dataOption.bounds.min.x,
         begy = mInPixel * dataOption.bounds.max.y,
         quicklookPlatform = properties[gmx.tileAttributeIndexes[gmx.quicklookPlatform]] || '',
-        img = hash.image,
         points = {};
 
     if (quicklookPlatform === 'LANDSAT8') {

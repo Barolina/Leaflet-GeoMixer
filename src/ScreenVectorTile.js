@@ -87,6 +87,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             url = '',
             itemImageProcessingHook = null,
             isTiles = false;
+
         if (gmx.IsRasterCatalog) {  // RasterCatalog
             if(!GMX_RasterCatalogID && gmx.quicklookBGfunc) {
                 url = gmx.quicklookBGfunc(item)
@@ -97,9 +98,6 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         } else if(urlBG) {
             url = urlBG;
             itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
-        } else if(gmx.Quicklook) {
-            url = gmx.rasterBGfunc(item);
-            itemImageProcessingHook = gmx.imageProcessingHook;
         }
         if(isTiles) {
             var arr = [[gmxTilePoint.x, gmxTilePoint.y]];
@@ -143,6 +141,10 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     cnt = len,
                     chkReadyRasters = function() {
                         if(cnt < 1) itemRastersPromise.resolve(arr);
+                    },
+                    skipRasterFunc = function() {
+                        cnt--;
+                        chkReadyRasters();
                     };
                     
                 var recursiveLoaders = [];
@@ -159,43 +161,65 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                     );
 
                     loader.then(function(img, imageGtp) {
-                        cnt--;
 
                         if (!img) {
-                            chkReadyRasters();
+                            skipRasterFunc();
                             return;
                         }
-
-                        if( itemImageProcessingHook ) {
-                            img = itemImageProcessingHook({
-                                gmx: gmx,
-                                image: img,
-                                geoItem: geo,
-                                item: item,
-                                gmxTilePoint: imageGtp
-                            });
-                        }
-
-                        if (imageGtp.z !== gmxTilePoint.z) {
-                            var pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, imageGtp.z);
-                            if(pos.size < 1/256) {// меньше 1px
-                                chkReadyRasters();
-                                return;
+                        var imgAttr = {
+                            gmx: gmx,
+                            geoItem: geo,
+                            item: item,
+                            gmxTilePoint: imageGtp
+                        };
+                        var prepareItem = function(imageElement) {
+                            cnt--;
+                            if( itemImageProcessingHook ) {
+                                imageElement = itemImageProcessingHook(imageElement, imgAttr);
                             }
 
-                            var canvas = document.createElement('canvas');
-                            canvas.width = canvas.height = 256;
-                            var ptx = canvas.getContext('2d');
-                            ptx.drawImage(img, Math.floor(pos.x), Math.floor(pos.y), pos.size, pos.size, 0, 0, 256, 256);
-                            p.push(canvas);
-                        } else {
-                            p.push(img);
+                            if (imageGtp.z !== gmxTilePoint.z) {
+                                var pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, imageGtp.z);
+                                if(pos.size < 1/256) {// меньше 1px
+                                    chkReadyRasters();
+                                    return;
+                                }
+
+                                var canvas = document.createElement('canvas');
+                                canvas.width = canvas.height = 256;
+                                var ptx = canvas.getContext('2d');
+                                ptx.drawImage(imageElement, Math.floor(pos.x), Math.floor(pos.y), pos.size, pos.size, 0, 0, 256, 256);
+                                p.push(canvas);
+                            } else {
+                                p.push(imageElement);
+                            }
+                            chkReadyRasters();
                         }
-                        chkReadyRasters();
-                    }, function() {
-                        cnt--;
-                        chkReadyRasters();
-                    });
+
+                        item.skipRasters = false;
+                        if( gmx.imageProcessingHook ) {
+                            var resProcessing = gmx.imageProcessingHook(img, {
+                                layerID: gmx.layerID,
+                                id: item.id,
+                                gmxTilePoint: imageGtp
+                            });
+                            if (resProcessing) {
+                                if (resProcessing instanceof HTMLCanvasElement || resProcessing instanceof HTMLImageElement) {
+                                    img = resProcessing;
+                                } else {
+                                    resProcessing.then(prepareItem, skipRasterFunc);
+                                    return;
+                                }
+                            } else {
+                                item.skipRasters = true;
+                                skipRasterFunc();
+                                return;
+                            }
+                        }
+                        prepareItem(img);
+                    }, 
+                        skipRasterFunc
+                    );
                     
                     recursiveLoaders.push(loader);
                 }
@@ -247,23 +271,43 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             
             mainRasterLoader.then(
                 function(img) {
-                    if(itemImageProcessingHook) {
-                        rasters[idr] = itemImageProcessingHook({
-                            gmx: gmx,
-                            image: img,
-                            geoItem: geo,
-                            item: item,
+                    var imgAttr = {
+                        gmx: gmx,
+                        geoItem: geo,
+                        item: item,
+                        gmxTilePoint: gmxTilePoint
+                    };
+                    var prepareItem = function(imageElement) {
+                        if(itemImageProcessingHook) {
+                            rasters[idr] = itemImageProcessingHook(imageElement, imgAttr);
+                        } else {
+                            rasters[idr] = imageElement;
+                        }
+                        def.resolve();
+                    }
+                    if( gmx.imageProcessingHook ) {
+                        var resProcessing = gmx.imageProcessingHook(img, {
+                            layerID: gmx.layerID,
+                            id: item.id,
                             gmxTilePoint: gmxTilePoint
                         });
-                    } else {
-                        rasters[idr] = img;
+                        if (resProcessing) {
+                            if (resProcessing instanceof HTMLCanvasElement || resProcessing instanceof HTMLImageElement) {
+                                img = resProcessing;
+                            } else {
+                                resProcessing.then(prepareItem, def.resolve);
+                                return;
+                            }
+                        } else {
+                            item.skipRasters = true;
+                            def.resolve();
+                            return;
+                        }
                     }
-                    def.resolve();
+                    prepareItem(img);
                 },
-                function() {
-                    def.resolve();
-                }
-            )
+                def.resolve
+            );
         }
         return def;
     }
@@ -501,7 +545,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                         if (rasters[idr]) {
                             dattr.bgImage = rasters[idr];
                         }
-                        if (dattr.styleExtend.skipRasters) {
+                        if (dattr.styleExtend.skipRasters || item.skipRasters) {
                             delete dattr.bgImage;
                         }
                         if ((dattr.style.fill || dattr.bgImage) &&
@@ -510,14 +554,13 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                                 coords = pixels_map.coords;
                                 hiddenLines = pixels_map.hidden;
                             }
-                            ctx.save();
-                            if(dattr.bgImage) {
+
+                            if(gmxAPIutils.isPatternNode(dattr.bgImage)) {
                                 var pattern = ctx.createPattern(dattr.bgImage, "no-repeat");
                                 ctx.fillStyle = pattern;
                                 style.bgImage = true;
                             }
                             coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
-                            ctx.restore();
                         }
                     }
                 } else if (geom.type === 'LINESTRING' || geom.type === 'MULTILINESTRING') {	// Отрисовка геометрии линий
@@ -548,6 +591,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 drawItem(geoItems[i]);
             }
             def.resolve();
+            rasters = {}; // clear rasters
         }
 
         if (showRaster) {
