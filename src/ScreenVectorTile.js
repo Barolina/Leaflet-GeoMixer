@@ -7,6 +7,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         tbounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z),
         showRaster = 'rasterBGfunc' in gmx && (zoom >= gmx.minZoomRasters),
         rasters = {},
+        crossOrigin = gmx.crossOrigin || 'anonymous',
         currentDrawDef = null;
 
     this.tpx = 256 * gmxTilePoint.x;
@@ -43,7 +44,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             curRequest = gmxImageLoader.push(rUrl, {
                 layerID: gmx.layerID,
                 zoom: gtp.z,
-                crossOrigin: 'anonymous'
+                crossOrigin: crossOrigin
             });
             
             curRequest.then(
@@ -266,7 +267,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             // for quicklook
             mainRasterLoader = gmxImageLoader.push(url, {
                 layerID: gmx.layerID,
-                crossOrigin: 'anonymous'
+                crossOrigin: crossOrigin
             });
             
             mainRasterLoader.then(

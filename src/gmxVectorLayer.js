@@ -53,6 +53,7 @@
                 return arr;
             }
         };
+        if (options.crossOrigin) this._gmx.crossOrigin = options.crossOrigin;
 
         this.on('tileunload', function(e) {
             _this._clearTileSubscription(e.tile.id);
@@ -177,7 +178,7 @@
         var _this = this,
             gmx = this._gmx,
             apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName,
-            sk = gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
+            sk = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.sessionKey = sk;
         gmx.tileSenderPrefix = "http://" + gmx.hostName + "/" + 
             "TileSender.ashx?WrapStyle=None" + 

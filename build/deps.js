@@ -33,4 +33,6 @@ if (typeof exports !== 'undefined') {
 
 if (typeof gmxDevOnLoad === 'function') {
 	gmxDevOnLoad(deps);
+} else if (typeof gmxAPI !== 'undefined' && typeof gmxAPI.gmxLayerDevLoader === 'function') {
+	gmxAPI.gmxLayerDevLoader(deps);
 }

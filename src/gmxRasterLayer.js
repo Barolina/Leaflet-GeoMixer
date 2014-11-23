@@ -27,7 +27,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
         if (!ph.geometry) {
             ph.geometry = {
                 type: 'POLYGON',
-                coordinates: [[[-worldSize, -worldSize], [worldSize, worldSize]]]
+                coordinates: [[[-worldSize, -worldSize], [-worldSize, worldSize], [worldSize, worldSize], [worldSize, -worldSize], [-worldSize, -worldSize]]]
             };
         }
 
