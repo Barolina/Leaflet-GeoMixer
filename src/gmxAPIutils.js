@@ -1090,7 +1090,7 @@ gmxAPIutils.Bounds.prototype = {
 
         var outputList = coords;
         cp1 = clip[clip.length-1];
-        for (j in clip) {
+        for (var j in clip) {
             var cp2 = clip[j],
                 inputList = outputList;
             outputList = [];

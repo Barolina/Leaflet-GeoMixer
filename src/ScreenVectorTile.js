@@ -341,7 +341,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                var geom = geo.arr[geo.arr.length-1];
+                var geom = geo.arr[geo.arr.length-1],
                     coords = geom.coordinates[0];
                 if (geom.type === 'MULTIPOLYGON') coords = coords[0];
                 var clip = tbounds.clipPolygon(coords);
