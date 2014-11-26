@@ -19,22 +19,32 @@
     },
    
     /** Sends JSONP requests 
-      @return {gmxDeferred} Defered with server JSON resonse or error status
+     * @param {String} url - request URL
+     * @param {Object} params - request params
+     * @param {Object} [options] - additional request options
+     * @param {String} [options.callbackParamName=CallbackName] - Name of param, that will be used for callback id. 
+       If callbackParamName is set to null, no params will be added (StaticJSONP)
+     * @return {gmxDeferred} Promise with server JSON response or with error status
     */
-	requestJSONP: function(url, params, callbackParamName) {
+	requestJSONP: function(url, params, options) {
+        options = options || {};
         var def = new gmxDeferred();
-        callbackParamName = callbackParamName || 'CallbackName';
         
         var script = document.createElement("script");
         script.setAttribute("charset", "UTF-8");
-        var callbackName = gmxAPIutils.uniqueGlobalName(function(obj)
-        {
-            delete window[callbackName];
-            document.getElementsByTagName("head").item(0).removeChild(script);
-            def.resolve(obj);
-        });
+        var callbackParamName = 'callbackParamName' in options ? options.callbackParamName : 'CallbackName';
         var urlParams = L.extend({}, params);
-        urlParams[callbackParamName] = callbackName;
+        
+        if (callbackParamName) {
+            var callbackName = gmxAPIutils.uniqueGlobalName(function(obj)
+            {
+                delete window[callbackName];
+                document.getElementsByTagName("head").item(0).removeChild(script);
+                def.resolve(obj);
+            });
+        
+            urlParams[callbackParamName] = callbackName;
+        }
         
         var paramsStringItems = [];
         

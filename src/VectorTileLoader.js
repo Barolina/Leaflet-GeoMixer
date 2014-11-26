@@ -40,7 +40,7 @@ var gmxVectorTileLoader = {
                 requestParams.Span = tileInfo.s;
             }
             
-            gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams).then(null, function() {
+            gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams, {callbackParamName: null}).then(null, function() {
                 def.reject();
             });            
         }
