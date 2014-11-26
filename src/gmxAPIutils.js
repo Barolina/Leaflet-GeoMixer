@@ -1095,7 +1095,7 @@ gmxAPIutils.Bounds.prototype = {
                 inputList = outputList;
             outputList = [];
             s = inputList[inputList.length - 1]; //last on the input list
-            for (i in inputList) {
+            for (var i in inputList) {
                 var e = inputList[i];
                 if (inside(e)) {
                     if (!inside(s)) outputList.push(intersection());
