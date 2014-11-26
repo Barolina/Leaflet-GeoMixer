@@ -119,3 +119,5 @@ Property|Type|Description
 layers|Array of `L.gmx.VectorLayer` or `L.gmx.RasterLayer`| Array of all the layers in GeoMixer map
 layersByID|Object| Hash of layers in GeoMixer map with layer ID as key
 layersByTitle|Object| Hash of layers in GeoMixer map with layer title as key
+properties|Object|GeoMixer map properties
+rawTree|Object|Raw map description, transferred from GeoMixer server (mostly for internal purposes)

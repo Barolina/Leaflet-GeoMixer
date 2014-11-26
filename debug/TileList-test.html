@@ -172,7 +172,7 @@
                 }).addTo(map);
             }
             var timeStamp = new Date().valueOf();
-            L.gmx.loadMap(mapName, opt).then(function(loadedLayers, mapInfo) {
+            L.gmx.loadMap(mapName, opt).then(function(loadedLayers) {
                 layersHash = loadedLayers;
                 getNewTileLists();
             });

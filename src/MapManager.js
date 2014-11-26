@@ -47,19 +47,19 @@ var gmxMapManager = {
         if (!serverData) return;
         
         mapInfo.layers = {};
-		
+
         //create index by layer name
-		gmxMapManager.iterateLayers(serverData[0], function(layerInfo) {
+        gmxMapManager.iterateLayers(serverData[0], function(layerInfo) {
             mapInfo.layers[layerInfo.properties.name] = layerInfo;
-		})
+        })
         
         return mapInfo.layers[layerID];
     },
-    _maps: {} //Deferred for each map. Structure maps[serverHost][mapID]: {promise:, layers:}
+    _maps: {} //Promise for each map. Structure: maps[serverHost][mapID]: {promise:, layers:}
 }
 
 gmxMapManager.iterateLayers = function(treeInfo, callback) {
-	var iterate = function(arr) {
+    var iterate = function(arr) {
         for (var i=0, len=arr.length; i<len; i++) {
             var layer = arr[i];
             
@@ -80,8 +80,12 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     this.layersByID = {};
     
     var _this = this;
-	
-	gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
+    
+    this.properties = L.extend({}, mapInfo.properties);
+    this.properties.BaseLayers = this.properties.BaseLayers ? JSON.parse(this.properties.BaseLayers) : [];
+    this.rawTree = mapInfo;
+    
+    gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
         var props = layerInfo.properties,
             layerOptions = L.extend({
                 mapName: mapInfo.properties.name, 
@@ -95,10 +99,10 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
             layer = new L.gmx.RasterLayer(layerOptions);
         }
 
-		layer.initFromDescription(layerInfo);
-		
-		_this.layers.push(layer);
-		_this.layersByTitle[props.title] = layer;
-		_this.layersByID[props.name] = layer;
-	});
+        layer.initFromDescription(layerInfo);
+        
+        _this.layers.push(layer);
+        _this.layersByTitle[props.title] = layer;
+        _this.layersByID[props.name] = layer;
+    });
 }
