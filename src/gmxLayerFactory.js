@@ -51,26 +51,35 @@ L.gmx.loadLayers = function(layers, globalOptions) {
 }
 
 L.gmx.loadMap = function(mapID, options) {
-	options = options || {};
+    options = options || {};
 
-	var def = new gmxDeferred(),
+    var def = new gmxDeferred(),
         hostName = options.hostName || DEFAULT_HOSTNAME,
         apiKey = options.apiKey || '';
 
-	gmxMapManager.getMap(hostName, apiKey, mapID).then(function(mapInfo) {
-		var loadedMap = new gmxMap(mapInfo, options);
-		
-		if (options.leafletMap) {
-			for (var l = 0; l < loadedMap.layers.length; l++) {
-				if (loadedMap.layers[l]._gmx.properties.visible) {
-					loadedMap.layers[l].addTo(options.leafletMap);
-				}
-			}
-		}
-		
-		def.resolve(loadedMap);
-	})
-	return def;
+    gmxMapManager.getMap(hostName, apiKey, mapID).then(function(mapInfo) {
+        var loadedMap = new gmxMap(mapInfo, options);
+        
+        var curZIndex = 0,
+            layer;
+            
+        if (options.leafletMap || options.setZIndex) {
+            for (var l = loadedMap.layers.length - 1; l >= 0 ; l--) {
+                layer = loadedMap.layers[l];
+                if (options.setZIndex) {
+                    layer.options.zIndex = curZIndex++;
+                }
+                
+                if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
+                    layer.addTo(options.leafletMap);
+                }
+                
+            }
+        }
+        
+        def.resolve(loadedMap);
+    })
+    return def;
 }
 
 
