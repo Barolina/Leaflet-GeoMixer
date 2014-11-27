@@ -84,6 +84,7 @@ Loads all layers from the GeoMixer's map.
 Option|Description|Type
 ------|-----------|:--:|-------------
 leafletMap| Leaflet map to add all the layers, that are visible in original GeoMixer map |`L.Map`
+setZIndex| Set z-index to all loaded layers to reflect their order in GeoMixer map. Default is `false`.|`Boolean`
 
 Function returns a promise, that is fulfilled after all the layers are loaded with an instance of `L.gmx.Map`.
 
