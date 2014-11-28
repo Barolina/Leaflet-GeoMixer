@@ -191,7 +191,7 @@
         gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
         gmx.styleManager.deferred.then(function () {
-            _this._update();
+            _this.repaint();
         });
 
         this.initPromise.resolve();
@@ -249,7 +249,7 @@
             observer.setDateInterval(beginDate, endDate);
         }
         
-        this._update();
+        this.repaint();
         return this;
     },
 
@@ -924,7 +924,7 @@
     addData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
             this._gmx.dataManager.addData(data, options);
-            this._update();
+            this.repaint();
         }
         return this;
     },
@@ -932,7 +932,7 @@
     removeData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
             this._gmx.dataManager.removeData(data, options);
-            this._update();
+            this.repaint();
         }
         return this;
 	}
