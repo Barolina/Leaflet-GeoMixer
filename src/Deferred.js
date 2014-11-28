@@ -79,5 +79,7 @@ gmxDeferred.all = function() {
     return resdef;
 }
 
-L.gmx = L.gmx || {};
-L.gmx.Deferred = gmxDeferred;
+if (typeof L !== 'undefined') {
+    L.gmx = L.gmx || {};
+    L.gmx.Deferred = gmxDeferred;
+}

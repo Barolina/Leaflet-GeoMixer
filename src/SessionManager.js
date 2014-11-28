@@ -6,10 +6,11 @@ var gmxSessionManager = {
     _scriptSearched: false,
     _scriptAPIKey: null,
     _searchScriptAPIKey: function() {
-        var _this = this;
-        if (this._scriptSearched) {
+        if (this._scriptSearched || typeof document === 'undefined') {
             return this._scriptAPIKey;
         }
+        
+        var _this = this;
         
         var scripts = document.getElementsByTagName("script");
 		for (var i = 0; i < scripts.length; i++) {

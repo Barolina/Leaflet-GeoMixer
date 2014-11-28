@@ -1,6 +1,5 @@
 var fs = require('fs'),
-    UglifyJS = require('uglify-js'),
-    deps = require('./deps.js').deps;
+    UglifyJS = require('uglify-js');
 
 function combineFiles(files) {
 	var content = '';
@@ -15,7 +14,8 @@ function chkDistPath() {
 	}
 }
 
-exports.build = function () {
+var build = function (depsFile) {
+    var deps = require(depsFile).deps;
 
 	console.log('Concatenating ' + deps.length + ' files...');
 	chkDistPath();
@@ -44,3 +44,6 @@ exports.build = function () {
 	fs.writeFileSync(path, newCompressed);
 	console.log('\tSaved to ' + path);
 };
+
+exports.build = build.bind(null, './deps.js');
+exports.node = build.bind(null, './deps_node.js');
