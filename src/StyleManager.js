@@ -240,7 +240,7 @@
         pt.maxSize = 2 * Math.max(pt.sx, pt.sy);
         return pt;
     }
-    var getImageSize = function(pt, flag)	{				// определение размеров image
+    var getImageSize = function(pt, flag) {     // check image size
         var url = pt.iconUrl;
 
         needLoadIcons++;
@@ -248,6 +248,7 @@
             crossOrigin: 'anonymous'
         }).then(
             function(it) {
+                pt.maxSize = Math.max(it.width, it.height);
                 pt.sx = it.width / 2;
                 pt.sy = it.height / 2;
                 if(flag) pt.image = it;
@@ -345,51 +346,8 @@
                 }
             }
         }
-        /*
-        if(pt.label) {
-            out.label = pt.label;
-            color = pt.label.color || 0;
-            out.label.strokeStyle = gmxAPIutils.dec2rgba(color, 1);
-            color = pt.label.haloColor || 0;
-            out.label.fillStyle = gmxAPIutils.dec2rgba(color, 1);
-            out.label.size = pt.label.size || 12;
-            out.label.extentLabel = gmxAPIutils.getLabelSize(prop[out.label.field], out.label);
-            out.sx = out.label.extentLabel[0];
-            out.sy = out.label.extentLabel[1];
-        }
-        */
+
         item.parsedStyleKeys = out;
-        return out;
-    }
-
-    var isGeoInTile = function(geom, parsedStyleKeys, observer) {
-        var out = null;
-        if (geom.type === 'POINT') {
-            var mInPixel = gmx.mInPixel,
-                tilePos = gmx.tileSubscriptions[observer.id],
-                coords = geom.coordinates,
-                scale = parsedStyleKeys.scale,
-                sx = parsedStyleKeys.sx || 4,
-                sy = parsedStyleKeys.sy || 4;
-
-            if(!tilePos) return true;
-            if(scale) {
-                sx *= scale, sy *= scale;
-            }
-            var px1 = coords[0] * mInPixel - tilePos.px,
-                py1 = tilePos.py - coords[1] * mInPixel;
-
-            if ((py1 - sy) <= 255 && (px1 - sx) <= 255 && (px1 + sx) >= 0 && (py1 + sy) >= 0) {
-                out = {
-                    sx: sx,
-                    sy: sy,
-                    px1: (0.5 + px1) << 0,
-                    py1: (0.5 + py1) << 0
-                };
-            }
-        } else {
-            out = true;
-        }
         return out;
     }
 
@@ -416,7 +374,7 @@
             item._lastZoom = zoom;
         }
         if (styles[item.currentFilter]) {
-            return isGeoInTile(geom, item.parsedStyleKeys, observer);
+            return true;
         } else {
             item.currentFilter = -1;
             return false;
@@ -444,7 +402,6 @@
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
         }
-        itemStyleParser(item, style.RenderStyle);
         return style.RenderStyle;
     }
 
