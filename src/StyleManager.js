@@ -240,32 +240,32 @@
         pt.maxSize = 2 * Math.max(pt.sx, pt.sy);
         return pt;
     }
-	var getImageSize = function(pt, flag)	{				// определение размеров image
-		var url = pt.iconUrl;
+    var getImageSize = function(pt, flag)	{				// определение размеров image
+        var url = pt.iconUrl;
 
-		needLoadIcons++;
-		gmxImageLoader.unshift(url, {
+        needLoadIcons++;
+        gmxImageLoader.unshift(url, {
             crossOrigin: 'anonymous'
         }).then(
             function(it) {
-				pt.sx = it.width / 2;
-				pt.sy = it.height / 2;
-				if(flag) pt.image = it;
-				imagesSize[url] = pt;
-				needLoadIcons--;
+                pt.sx = it.width / 2;
+                pt.sy = it.height / 2;
+                if(flag) pt.image = it;
+                imagesSize[url] = pt;
+                needLoadIcons--;
                 _this._chkReady();
-			},
-			function(){
-				pt.sx = 1;
-				pt.sy = 0;
-				pt.image = null;
-				imagesSize[url] = pt;
-				needLoadIcons--;
-				_this._chkReady();
-				console.log({url: url, func: 'getImageSize', Error: 'image not found'});
-			}
+            },
+            function(){
+                pt.sx = 1;
+                pt.sy = 0;
+                pt.image = null;
+                imagesSize[url] = pt;
+                needLoadIcons--;
+                _this._chkReady();
+                console.log({url: url, func: 'getImageSize', Error: 'image not found'});
+            }
         );
-	}
+    }
 
     var itemStyleParser = function(item, pt) {
         var out = {},
@@ -395,7 +395,7 @@
 
     var chkStyleFilter = function(item, tile, observer, geom) {
         var zoom = gmx.currentZoom;
-        if (item._lastZoom !== gmx.currentZoom || !('currentFilter' in item)) {
+        if (item._lastZoom !== zoom || !('currentFilter' in item)) {
             var fnum = item.currentFilter;
             item.currentFilter = -1;
             for (var i = 0, len = styles.length; i < len; i++) {
@@ -450,19 +450,19 @@
 
     // estimete style size for arbitrary object
     var getMaxStyleSize = function(zoom) {
-		if (!zoom) zoom = gmx.currentZoom;
-		var maxSize = 0;
-		for (var i = 0, len = styles.length; i < len; i++) {
-			var style = styles[i];
-			if (zoom > style.MaxZoom || zoom < style.MinZoom) continue;
-			var RenderStyle = style.RenderStyle;
-			if (!RenderStyle.common || needLoadIcons) {
-				maxSize = MAX_STYLE_SIZE;
-				break;
-			}
-			maxSize = RenderStyle.maxSize;
-		}
-		return maxSize;
+        if (!zoom) zoom = gmx.currentZoom;
+        var maxSize = 0;
+        for (var i = 0, len = styles.length; i < len; i++) {
+            var style = styles[i];
+            if (zoom > style.MaxZoom || zoom < style.MinZoom) continue;
+            var RenderStyle = style.RenderStyle;
+            if (!RenderStyle.common || needLoadIcons) {
+                maxSize = MAX_STYLE_SIZE;
+                break;
+            }
+            maxSize = RenderStyle.maxSize;
+        }
+        return maxSize;
     }
 
     this._maxStyleSize = 0;
