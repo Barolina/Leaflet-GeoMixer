@@ -1126,11 +1126,11 @@ gmxAPIutils.bounds = function(arr) {
 };
 
 if (typeof L !== 'undefined') {
-    L.LineUtil.getLength = gmxAPIutils.getLength;
-    L.LineUtil.prettifyDistance = gmxAPIutils.prettifyDistance;
+    // L.LineUtil.getLength = gmxAPIutils.getLength;
+    // L.LineUtil.prettifyDistance = gmxAPIutils.prettifyDistance;
 
-    L.PolyUtil.getArea = gmxAPIutils.getArea;
-    L.PolyUtil.prettifyArea = gmxAPIutils.prettifyArea;
+    // L.PolyUtil.getArea = gmxAPIutils.getArea;
+    // L.PolyUtil.prettifyArea = gmxAPIutils.prettifyArea;
 
 
     L.Util.formatCoordinates = function (latlng, type) {
@@ -1142,8 +1142,7 @@ if (typeof L !== 'undefined') {
 }
 
 if (typeof module !== 'undefined') {
-    //module.exports = gmxAPIutils;
-    gmxAPIutils.requestJSONP = function(requestURL, urlParams) {
+    gmxAPIutils.requestJSONP = function(requestURL, urlParams, options) {
         var http = require('http'),
             url = require('url');
         
@@ -1159,7 +1158,7 @@ if (typeof module !== 'undefined') {
         
         var parsedURL = url.parse(requestURL + sepSym + paramsStringItems.join('&'));
         parsedURL.headers = {Referer: 'http://localhost'};
-        
+        console.log(requestURL + sepSym + paramsStringItems.join('&'));
         http.get(parsedURL, function(res) {
             var body = '';
             res.setEncoding('utf8');
@@ -1167,6 +1166,12 @@ if (typeof module !== 'undefined') {
                 body += chunk;
             });
             res.on('end', function () {
+                //ugly hack
+                if (options && options.callbackParamName === null) {
+                    body = body.substring(27, body.length-1);
+                    // console.log(body);
+                }
+                
                 def.resolve(JSON.parse(body));
             })
         }).on('error', function(e) {

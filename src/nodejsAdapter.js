@@ -1,4 +1,5 @@
 ﻿module.exports = {
     sessionManager: gmxSessionManager,
-    mapManager: gmxMapManager
+    mapManager: gmxMapManager,
+    DataManager: gmxDataManager
 }

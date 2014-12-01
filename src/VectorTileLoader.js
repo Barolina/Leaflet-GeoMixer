@@ -1,5 +1,4 @@
-﻿window.gmxAPI = window.gmxAPI || {};
-window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || function(data) {
+﻿var _vectorTileReceiver = function(data) {
     var key = gmxVectorTileLoader._getKey({
         layerID: data.LayerName,
         x: data.x,
@@ -11,6 +10,11 @@ window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || functio
     })
     
     gmxVectorTileLoader._loadedTiles[key] && gmxVectorTileLoader._loadedTiles[key].resolve(data.values);
+}
+
+if (typeof window !== 'undefined') {
+    window.gmxAPI = window.gmxAPI || {};
+    window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || _vectorTileReceiver;
 }
 
 var gmxVectorTileLoader = {
@@ -40,7 +44,9 @@ var gmxVectorTileLoader = {
                 requestParams.Span = tileInfo.s;
             }
             
-            gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams, {callbackParamName: null}).then(null, function() {
+            var callback = typeof window === 'undefined' ? _vectorTileReceiver : null;
+            
+            gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams, {callbackParamName: null}).then(callback, function() {
                 def.reject();
             });            
         }
