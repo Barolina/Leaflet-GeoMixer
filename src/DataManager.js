@@ -96,10 +96,6 @@
             isIntersects = function(bounds, dx, dy) {
                 return bboxActive ? bboxActive.intersectsWithDelta(bounds, dx, dy) : observer.intersects(bounds);
             },
-            isItemIntersects = function(bounds, item) {
-                var style = item.parsedStyleKeys || {};
-                return isIntersects(bounds, style.sx / _this._gmx.mInPixel, style.sy / _this._gmx.mInPixel);
-            },
             putData = function(tile) {
                 var data = tile.data;
                 if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
@@ -108,14 +104,13 @@
                 }
 
                 for (var j = 0, len1 = data.length; j < len1; j++) {
-                    var dataOption = tile.dataOptions[j],
-                        it = data[j],
+                    var dataOption = tile.dataOptions[j];
+                    if (!observer.intersects(dataOption.bounds)) continue;
+
+                    var it = data[j],
                         id = it[0],
                         item = _this.getItem(id);
 
-                    if (!isItemIntersects(dataOption.bounds, item)) {
-                        continue;
-                    }
                     var geom = it[it.length - 1],
                         isFiltered = false;
 
@@ -173,6 +168,7 @@
                 if(item.type.indexOf('MULTI') == -1) {
                     item.type = 'MULTI' + item.type;
                 }
+                delete item.bounds;
             } else {
                 item = {
                     id: id
@@ -183,7 +179,6 @@
                 };
                 this._items[id] = item;
             }
-            delete item.bounds;
             item.properties = it;
             item.options.fromTiles[vectorTileKey] = i;
             if(layerProp.TemporalColumnName) {
@@ -311,16 +306,20 @@
         var item = this._items[id];
         if (item && !item.bounds) {
             var fromTiles = item.options.fromTiles,
-                bounds = gmxAPIutils.bounds();
+                arr = [];
             for (var key in fromTiles) {
                 var tile = this._tiles[key].tile,
                     dataOptions = tile.dataOptions,
                     num = fromTiles[key];
-                var dataOption = dataOptions[num];
-                if (!dataOption) dataOption = dataOptions[num] = {};
-                bounds.extendBounds(dataOption.bounds);
+                arr.push(dataOptions[num].bounds);
             }
-            item.bounds = bounds;
+            if (arr.length === 1) item.bounds = arr[0];
+            else {
+                item.bounds = gmxAPIutils.bounds();
+                arr.forEach(function(it) {
+                    item.bounds.extendBounds(it);
+                });
+            }
         }
         return item;
     },

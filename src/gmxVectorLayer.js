@@ -190,10 +190,6 @@
         this.initLayerData(ph);
         gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
-        gmx.styleManager.deferred.then(function () {
-            _this._update();
-        });
-
         this.initPromise.resolve();
     },
 
@@ -249,7 +245,7 @@
             observer.setDateInterval(beginDate, endDate);
         }
         
-        this._update();
+        this.repaint();
         return this;
     },
 
@@ -367,44 +363,47 @@
     },
 
     _update: function () {
-        var gmx = this._gmx;
+        var gmx = this._gmx,
+            _this = this;
         if (!this._map || gmx.zoomstart) return;
 
-        var zoom = this._map.getZoom();
-        if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
-            clearTimeout(this._clearBgBufferTimer);
-            this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 500);
-            return;
-        }
-        var tileBounds = this._getScreenTileBounds();
-        this._addTilesFromCenterOut(tileBounds);
-
-        if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
-            this._removeOtherTiles(tileBounds);
-        }
-        
-        //L.TileVector will remove all tiles from other zooms.
-        //But it will not remove subscriptions without tiles - we should do it ourself
-        var dataManager = gmx.dataManager,
-            bboxArr = gmx.getScreenBboxArr();
-
-        for (var key in gmx.tileSubscriptions) {
-            var parsedKey = key.split(':');
-            if (parsedKey[0] != zoom) {
-                this._clearTileSubscription(key);
-            } else {    // deactivate observers for invisible Tiles
-                var observer = dataManager.getObserver(key);
-                var active = false;
-                for (var i = 0, len = bboxArr.length; i < len; i++) {
-                    if (observer.intersects(bboxArr[i])) {
-                        active = true;
-                        break;
-                    }
-                }
-                if (active) observer.activate();
-                else observer.deactivate();
+        gmx.styleManager.deferred.then(function () {
+            var zoom = _this._map.getZoom();
+            if (zoom > _this.options.maxZoom || zoom < _this.options.minZoom) {
+                clearTimeout(_this._clearBgBufferTimer);
+                _this._clearBgBufferTimer = setTimeout(L.bind(_this._clearBgBuffer, _this), 500);
+                return;
             }
-        }
+            var tileBounds = _this._getScreenTileBounds();
+            _this._addTilesFromCenterOut(tileBounds);
+
+            if (_this.options.unloadInvisibleTiles || _this.options.reuseTiles) {
+                _this._removeOtherTiles(tileBounds);
+            }
+            
+            //L.TileVector will remove all tiles from other zooms.
+            //But it will not remove subscriptions without tiles - we should do it ourself
+            var dataManager = gmx.dataManager,
+                bboxArr = gmx.getScreenBboxArr();
+
+            for (var key in gmx.tileSubscriptions) {
+                var parsedKey = key.split(':');
+                if (parsedKey[0] != zoom) {
+                    _this._clearTileSubscription(key);
+                } else {    // deactivate observers for invisible Tiles
+                    var observer = dataManager.getObserver(key);
+                    var active = false;
+                    for (var i = 0, len = bboxArr.length; i < len; i++) {
+                        if (observer.intersects(bboxArr[i])) {
+                            active = true;
+                            break;
+                        }
+                    }
+                    if (active) observer.activate();
+                    else observer.deactivate();
+                }
+            }
+        });
     },
 
     _getScreenTileBounds: function () {
@@ -924,7 +923,7 @@
     addData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
             this._gmx.dataManager.addData(data, options);
-            this._update();
+            this.repaint();
         }
         return this;
     },
@@ -932,7 +931,7 @@
     removeData: function(data, options) {
         if (!this._gmx.mapName) {     // client side layer
             this._gmx.dataManager.removeData(data, options);
-            this._update();
+            this.repaint();
         }
         return this;
 	}

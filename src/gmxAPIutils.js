@@ -1131,10 +1131,17 @@ L.LineUtil.prettifyDistance = gmxAPIutils.prettifyDistance;
 L.PolyUtil.getArea = gmxAPIutils.getArea;
 L.PolyUtil.prettifyArea = gmxAPIutils.prettifyArea;
 
-
-L.Util.formatCoordinates = function (latlng, type) {
-    return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
+L.gmx = L.gmx || {};
+L.gmx.Util = {
+    formatCoordinates: function (latlng, type) {
+        return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
+    },
+    geoArea: gmxAPIutils.geoArea,
+    getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
+    getGeometrySummary: gmxAPIutils.getGeometrySummary
 };
+
+L.Util.formatCoordinates = L.gmx.Util;
 L.Util.geoArea = gmxAPIutils.geoArea;
 L.Util.getGeometrySummary = gmxAPIutils.getGeometrySummary;
 L.Util.getGeometriesSummary = gmxAPIutils.getGeometriesSummary;

@@ -240,32 +240,33 @@
         pt.maxSize = 2 * Math.max(pt.sx, pt.sy);
         return pt;
     }
-	var getImageSize = function(pt, flag)	{				// определение размеров image
-		var url = pt.iconUrl;
+    var getImageSize = function(pt, flag) {     // check image size
+        var url = pt.iconUrl;
 
-		needLoadIcons++;
-		gmxImageLoader.unshift(url, {
+        needLoadIcons++;
+        gmxImageLoader.unshift(url, {
             crossOrigin: 'anonymous'
         }).then(
             function(it) {
-				pt.sx = it.width / 2;
-				pt.sy = it.height / 2;
-				if(flag) pt.image = it;
-				imagesSize[url] = pt;
-				needLoadIcons--;
+                pt.maxSize = Math.max(it.width, it.height);
+                pt.sx = it.width / 2;
+                pt.sy = it.height / 2;
+                if(flag) pt.image = it;
+                imagesSize[url] = pt;
+                needLoadIcons--;
                 _this._chkReady();
-			},
-			function(){
-				pt.sx = 1;
-				pt.sy = 0;
-				pt.image = null;
-				imagesSize[url] = pt;
-				needLoadIcons--;
-				_this._chkReady();
-				console.log({url: url, func: 'getImageSize', Error: 'image not found'});
-			}
+            },
+            function(){
+                pt.sx = 1;
+                pt.sy = 0;
+                pt.image = null;
+                imagesSize[url] = pt;
+                needLoadIcons--;
+                _this._chkReady();
+                console.log({url: url, func: 'getImageSize', Error: 'image not found'});
+            }
         );
-	}
+    }
 
     var itemStyleParser = function(item, pt) {
         var out = {},
@@ -345,57 +346,14 @@
                 }
             }
         }
-        /*
-        if(pt.label) {
-            out.label = pt.label;
-            color = pt.label.color || 0;
-            out.label.strokeStyle = gmxAPIutils.dec2rgba(color, 1);
-            color = pt.label.haloColor || 0;
-            out.label.fillStyle = gmxAPIutils.dec2rgba(color, 1);
-            out.label.size = pt.label.size || 12;
-            out.label.extentLabel = gmxAPIutils.getLabelSize(prop[out.label.field], out.label);
-            out.sx = out.label.extentLabel[0];
-            out.sy = out.label.extentLabel[1];
-        }
-        */
+
         item.parsedStyleKeys = out;
-        return out;
-    }
-
-    var isGeoInTile = function(geom, parsedStyleKeys, observer) {
-        var out = null;
-        if (geom.type === 'POINT') {
-            var mInPixel = gmx.mInPixel,
-                tilePos = gmx.tileSubscriptions[observer.id],
-                coords = geom.coordinates,
-                scale = parsedStyleKeys.scale,
-                sx = parsedStyleKeys.sx || 4,
-                sy = parsedStyleKeys.sy || 4;
-
-            if(!tilePos) return true;
-            if(scale) {
-                sx *= scale, sy *= scale;
-            }
-            var px1 = coords[0] * mInPixel - tilePos.px,
-                py1 = tilePos.py - coords[1] * mInPixel;
-
-            if ((py1 - sy) <= 255 && (px1 - sx) <= 255 && (px1 + sx) >= 0 && (py1 + sy) >= 0) {
-                out = {
-                    sx: sx,
-                    sy: sy,
-                    px1: (0.5 + px1) << 0,
-                    py1: (0.5 + py1) << 0
-                };
-            }
-        } else {
-            out = true;
-        }
         return out;
     }
 
     var chkStyleFilter = function(item, tile, observer, geom) {
         var zoom = gmx.currentZoom;
-        if (item._lastZoom !== gmx.currentZoom || !('currentFilter' in item)) {
+        if (item._lastZoom !== zoom || !('currentFilter' in item)) {
             var fnum = item.currentFilter;
             item.currentFilter = -1;
             for (var i = 0, len = styles.length; i < len; i++) {
@@ -416,7 +374,7 @@
             item._lastZoom = zoom;
         }
         if (styles[item.currentFilter]) {
-            return isGeoInTile(geom, item.parsedStyleKeys, observer);
+            return true;
         } else {
             item.currentFilter = -1;
             return false;
@@ -444,25 +402,24 @@
             itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
         }
-        itemStyleParser(item, style.RenderStyle);
         return style.RenderStyle;
     }
 
     // estimete style size for arbitrary object
     var getMaxStyleSize = function(zoom) {
-		if (!zoom) zoom = gmx.currentZoom;
-		var maxSize = 0;
-		for (var i = 0, len = styles.length; i < len; i++) {
-			var style = styles[i];
-			if (zoom > style.MaxZoom || zoom < style.MinZoom) continue;
-			var RenderStyle = style.RenderStyle;
-			if (!RenderStyle.common || needLoadIcons) {
-				maxSize = MAX_STYLE_SIZE;
-				break;
-			}
-			maxSize = RenderStyle.maxSize;
-		}
-		return maxSize;
+        if (!zoom) zoom = gmx.currentZoom;
+        var maxSize = 0;
+        for (var i = 0, len = styles.length; i < len; i++) {
+            var style = styles[i];
+            if (zoom > style.MaxZoom || zoom < style.MinZoom) continue;
+            var RenderStyle = style.RenderStyle;
+            if (!RenderStyle.common || needLoadIcons) {
+                maxSize = MAX_STYLE_SIZE;
+                break;
+            }
+            maxSize = RenderStyle.maxSize;
+        }
+        return maxSize;
     }
 
     this._maxStyleSize = 0;
