@@ -84,7 +84,7 @@
                     res = key in properties ? properties[key] : '';
                 if (key === 'SUMMARY' && !res) {
                     var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
-                    res = L.Util.getGeometriesSummary(geometries, this._gmx.units);
+                    res = L.gmxUtil.getGeometriesSummary(geometries, this._gmx.units);
                 }
                 var hookID = gmxAPIutils.newId(),
                     st = "<span id='" + hookID + "'>" + res + "</span>";

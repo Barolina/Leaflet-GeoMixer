@@ -123,10 +123,10 @@
     },
 
 	getTilePosZoomDelta: function(tilePoint, zoomFrom, zoomTo) {		// получить смещение тайла на меньшем zoom
-		var dz = Math.pow(2, zoomFrom - zoomTo);
-		var size = 256 / dz;
-		var dx = tilePoint.x % dz;
-		var dy = tilePoint.y % dz;
+        var dz = Math.pow(2, zoomFrom - zoomTo),
+            size = 256 / dz,
+            dx = tilePoint.x % dz,
+            dy = tilePoint.y % dz;
 		return {
 			size: size
 			,zDelta: dz
@@ -204,9 +204,9 @@
     },
 
     dec2rgba: function(i, a)	{				// convert decimal to rgb
-		var r = (i >> 16) & 255;
-		var g = (i >> 8) & 255;
-		var b = i & 255;
+        var r = (i >> 16) & 255,
+            g = (i >> 8) & 255,
+            b = i & 255;
 		return 'rgba('+r+', '+g+', '+b+', '+a+')';
 	},
 
@@ -218,9 +218,9 @@
         return a < 1 ? this.dec2rgba(i, a) : '#' + this.dec2hex(i);
     },
 
-	'oneDay': 60*60*24			// один день
+    oneDay: 60*60*24			// один день
 	,
-    'isTileKeysIntersects': function(tk1, tk2) { // пересечение по номерам двух тайлов
+    isTileKeysIntersects: function(tk1, tk2) { // пересечение по номерам двух тайлов
         if (tk1.z < tk2.z) {
             var t = tk1; tk1 = tk2; tk2 = t;
         }
@@ -247,7 +247,7 @@
         return out;
     }
     , 
-    'getPatternIcon': function(item, style) {			// получить bitmap стиля pattern
+    getPatternIcon: function(item, style) {			// получить bitmap стиля pattern
         if (!style.pattern) return null;
 
         var notFunc = true,
@@ -367,7 +367,7 @@
         return { 'notFunc': notFunc, 'canvas': canvas1 };
     }
     ,
-    'toPixels': function(p, tpx, tpy, mInPixel) {				// получить координату в px
+    toPixels: function(p, tpx, tpy, mInPixel) { // get pixel point
         var px1 = p[0] * mInPixel; 	px1 = (0.5 + px1) << 0;
         var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
         return [px1 - tpx, tpy - py1];
@@ -481,7 +481,7 @@
             ctx.fill();
         }
     },
-	'lineToCanvas': function(attr) {				// Линии в canvas
+    lineToCanvas: function(attr) {  // Lines in canvas
 		var gmx = attr.gmx,
             coords = attr.coords,
             ctx = attr.ctx;
@@ -501,7 +501,7 @@
 		}
 	},
 
-    polygonToCanvas: function(attr) {       // Полигон в canvas
+    polygonToCanvas: function(attr) {       // Polygons in canvas
         if(attr.coords.length === 0) return null;
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
@@ -568,9 +568,9 @@
         return it instanceof HTMLCanvasElement || it instanceof HTMLImageElement;
     },
 
-    labelCanvasContext: null 			// 2dContext canvas для определения размера Label
+    labelCanvasContext: null    // 2dContext canvas for Label size
     ,
-    getLabelWidth: function(txt, style)	{			// Получить размер Label
+    getLabelWidth: function(txt, style) {   // Get label size Label
         if(style) {
             if(!gmxAPIutils.labelCanvasContext) {
                 var canvas = document.createElement('canvas');
@@ -601,11 +601,10 @@
         ctx.strokeText(txt, x, y);
         ctx.fillText(txt, x, y);
     }
-    ,'worldWidthMerc': 20037508
-    ,'r_major': 6378137.000
+    ,worldWidthMerc: 20037508
+    ,r_major: 6378137.000
     ,
-    deg_rad: function(ang)
-    {
+    deg_rad: function(ang) {
         return ang * (Math.PI/180.0);
     },
 
@@ -1011,6 +1010,73 @@
             minx = x * tileSize, 
             miny = y * tileSize;
         return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
+    },
+
+    styleKeys: {
+        marker: {
+            server: ['image',   'angle',     'scale',     'minScale',     'maxScale',     'circle',     'center',     'color'],
+            client: ['iconUrl', 'iconAngle', 'iconScale', 'iconMinScale', 'iconMaxScale', 'iconCircle', 'iconCenter', 'iconColor']
+        },
+        outline: {
+            server: ['color',  'opacity',   'thickness', 'dashes'],
+            client: ['color',  'opacity',   'weight',    'dashArray']
+        },
+        fill: {
+            server: ['color',     'opacity',   'image',       'pattern',     'radialGradient',     'linearGradient'],
+            client: ['fillColor', 'fillOpacity', 'fillImage', 'fillPattern', 'fillRadialGradient', 'fillLinearGradient']
+        },
+        label: {
+            server: ['field',      'color',      'haloColor',      'size',          'spacing',      'align'],
+            client: ['labelField', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
+        }
+    },
+
+    toServerStyle: function(style) {   // Style leaflet->Scanex
+        var out = {};
+
+        for (var key in gmxAPIutils.styleKeys) {
+            var keys = gmxAPIutils.styleKeys[key];
+            keys.client.forEach(function(key1, i) {
+                if (key1 in style) {
+                    if (!out[key]) out[key] = {};
+                    out[key][keys.server[i]] = style[key1];
+                }
+            });
+        }
+        if ('iconAnchor' in style) {
+            if (!out.marker) out.marker = {};
+            out.marker.dx = style.iconAnchor[0];
+            out.marker.dy = style.iconAnchor[1];
+        }
+        if ('iconSize' in style) {
+            if (!out.marker) out.marker = {};
+            out.marker.size = style.iconSize[0];
+        }
+        return out;
+    },
+
+    fromServerStyle: function(style) {   // Style Scanex->leaflet
+        var out = {};
+
+        for (var key in gmxAPIutils.styleKeys) {
+            var st = style[key];
+            if (st && typeof(st) === 'object') {
+                var keys = gmxAPIutils.styleKeys[key];
+                keys.server.forEach(function(key1, i) {
+                    if (key1 in st) {
+                        out[keys.client[i]] = st[key1];
+                    }
+                });
+            }
+        }
+        if (style.marker) {
+            var st = style.marker;
+            if ('dx' in st || 'dy' in st) {
+                out.iconAnchor = [st.dx || 0, st.dy || 0];
+            }
+            if ('size' in st) out.iconSize = [st.size || 0, st.size || 0];
+        }
+        return out;
     }
 }
 
@@ -1125,26 +1191,22 @@ gmxAPIutils.bounds = function(arr) {
     return new gmxAPIutils.Bounds(arr);
 };
 
-L.LineUtil.getLength = gmxAPIutils.getLength;
-L.LineUtil.prettifyDistance = gmxAPIutils.prettifyDistance;
-
-L.PolyUtil.getArea = gmxAPIutils.getArea;
-L.PolyUtil.prettifyArea = gmxAPIutils.prettifyArea;
-
-L.gmx = L.gmx || {};
-L.gmx.Util = {
+L.gmxUtil = {
+    fromServerStyle: gmxAPIutils.fromServerStyle,
+    toServerStyle: gmxAPIutils.toServerStyle,
+    bounds: gmxAPIutils.bounds,
+    tileSizes: gmxAPIutils.tileSizes,
     formatCoordinates: function (latlng, type) {
         return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
     },
+    getLength: gmxAPIutils.getLength,
+    prettifyDistance: gmxAPIutils.prettifyDistance,
+    getArea: gmxAPIutils.getArea,
+    prettifyArea: gmxAPIutils.prettifyArea,
     geoArea: gmxAPIutils.geoArea,
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
     getGeometrySummary: gmxAPIutils.getGeometrySummary
 };
-
-L.Util.formatCoordinates = L.gmx.Util;
-L.Util.geoArea = gmxAPIutils.geoArea;
-L.Util.getGeometrySummary = gmxAPIutils.getGeometrySummary;
-L.Util.getGeometriesSummary = gmxAPIutils.getGeometriesSummary;
 
 !function() {
 
