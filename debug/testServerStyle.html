@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0px;
+        }
+        #controls {
+            position: absolute;
+			left: 54px;
+			top: 11px;
+			z-index: 1;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    <script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+</head>
+<body>
+	<div id="controls">
+		<div>
+            <span id="result"></span>
+        </div>
+	</div>
+
+	<script>
+        var testStyle = {
+            marker:{
+                image : 'url',             // URL иконки маркера (по умолчанию: '')
+                angle : '[angle]',       // угол поворота маркера (по умолчанию: 0)
+                scale : 2,              // масштабирование маркера (по умолчанию: 1)
+                minScale : 1,           // минимальный scale (по умолчанию: 0.01)
+                maxScale : 6,           // максимальный scale (по умолчанию: 1000)
+                size: 3,                // размер квадрата при отрисовке маркера линией (по умолчанию: 0)
+                circle : true,            // Отображение круга (по умолчанию: false)
+                center : true,           // флаг центрирования маркера (по умолчанию: false)
+                                        // смещения от левого верхнего угла геометрии объекта - применяются только при отсутствии флага центрирования маркера
+                dx: 12,                // смещение по X
+                dy: 14,                // смещение по Y
+                color : 0xff                // замена цвета 0xff00ff на color в маркере (по умолчанию: 0xff00ff)
+            }
+            ,
+            fill:{
+                image : 'url1',             // URL BitMap которое берется в качестве подложки заполнения (по умолчанию: '')
+                color : '[test]',        // цвет заполнения (по умолчанию: 0)
+                opacity : 34,        // opacity заполнения (по умолчанию: 100)
+                pattern: {
+                    colors: [0xff, 0xf1, 0xf2],       // массив цветов в формате UInt|Expression (по умолчанию: [])
+                    style: 'vertical',      // могут быть заданны строки (horizontal, vertical, diagonal1, diagonal2, circle, cross)
+                                                            //(по умолчанию: 'horizontal')
+                    width: 4,     // ширина каждого цвета в пикселах (по умолчанию: 8)
+                    step: 5       // отступ в пикселах после каждого цвета (для circle от края)
+                }
+                ,
+                radialGradient: {
+                    x1: 3,     // сдвиг по оси X центра первой окружности; (по умолчанию: 0)
+                    y1: 4,     // сдвиг по оси Y центра первой окружности; (по умолчанию: 0)
+                    r1: 5,     // радиус первой окружности; (по умолчанию: 0)
+                    x2: 6,     // сдвиг по оси X центра второй окружности; (по умолчанию: 0)
+                    y2: 7,     // сдвиг по оси Y центра второй окружности; (по умолчанию: 0)
+                    r2: 8,     // радиус второй окружности; (по умолчанию: 0)
+                    addColorStop: [[0, 0xFF0000,100], [1, 0xFFFFFF,100]]     // массив стоп цветов объекта градиента
+                      // position — положение цвета в градиенте. Значение должно быть в диапазоне 0.0 (начало) до 1.0 (конец);
+                      // color — код цвета или формула.
+                      // opacity — прозрачность
+                      //  (по умолчанию: addColorStop = [[0, 0xFF0000,100], [1, 0xFFFFFF,100]])
+                },
+                linearGradient: {
+                    x1: 11,     // сдвиг по оси X начальной точки (по умолчанию: 0)
+                    y1: 12,     // сдвиг по оси Y начальной точки (по умолчанию: 0)
+                    x2: 13,     // сдвиг по оси X конечной точки (по умолчанию: 0)
+                    y2: 14,     // сдвиг по оси Y конечной точки (по умолчанию: 0)
+                    addColorStop: [[0, 0xFF0000,100], [1, 0xFFFFFF,100]]     // массив стоп цветов объекта градиента
+                      // position — положение цвета в градиенте. Значение должно быть в диапазоне 0.0 (начало) до 1.0 (конец);
+                      // color — код цвета или формула.
+                      // opacity — прозрачность
+                      //  (по умолчанию: addColorStop = [[0, 0xFF0000,100], [1, 0xFFFFFF,100]])
+                }
+            }
+            ,
+            outline:{
+                color : 0xFF,        // цвет линии (по умолчанию: 0)
+                opacity : 56,     // opacity линии (по умолчанию: 100)
+                thickness: 2,            // толщина линии (по умолчанию: 0)
+                dashes: [3,1,6]               // массив UInt отрезков пунктиров (по умолчанию: null)
+            },
+            label:{
+                color: 0xFF1,                // цвет текстовой метки (по умолчанию: 0)
+                haloColor: 0x00FF1,             // цвет Glow вокруг метки (по умолчанию: -1)
+                size: 4,                 // FontSize метки  (по умолчанию: 0)
+                spacing: 5,              // растояние между символами (по умолчанию: -1)
+                align: 'center',              // выравнивание могут быть заданны строки (left, right, center) (по умолчанию: left)
+                                        // смещения от левого верхнего угла геометрии объекта
+                dx: 6,                // смещение по X (по умолчанию: 0)
+                dy: 7,                // смещение по Y (по умолчанию: 0)
+                field: 'myField'               // текст метки брать из атрибута объекта (по умолчанию: '')
+            } 
+        };            
+
+        var cmpObj = function(o, o1) {
+            var out = '';
+            for (var key in o) {
+                var it = o[key],
+                    it1 = o1[key];
+                if (typeof(it) === 'object') {
+                    out = cmpObj(it, it1);
+                    if (out) return {key: key, server: it, client: it1};
+                }
+            }
+            return out;
+        }
+
+        
+        var cs = L.gmxUtil.fromServerStyle(testStyle),
+            res = cmpObj(testStyle, L.gmxUtil.toServerStyle(cs));
+
+        var res = 'Test fromServerStyle - ' + (res ? 'error in key: ' + res.key : 'ok');
+        document.getElementById("result").innerHTML = res;
+        //console.log('Test fromServerStyle - ' + (res ? 'error in key: ' + res.key : 'ok'));
+        //console.log('diff: ', res);
+	</script>
+</body>
+</html>
