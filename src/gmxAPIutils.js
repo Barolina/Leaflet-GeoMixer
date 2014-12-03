@@ -1014,8 +1014,8 @@
 
     styleKeys: {
         marker: {
-            server: ['image',   'angle',     'scale',     'minScale',     'maxScale',     'circle',     'center',     'color'],
-            client: ['iconUrl', 'iconAngle', 'iconScale', 'iconMinScale', 'iconMaxScale', 'iconCircle', 'iconCenter', 'iconColor']
+            server: ['image',   'angle',     'scale',     'minScale',     'maxScale',     'size',         'circle',     'center',     'color'],
+            client: ['iconUrl', 'iconAngle', 'iconScale', 'iconMinScale', 'iconMaxScale', 'iconGeomSize', 'iconCircle', 'iconCenter', 'iconColor']
         },
         outline: {
             server: ['color',  'opacity',   'thickness', 'dashes'],
@@ -1048,15 +1048,13 @@
             out.marker.dx = style.iconAnchor[0];
             out.marker.dy = style.iconAnchor[1];
         }
-        if ('iconSize' in style) {
-            if (!out.marker) out.marker = {};
-            out.marker.size = style.iconSize[0];
-        }
         return out;
     },
 
     fromServerStyle: function(style) {   // Style Scanex->leaflet
-        var out = {};
+        var out = {
+            type: ''    // 'polygon', 'line', 'circle', 'square', 'image'
+        };
 
         for (var key in gmxAPIutils.styleKeys) {
             var st = style[key];
@@ -1074,7 +1072,6 @@
             if ('dx' in st || 'dy' in st) {
                 out.iconAnchor = [st.dx || 0, st.dy || 0];
             }
-            if ('size' in st) out.iconSize = [st.size || 0, st.size || 0];
         }
         return out;
     }
