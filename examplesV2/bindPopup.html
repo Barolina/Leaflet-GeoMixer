@@ -57,13 +57,24 @@
                     popupopen: function(ev) {
                         var popup = ev.popup,
                             props = ev.gmx.properties,
-                            txt = '<img width="560" src="' + props['Фото1'] + '"/><br>';
-                            keys = ['Наименование', 'Адрес современный', 'Категория', 'Подробнее'];
-
-                        keys.forEach(function(key) {
-                            if (props[key]) txt += '<br>' + props[key];
+                            container = L.DomUtil.create('div', 'myPopup'),
+                            image = L.DomUtil.create('img', 'myImage', container);
+                        
+                        L.extend(image, {
+                            width: 560,
+                            galleryimg: 'no',
+                            onselectstart: L.Util.falseFn,
+                            onmousemove: L.Util.falseFn,
+                            onload: function(ev) {
+                                popup.update();
+                            },
+                            src: props['Фото1']
                         });
-                        popup.setContent(txt);
+                        ['Наименование', 'Адрес современный', 'Категория', 'Подробнее'].forEach(function(key) {
+                            var prop = L.DomUtil.create('div', '', container);
+                            prop.innerHTML = props[key];
+                        });
+                        popup.setContent(container);
                     }
                 }
             );
