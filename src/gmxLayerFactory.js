@@ -61,13 +61,16 @@ L.gmx.loadMap = function(mapID, options) {
         var loadedMap = new gmxMap(mapInfo, options);
         
         var curZIndex = 0,
+            vectorLayersOffset = 2000000,
             layer;
             
         if (options.leafletMap || options.setZIndex) {
             for (var l = loadedMap.layers.length - 1; l >= 0 ; l--) {
                 layer = loadedMap.layers[l];
                 if (options.setZIndex) {
-                    layer.options.zIndex = curZIndex++;
+                    var zIndex = curZIndex++;
+                    if (layer._gmx.properties.type === 'Vector') zIndex += vectorLayersOffset;
+                    layer.options.zIndex = zIndex;
                 }
                 
                 if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
