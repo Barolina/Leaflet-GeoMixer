@@ -103,7 +103,7 @@ setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Задаёт вре
 addTo|`addTo(map)`|`this`|Добавить слой на карту. Аргемент `map` имеет тип `L.Map`.
 bindPopup|`bindPopup(html <String> `&#124;` el <HTMLElement> `&#124;` popup <Popup>, options <Popup options>? )`|`this`|Связывает всплывающее окно с векторным слоем по `click` на объекте слоя.
 repaint|`repaint()`||Перерисовать слой.
-setImageProcessingHook|`setImageProcessingHook(function(image, options): Canvas|Deferred)`||Установка функции предобработки растров объектов слоя.  Единственный аргумент - ф-ция, которая принимает растр объекта(image) и описание этого растра (). Возвращает: `Canvas` - объект замещающий исходный растр, `null` - не показывать растр. Может возвращать `Deferred` при асинхронном режиме.
+setImageProcessingHook|`setImageProcessingHook( function(image, options): Canvas|Deferred)`||Установка функции предобработки растров объектов слоя.  Единственный аргумент - ф-ция, которая принимает растр объекта(image) и описание этого растра (). Возвращает: `Canvas` - объект замещающий исходный растр, `null` - не показывать растр. Может возвращать `Deferred` при асинхронном режиме.
 removeImageProcessingHook|`removeImageProcessingHook()`||Удалить функцию предобработки растров объектов слоя.
 
 ## Класс L.gmx.RasterLayer
