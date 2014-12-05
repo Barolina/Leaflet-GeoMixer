@@ -1,7 +1,7 @@
 ﻿L.gmx.VectorLayer.include({
+    bindPopup: function (content, options) {
 
-	bindPopup: function (content, options) {
-
+        if (this._popup) this.unbindPopup();
 		if (content instanceof L.Popup) {
 			this._popup = content;
 		} else {
@@ -20,7 +20,7 @@
 			this._popupHandlersAdded = true;
 		}
 		if (options && options.popupopen) {
-            this._popup.on('popupopen', options.popupopen, this);
+            this._popupopen = options.popupopen;
 		}
 
         this._popup.updateLayout = this._popup._updateLayout;
@@ -35,6 +35,7 @@
 			    .off('click', this._openPopup)
 			    .off('remove', this.closePopup);
 
+            this._popupopen = null;
 			this._popupHandlersAdded = false;
 		}
         this._gmx.balloonEnable = false;
@@ -105,10 +106,11 @@
                 if (spanIDs[id]) spanKeys[spanIDs[id]] = span;
             }
 
-            this._popup.fire('popupopen', {
+            if (this._popupopen) this._popupopen({
                 popup: this._popup,
                 latlng: e.latlng,
                 layerPoint: e.layerPoint,
+                contentNode: this._popup._contentNode,
                 containerPoint: e.containerPoint,
                 originalEvent: e.originalEvent,
                 gmx: {
