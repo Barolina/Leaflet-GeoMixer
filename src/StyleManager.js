@@ -158,7 +158,7 @@
                     pt.radialGradient.addColorStopFunctions = [];
                     for (var i = 0, len = pt.radialGradient.addColorStop.length; i < len; i++)
                     {
-                        var arr = pt.radialGradient.addColorStop[i];
+                        var arr = pt.radialGradient.addColorStop[i],
                             resFunc = [
                                 (typeof(arr[0]) === 'string' ? gmxParsers.parseExpression(arr[0]) : null)
                                 ,(typeof(arr[1]) === 'string' ? gmxParsers.parseExpression(arr[1]) : null)
