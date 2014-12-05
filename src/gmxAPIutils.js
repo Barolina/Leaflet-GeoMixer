@@ -1189,6 +1189,7 @@ gmxAPIutils.bounds = function(arr) {
 };
 
 L.gmxUtil = {
+    requestJSONP: gmxAPIutils.requestJSONP,
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
     bounds: gmxAPIutils.bounds,
