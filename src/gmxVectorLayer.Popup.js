@@ -106,20 +106,23 @@
                 if (spanIDs[id]) spanKeys[spanIDs[id]] = span;
             }
 
-            if (this._popupopen) this._popupopen({
-                popup: this._popup,
-                latlng: e.latlng,
-                layerPoint: e.layerPoint,
-                contentNode: this._popup._contentNode,
-                containerPoint: e.containerPoint,
-                originalEvent: e.originalEvent,
-                gmx: {
-                    id: gmx.id,
-                    properties: gmx.properties,
-                    templateBalloon: templateBalloon,
-                    spanKeys: spanKeys
-                }
-            });
+            if (this._popupopen) {
+                this._popupopen({
+                    popup: this._popup,
+                    latlng: e.latlng,
+                    layerPoint: e.layerPoint,
+                    contentNode: this._popup._contentNode,
+                    containerPoint: e.containerPoint,
+                    originalEvent: e.originalEvent,
+                    gmx: {
+                        id: gmx.id,
+                        properties: gmx.properties,
+                        templateBalloon: templateBalloon,
+                        spanKeys: spanKeys
+                    }
+                });
+                this._popup._adjustPan();
+            }
         }
     }
 });
