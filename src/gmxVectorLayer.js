@@ -587,15 +587,15 @@
             bounds = gmxAPIutils.bounds([mercPoint]);
 
         for (var i = geoItems.length - 1; i >= 0; i--) {
-            var geoItem = geoItems[i].arr,
+            var geoItem = geoItems[i].properties,
                 idr = geoItem[0],
                 dataOption = geoItems[i].dataOption || {},
                 item = gmx.dataManager.getItem(idr),
-                parsedStyleKeys = item.parsedStyleKeys || {},
-                sx = parsedStyleKeys.sx || 0,
-                sy = parsedStyleKeys.sy || 0,
+                currentStyle = item.currentStyle || item.parsedStyleKeys,
+                sx = currentStyle.sx || 0,
+                sy = currentStyle.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
-                lineWidth = parsedStyle.lineWidth || 0,
+                lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || 0,
                 dx = (sx + lineWidth) / mInPixel,
                 dy = (sy + lineWidth) / mInPixel;
 
@@ -605,8 +605,8 @@
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) continue;
 
             var geom = geoItem[geoItem.length - 1],
-                fill = parsedStyle.fill || parsedStyle.bgImage,
-                marker = parsedStyle.marker,
+                fill = currentStyle.fillStyle || parsedStyle.bgImage,
+                marker = parsedStyle.image,
                 type = geom.type,
                 chktype = type,
                 hiddenLines = dataOption.hiddenLines,
@@ -856,7 +856,7 @@
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-            gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); });
+            gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.properties[0]) - Number(b.properties[0]); });
         }
 
         if('MetaProperties' in prop) {

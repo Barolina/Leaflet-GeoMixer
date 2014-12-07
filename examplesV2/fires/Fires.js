@@ -211,8 +211,8 @@ var _hq = {
                 var indexes = fromLayer._gmx.tileAttributeIndexes;
                 var parseItem = function(item) {
                     return {
-                        properties: gmxAPIutils.getPropertiesHash(item.arr, indexes),
-                        geometry: item.arr[item.arr.length - 1]
+                        properties: gmxAPIutils.getPropertiesHash(item.properties, indexes),
+                        geometry: item.properties[item.properties.length - 1]
                     };
                 };
                 (data.added || []).map(function(it) {

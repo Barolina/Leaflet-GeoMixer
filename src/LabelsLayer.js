@@ -27,7 +27,7 @@ L.LabelsLayer = L.Class.extend({
                     style = gmx.styleManager.getObjStyle(item),
                     id = '_' + item.id,
                     options = item.options;
-                if (style.label) {
+                if (style.labelField) {
                     if (!('center' in options)) {
                         var bounds = item.bounds;
                         options.center = item.type === 'POINT' ?
@@ -35,9 +35,9 @@ L.LabelsLayer = L.Class.extend({
                            : [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2]
                         ;
                     }
-                    var txt = gmx.getPropItem(item.properties, style.label.field);
+                    var txt = gmx.getPropItem(item.properties, style.labelField);
                     if (!('label' in options) || options.label.txt !== txt) {
-                        var size = style.label.size || 12;
+                        var size = style.labelFontSize || 12;
                         style.font = size + 'px "Arial"';
                         var width = gmxAPIutils.getLabelWidth(txt, style);
                         if (!width) {
@@ -46,11 +46,8 @@ L.LabelsLayer = L.Class.extend({
                         }
                         options.label = {
                             width: width + 3,
-                            MinZoom: style.MinZoom,
-                            MaxZoom: style.MaxZoom,
                             txt: txt,
-                            style: style.label,
-                            iconRadius: options.size
+                            style: style
                         };
                     }
                     if (options.label.width) {
@@ -210,12 +207,10 @@ L.LabelsLayer = L.Class.extend({
             for (var id in labels) {
                 var it = labels[id],
                     options = it.options,
-                    label = options.label;
-                if (_zoom > label.MaxZoom || _zoom < label.MinZoom) continue;
-                var style = label.style,
+                    label = options.label,
+                    style = label.style,
                     width = label.width,
-                    size = style.size || 12,
-                    //iconRadius = 2*(label.iconRadius || 0),
+                    size = style.labelFontSize || 12,
                     ww = width / this.mInPixel2,
                     hh = size / this.mInPixel2,
                     center = options.center,
@@ -234,11 +229,11 @@ L.LabelsLayer = L.Class.extend({
                 if(isFiltered) continue;
 
                 if (!('labelStyle' in options)) {
-                    var strokeStyle = gmxAPIutils.dec2color(style.haloColor || 0, 1);
+                    var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor || 0, 1);
                     options.labelStyle = {
                         font: size + 'px "Arial"'
                         ,strokeStyle: strokeStyle
-                        ,fillStyle: gmxAPIutils.dec2color(style.color || 0, 1)
+                        ,fillStyle: gmxAPIutils.dec2color(style.labelColor || 0, 1)
                         ,shadowBlur: 4
                         ,shadowColor: strokeStyle
                     };
