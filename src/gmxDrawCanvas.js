@@ -61,21 +61,24 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
 //          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
     var propsArr = geoItem.properties,
         idr = propsArr[0],
-        geom = propsArr[propsArr.length-1],
-        dataOption = geoItem.dataOption,
-        ctx = options.ctx,
         gmx = options.gmx,
-        rasters = options.rasters,
-        tbounds = options.tbounds,
         item = gmx.dataManager.getItem(idr);
 
     if (!item) return;
+    var style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
+    if (!style) return; 
+
+    var geom = propsArr[propsArr.length-1],
+        dataOption = geoItem.dataOption,
+        ctx = options.ctx,
+        rasters = options.rasters,
+        tbounds = options.tbounds;
+
     if (gmx.styleHook && !geoItem.styleExtend) {
         geoItem.styleExtend = gmx.styleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
     }
 
     var geoType = geom.type,
-        style = gmx.styleManager.getObjStyle(item), //call each time because of possible style can depends from item properties
         currentStyle = (gmx.lastHover && gmx.lastHover.id === idr ? item.parsedStyleHover : item.parsedStyleKeys);
 
     item.currentStyle = currentStyle;
