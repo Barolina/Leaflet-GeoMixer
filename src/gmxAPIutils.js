@@ -1203,7 +1203,9 @@ L.gmxUtil = {
     prettifyArea: gmxAPIutils.prettifyArea,
     geoArea: gmxAPIutils.geoArea,
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
-    getGeometrySummary: gmxAPIutils.getGeometrySummary
+    getGeometrySummary: gmxAPIutils.getGeometrySummary,
+    getPropertiesHash: gmxAPIutils.getPropertiesHash,
+    distVincenty: gmxAPIutils.distVincenty
 };
 
 !function() {
