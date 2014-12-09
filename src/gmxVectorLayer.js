@@ -587,7 +587,7 @@
             bounds = gmxAPIutils.bounds([mercPoint]);
 
         for (var i = geoItems.length - 1; i >= 0; i--) {
-            var geoItem = geoItems[i].arr,
+            var geoItem = geoItems[i].properties,
                 idr = geoItem[0],
                 dataOption = geoItems[i].dataOption || {},
                 item = gmx.dataManager.getItem(idr),
@@ -856,7 +856,7 @@
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-            gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.arr[0]) - Number(b.arr[0]); });
+            gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.properties[0]) - Number(b.properties[0]); });
         }
 
         if('MetaProperties' in prop) {

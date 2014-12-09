@@ -42,14 +42,16 @@
 		return this;
 	},
 
-	openPopup: function (latlng) {
+	openPopup: function (latlng, options) {
 
 		if (this._popup) {
 			// open the popup from one of the path's points if not specified
 			latlng = latlng || this._latlng ||
 			         this._latlngs[Math.floor(this._latlngs.length / 2)];
 
-			this._openPopup({latlng: latlng});
+			if (!options) options = {};
+            options.latlng = latlng;
+            this._openPopup(options);
 		}
 
 		return this;
@@ -63,12 +65,12 @@
 		return this;
 	},
 
-	_openPopup: function (e) {
-        var originalEvent = e.originalEvent,
+	_openPopup: function (options) {
+        var originalEvent = options.originalEvent || {},
             skip = originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
-            var gmx = e.gmx,
+            var gmx = options.gmx || {},
                 properties = gmx.properties,
                 spanIDs = {},
                 templateBalloon = this._popup._initContent || gmx.templateBalloon;
@@ -95,7 +97,7 @@
             }
 
             this._popup.setContent(templateBalloon);
-            this._popup.setLatLng(e.latlng);
+            this._popup.setLatLng(options.latlng);
             this._map.openPopup(this._popup);
 
             var arr = this._popup._contentNode.getElementsByTagName("span"),
@@ -109,11 +111,11 @@
             if (this._popupopen) {
                 this._popupopen({
                     popup: this._popup,
-                    latlng: e.latlng,
-                    layerPoint: e.layerPoint,
+                    latlng: options.latlng,
+                    layerPoint: options.layerPoint,
                     contentNode: this._popup._contentNode,
-                    containerPoint: e.containerPoint,
-                    originalEvent: e.originalEvent,
+                    containerPoint: options.containerPoint,
+                    originalEvent: options.originalEvent,
                     gmx: {
                         id: gmx.id,
                         properties: gmx.properties,

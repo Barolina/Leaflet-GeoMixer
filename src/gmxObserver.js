@@ -69,7 +69,7 @@ var gmxObserver = L.Class.extend({
             
             for (var i = 0; i < len; i++) {
                 var it = data[i],
-                    id = it.arr[0];
+                    id = it.properties[0];
 
                 newItems[id] = it;
                 

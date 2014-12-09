@@ -66,7 +66,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
  
     //load missing rasters for one item
     var getItemRasters = function(geo) {
-        var properties = geo.arr,
+        var properties = geo.properties,
             dataOption = geo.dataOption || {},
             idr = properties[0],
             item = gmx.dataManager.getItem(idr),
@@ -332,7 +332,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
                 skipRasters = false;
 
             if (gmx.styleHook) {
-                var idr = geo.arr[0];
+                var idr = geo.properties[0];
                 geo.styleExtend = gmx.styleHook(
                     gmx.dataManager.getItem(idr),
                     gmx.lastHover && idr === gmx.lastHover.id
@@ -341,7 +341,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                var geom = geo.arr[geo.arr.length-1],
+                var geom = geo.properties[geo.properties.length-1],
                     coords = geom.coordinates[0];
                 if (geom.type === 'MULTIPOLYGON') coords = coords[0];
                 var clip = tbounds.clipPolygon(coords);
@@ -461,7 +461,7 @@ var gmxScreenVectorTile = function(layer, tilePoint, zoom) {
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
             var drawItem = function(geoItem) {
-                var arr = geoItem.arr,
+                var arr = geoItem.properties,
                     idr = arr[0],
                     item = gmx.dataManager.getItem(idr);
                 if (!item) return;

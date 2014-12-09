@@ -247,7 +247,7 @@
         return out;
     }
     , 
-    getPatternIcon: function(item, style) {			// получить bitmap стиля pattern
+    getPatternIcon: function(item, style, indexes) {			// получить bitmap стиля pattern
         if (!style.pattern) return null;
 
         var notFunc = true,
@@ -261,7 +261,7 @@
                 ,maxStep: 1000
             };
         if (pattern.patternStepFunction != null && prop != null) {
-            step = pattern.patternStepFunction(prop);
+            step = pattern.patternStepFunction(prop, indexes);
             notFunc = false;
         }
         if (step > patternDefaults.maxStep) {
@@ -273,7 +273,7 @@
         
         var size = (pattern.width > 0 ? pattern.width : 8);		// толщина линий
         if (pattern.patternWidthFunction != null && prop != null) {
-            size = pattern.patternWidthFunction(prop);
+            size = pattern.patternWidthFunction(prop, indexes);
             notFunc = false;
         }
         if (size > patternDefaults.maxWidth) {
@@ -285,7 +285,7 @@
 
         var op = style.fillOpacity;
         if (style.opacityFunction != null && prop != null) {
-            op = style.opacityFunction(prop) / 100;
+            op = style.opacityFunction(prop, indexes) / 100;
             notFunc = false;
         }
         
@@ -296,7 +296,7 @@
         for (var i = 0; i < count; i++) {
             var col = arr[i];
             if(pattern.patternColorsFunction[i] != null) {
-                col =  (prop != null ? pattern.patternColorsFunction[i](prop): rgb[i%3]);
+                col =  (prop != null ? pattern.patternColorsFunction[i](prop, indexes): rgb[i%3]);
                 notFunc = false;
             }
             resColors.push(col);

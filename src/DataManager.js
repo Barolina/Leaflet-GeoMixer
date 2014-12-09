@@ -133,7 +133,7 @@
                     
                     resItems.push({
                         id: id,
-                        arr: it,
+                        properties: it,
                         item: item,
                         dataOption: dataOption
                     });
