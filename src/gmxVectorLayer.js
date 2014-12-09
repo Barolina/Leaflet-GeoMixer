@@ -175,8 +175,7 @@
 
     //public interface
     initFromDescription: function(ph) {
-        var _this = this,
-            gmx = this._gmx,
+        var gmx = this._gmx,
             apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName,
             sk = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.sessionKey = sk;

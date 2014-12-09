@@ -351,7 +351,7 @@
         return out;
     }
 
-    var chkStyleFilter = function(item, tile, observer, geom) {
+    var chkStyleFilter = function(item) {
         var zoom = gmx.currentZoom;
         if (item._lastZoom !== zoom || !('currentFilter' in item)) {
             var fnum = item.currentFilter;
