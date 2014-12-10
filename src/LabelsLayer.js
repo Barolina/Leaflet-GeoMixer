@@ -200,8 +200,7 @@ L.LabelsLayer = L.Class.extend({
 
     _redraw: function () {
         var out = [],
-            _zoom = this._map._zoom;
-        var _map = this._map,
+            _map = this._map,
             size = _map.getSize(),
             _canvas = this._canvas,
             mapTop = _map._getTopLeftPoint(),

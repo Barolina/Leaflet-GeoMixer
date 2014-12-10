@@ -1,5 +1,4 @@
-﻿"use strict";
-var gmxAPIutils = {
+﻿var gmxAPIutils = {
 	lastMapId: 0,
     
 	newId: function()

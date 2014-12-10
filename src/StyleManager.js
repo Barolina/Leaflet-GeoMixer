@@ -41,17 +41,17 @@
         // TIDO: need redraw all visible tiles
     }
 
-    var getType = function(st) {     // type for object
-        var type = '';
-        if (st.iconUrl) {
-            type = 'image';
-            getImageSize(st, true);
-        } else {
-            if (st.fillRadialGradient) type = 'circle';
-            else if (st.iconGeomSize) type = 'square';
-        }
-        return type;
-    }
+    // var getType = function(st) {     // type for object
+        // var type = '';
+        // if (st.iconUrl) {
+            // type = 'image';
+            // getImageSize(st, true);
+        // } else {
+            // if (st.fillRadialGradient) type = 'circle';
+            // else if (st.iconGeomSize) type = 'square';
+        // }
+        // return type;
+    // }
 
     var parseRadialGradient = function(rg) {
         //	x1,y1,r1 — координаты центра и радиус первой окружности;
