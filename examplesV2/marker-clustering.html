@@ -93,7 +93,7 @@
                     markers.clearLayers();
                     var latlngs = [];
                     for (var i = 0, len = data.added.length; i < len; i++) {
-                        var item = data.added[i].arr,
+                        var item = data.added[i].properties,
                             geo = item[item.length - 1],
                             title = item[0],
                             p = geo.coordinates,

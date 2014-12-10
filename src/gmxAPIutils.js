@@ -1,4 +1,5 @@
-﻿var gmxAPIutils = {
+﻿"use strict";
+var gmxAPIutils = {
 	lastMapId: 0,
     
 	newId: function()
@@ -247,11 +248,11 @@
         return out;
     }
     , 
-    getPatternIcon: function(item, style, indexes) {			// получить bitmap стиля pattern
-        if (!style.pattern) return null;
+    getPatternIcon: function(item, style, indexes) { // получить bitmap стиля pattern
+        if (!style.fillPattern) return null;
 
         var notFunc = true,
-            pattern = style.pattern,
+            pattern = style.fillPattern,
             prop = (item ? item.properties : {}),
             step = (pattern.step > 0 ? pattern.step : 0),		// шаг между линиями
             patternDefaults = {					// настройки для pattern стилей
@@ -377,11 +378,11 @@
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
             item = attr.item,
-            parsedStyleKeys = item.parsedStyleKeys,
-            style = attr.style,
+            currentStyle = item.currentStyle || item.parsedStyleKeys || {},
+            style = attr.style || {},
             scale = attr.scale || style.scale,
-            sx = parsedStyleKeys.sx || style.sx || 4,
-            sy = parsedStyleKeys.sy || style.sy || 4,
+            sx = currentStyle.sx || style.sx || 4,
+            sy = currentStyle.sy || style.sy || 4,
             px = attr.tpx,
             py = attr.tpy;
 
@@ -405,80 +406,63 @@
     pointToCanvas: function(attr) {				// Точку в canvas
         var gmx = attr.gmx,
             pointAttr = attr.pointAttr,
-            style = attr.style,
+            style = attr.style || {},
             sx = pointAttr.sx,
             sy = pointAttr.sy,
             px1 = pointAttr.px1,
             py1 = pointAttr.py1;
 
         var item = attr.item,
-            parsedStyleKeys = item.parsedStyleKeys,
+            currentStyle = item.currentStyle || item.parsedStyleKeys,
             px1sx = px1 - sx, py1sy = py1 - sy,
             sx2 = 2 * sx, sy2 = 2 * sy,
             ctx = attr.ctx;
 
-        if(style.marker) {
-            style.rotateRes = parsedStyleKeys.rotate || 0;
-            if(style.image) {
-                if('opacity' in style) ctx.globalAlpha = style.opacity;
-                if(gmx.transformFlag) {
-                    ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
-                    ctx.drawImage(style.image, px1sx, -py1sy, sx2, sy2);
-                    ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
-                } else if(style.rotateRes) {
-                    ctx.translate(px1, py1);
-                    ctx.rotate(gmxAPIutils.deg_rad(style.rotateRes));
-                    ctx.translate(-px1, -py1);
-                    ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
-                    ctx.setTransform(1, 0, 0, 1, 0, 0);
-                } else {
-                    ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
-                }
-                if('opacity' in style) ctx.globalAlpha = 1;
-            }
-        } else if(style.strokeStyle) {
-            ctx.beginPath();
-            if(style.circle) {
-                ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
+        if(style.image) {
+            style.rotateRes = currentStyle.rotate || 0;
+            if('opacity' in style) ctx.globalAlpha = currentStyle.opacity || style.opacity;
+            if(gmx.transformFlag) {
+                ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
+                ctx.drawImage(style.image, px1sx, -py1sy, sx2, sy2);
+                ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
+            } else if(style.rotateRes) {
+                ctx.translate(px1, py1);
+                ctx.rotate(gmxAPIutils.deg_rad(style.rotateRes));
+                ctx.translate(-px1, -py1);
+                ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
             } else {
-                ctx.strokeRect(px1sx, py1sy, sx2, sy2);
+                ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
             }
-            ctx.stroke();
-        }
-        if(style.fill) {
+            if('opacity' in style) ctx.globalAlpha = 1;
+        } else if(style.fillColor || currentStyle.fillRadialGradient) {
             ctx.beginPath();
-            if(style.circle || style.radialGradient) {
-                if(style.radialGradient) {
-                    var indexes = gmx.tileAttributeIndexes,
-                        prop = item.properties;
-                    var rgr = style.radialGradient,
-                        r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
-                        r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
-                        x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
-                        y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
-                        x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
-                        y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
-                    style.circle = r2;
-                    var radgrad = ctx.createRadialGradient(px1+x1, py1+y1, r1, px1+x2, py1+y2,r2);  
-                    for (var i = 0, len = style.radialGradient.addColorStop.length; i < len; i++)
-                    {
-                        var arr = style.radialGradient.addColorStop[i],
-                            arrFunc = style.radialGradient.addColorStopFunctions[i],
-                            p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
-                            p3 = arr.length < 4
-                                ? gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1],
-                                    (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2]))/100)
-                                : arr[3]
-                            ;
-                        radgrad.addColorStop(p0, p3);
+            if(style.type === 'circle' || currentStyle.fillRadialGradient) {
+                var circle = style.iconGeomSize;
+                if(currentStyle.fillRadialGradient) {
+                    var rgr = currentStyle.fillRadialGradient,
+                        radgrad = ctx.createRadialGradient(px1+rgr.x1, py1+rgr.y1, rgr.r1, px1+rgr.x2, py1+rgr.y2, rgr.r2);
+                    for (var i = 0, len = rgr.addColorStop.length; i < len; i++) {
+                        var arr = rgr.addColorStop[i];
+                        radgrad.addColorStop(arr[0], arr[1]);
                     }
                     ctx.fillStyle = radgrad;
+                    circle = rgr.r2;
                 }
-                ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
+                ctx.arc(px1, py1, circle, 0, 2*Math.PI);
             } else {
                 ctx.fillRect(px1sx, py1sy, sx2, sy2);
             }
             ctx.fill();
+        }
+        if(currentStyle.strokeStyle) {
+            ctx.beginPath();
+            if(style.circle) {
+                ctx.arc(px1, py1, style.iconGeomSize, 0, 2*Math.PI);
+            } else {
+                ctx.strokeRect(px1sx, py1sy, sx2, sy2);
+            }
+            ctx.stroke();
         }
     },
     lineToCanvas: function(attr) {  // Lines in canvas
@@ -1026,9 +1010,16 @@
             client: ['fillColor', 'fillOpacity', 'fillImage', 'fillPattern', 'fillRadialGradient', 'fillLinearGradient']
         },
         label: {
-            server: ['field',      'color',      'haloColor',      'size',          'spacing',      'align'],
-            client: ['labelField', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
+            server: ['text',      'field',      'color',      'haloColor',      'size',          'spacing',      'align'],
+            client: ['labelText', 'labelField', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
         }
+    },
+    styleFuncKeys: {
+        'iconGeomSize': 'iconGeomSizeFunction',
+        'iconAngle': 'rotateFunction',
+        'iconScale': 'scaleFunction',
+        'color': 'colorFunction',
+        'fillColor': 'fillColorFunction'
     },
 
     toServerStyle: function(style) {   // Style leaflet->Scanex
@@ -1062,7 +1053,19 @@
                 var keys = gmxAPIutils.styleKeys[key];
                 keys.server.forEach(function(key1, i) {
                     if (key1 in st) {
-                        out[keys.client[i]] = st[key1];
+                        var newKey = keys.client[i],
+                            zn = st[key1];
+                        if (typeof(zn) === 'string') {
+                            if (gmxAPIutils.styleFuncKeys[newKey]) {
+                                if (zn.match(/[^\d\.]/) === null) zn = Number(zn);
+                                else {
+                                    out[gmxAPIutils.styleFuncKeys[newKey]] = gmxParsers.parseExpression(zn);
+                                }
+                            }
+                        } else if (key1 === 'opacity') {
+                            zn /= 100;
+                        }
+                        out[newKey] = zn;
                     }
                 });
             }

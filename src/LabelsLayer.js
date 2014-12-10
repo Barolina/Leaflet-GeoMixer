@@ -24,10 +24,19 @@ L.LabelsLayer = L.Class.extend({
                 labels = {};
             for (var i = 0, len = added.length; i < len; i++) {
                 var item = added[i].item,
-                    style = gmx.styleManager.getObjStyle(item),
+                    currentStyle = item.currentStyle || item.parsedStyleKeys || {};
+
+                if (gmx.styleHook) {
+                    currentStyle = gmx.styleManager.applyStyleHook(item, gmx.lastHover && item.id === gmx.lastHover.id);
+                }
+                var style = gmx.styleManager.getObjStyle(item),
+                    labelText = currentStyle.labelText || style.labelText,
+                    labelField = currentStyle.labelField || style.labelField,
+                    fontSize = currentStyle.labelFontSize || style.labelFontSize,
                     id = '_' + item.id,
                     options = item.options;
-                if (style.label) {
+
+                if (labelText || labelField) {
                     if (!('center' in options)) {
                         var bounds = item.bounds;
                         options.center = item.type === 'POINT' ?
@@ -35,22 +44,23 @@ L.LabelsLayer = L.Class.extend({
                            : [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2]
                         ;
                     }
-                    var txt = gmx.getPropItem(item.properties, style.label.field);
+                    var txt = labelText || gmx.getPropItem(item.properties, labelField);
                     if (!('label' in options) || options.label.txt !== txt) {
-                        var size = style.label.size || 12;
-                        style.font = size + 'px "Arial"';
-                        var width = gmxAPIutils.getLabelWidth(txt, style);
+                        var size = fontSize || 12,
+                            width = gmxAPIutils.getLabelWidth(txt, style);
                         if (!width) {
                             delete labels[id];
                             continue;
                         }
                         options.label = {
                             width: width + 3,
-                            MinZoom: style.MinZoom,
-                            MaxZoom: style.MaxZoom,
                             txt: txt,
-                            style: style.label,
-                            iconRadius: options.size
+                            style: {
+                                font: size + 'px "Arial"',
+                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor,
+                                labelColor: currentStyle.labelColor || style.labelColor,
+                                labelFontSize: fontSize
+                            }
                         };
                     }
                     if (options.label.width) {
@@ -63,17 +73,20 @@ L.LabelsLayer = L.Class.extend({
 
         var addObserver = function (layer) {
             var gmx = layer._gmx,
-                dataManager = gmx.dataManager;
-            var observer = dataManager.addObserver({
-                type: 'resend',
-                bbox: _this.bbox,
-                filters: ['styleFilter', 'userFilter'],
-                callback: function(data) {
-                    chkData(data, layer);
-                    _this.redraw();
-                }
-            }, '_Labels');
-            return observer;
+                filters = ['styleFilter', 'userFilter'],
+                options = {
+                    type: 'resend',
+                    bbox: _this.bbox,
+                    filters: filters,
+                    callback: function(data) {
+                        chkData(data, layer);
+                        _this.redraw();
+                    }
+                };
+            if (gmx.beginDate && gmx.endDate) {
+                options.dateInterval = [gmx.beginDate, gmx.endDate];
+            }
+            return gmx.dataManager.addObserver(options, '_Labels');
         }
         this._layeradd = function (ev) {
             var layer = ev.layer,
@@ -84,7 +97,6 @@ L.LabelsLayer = L.Class.extend({
                 _this._observers[id] = observer;
                 _this._labels['_' + id] = {};
                 _this.redraw();
-                layer.on('doneDraw', _this.redraw, _this);
 
             }
         }
@@ -98,7 +110,6 @@ L.LabelsLayer = L.Class.extend({
                 delete _this._observers[id];
                 delete _this._labels['_' + id];
                 _this._reset();
-                ev.layer.off('doneDraw', _this.redraw, _this);
             }
         }
     },
@@ -181,41 +192,36 @@ L.LabelsLayer = L.Class.extend({
     },
 
     _reset: function () {
+        this._updateBbox();
+        for (var id in this._observers) {
+            this._observers[id].fire('update');
+        }
+    },
+
+    _redraw: function () {
+        var out = [],
+            _zoom = this._map._zoom;
         var _map = this._map,
             size = _map.getSize(),
             _canvas = this._canvas,
             mapTop = _map._getTopLeftPoint(),
             topLeft = _map.containerPointToLayerPoint([0, mapTop.y < 0 ? -mapTop.y : 0]);
 
-        L.DomUtil.setPosition(_canvas, topLeft);
         _canvas.width = size.x; _canvas.height = size.y;
-
-        this._updateBbox();
+        L.DomUtil.setPosition(_canvas, topLeft);
 
         var ctx = _canvas.getContext('2d');
         ctx.translate(this._ctxShift[0], this._ctxShift[1]);
-
-        for (var id in this._observers) {
-            this._observers[id].fire('update');
-        }
-        this.redraw();
-    },
-
-    _redraw: function () {
-        var out = [],
-            _zoom = this._map._zoom;
 
         for (var layerId in this._labels) {
             var labels = this._labels[layerId];
             for (var id in labels) {
                 var it = labels[id],
                     options = it.options,
-                    label = options.label;
-                if (_zoom > label.MaxZoom || _zoom < label.MinZoom) continue;
-                var style = label.style,
+                    label = options.label,
+                    style = label.style,
                     width = label.width,
-                    size = style.size || 12,
-                    //iconRadius = 2*(label.iconRadius || 0),
+                    size = style.labelFontSize || 12,
                     ww = width / this.mInPixel2,
                     hh = size / this.mInPixel2,
                     center = options.center,
@@ -234,11 +240,11 @@ L.LabelsLayer = L.Class.extend({
                 if(isFiltered) continue;
 
                 if (!('labelStyle' in options)) {
-                    var strokeStyle = gmxAPIutils.dec2color(style.haloColor || 0, 1);
+                    var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor || 0, 1);
                     options.labelStyle = {
                         font: size + 'px "Arial"'
                         ,strokeStyle: strokeStyle
-                        ,fillStyle: gmxAPIutils.dec2color(style.color || 0, 1)
+                        ,fillStyle: gmxAPIutils.dec2color(style.labelColor || 0, 1)
                         ,shadowBlur: 4
                         ,shadowColor: strokeStyle
                     };
@@ -275,7 +281,10 @@ L.LabelsLayer = L.Class.extend({
 
     _animateZoom: function (e) {
         var scale = this._map.getZoomScale(e.zoom),
-            offset = this._map._getCenterOffset(e.center)._multiplyBy(-scale).subtract(this._map._getMapPanePos());
+            pixelBoundsMin = this._map.getPixelBounds().min;
+
+        var offset = this._map._getCenterOffset(e.center)._multiplyBy(-scale).subtract(this._map._getMapPanePos());
+        if (pixelBoundsMin.y < 0) offset.y += pixelBoundsMin.multiplyBy(-scale).y;
 
         this._canvas.style[L.DomUtil.TRANSFORM] = L.DomUtil.getTranslateString(offset) + ' scale(' + scale + ')';
     }

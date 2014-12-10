@@ -239,10 +239,13 @@
         
         //gmx.dataManager.setDateInterval(beginDate, endDate);
         
+        var observer = null;
         for (var key in gmx.tileSubscriptions) {
-            var observer = gmx.dataManager.getObserver(key);
+            observer = gmx.dataManager.getObserver(key);
             observer.setDateInterval(beginDate, endDate);
         }
+        observer = gmx.dataManager.getObserver('_Labels');
+        if (observer) observer.setDateInterval(beginDate, endDate);
         
         this.repaint();
         return this;
@@ -590,11 +593,11 @@
                 idr = geoItem[0],
                 dataOption = geoItems[i].dataOption || {},
                 item = gmx.dataManager.getItem(idr),
-                parsedStyleKeys = item.parsedStyleKeys || {},
-                sx = parsedStyleKeys.sx || 0,
-                sy = parsedStyleKeys.sy || 0,
+                currentStyle = item.currentStyle || item.parsedStyleKeys,
+                sx = currentStyle.sx || 0,
+                sy = currentStyle.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
-                lineWidth = parsedStyle.lineWidth || 0,
+                lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || 0,
                 dx = (sx + lineWidth) / mInPixel,
                 dy = (sy + lineWidth) / mInPixel;
 
@@ -604,8 +607,8 @@
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) continue;
 
             var geom = geoItem[geoItem.length - 1],
-                fill = parsedStyle.fill || parsedStyle.bgImage,
-                marker = parsedStyle.marker,
+                fill = currentStyle.fillStyle || parsedStyle.bgImage,
+                marker = parsedStyle.image,
                 type = geom.type,
                 chktype = type,
                 hiddenLines = dataOption.hiddenLines,

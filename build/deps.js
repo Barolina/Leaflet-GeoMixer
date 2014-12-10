@@ -11,6 +11,7 @@
     "gmxObserver.js",
     "LabelsLayer.js",
     "gmxAPIutils.js",
+    "gmxDrawCanvas.js", 
     "gmxImageTransform.js",
     "SessionManager.js",
     "MapManager.js",

@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+        #map {
+            height: 40%;
+            width: 100%;
+            margin: 0px;
+        }
+        #infoPanel {
+            position: absolute;
+			left: 0px;
+			right: 0px;
+			top: 21px;
+            text-align: center;
+			z-index: 1;
+        }
+        
+        #info {
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            padding: 10px;
+        }
+        #result {
+            color: white;
+			border: 2px;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            padding: 3px;
+        }
+    </style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+</head>
+<body>
+
+	<div id="map"></div>
+	<div id="result"></div>
+
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxCenter.css" />
+	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxCenter.js"></script>
+
+	<script>
+		var map = L.map('map').setView([55.726456, 37.760009], 1);
+
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+
+        map.addControl(L.control.gmxCenter({color: 'black'}));// default options = {color: '#216b9c'}
+
+        var canvas = document.createElement('canvas');
+        canvas.width = 200, canvas.height = 500;
+        var bbox = gmxAPIutils.getTileBounds(27, 46, 8);
+        L.gmx.loadLayers([
+            {mapID: '6VYUE', layerID: 'D9E2627441D844168F2DF44E749D9453'}
+        ]).then(function(testLayer) {
+            var gmx = testLayer._gmx;
+            gmx.styleManager.initStyles();
+            var observer = testLayer.addObserver({
+                bbox: bbox,
+                callback: function(data) {
+                    if (data.added) {
+                        var len = data.added.length;
+                        console.log('observer', data);
+                        gmx.currentZoom = 8;
+                        gmx.tileSize = gmxAPIutils.tileSizes[gmx.currentZoom];
+                        gmx.mInPixel = 256 / gmx.tileSize;
+
+                        var ctx = canvas.getContext('2d'),
+                            dattr = {
+                                tbounds: bbox,
+                                rasters: {},
+                                gmx: gmx,
+                                tpx: 256 * 27,
+                                tpy: 256 *(1 + 46),
+                                ctx: ctx
+                            };
+                        ctx.clearRect(0, 0, 200, 500);
+                        for (var i = 0; i < len; i++) {
+                            L.gmxUtil.drawGeoItem(data.added[i], dattr);
+                        }
+                    }
+                }
+              });
+
+            //testLayer.addTo(map);
+
+            document.getElementById("result").appendChild(canvas);
+            
+            L.control.layers({
+                OSM: osm
+            }, {
+                testLayer: testLayer
+           }, {collapsed: false}).addTo(map);
+        })
+	</script>
+</body>
+</html>
