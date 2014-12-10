@@ -129,7 +129,7 @@ L.extend(gmxClusters.prototype, {
                     clusterNum++;
                     pt.id = 'cl_' + clusterNum;
                     pt.subType = 'cluster';
-                    var from = pt.propHiden._members[0].arr,
+                    var from = pt.propHiden._members[0].properties,
                         len = from.length,
                         arr = new Array(len);
                     arr[0] = pt.id;
@@ -137,7 +137,7 @@ L.extend(gmxClusters.prototype, {
                         type: 'POINT',
                         coordinates: [pt.x, pt.y]
                     };
-                    pt.arr = arr;
+                    pt.properties = arr;
                     pt.dataOption = {
                         boundsArr: [],
                         bounds: L.gmxUtil.bounds([[pt.x, pt.y]])

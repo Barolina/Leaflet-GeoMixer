@@ -420,7 +420,7 @@ var gmxAPIutils = {
 
         if(style.image) {
             style.rotateRes = currentStyle.rotate || 0;
-            if('opacity' in style) ctx.globalAlpha = style.opacity;
+            if('opacity' in style) ctx.globalAlpha = currentStyle.opacity || style.opacity;
             if(gmx.transformFlag) {
                 ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
                 ctx.drawImage(style.image, px1sx, -py1sy, sx2, sy2);
@@ -435,50 +435,34 @@ var gmxAPIutils = {
                 ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
             }
             if('opacity' in style) ctx.globalAlpha = 1;
-        } else if(style.strokeStyle) {
+        } else if(style.fillColor || currentStyle.fillRadialGradient) {
             ctx.beginPath();
-            if(style.circle) {
-                ctx.arc(px1, py1, style.circle, 0, 2*Math.PI);
-            } else {
-                ctx.strokeRect(px1sx, py1sy, sx2, sy2);
-            }
-            ctx.stroke();
-        }
-        if(style.fillColor || style.fillRadialGradient) {
-            ctx.beginPath();
-            if(style.type === 'circle' || style.fillRadialGradient) {
-                if(style.fillRadialGradient) {
-                    var circle = style.iconGeomSize,
-                        indexes = gmx.tileAttributeIndexes,
-                        prop = item.properties;
-                    var rgr = style.fillRadialGradient,
-                        r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
-                        r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
-                        x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
-                        y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
-                        x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
-                        y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
-                    circle = r2;
-                    var radgrad = ctx.createRadialGradient(px1+x1, py1+y1, r1, px1+x2, py1+y2,r2);  
-                    for (var i = 0, len = rgr.addColorStop.length; i < len; i++)
-                    {
-                        var arr = rgr.addColorStop[i],
-                            arrFunc = rgr.addColorStopFunctions[i],
-                            p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
-                            p3 = arr.length < 4
-                                ? gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1],
-                                    (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2]))/100)
-                                : arr[3]
-                            ;
-                        radgrad.addColorStop(p0, p3);
+            if(style.type === 'circle' || currentStyle.fillRadialGradient) {
+                var circle = style.iconGeomSize;
+                if(currentStyle.fillRadialGradient) {
+                    var rgr = currentStyle.fillRadialGradient,
+                        radgrad = ctx.createRadialGradient(px1+rgr.x1, py1+rgr.y1, rgr.r1, px1+rgr.x2, py1+rgr.y2, rgr.r2);
+                    for (var i = 0, len = rgr.addColorStop.length; i < len; i++) {
+                        var arr = rgr.addColorStop[i];
+                        radgrad.addColorStop(arr[0], arr[1]);
                     }
                     ctx.fillStyle = radgrad;
+                    circle = rgr.r2;
                 }
                 ctx.arc(px1, py1, circle, 0, 2*Math.PI);
             } else {
                 ctx.fillRect(px1sx, py1sy, sx2, sy2);
             }
             ctx.fill();
+        }
+        if(currentStyle.strokeStyle) {
+            ctx.beginPath();
+            if(style.circle) {
+                ctx.arc(px1, py1, style.iconGeomSize, 0, 2*Math.PI);
+            } else {
+                ctx.strokeRect(px1sx, py1sy, sx2, sy2);
+            }
+            ctx.stroke();
         }
     },
     lineToCanvas: function(attr) {  // Lines in canvas
@@ -1026,8 +1010,8 @@ var gmxAPIutils = {
             client: ['fillColor', 'fillOpacity', 'fillImage', 'fillPattern', 'fillRadialGradient', 'fillLinearGradient']
         },
         label: {
-            server: ['field',      'color',      'haloColor',      'size',          'spacing',      'align'],
-            client: ['labelField', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
+            server: ['text',      'field',      'color',      'haloColor',      'size',          'spacing',      'align'],
+            client: ['labelText', 'labelField', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
         }
     },
     styleFuncKeys: {
@@ -1222,7 +1206,9 @@ L.gmxUtil = {
     prettifyArea: gmxAPIutils.prettifyArea,
     geoArea: gmxAPIutils.geoArea,
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
-    getGeometrySummary: gmxAPIutils.getGeometrySummary
+    getGeometrySummary: gmxAPIutils.getGeometrySummary,
+    getPropertiesHash: gmxAPIutils.getPropertiesHash,
+    distVincenty: gmxAPIutils.distVincenty
 };
 
 !function() {

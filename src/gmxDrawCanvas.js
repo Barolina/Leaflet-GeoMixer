@@ -25,8 +25,8 @@ var setCanvasStyle = function(item, ctx, style) {
 
     if(currentStyle.canvasPattern) {
         ctx.fillStyle = ctx.createPattern(currentStyle.canvasPattern.canvas, "repeat");
-    } else if(style.fillLinearGradient) {
-        var rgr = style.fillLinearGradient,
+    } else if(currentStyle.fillLinearGradient) {
+        var rgr = currentStyle.fillLinearGradient,
             x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1,
             y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1,
             x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2,
@@ -74,14 +74,14 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
         rasters = options.rasters,
         tbounds = options.tbounds;
 
-    if (gmx.styleHook && !geoItem.styleExtend) {
-        geoItem.styleExtend = gmx.styleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
-    }
-
     var geoType = geom.type,
         currentStyle = (gmx.lastHover && gmx.lastHover.id === idr ? item.parsedStyleHover : item.parsedStyleKeys);
 
-    item.currentStyle = currentStyle;
+    if (gmx.styleHook && !geoItem.styleExtend) {
+        geoItem.styleExtend = gmx.styleManager.applyStyleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
+    }
+
+    item.currentStyle = geoItem.styleExtend || currentStyle;
     setCanvasStyle(item, ctx, style);
 
     var dattr = {

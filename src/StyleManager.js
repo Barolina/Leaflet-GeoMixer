@@ -16,7 +16,6 @@
         for (var i = 0; i < len; i++) {
             var gmxStyle = gmx.styles[i] || arr[i];
             if (!gmxStyle.RenderStyle) gmxStyle.RenderStyle = DEFAULT_STYLE;
-            
             if (gmxStyle.HoverStyle === undefined && gmxStyle.RenderStyle) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
                 if (hoveredStyle.marker && hoveredStyle.marker.size) hoveredStyle.marker.size += 1;
@@ -26,7 +25,6 @@
             } else if (gmxStyle.HoverStyle === null) {
                 delete gmxStyle.HoverStyle;
             }
-
             var pt = parseItem(gmxStyle);
             if (!balloonEnable && pt.BalloonEnable) balloonEnable = true;
             styles.push(pt);
@@ -245,6 +243,39 @@
                 }
                 out.rotate = rotateRes || 0;
             }
+        } else if(pt.fillPattern) {
+            out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt, indexes));
+        } else if(pt.fillRadialGradient) {
+            var rgr = pt.fillRadialGradient,
+                r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
+                r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
+                x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
+                y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
+                x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
+                y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
+            var colorStop = [],
+                len = rgr.addColorStop.length;
+            if (!rgr.addColorStopFunctions) rgr.addColorStopFunctions = new Array(len);
+            for (var i = 0; i < len; i++) {
+                var arr = rgr.addColorStop[i],
+                    arrFunc = rgr.addColorStopFunctions[i] || [],
+                    p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
+                    p3 = arr.length < 4
+                        ? gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1],
+                            (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2]))/100)
+                        : arr[3]
+                    ;
+                colorStop.push([p0, p3]);
+            }
+            out.sx = out.sy = out.iconGeomSize = r2;
+            out.fillRadialGradient = {
+                x1:x1, y1:y1, r1:r1, x2:x2, y2:y2, r2:r2,
+                addColorStop: colorStop
+            };
+            out._radialGradientParsed = {
+                create: [x1, y1, r1, x2, y2, r2]
+                ,colorStop: colorStop
+            };
         } else {
             if(itemType === 'POLYGON' || itemType === 'MULTIPOLYGON') {
                 type = 'polygon';
@@ -267,35 +298,6 @@
             out.scale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
         }
 
-        if(pt.fillPattern) {
-            out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt, indexes));
-        } else if(pt.fillRadialGradient) {
-            var rgr = pt.fillRadialGradient,
-                r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
-                r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
-                x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
-                y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
-                x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
-                y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
-            var colorStop = [];
-            for (var i = 0, len = rgr.addColorStop.length; i < len; i++) {
-                var arr = rgr.addColorStop[i],
-                    arrFunc = rgr.addColorStopFunctions[i],
-                    p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
-                    p3 = arr.length < 4
-                        ? gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1],
-                            (arr.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2]))/100)
-                        : arr[3]
-                    ;
-                colorStop.push([p0, p3]);
-            }
-            out.sx = out.sy = out.size = r2;
-            out._radialGradientParsed = {
-                create: [x1, y1, r1, x2, y2, r2]
-                ,colorStop: colorStop
-            };
-        }
-
         if(type === 'polygon') {
             out.type = type;
             out.fillStyle = pt.fillColor;
@@ -308,6 +310,11 @@
             }
         }
 
+        gmxAPIutils.styleKeys.label.client.forEach(function(it) {
+            if(it in pt) {
+                out[it] = pt[it];
+            }
+        });
         //item.parsedStyleKeys = out;
         return out;
     }
@@ -350,6 +357,11 @@
         var item = gmx.dataManager.getItem(id),
             style = styles[item.currentFilter];
         return style ? style.Balloon : null;
+    }
+
+    // apply styleHook func
+    this.applyStyleHook = function(item, hoverFlag) {
+        return itemStyleParser(item, gmx.styleHook(item, hoverFlag));
     }
     
     // только для item прошедших через chkStyleFilter

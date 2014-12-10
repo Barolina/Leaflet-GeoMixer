@@ -175,8 +175,7 @@
 
     //public interface
     initFromDescription: function(ph) {
-        var _this = this,
-            gmx = this._gmx,
+        var gmx = this._gmx,
             apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName,
             sk = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.sessionKey = sk;
@@ -240,10 +239,13 @@
         
         //gmx.dataManager.setDateInterval(beginDate, endDate);
         
+        var observer = null;
         for (var key in gmx.tileSubscriptions) {
-            var observer = gmx.dataManager.getObserver(key);
+            observer = gmx.dataManager.getObserver(key);
             observer.setDateInterval(beginDate, endDate);
         }
+        observer = gmx.dataManager.getObserver('_Labels');
+        if (observer) observer.setDateInterval(beginDate, endDate);
         
         this.repaint();
         return this;
