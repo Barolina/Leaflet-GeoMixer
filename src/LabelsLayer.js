@@ -109,7 +109,7 @@ L.LabelsLayer = L.Class.extend({
                 dataManager.removeObserver(_this._observers[id].id);
                 delete _this._observers[id];
                 delete _this._labels['_' + id];
-                _this._reset();
+                _this.redraw();
             }
         }
     },
