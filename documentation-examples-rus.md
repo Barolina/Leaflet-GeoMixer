@@ -4,7 +4,7 @@
 
 Пример|Описание|Примечание
 ------|---------|-----------
-[GeoMixerMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html)| Загрузка карты с сервера ГеоМиксера| Загружаются все видимые слои заданной карты
+[GeoMixerMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html)| Загрузка карты с сервера GeoMixer-а| Загружаются все видимые слои заданной карты
 [satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)| Загрузка базовой подложки - снимки|
 [GMXLayerLeaflet.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html)| Загрузка слоя с сервера ГеоМиксера. Демонстрируется работа с мультивременным слоем.
 [Animation.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html)| Предварительная загрузка данных слоя точек пожаров - показ точек за любой день при помощи ползунка.
@@ -26,7 +26,7 @@
 [Landsat8.html](http://scanex.github.io/Leaflet.imageTransform/examples/Landsat8.html)| Снимки Landsat|
 [Editing.html](http://scanex.github.io/Leaflet.imageTransform/examples/Editing.html)| Перепривязка снимка|
 
-##Плагины [контролов](https://github.com/ScanEx/gmxControls) ГеоМиксера
+##Плагины [контролов](https://github.com/ScanEx/gmxControls) GeoMixer-а
 Пользователь сам выбирает набор необходимых ему контролов.
 
 Пример|Описание|Примечание
@@ -40,7 +40,7 @@
 [L.Control.gmxIconGroup.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxIconGroup.html)| Контрол группы иконок|
 [L.Control.boxZoom.html](http://scanex.github.io/gmxControls/examples/L.Control.boxZoom.html)| BoxZoom контрол|
 [L.Control.gmxHide.html](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Контрол видимости верхних контролов|
-[ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов ГеоМиксера| 
+[ScanexControls.html](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов GeoMixer-а| 
 
 ##Плагин [L.GmxDrawing.js](https://github.com/ScanEx/gmxDrawing)
 
