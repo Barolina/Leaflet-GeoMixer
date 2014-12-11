@@ -100,7 +100,7 @@ leafletMap| Карта Leaflet для добавления к ней всех с
 setFilter|`setFilter(function(item): Boolean)`|`this`| Установить ф-цию для фильтрации объектов перед рендерингом. Единственный аргумент - ф-ция, которая принимает объект из слоя и возвращает булево значение (`false` - отфильтровать)
 removeFilter|`removeFilter()`||Удалить ф-цию фильтрации объектов перед рендерингом.
 setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Задаёт временной интервал для мультиврменных слоёв. Только объекты из этого интервала будут загружены и показаны на карте. `beginDate` и `endDate` имеют тип `Date`.
-addTo|`addTo(map)`|`this`|Добавить слой на карту. Аргемент `map` имеет тип `L.Map`.
+addTo|`addTo(map)`|`this`|Добавить слой на карту. Аргумент `map` имеет тип `L.Map`.
 bindPopup|`bindPopup(html <String> `&#124;` el <HTMLElement> `&#124;` popup <Popup>, options <Popup options>? )`|`this`|Связывает всплывающее окно с векторным слоем по `click` на объекте слоя.
 repaint|`repaint()`||Перерисовать слой.
 setImageProcessingHook|`setImageProcessingHook( function(image, options): Canvas|Deferred)`||Установка функции предобработки растров объектов слоя.  Единственный аргумент - ф-ция, которая принимает растр объекта(image) и описание этого растра (). Возвращает: `Canvas` - объект замещающий исходный растр, `null` - не показывать растр. Может возвращать `Deferred` при асинхронном режиме.
