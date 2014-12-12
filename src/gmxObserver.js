@@ -8,7 +8,7 @@ var gmxObserver = L.Class.extend({
             callback: Func,              // will be called when layer's data for this observer is changed
             dateInterval: [dateBegin,dateEnd], // temporal interval
             bbox: bbox,                  // bbox to observe
-            filter: Func                 // user filter
+            filters: [String]            // filter keys array
         }
     */    
     initialize: function(options) {
@@ -25,8 +25,6 @@ var gmxObserver = L.Class.extend({
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
             this.world = true;
         }
-
-        //this._filters = options.filter ? {userFilter: func} : {};
         
         if (options.dateInterval) {
             this._setDateInterval(options.dateInterval[0], options.dateInterval[1]);

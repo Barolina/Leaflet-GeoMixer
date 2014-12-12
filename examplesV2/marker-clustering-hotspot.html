@@ -83,6 +83,7 @@
 		var markers = new L.MarkerClusterGroup();
 		map.addLayer(markers);
 
+		var items = {};
         L.gmx.loadLayers([
             {mapID: 'AZR6A', layerID: 'C13B4D9706F7491EBC6DC70DFFA988C0'}
         ]).then(function(hotspotLayer) {
@@ -90,19 +91,31 @@
             var observer = hotspotLayer.addObserver({
                 dateInterval: [ddt1, ddt2],
                 callback: function(data) {
+console.log('data', data);
                     markers.clearLayers();
-                    var latlngs = [];
+                    var arr = [];
                     for (var i = 0, len = data.added.length; i < len; i++) {
-                        var item = data.added[i].properties,
-                            geo = item[item.length - 1],
-                            title = item[0],
-                            p = geo.coordinates,
-                            latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]});
-                        var marker = new L.Marker(latlng, { title: title });
-                        marker.bindPopup(title);
-                        markers.addLayer(marker);
+                        var vectorTileItem = data.added[i],
+                            id = vectorTileItem.id,
+                            marker = items[id];
+                        if (!marker) {
+                            var item = vectorTileItem.properties,
+                                geo = item[item.length - 1],
+                                title = item[0],
+                                parsedStyle = vectorTileItem.item.parsedStyleKeys,
+                                p = geo.coordinates,
+                                latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]});
+                            marker = new L.Marker(latlng, {
+                                icon: L.icon({
+                                    iconUrl: parsedStyle.iconUrl
+                                })
+                            });
+                        }
+                        arr.push(marker);
                     }
+                    markers.addLayers(arr);
                 }
+                ,filters: ['styleFilter']
                 ,type: 'resend'
               });
             var updateBbox = function() {

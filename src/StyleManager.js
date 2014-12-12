@@ -235,6 +235,7 @@
         out.sy = pt.sy;
         if(type === 'image') {
             out.type = pt.type;
+            if (pt.iconUrl) out.iconUrl = pt.iconUrl;
             if (pt.image) out.image = pt.image;
             if (pt.iconAngle) {
                 var rotateRes = pt.iconAngle || 0;
@@ -305,7 +306,7 @@
                 color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : pt.fillColor || 255);
                 opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes)/100 : pt.fillOpacity || 1);
                 out.fillStyle = gmxAPIutils.dec2color(color, opacity);
-            } else if (pt.fillOpacity) {
+            } else if ('fillOpacity' in pt) {
                 out.fillStyle = gmxAPIutils.dec2color(pt.fillColor, pt.fillOpacity);
             }
         }

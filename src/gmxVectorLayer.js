@@ -252,6 +252,14 @@
     },
 
     addObserver: function (options) {
+        if (options.filters) {
+            for (var i = 0, len = options.filters.length; i < len; i++) {
+                if (options.filters[i] === 'styleFilter') {
+                    this._gmx.styleManager.initStyles();
+                    break;
+                }
+            }
+        }
         return this._gmx.dataManager.addObserver(options);
     },
 
@@ -741,7 +749,7 @@
                             targets: geoItems
                             ,target: target
                             ,templateBalloon: gmx.styleManager.getItemBalloon(target.id)
-                            ,properties: gmxAPIutils.getPropertiesHash(target.properties, gmx.tileAttributeIndexes)
+                            ,properties: layer.getItemProperties(target.properties)
                             ,id: target.id
                         };
                         if (this.hasEventListeners(type)) this.fire(type, ev);
@@ -936,5 +944,14 @@
             this.repaint();
         }
         return this;
-	}
+    },
+
+    getItemProperties: function(propArray) {
+        var properties = {},
+            indexes = this._gmx.tileAttributeIndexes;
+        for (var key in indexes) {
+            properties[key] = propArray[indexes[key]];
+        }
+        return properties;
+    }
 });
