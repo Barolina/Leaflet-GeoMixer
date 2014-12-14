@@ -91,7 +91,6 @@
             var observer = hotspotLayer.addObserver({
                 dateInterval: [ddt1, ddt2],
                 callback: function(data) {
-console.log('data', data);
                     markers.clearLayers();
                     var arr = [];
                     for (var i = 0, len = data.added.length; i < len; i++) {
