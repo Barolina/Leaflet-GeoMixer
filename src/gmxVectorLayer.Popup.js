@@ -72,8 +72,7 @@
         if (!skip) {
             var gmx = options.gmx || {},
                 properties = gmx.properties,
-                summary = '',
-                spanIDs = {},
+                //spanIDs = {},
                 templateBalloon = this._popup._initContent || gmx.templateBalloon,
                 outItem = {
                     id: gmx.id,
