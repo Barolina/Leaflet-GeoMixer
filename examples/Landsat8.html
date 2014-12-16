@@ -27,6 +27,15 @@
         .leaflet-popup-content {
             word-wrap: break-word;
         }
+        .button-active {
+            background: #BBB;
+        }
+        
+        button {
+            border: 1px solid gray;
+            border-radius: 1px;
+            background: #EEE;
+        }
     </style>
 
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
@@ -35,14 +44,20 @@
 	<div id="map"></div>
     <div id="infoPanel">
         <span id="info">
-                Displays visible layers from a <a href="http://maps.kosmosnimki.ru/api/index.html?H2DUP" target="_blank">GeoMixer map</a>: historical places and border of Moscow region
+            Landsat 8 imagery. Select date interval:
+            <button data-begin="2014/11/17" data-end="2014/11/23" class="button-active">Nov 17-23</button>
+            <button data-begin="2014/11/24" data-end="2014/11/30">Nov 24-30</button>
+            <button data-begin="2014/12/1"  data-end="2014/12/7">Dec 1-7</button>
         </span>
     </div>
 
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
-	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+    
+	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	
+    <script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
 	<script>
-		var map = L.map('map').setView([55.73, 37.59], 8);
+		var map = L.map('map').setView([60.22, 119.47], 8);
 
 		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
@@ -50,7 +65,15 @@
 		}).addTo(map);
 
         //Load all the layers from GeoMixer map and add them to Leaflet map
-        L.gmx.loadMap('H2DUP', {leafletMap: map});
+        L.gmx.loadLayer('BCE33233D65F4BEB94DDFE7604AB4CCE', '04DDB23F49F84B9A9122CBA6BC26D3ED').then(function(landsat8) {
+            //console.log(landsat8);
+            landsat8.setDateInterval(new Date('2014/11/17'), new Date('2014/11/23')).addTo(map);
+        
+            $('#info > button').click(function() {
+                landsat8.setDateInterval(new Date($(this).data('begin')), new Date($(this).data('end')));
+                $(this).addClass('button-active').siblings().removeClass('button-active');
+            })
+        });
 	</script>
 </body>
 </html>
