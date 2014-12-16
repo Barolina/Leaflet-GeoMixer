@@ -2,31 +2,31 @@
     bindPopup: function (content, options) {
 
         if (this._popup) this.unbindPopup();
-		if (content instanceof L.Popup) {
-			this._popup = content;
-		} else {
-			if (!this._popup || options) {
-				this._popup = new L.Popup(options, this);
-			}
-			this._popup._initContent = content;
-			this._popup.setContent(content);
-		}
+        if (content instanceof L.Popup) {
+            this._popup = content;
+        } else {
+            if (!this._popup || options) {
+                this._popup = new L.Popup(options);
+            }
+            this._popup.setContent(content);
+        }
+        this._popup._initContent = content;
 
-		if (!this._popupHandlersAdded) {
-			this
-			    .on('click', this._openPopup, this)
-			    .on('remove', this.closePopup, this);
+        if (!this._popupHandlersAdded) {
+            this
+                .on('click', this._openPopup, this)
+                .on('remove', this.closePopup, this);
 
-			this._popupHandlersAdded = true;
-		}
-		if (options && options.popupopen) {
+            this._popupHandlersAdded = true;
+        }
+        if (options && options.popupopen) {
             this._popupopen = options.popupopen;
-		}
+        }
 
         this._popup.updateLayout = this._popup._updateLayout;
 
-		return this;
-	},
+        return this;
+    },
 
 	unbindPopup: function () {
 		if (this._popup) {
@@ -72,59 +72,51 @@
         if (!skip) {
             var gmx = options.gmx || {},
                 properties = gmx.properties,
+                summary = '',
                 spanIDs = {},
-                templateBalloon = this._popup._initContent || gmx.templateBalloon;
-            if (!templateBalloon) {
-                templateBalloon = '';
-                for (var key in properties) {
-                    templateBalloon += '<b>' + key + ':</b> [' +  key + ']<br />';
-                }
-            }
-            var reg = /\[([^\]]+)\]/i;
-            var matches = reg.exec(templateBalloon);
-            while(matches && matches.length > 1) {
-                var key = matches[1],
-                    res = key in properties ? properties[key] : '';
-                if (key === 'SUMMARY' && !res) {
-                    var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
-                    res = L.gmxUtil.getGeometriesSummary(geometries, this._gmx.units);
-                }
-                var hookID = gmxAPIutils.newId(),
-                    st = "<span id='" + hookID + "'>" + res + "</span>";
-                spanIDs[hookID] = key;
-                templateBalloon = templateBalloon.replace(matches[0], st);
-                matches = reg.exec(templateBalloon);
-            }
+                templateBalloon = this._popup._initContent || gmx.templateBalloon,
+                outItem = {
+                    id: gmx.id,
+                    properties: gmx.properties
+                };
 
-            this._popup.setContent(templateBalloon);
+            if (!(templateBalloon instanceof L.Popup)) {
+                if (!(templateBalloon instanceof HTMLElement)) {
+                    if (!templateBalloon) {
+                        templateBalloon = '';
+                        for (var key in properties) {
+                            templateBalloon += '<b>' + key + ':</b> [' +  key + ']<br />';
+                        }
+                    }
+                    var reg = /\[([^\]]+)\]/i;
+                    var matches = reg.exec(templateBalloon);
+                    while(matches && matches.length > 1) {
+                        var key = matches[1],
+                            res = key in properties ? properties[key] : '';
+                        if (key === 'SUMMARY' && !res) {
+                            var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
+                            res = outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, this._gmx.units);
+                        }
+                        // var hookID = gmxAPIutils.newId(),
+                            // st = "<span id='" + hookID + "'>" + res + "</span>";
+                        // spanIDs[hookID] = key;
+                        //templateBalloon = templateBalloon.replace(matches[0], st);
+                        templateBalloon = templateBalloon.replace(matches[0], res);
+                        matches = reg.exec(templateBalloon);
+                    }
+                }
+
+                this._popup.setContent(templateBalloon);
+            }
             this._popup.setLatLng(options.latlng);
             this._map.openPopup(this._popup);
 
-            var arr = this._popup._contentNode.getElementsByTagName("span"),
-                spanKeys = {};
-            for (var i = 0, len = arr.length; i < len; i++) {
-                var span = arr[i],
-                    id = span.id;
-                if (spanIDs[id]) spanKeys[spanIDs[id]] = span;
-            }
-
-            if (this._popupopen) {
-                this._popupopen({
-                    popup: this._popup,
-                    latlng: options.latlng,
-                    layerPoint: options.layerPoint,
-                    contentNode: this._popup._contentNode,
-                    containerPoint: options.containerPoint,
-                    originalEvent: options.originalEvent,
-                    gmx: {
-                        id: gmx.id,
-                        properties: gmx.properties,
-                        templateBalloon: templateBalloon,
-                        spanKeys: spanKeys
-                    }
-                });
-                this._popup._adjustPan();
-            }
+            outItem.templateBalloon = templateBalloon;
+            this.fire('popupopen', {
+                popup: this._popup,
+                gmx: outItem
+            });
+            //this._popup._adjustPan();
         }
     }
 });
