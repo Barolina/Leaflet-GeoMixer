@@ -108,13 +108,13 @@
                 this._popup.setContent(templateBalloon);
             }
             this._popup.setLatLng(options.latlng);
-            this._map.openPopup(this._popup);
 
             outItem.templateBalloon = templateBalloon;
             this.fire('popupopen', {
                 popup: this._popup,
                 gmx: outItem
             });
+            this._map.openPopup(this._popup);
             //this._popup._adjustPan();
         }
     }
