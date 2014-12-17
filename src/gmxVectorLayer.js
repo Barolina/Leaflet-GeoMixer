@@ -378,6 +378,8 @@
         if (!this._map || gmx.zoomstart) return;
 
         gmx.styleManager.deferred.then(function () {
+            if (!_this._map) return;
+
             var zoom = _this._map.getZoom();
             if (zoom > _this.options.maxZoom || zoom < _this.options.minZoom) {
                 clearTimeout(_this._clearBgBufferTimer);
