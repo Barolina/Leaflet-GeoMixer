@@ -177,7 +177,7 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
             if (dattr.styleExtend.skipRasters || item.skipRasters) {
                 delete dattr.bgImage;
             }
-            if ((currentStyle.fillStyle || dattr.bgImage) &&
+            if ((currentStyle.fillStyle || currentStyle.canvasPattern || dattr.bgImage) &&
                 tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 if(flagPixels) {
                     coords = pixels_map.coords;

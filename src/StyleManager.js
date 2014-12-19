@@ -234,7 +234,7 @@
         out.sx = pt.sx;
         out.sy = pt.sy;
         if(type === 'image') {
-            out.type = pt.type;
+            out.type = type;
             if (pt.iconUrl) out.iconUrl = pt.iconUrl;
             if (pt.image) out.image = pt.image;
             if (pt.iconAngle) {
@@ -244,8 +244,6 @@
                 }
                 out.rotate = rotateRes || 0;
             }
-        } else if(pt.fillPattern) {
-            out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt, indexes));
         } else if(pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
                 r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
@@ -278,6 +276,9 @@
                 ,colorStop: colorStop
             };
         } else {
+            if(pt.fillPattern) {
+                out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt, indexes));
+            }
             if(itemType === 'POLYGON' || itemType === 'MULTIPOLYGON') {
                 type = 'polygon';
             }
