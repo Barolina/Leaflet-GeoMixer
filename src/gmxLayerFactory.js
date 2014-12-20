@@ -81,7 +81,10 @@ L.gmx.loadMap = function(mapID, options) {
         }
         
         def.resolve(loadedMap);
-    })
+    },
+    function(response) {
+        def.reject("Can't load map " + mapID + " from " + hostName + ": " + response.ErrorInfo.ErrorMessage);
+    });
     return def;
 }
 
