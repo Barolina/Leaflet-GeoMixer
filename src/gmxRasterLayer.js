@@ -17,7 +17,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                 styles: [{
                     MinZoom: props.styles[0].MinZoom,
                     MaxZoom: props.styles[0].MaxZoom,
-                    RenderStyle: {outline: {thickness: 0}, fill: {opacity: 0}},
+                    RenderStyle: {outline: {thickness: 0}, fill: {opacity: 100}},
                     HoverStyle: null
                 }]
             },

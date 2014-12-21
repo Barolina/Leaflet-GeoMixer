@@ -177,18 +177,21 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
             if (dattr.styleExtend.skipRasters || item.skipRasters) {
                 delete dattr.bgImage;
             }
-            if ((currentStyle.fillStyle || currentStyle.canvasPattern || dattr.bgImage) &&
-                tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 if(flagPixels) {
                     coords = pixels_map.coords;
                     hiddenLines = pixels_map.hidden;
                 }
-
+            if (dattr.bgImage && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 if(gmxAPIutils.isPatternNode(dattr.bgImage)) {
-                    var pattern = ctx.createPattern(dattr.bgImage, "no-repeat");
-                    ctx.fillStyle = pattern;
+                    if ('rasterOpacity' in gmx) ctx.globalAlpha = gmx.rasterOpacity;
+                    ctx.fillStyle = ctx.createPattern(dattr.bgImage, "no-repeat");
                     style.bgImage = true;
                 }
+                coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
+                ctx.globalAlpha = 1;
+            }
+            if (currentStyle.fillStyle || currentStyle.canvasPattern) {
+                ctx.fillStyle = currentStyle.fillStyle;
                 coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
             }
         }

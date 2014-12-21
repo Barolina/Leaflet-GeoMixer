@@ -34,11 +34,25 @@
     }
 
     this.setStyle = function(st, num) {
-        var style = parseItem(st);
-        var i = Number(num) || 0;
-        if(i > styles.length - 1) styles.push(style);
-        else styles[i] = style;
-        // TIDO: need redraw all visible tiles
+        var end = num;
+        if (num === undefined) {
+            num = 0, end = styles.length - 1;
+            if (st.regularStyle && st.regularStyle.fill && 'opacity' in st.regularStyle.fill) {
+                gmx.rasterOpacity = st.regularStyle.fill.opacity / 100;
+                styles.map(function(style) { style.version++; });
+                return;
+            }
+        }
+        for (var i = num; i <= end; i++) {
+            var style = styles[i];
+            if (!style) {
+                style = parseItem({});
+                styles[i] = style;
+            }
+            style.version++;
+            if (st.regularStyle) style.RenderStyle = parseStyle(L.gmxUtil.fromServerStyle(st.regularStyle));
+            if (st.hoveredStyle) style.HoverStyle = parseStyle(L.gmxUtil.fromServerStyle(st.hoveredStyle));
+        }
     }
 
     // var getType = function(st) {     // type for object
@@ -184,6 +198,7 @@
             ,BalloonEnable: style.BalloonEnable || false
             ,RenderStyle: (style.RenderStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {})
             ,HoverStyle: (style.HoverStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle)) : {})
+            ,version: 0
         };
 
         if('Filter' in style) {
@@ -302,13 +317,17 @@
 
         if(type === 'polygon') {
             out.type = type;
-            out.fillStyle = pt.fillColor;
+            var fop = pt.fillOpacity,
+                fc = pt.fillColor,
+                fcDec = typeof(fc) == 'string' ? parseInt(fc.replace(/#/, ''), 16) : fc;
+
+            if('fillColor' in pt) out.fillStyle = gmxAPIutils.dec2color(fcDec, 1);
             if('fillColorFunction' in pt || 'fillOpacityFunction' in pt) {
-                color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : pt.fillColor || 255);
-                opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes)/100 : pt.fillOpacity || 1);
+                color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : fc || 255);
+                opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes)/100 : fop || 1);
                 out.fillStyle = gmxAPIutils.dec2color(color, opacity);
-            } else if ('fillOpacity' in pt) {
-                out.fillStyle = gmxAPIutils.dec2color(pt.fillColor, pt.fillOpacity);
+            } else if ('fillOpacity' in pt && 'fillColor' in pt) {
+                out.fillStyle = gmxAPIutils.dec2color(fcDec, fop);
             }
         }
 
@@ -322,17 +341,20 @@
     }
 
     var chkStyleFilter = function(item) {
-        var zoom = gmx.currentZoom;
-        if (item._lastZoom !== zoom || !('currentFilter' in item)) {
-            var fnum = item.currentFilter,
-                properties = item.properties,
+        var zoom = gmx.currentZoom,
+            fnum = item.currentFilter,
+            curr = styles[fnum],
+            needParse = !curr || curr.version !== item.styleVersion;
+
+        if (needParse || item._lastZoom !== zoom) {
+            var properties = item.properties,
                 indexes = gmx.tileAttributeIndexes;
             item.currentFilter = -1;
             for (var i = 0, len = styles.length; i < len; i++) {
                 var st = styles[i];
                 if (zoom > st.MaxZoom || zoom < st.MinZoom) continue;
                 if ('FilterFunction' in st && !st.FilterFunction(properties, indexes)) continue;
-                if (fnum !== i) {
+                if (needParse || fnum !== i) {
                     item.parsedStyleKeys = itemStyleParser(item, st.RenderStyle);
                     if (st.HoverStyle) item.parsedStyleHover = itemStyleParser(item, st.HoverStyle);
                 }
@@ -341,6 +363,7 @@
                     // item.options.size = item.parsedStyleKeys.size;
                 // }
                 item.currentFilter = i;
+                item.styleVersion = st.version;
                 break;
             }
             item._lastZoom = zoom;

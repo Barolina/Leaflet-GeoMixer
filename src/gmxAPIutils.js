@@ -1047,9 +1047,14 @@
         };
 
         for (var key in gmxAPIutils.styleKeys) {
+            var keys = gmxAPIutils.styleKeys[key];
+            keys.client.forEach(function(key1) {
+                if (key1 in style) {
+                    out[key1] = style[key1];
+                }
+            });
             var st = style[key];
             if (st && typeof(st) === 'object') {
-                var keys = gmxAPIutils.styleKeys[key];
                 keys.server.forEach(function(key1, i) {
                     if (key1 in st) {
                         var newKey = keys.client[i],

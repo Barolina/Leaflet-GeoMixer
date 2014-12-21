@@ -193,9 +193,10 @@
     },
 
     setStyle: function (style, num) {
-        var gmx = this._gmx;
+        var _this = this;
         this.initPromise.then(function() {
-            gmx.styleManager.setStyle(style, num);
+            _this._gmx.styleManager.setStyle(style, num);
+            _this.repaint();
         });
         return this;
     },
