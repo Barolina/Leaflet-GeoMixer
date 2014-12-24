@@ -315,7 +315,7 @@
             out.scale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
         }
 
-        if(type === 'polygon') {
+        if(type === 'square' || type === 'polygon') {
             out.type = type;
             var fop = pt.fillOpacity,
                 fc = pt.fillColor,
