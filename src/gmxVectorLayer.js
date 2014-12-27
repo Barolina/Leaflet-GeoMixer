@@ -885,6 +885,14 @@
             if('quicklookPlatform' in meta) {    // тип спутника
                 gmx.quicklookPlatform = meta.quicklookPlatform.Value;
             }
+            if('quicklookX1' in meta) gmx.quicklookX1 = meta.quicklookX1.Value;
+            if('quicklookY1' in meta) gmx.quicklookY1 = meta.quicklookY1.Value;
+            if('quicklookX2' in meta) gmx.quicklookX2 = meta.quicklookX2.Value;
+            if('quicklookY2' in meta) gmx.quicklookY2 = meta.quicklookY2.Value;
+            if('quicklookX3' in meta) gmx.quicklookX3 = meta.quicklookX3.Value;
+            if('quicklookY3' in meta) gmx.quicklookY3 = meta.quicklookY3.Value;
+            if('quicklookX4' in meta) gmx.quicklookX4 = meta.quicklookX4.Value;
+            if('quicklookY4' in meta) gmx.quicklookY4 = meta.quicklookY4.Value;
         }
 
         var tileAttributeIndexes = {};

@@ -10,7 +10,8 @@ var gmxImageTransform = function(img, hash) {
         coord = properties[properties.length-1].coordinates,
         begx = mInPixel * dataOption.bounds.min.x,
         begy = mInPixel * dataOption.bounds.max.y,
-        quicklookPlatform = properties[gmx.tileAttributeIndexes[gmx.quicklookPlatform]] || '',
+        indexes = gmx.tileAttributeIndexes,
+        quicklookPlatform = properties[indexes[gmx.quicklookPlatform]] || gmx.quicklookPlatform || '',
         points = {};
 
     if (quicklookPlatform === 'LANDSAT8') {
@@ -25,6 +26,18 @@ var gmxImageTransform = function(img, hash) {
         points.x3 = coord[2][0], points.y3 = coord[2][1];
         points.x4 = coord[3][0], points.y4 = coord[3][1];
         ready = true;
+    } else if (quicklookPlatform === 'imageMercator') {
+        points.x1 = gmx.quicklookX1 ? properties[indexes[gmx.quicklookX1]] : properties[indexes.x1] || 0;
+        points.y1 = gmx.quicklookY1 ? properties[indexes[gmx.quicklookY1]] : properties[indexes.y1] || 0;
+        points.x2 = gmx.quicklookX2 ? properties[indexes[gmx.quicklookX2]] : properties[indexes.x2] || 0;
+        points.y2 = gmx.quicklookY2 ? properties[indexes[gmx.quicklookY2]] : properties[indexes.y2] || 0;
+        points.x3 = gmx.quicklookX3 ? properties[indexes[gmx.quicklookX3]] : properties[indexes.x3] || 0;
+        points.y3 = gmx.quicklookY3 ? properties[indexes[gmx.quicklookY3]] : properties[indexes.y3] || 0;
+        points.x4 = gmx.quicklookX4 ? properties[indexes[gmx.quicklookX4]] : properties[indexes.x4] || 0;
+        points.y4 = gmx.quicklookY4 ? properties[indexes[gmx.quicklookY4]] : properties[indexes.y4] || 0;
+        ready = true;
+        begx = mInPixel * points.x1;
+        begy = mInPixel * points.y1;
     } else {
         points = gmxAPIutils.getQuicklookPoints(coord);
     }
