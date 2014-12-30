@@ -1386,5 +1386,5 @@ L.gmxUtil = {
         }
 	}
 	//расширяем namespace
-	gmxAPIutils.sendCrossDomainPostRequest = sendCrossDomainPostRequest;
+	L.gmxUtil.sendCrossDomainPostRequest = gmxAPIutils.sendCrossDomainPostRequest = sendCrossDomainPostRequest;
 })();
