@@ -893,6 +893,10 @@
             if('quicklookY3' in meta) gmx.quicklookY3 = meta.quicklookY3.Value;
             if('quicklookX4' in meta) gmx.quicklookX4 = meta.quicklookX4.Value;
             if('quicklookY4' in meta) gmx.quicklookY4 = meta.quicklookY4.Value;
+
+            if('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
+                gmx.multiFilters = meta.multiFilters.Value == 1 ? true : false;
+            }
         }
 
         var tileAttributeIndexes = {};

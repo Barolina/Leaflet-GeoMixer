@@ -2,11 +2,9 @@
     styleCanvasKeysLen = styleCanvasKeys.length;
 
 var setCanvasStyle = function(item, ctx, style) {
-    var currentStyle = item.currentStyle || item.parsedStyleKeys || {};
-
     for (var i = 0; i < styleCanvasKeysLen; i++) {
         var key = styleCanvasKeys[i],
-            valKey = currentStyle[key] || style[key];
+            valKey = style[key];
         if (valKey !== ctx[key]) {
             ctx[key] = valKey;
         }
@@ -21,12 +19,14 @@ var setCanvasStyle = function(item, ctx, style) {
             ctx.mozDash = dashes;
             ctx.mozDashOffset = dashOffset;
         }            
+        if (ctx.lineCap !== 'round') ctx.lineCap = 'round';
+        if (ctx.lineJoin !== 'round') ctx.lineJoin = 'round';
     }
 
-    if(currentStyle.canvasPattern) {
-        ctx.fillStyle = ctx.createPattern(currentStyle.canvasPattern.canvas, "repeat");
-    } else if(currentStyle.fillLinearGradient) {
-        var rgr = currentStyle.fillLinearGradient,
+    if(style.canvasPattern) {
+        ctx.fillStyle = ctx.createPattern(style.canvasPattern.canvas, "repeat");
+    } else if(style.fillLinearGradient) {
+        var rgr = style.fillLinearGradient,
             x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1,
             y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1,
             x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2,
@@ -44,55 +44,35 @@ var setCanvasStyle = function(item, ctx, style) {
     }
 }
 
-L.gmxUtil.drawGeoItem = function(geoItem, options) {
-// geoItem
-//      properties: объект (в формате векторного тайла)
-//      dataOption: дополнительные свойства объекта
-// options
-//      ctx: canvas context
-//      tbounds: tile bounds
-//      tpx: X смещение тайла
-//      tpy: Y смещение тайла
-//      gmx: ссылка на layer._gmx
-//          gmx.dataManager
-//          gmx.styleManager
-//          gmx.currentZoom 
-//      style: стиль в новом формате
-//          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
+var drawGeoItem = function(geoItem, options, currentStyle) {
     var propsArr = geoItem.properties,
         idr = propsArr[0],
         gmx = options.gmx,
-        item = gmx.dataManager.getItem(idr);
-
-    if (!item) return;
-    var style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
-    if (!style) return; 
-
-    var geom = propsArr[propsArr.length-1],
-        dataOption = geoItem.dataOption,
         ctx = options.ctx,
+        item = gmx.dataManager.getItem(idr),
+        geom = propsArr[propsArr.length-1],
+        dataOption = geoItem.dataOption,
         rasters = options.rasters,
         tbounds = options.tbounds;
 
-    var geoType = geom.type,
-        currentStyle = (gmx.lastHover && gmx.lastHover.id === idr ? item.parsedStyleHover : item.parsedStyleKeys);
-
+    var style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
     if (gmx.styleHook && !geoItem.styleExtend) {
         geoItem.styleExtend = gmx.styleManager.applyStyleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
     }
 
     item.currentStyle = geoItem.styleExtend || currentStyle;
-    setCanvasStyle(item, ctx, style);
+    setCanvasStyle(item, ctx, item.currentStyle);
 
-    var dattr = {
-        gmx: gmx
-        ,item: item
-        ,style: style
-        ,styleExtend: geoItem.styleExtend || {}
-        ,ctx: ctx
-        ,tpx: options.tpx
-        ,tpy: options.tpy
-    };
+    var geoType = geom.type,
+        dattr = {
+            gmx: gmx
+            ,item: item
+            ,style: style
+            ,styleExtend: geoItem.styleExtend || {}
+            ,ctx: ctx
+            ,tpx: options.tpx
+            ,tpy: options.tpy
+        };
     if (geoType === 'POINT') {
         dattr.pointAttr = gmxAPIutils.getPixelPoint(dattr, geom.coordinates);
         if (!dattr.pointAttr) return false;   // point not in canvas tile
@@ -206,6 +186,35 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
             dattr.coords = coords;
             gmxAPIutils.lineToCanvas(dattr);
         }
+    }
+    return true;
+}
+
+L.gmxUtil.drawGeoItem = function(geoItem, options) {
+// geoItem
+//      properties: объект (в формате векторного тайла)
+//      dataOption: дополнительные свойства объекта
+// options
+//      ctx: canvas context
+//      tbounds: tile bounds
+//      tpx: X смещение тайла
+//      tpy: Y смещение тайла
+//      gmx: ссылка на layer._gmx
+//          gmx.dataManager
+//          gmx.styleManager
+//          gmx.currentZoom 
+//      style: стиль в новом формате
+//          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
+    var gmx = options.gmx,
+        hover = gmx.lastHover && gmx.lastHover.id === geoItem.id,
+        item = gmx.dataManager.getItem(geoItem.id);
+
+    if (gmx.multiFilters) {
+        item.multiFilters.forEach(function(it) {
+            drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle);
+        });
+    } else {
+        drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys);
     }
     return true;
 }

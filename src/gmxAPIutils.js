@@ -211,7 +211,7 @@
 	},
 
     dec2hex: function(i)	{					// convert decimal to hex
-        return (i+0x1000000).toString(16).substr(-6).toUpperCase();
+        return (i+0x1000000).toString(16).substr(-6);
     },
 
     dec2color: function(i, a)   {   // convert decimal to canvas color
@@ -470,18 +470,16 @@
             ctx = attr.ctx;
 
         var lastX = null, lastY = null;
-		if(attr.style.strokeStyle) {
-			ctx.beginPath();
-			for (var i = 0, len = coords.length; i < len; i++) {
-                var p1 = gmxAPIutils.toPixels(coords[i], attr.tpx, attr.tpy, gmx.mInPixel);
-				if(lastX !== p1[0] || lastY !== p1[1]) {
-					if(i == 0)	ctx.moveTo(p1[0], p1[1]);
-					else 		ctx.lineTo(p1[0], p1[1]);
-					lastX = p1[0], lastY = p1[1];
-				}
-			}
-			ctx.stroke();
-		}
+        ctx.beginPath();
+        for (var i = 0, len = coords.length; i < len; i++) {
+            var p1 = gmxAPIutils.toPixels(coords[i], attr.tpx, attr.tpy, gmx.mInPixel);
+            if(lastX !== p1[0] || lastY !== p1[1]) {
+                if(i == 0)	ctx.moveTo(p1[0], p1[1]);
+                else 		ctx.lineTo(p1[0], p1[1]);
+                lastX = p1[0], lastY = p1[1];
+            }
+        }
+        ctx.stroke();
 	},
 
     polygonToCanvas: function(attr) {       // Polygons in canvas
@@ -826,6 +824,9 @@
         if (latlngs && latlngs.length) {
             var lng = false, lat = false;
             latlngs.forEach(function(latlng) {
+                if (L.Util.isArray(latlng)) {   // From Mercator array
+                    latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
+                }
                 if (lng !== false && lat !== false)
                     length += parseFloat(gmxAPIutils.distVincenty(lng, lat, latlng.lng, latlng.lat));
                 lng = latlng.lng;
@@ -883,19 +884,9 @@
                 ret += gmxAPIutils.geoLength({ type: "LINESTRING", coordinates: geom.coordinates[i] });
             return ret;
         } else if (geom.type == "LINESTRING") {
-            ret = gmxAPIutils(geom.coordinates[0]);
-            for (var i = 1; i < geom.coordinates.length; i++)
-                ret -= gmxAPIutils.geoLength(geom.coordinates[i]);
-            return ret;
+            ret = gmxAPIutils.getLength(geom.coordinates);
         }
-        else if (geom.length)
-        {
-            var latlngs = [];
-            //gmxAPIutils.forEachPoint(geom, function(p) { pts.push(p); });
-            return gmxAPIutils.getLength(latlngs);
-        }
-        else
-            return 0;
+        return ret;
     },
 
     geometryToGeoJSON: function (geom) {

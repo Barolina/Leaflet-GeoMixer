@@ -331,18 +331,20 @@
             }
         }
 
+        if('dashArray' in pt) out.dashArray = pt.dashArray;
+        if('dashOffset' in pt) out.dashOffset = pt.dashOffset;
+
         gmxAPIutils.styleKeys.label.client.forEach(function(it) {
             if(it in pt) {
                 out[it] = pt[it];
             }
         });
-        //item.parsedStyleKeys = out;
         return out;
     }
 
     var chkStyleFilter = function(item) {
         var zoom = gmx.currentZoom,
-            fnum = item.currentFilter,
+            fnum = gmx.multiFilters ? -1 : item.currentFilter,
             curr = styles[fnum],
             needParse = !curr || curr.version !== item.styleVersion;
 
@@ -350,21 +352,36 @@
             var properties = item.properties,
                 indexes = gmx.tileAttributeIndexes;
             item.currentFilter = -1;
+            item.multiFilters = [];
             for (var i = 0, len = styles.length; i < len; i++) {
                 var st = styles[i];
                 if (zoom > st.MaxZoom || zoom < st.MinZoom) continue;
                 if ('FilterFunction' in st && !st.FilterFunction(properties, indexes)) continue;
+                item.currentFilter = i;
                 if (needParse || fnum !== i) {
-                    item.parsedStyleKeys = itemStyleParser(item, st.RenderStyle);
-                    if (st.HoverStyle) item.parsedStyleHover = itemStyleParser(item, st.HoverStyle);
+                    var parsed = itemStyleParser(item, st.RenderStyle),
+                        parsedHover = null;
+
+                    item.parsedStyleKeys = parsed;
+                    if (st.HoverStyle) {
+                        parsedHover = itemStyleParser(item, st.HoverStyle);
+                        item.parsedStyleHover = parsedHover;
+                    }
+                    if (gmx.multiFilters) {
+                        item.multiFilters.push({
+                            style: st.RenderStyle,
+                            styleHover: st.HoverStyle,
+                            parsedStyle: parsed,
+                            parsedStyleHover: parsedHover
+                        });
+                    }
                 }
 
                 // if (item.parsedStyleKeys && item.parsedStyleKeys.size) {
                     // item.options.size = item.parsedStyleKeys.size;
                 // }
-                item.currentFilter = i;
                 item.styleVersion = st.version;
-                break;
+                if (!gmx.multiFilters) break;      // Один обьект в один фильтр 
             }
             item._lastZoom = zoom;
         }
@@ -391,13 +408,9 @@
     
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
+        chkStyleFilter(item);
         var style = styles[item.currentFilter];
-
-        if (!style) {
-            chkStyleFilter(item);
-            style = styles[item.currentFilter];
-            if (!style) return null;
-        }
+        if (!style) return null;
         if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
             item.parsedStyleHover = itemStyleParser(item, style.HoverStyle);
             return style.HoverStyle;
