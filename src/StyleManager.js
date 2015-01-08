@@ -37,11 +37,11 @@
         var end = num;
         if (num === undefined) {
             num = 0, end = styles.length - 1;
-            if (st.regularStyle && st.regularStyle.fill && 'opacity' in st.regularStyle.fill) {
-                gmx.rasterOpacity = st.regularStyle.fill.opacity / 100;
-                styles.map(function(style) { style.version++; });
-                return;
-            }
+            // if (st.regularStyle && st.regularStyle.fill && 'opacity' in st.regularStyle.fill) {
+                // gmx.rasterOpacity = st.regularStyle.fill.opacity / 100;
+                // styles.map(function(style) { style.version++; });
+                // return;
+            // }
         }
         for (var i = num; i <= end; i++) {
             var style = styles[i];

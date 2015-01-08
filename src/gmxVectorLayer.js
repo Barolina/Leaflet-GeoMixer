@@ -192,6 +192,15 @@
         this.initPromise.resolve();
     },
 
+    setRasterOpacity: function (opacity) {
+        var _this = this;
+        this._gmx.rasterOpacity = opacity;
+        this.initPromise.then(function() {
+            _this.repaint();
+        });
+        return this;
+    },
+
     setStyle: function (style, num) {
         var _this = this;
         this.initPromise.then(function() {
