@@ -4,24 +4,20 @@
 	<title>Leaflet.heat plugin with GeoMixer data</title>
 	<meta charset="utf-8" />
     <style>
-        html, body {
-            height: 100%;
-            margin: 0px;
-        }
-        
         #controls {
             position: absolute;
             left: 54px;
             top: 11px;
             z-index: 1;
-            background-color: #ffffff;
-            padding: 13px 15px 13px 13px;
-            border-radius: 5px;
-            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        
+        #title{
+            text-align: center;
         }
         
         #slider {
             width: 300px;
+            margin: 5px;
         }
         #timeInfo {
             text-align: center;
@@ -35,10 +31,12 @@
         #auto > * {
             vertical-align: middle;
         }
-        
     </style>
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="stylesheet" href="examples.css" />
+    
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
     
@@ -50,8 +48,12 @@
 
     <script src="http://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
 </head>
+
 <body>
-    <div id="controls">
+    <div id="controls" class="gmxPanel">
+        <div id="title">
+            Fires (based on NASA FIRMS) <label><input id="useHeatmap" checked type="checkbox">use heatmap</label>
+        </div>
         <div id="slider"></div>
         <div id="timeInfo">
             <span id="curDate">Loading data...</span>
@@ -84,10 +86,27 @@
         var autochkbox = document.getElementById('autochkbox');
         
         var heatmap = null; 
-        L.gmx.loadLayer('NDFYK', '3E88643A8AC94AFAB4FD44941220B1CE', {
+        L.gmx.loadLayer('26F864B658344DC2AD59EAE84D28BF19', '3E88643A8AC94AFAB4FD44941220B1CE', {
             beginDate: new Date(ddt2.valueOf() - oneDay),
             endDate: ddt2
         }).then(function(hotspotLayer) {
+            var useHeatmap = function(doUse) {
+                if (doUse) {
+                    observer.activate();
+                    heatmap.addTo(map);
+                    map.removeLayer(hotspotLayer);
+                } else {
+                    observer.deactivate();
+                    map.removeLayer(heatmap);
+                    hotspotLayer.addTo(map);
+                }
+            }
+            
+            document.getElementById('useHeatmap').onchange = function() {
+                useHeatmap(this.checked);
+                $('#auto').toggle(this.checked);
+            }
+            
             var observer = hotspotLayer.addObserver({
                 callback: function(data) {
                     var latlngs = [];
@@ -114,6 +133,7 @@
             var nextDay = function(val) {
                 updateInfo(new Date(val - oneDay));
                 observer.setDateInterval(new Date(val - oneDay), new Date(val));
+                hotspotLayer.setDateInterval(new Date(val - oneDay), new Date(val));
             }
             var chkAuto = function() {
                 if (autochkbox.checked) {
