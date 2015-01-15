@@ -19,6 +19,11 @@
 			border-radius: 5px;
             box-shadow: 0 1px 7px rgba(0,0,0,0.65);
         }
+        
+        #title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
 		
 		#slider {
 			width: 300px;
@@ -41,6 +46,7 @@
 </head>
 <body>
 	<div id="controls">
+        <div id="title">NASA FIRMS Hotspots</div>
 		<div id="slider"></div>
 		<div id="timeInfo">Loading data...</div>
 	</div>
@@ -48,7 +54,7 @@
 	<div id="map" style="width: 100%; height: 100%"></div>
 	
 	<script>
-		var map = L.map('map').setView([0, 0], 2);
+		var map = L.map('map').setView([31, 13.5], 3);
 
 		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
@@ -64,15 +70,15 @@
 		var startDate = new Date('2013/11/01'),
             oneDay = 1000*60*60*24,	// milliseconds in one day
             now = startDate.getTime(),
-            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the UTC day
+            ddt1 = new Date( now - now % oneDay), //beginning of the UTC day
             ddt2 = new Date(ddt1.getTime() + 20*oneDay);
 		
         L.gmx.loadLayer('AZR6A', 'C13B4D9706F7491EBC6DC70DFFA988C0', {
-            beginDate: new Date(ddt2.valueOf() - oneDay),
-            endDate: ddt2
+            beginDate: ddt2,
+            endDate: new Date(ddt2.valueOf() + oneDay)
         }).then(function(hotspotLayer) {
 			hotspotLayer._gmx.dataManager.preloadTiles(ddt1, ddt2).then(function() {
-				updateInfo(new Date(ddt2.valueOf() - oneDay));
+				updateInfo(new Date(ddt2.valueOf()));
 				hotspotLayer.addTo(map);
 				$('#slider').slider({
 					min: ddt1.valueOf() + oneDay,
@@ -80,8 +86,8 @@
 					step: oneDay,
 					value: ddt2.valueOf(),
 					slide: function(event, ui) {
-						updateInfo(new Date(ui.value - oneDay));
-						hotspotLayer.setDateInterval(new Date(ui.value - oneDay), new Date(ui.value));
+						updateInfo(new Date(ui.value));
+						hotspotLayer.setDateInterval(new Date(ui.value), new Date(ui.value + oneDay));
 					}
 				});
 			})
