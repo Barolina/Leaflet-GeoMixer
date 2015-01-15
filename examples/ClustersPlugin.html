@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet.MarkerCluster plugin with GeoMixer layers</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+
+    <script src="http://scanex.github.io/Leaflet-GeoMixer/build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+	<link rel="stylesheet" href="http://leaflet.github.io/Leaflet.markercluster/dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="http://leaflet.github.io/Leaflet.markercluster/dist/MarkerCluster.Default.css" />
+	<script src="http://leaflet.github.io/Leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+    </style>
+
+</head>
+<body>
+
+	<div id="map"></div>
+	<script type="text/javascript">
+
+		var map = L.map('map').setView([55.726456, 37.760009], 9);
+        
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+        
+        var CultureIcon = L.Icon.extend({options: {
+            iconUrl: 'http://geomixer.scanex.ru/GetImage.ashx?usr=LayerManager&img=herritage_zn%5Cherritage_zn%5Cmosc%5Chram_blue.png'
+        }})
+
+		var markers = new L.MarkerClusterGroup({
+            showCoverageOnHover: false
+        }).addTo(map);
+        
+        L.gmx.loadLayer('6VYUE', 'D9E2627441D844168F2DF44E749D9453').then(function(gmxLayer) {
+            gmxLayer.addObserver({
+                callback: function(data) {
+                    var newLayers = data.added.map(function(obj) {
+                        var item = obj.properties,
+                            c = item[item.length - 1].coordinates,
+                            latlng = L.Projection.Mercator.unproject({x: c[0], y: c[1]});
+                        
+                        return L.marker(latlng, {icon: new CultureIcon()});
+                    });
+                    
+                    markers.addLayers(newLayers);
+                }
+            });
+		});
+
+	</script>
+</body>
+</html>
