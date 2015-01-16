@@ -814,21 +814,16 @@
 
         var minPoint = this._map.project(minLatLng),
             maxPoint = this._map.project(maxLatLng);
-            
-        if (delta) {
-            minPoint.x -= delta;
-            maxPoint.x += delta;
-            minPoint.y -= delta;
-            maxPoint.y += delta;
-        }
+
+        if (!delta) delta = 0;
 
         var pixelBounds = this._map.getPixelBounds(),
-            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY)/256),
-            maxY = 1 + Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY)/256),
+            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta)/256),
+            maxY = 1 + Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta)/256),
             minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x),
-            minX = Math.floor((minX + shiftX)/256),
+            minX = Math.floor((minX + shiftX - delta)/256),
             maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x),
-            maxX = Math.floor((maxX + shiftX)/256),
+            maxX = Math.floor((maxX + shiftX + delta)/256),
             gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
