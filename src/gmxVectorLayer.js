@@ -614,6 +614,7 @@
                 dataOption = geoItems[i].dataOption || {},
                 item = gmx.dataManager.getItem(idr),
                 currentStyle = item.currentStyle || item.parsedStyleKeys,
+                iconScale = currentStyle.iconScale || 1,
                 sx = currentStyle.sx || 0,
                 sy = currentStyle.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
@@ -698,7 +699,7 @@
                 }
                 if (!flag) continue;
             } else if(chktype === 'POINT') {
-                coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx, dy);
+                coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx * iconScale, dy * iconScale);
                 if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
             }
 
