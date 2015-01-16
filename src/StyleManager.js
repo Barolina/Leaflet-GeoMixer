@@ -86,7 +86,7 @@
             }
         }
         
-        rg.addColorStop = rg.addColorStop || [[0, 0xFF0000], [1, 0xFFFFFF]];
+        rg.addColorStop = rg.addColorStop || [[0, 0xFF0000, 0.5], [1, 0xFFFFFF, 0.5]];
         rg.addColorStopFunctions = [];
         for (var i = 0, len = rg.addColorStop.length; i < len; i++) {
             var arr = rg.addColorStop[i],
@@ -97,7 +97,7 @@
                 ];
             rg.addColorStopFunctions.push(resFunc);
             if (resFunc[1] === null && resFunc[2] === null) {
-                arr.push(gmxAPIutils.dec2color(arr[1], arr[2]/100));
+                arr.push(gmxAPIutils.dec2color(arr[1], arr[2]));
             } else {
                 common = false;
             }
@@ -173,6 +173,9 @@
                     if (parsePattern(st.fillPattern)) {
                         st.canvasPattern = gmxAPIutils.getPatternIcon(null, st);
                     }
+                } else if (st.iconCircle) {
+                    type = 'circle';
+                    if (!('iconGeomSize' in st)) st.iconGeomSize = 4;
                 } else if (st.fillRadialGradient) {
                     type = 'circle';
                     var size = parseRadialGradient(st.fillRadialGradient);
@@ -267,6 +270,7 @@
                 y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
                 x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
                 y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
+            if (rgr.r2max) r2 = Math.min(r2, rgr.r2max);
             var colorStop = [],
                 len = rgr.addColorStop.length;
             if (!rgr.addColorStopFunctions) rgr.addColorStopFunctions = new Array(len);
@@ -311,11 +315,11 @@
             out.lineWidth = 'weight' in pt ? pt.weight : 1;
         }
 
-        if(pt.iconScale) {
-            out.scale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
+        if('iconScale' in pt) {
+            out.iconScale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
         }
 
-        if(type === 'square' || type === 'polygon') {
+        if(type === 'square' || type === 'polygon' || type === 'circle') {
             out.type = type;
             var fop = pt.fillOpacity,
                 fc = pt.fillColor,

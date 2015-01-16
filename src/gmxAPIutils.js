@@ -229,16 +229,16 @@
         return tk1.x >> dz === tk2.x && tk1.y >> dz === tk2.y;
 	},
 
-    rotatePoints: function(arr, angle, scale, center) {			// rotate - массива точек
+    rotatePoints: function(arr, angle, iconScale, center) {			// rotate - массива точек
         var out = [];
         angle *= Math.PI / 180.0
         var sin = Math.sin(angle);
         var cos = Math.cos(angle);
-        if(!scale) scale = 1;
+        if(!iconScale) iconScale = 1;
         for (var i = 0; i < arr.length; i++)
         {
-            var x = scale * arr[i].x - center.x;
-            var y = scale * arr[i].y - center.y;
+            var x = iconScale * arr[i].x - center.x;
+            var y = iconScale * arr[i].y - center.y;
             out.push({
                 'x': cos * x - sin * y + center.x
                 ,'y': sin * x + cos * y + center.y
@@ -379,15 +379,13 @@
             item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys || {},
             style = attr.style || {},
-            scale = attr.scale || style.scale,
+            iconScale = attr.iconScale || style.iconScale || 1,
             sx = currentStyle.sx || style.sx || 4,
             sy = currentStyle.sy || style.sy || 4,
             px = attr.tpx,
             py = attr.tpy;
 
-        if(scale) {
-            sx *= scale, sy *= scale;
-        }
+        sx *= iconScale, sy *= iconScale;
         var px1 = coords[0] * mInPixel - px,
             py1 = py - coords[1] * mInPixel;
         
@@ -413,6 +411,7 @@
 
         var item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys,
+            iconScale = currentStyle.iconScale || 1,
             px1sx = px1 - sx, py1sy = py1 - sy,
             sx2 = 2 * sx, sy2 = 2 * sy,
             ctx = attr.ctx;
@@ -439,14 +438,14 @@
             if(style.type === 'circle' || currentStyle.fillRadialGradient) {
                 var circle = style.iconGeomSize;
                 if(currentStyle.fillRadialGradient) {
-                    var rgr = currentStyle.fillRadialGradient,
-                        radgrad = ctx.createRadialGradient(px1+rgr.x1, py1+rgr.y1, rgr.r1, px1+rgr.x2, py1+rgr.y2, rgr.r2);
+                    var rgr = currentStyle.fillRadialGradient;
+                    circle = rgr.r2 * iconScale;
+                    var radgrad = ctx.createRadialGradient(px1+rgr.x1, py1+rgr.y1, rgr.r1 * iconScale, px1+rgr.x2, py1+rgr.y2, circle);
                     for (var i = 0, len = rgr.addColorStop.length; i < len; i++) {
                         var arr = rgr.addColorStop[i];
                         radgrad.addColorStop(arr[0], arr[1]);
                     }
                     ctx.fillStyle = radgrad;
-                    circle = rgr.r2;
                 }
                 ctx.arc(px1, py1, circle, 0, 2*Math.PI);
             } else {
@@ -456,7 +455,7 @@
         }
         if(currentStyle.strokeStyle) {
             ctx.beginPath();
-            if(style.circle) {
+            if(style.type === 'circle') {
                 ctx.arc(px1, py1, style.iconGeomSize, 0, 2*Math.PI);
             } else {
                 ctx.strokeRect(px1sx, py1sy, sx2, sy2);

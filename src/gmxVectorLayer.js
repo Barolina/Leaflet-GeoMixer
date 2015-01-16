@@ -706,6 +706,7 @@
                 ,properties: item.properties
                 ,geometry: geom
                 ,bounds: item.bounds
+                ,parsedStyle: parsedStyle
             };
         }
         return null;
@@ -750,9 +751,10 @@
                     
                     var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
                     if (target) {
-                        var changed = !lastHover || lastHover.id !== target.id;
+                        var idr = target.id,
+                            changed = !lastHover || lastHover.id !== idr;
                         if (type === 'mousemove' && lastHover) {
-                            if (!changed) return target.id;
+                            if (!changed) return idr;
                             gmx.lastHover = null;
                             chkHover('mouseout');
                         }
@@ -760,18 +762,21 @@
                         ev.gmx = {
                             targets: geoItems
                             ,target: target
-                            ,templateBalloon: gmx.styleManager.getItemBalloon(target.id)
+                            ,templateBalloon: gmx.styleManager.getItemBalloon(idr)
                             ,properties: layer.getItemProperties(target.properties)
-                            ,id: target.id
+                            ,id: idr
                         };
                         if (this.hasEventListeners(type)) this.fire(type, ev);
                         if (type === 'mousemove' && changed) {
                             lastHover = gmx.lastHover = ev.gmx;
-                            lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds);
+                            var item = gmx.dataManager.getItem(idr),
+                                currentStyle = gmx.styleManager.getObjStyle(item);
+
+                            lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.iconGeomSize);
                             chkHover('mouseover');
                         }
                         this._map.doubleClickZoom.disable();
-                        return target.id;
+                        return idr;
                     }
                 }
             }
@@ -784,7 +789,7 @@
         return 0;
     },
     
-    _getTilesByBounds: function (bounds) {    // Получить список gmxTiles по bounds
+    _getTilesByBounds: function (bounds, delta) {    // Получить список gmxTiles по bounds
         var gmx = this._gmx,
             zoom = this._map._zoom,
             shiftX = gmx.shiftX || 0,   // Сдвиг слоя
@@ -798,19 +803,25 @@
 
         if (ne.lng - sw.lng < 360) {
             if (maxLatLng.lng < sw.lng) {
-                var sx = sw.lng - maxLatLng.lng;
-                dx = 360 * (1 + Math.floor(sx / 360));
+                dx = 360 * (1 + Math.floor((sw.lng - maxLatLng.lng) / 360));
             } else if (minLatLng.lng > ne.lng) {
-                var sx = ne.lng - minLatLng.lng;
-                dx = 360 * Math.floor(sx / 360);
+                dx = 360 * Math.floor((ne.lng - minLatLng.lng) / 360);
             }
         }
         minLatLng.lng += dx;
         maxLatLng.lng += dx;
 
         var minPoint = this._map.project(minLatLng),
-            maxPoint = this._map.project(maxLatLng),
-            pixelBounds = this._map.getPixelBounds(),
+            maxPoint = this._map.project(maxLatLng);
+            
+        if (delta) {
+            minPoint.x -= delta;
+            maxPoint.x += delta;
+            minPoint.y -= delta;
+            maxPoint.y += delta;
+        }
+
+        var pixelBounds = this._map.getPixelBounds(),
             minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY)/256),
             maxY = 1 + Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY)/256),
             minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x),

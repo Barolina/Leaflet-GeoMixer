@@ -72,6 +72,9 @@
         if (!skip) {
             var gmx = options.gmx || {},
                 properties = gmx.properties,
+                target = gmx.target,
+                geometry = target.geometry,
+                latlng = options.latlng,
                 //spanIDs = {},
                 templateBalloon = this._popup._initContent || gmx.templateBalloon,
                 outItem = {
@@ -79,6 +82,10 @@
                     properties: gmx.properties
                 };
 
+            if (geometry.type === 'POINT') {
+                var coord = geometry.coordinates;
+                latlng = L.Projection.Mercator.unproject({x: coord[0], y: coord[1]});
+            }
             if (!(templateBalloon instanceof L.Popup)) {
                 if (!(templateBalloon instanceof HTMLElement)) {
                     if (!templateBalloon) {
@@ -107,7 +114,7 @@
 
                 this._popup.setContent(templateBalloon);
             }
-            this._popup.setLatLng(options.latlng);
+            this._popup.setLatLng(latlng);
 
             outItem.templateBalloon = templateBalloon;
             this.fire('popupopen', {
