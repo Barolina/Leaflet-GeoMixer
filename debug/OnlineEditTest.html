@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+	<link rel="stylesheet" href="../examples/examples.css" />
+</head>
+<body>
+	<div id="map"></div>
+    <div id="infoPanel">
+        <span id="info" class="gmxPanel">
+                Demo of real-time object updates in vector layers
+        </span>
+    </div>
+
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+	<script>
+		var map = L.map('map').setView([55.73, 37.59], 5);
+
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+        
+        L.gmx.layersVersion.start(3000);
+
+        L.gmx.loadLayer('89FC5850C6784C0A8AC52CCDEAC1B252', '6CF6AF0732734771A40A85E776EEC9E4').then(function(gmxLayer) {
+            gmxLayer.addTo(map);
+        });
+	</script>
+</body>
+</html>
