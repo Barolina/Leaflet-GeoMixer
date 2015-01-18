@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>GeoMixer Vector Layer Interaction</title>
+    <meta charset="utf-8" />
+    <style>
+        #controls {
+            position: absolute;
+            left: 54px;
+            top: 11px;
+            z-index: 1;
+        }
+        
+        #fireInfo {
+            display: none;
+            position: absolute;
+            left: 300px;
+            top: 11px;
+            z-index: 1;
+            width: 85px;
+        }
+        
+        #title {
+            margin: 10px 0px 5px 0px;
+        }
+    </style>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="examples.css" />
+    
+    
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    <script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
+    
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+</head>
+<body>
+    <div id="controls" class="gmxPanel">
+        <div>Fires (based on NASA FIRMS)</div>
+        <div id="title">Change icon size</div>
+        <div id="sliderSize"></div>
+    </div>
+    
+    <div id="fireInfo" class="gmxPanel">
+        Hotspots: <span id="fire-count"></span>
+    </div>
+
+    <div id="map" style="width: 100%; height: 100%"></div>
+    
+    <script>
+    
+        // internal style format of GeoMixer plugin
+        var style = {
+            fillRadialGradient: {
+                r2Function: function (prop) {
+                    return Math.min (5 * prop[3], 100);
+                },
+                addColorStop: [
+                    [0, 0xFFFF00, 0.5],
+                    [1, 0xFF2200, 0.5]
+                ]
+            }
+        };
+        
+        var map = L.map('map').setView([-18, 25], 5);
+
+        L.tileLayer('http://{s}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+        }).addTo(map);
+        
+        $('#sliderSize').slider({
+            min: 0.1,
+            max: 1.1,
+            step: 0.1,
+            value: 0.6
+        });
+        
+        L.gmx.loadLayer('NDFYK', '3E88643A8AC94AFAB4FD44941220B1CE', {
+            beginDate: new Date('2014/10/29'),
+            endDate: new Date('2014/10/30')
+        }).then(function(hotspotLayer) {
+            hotspotLayer.addTo(map);
+            
+            hotspotLayer.on({
+                mouseover: function(event) {
+                    $('#fire-count').text(event.gmx.properties.HotSpotCount);
+                    $('#fireInfo').show();
+                },
+                mouseout: function() {
+                    $('#fireInfo').hide();
+                }
+            });
+            
+            var setStyle = function(val) {
+                style.iconScale = val;
+                hotspotLayer.setStyle({regularStyle: style, hoveredStyle: style});
+            }
+            
+            $('#sliderSize').on('slide', function(event, ui) {
+                setStyle(ui.value);
+            });
+            
+            setStyle($('#sliderSize').slider('value'));
+        })
+    </script>
+</body>
+</html>
