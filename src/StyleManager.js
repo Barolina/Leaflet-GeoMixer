@@ -168,24 +168,31 @@
                 type = 'image';
                 getImageSize(st, true);
             } else {
+                st.common = true;
                 if (st.fillPattern) {
                     type = 'square';
-                    if (parsePattern(st.fillPattern)) {
-                        st.canvasPattern = gmxAPIutils.getPatternIcon(null, st);
-                    }
+                    st.common = parsePattern(st.fillPattern);
+                    st.canvasPattern = gmxAPIutils.getPatternIcon(null, st);
                 } else if (st.iconCircle) {
                     type = 'circle';
                     if (!('iconGeomSize' in st)) st.iconGeomSize = 4;
                 } else if (st.fillRadialGradient) {
                     type = 'circle';
                     var size = parseRadialGradient(st.fillRadialGradient);
-                    if (size !== null) st.iconGeomSize = size;
+                    if (size === null) {
+                        st.common = false;
+                    } else {
+                        st.iconGeomSize = size;
+                    }
                 } else if (st.fillLinearGradient) {
                     type = 'square';
-                    parseLinearGradient(st.fillLinearGradient);
+                    st.common = parseLinearGradient(st.fillLinearGradient);
                 } else if (st.iconGeomSize) type = 'square';
             }
             st.type = type;
+        }
+        if (st.common && !st.maxSize) {
+            st.maxSize = st.iconGeomSize || st.weight || 0;
         }
         return st;
     }
@@ -302,9 +309,8 @@
                 type = 'polygon';
             }
             if(pt.iconGeomSize) {
-                out.size = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
-                out.sx = out.size;
-                out.sy = out.size;
+                out.iconGeomSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
+                out.sx = out.sy = out.iconGeomSize;
             }
             out.stroke = true;
             if('colorFunction' in pt || 'opacityFunction' in pt) {
