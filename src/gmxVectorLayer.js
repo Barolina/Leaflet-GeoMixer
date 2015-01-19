@@ -205,6 +205,7 @@
         var _this = this;
         this.initPromise.then(function() {
             _this._gmx.styleManager.setStyle(style, num);
+            _this.fire('stylechange', {num: num || 0});
             _this.repaint();
         });
         return this;
@@ -494,6 +495,9 @@
             
             var observer = gmx.dataManager.addObserver(attr, zKey);
             
+            myLayer.on('stylechange', function() {
+                observer.setBounds(gmx.styleManager.getStyleBounds(gmxTilePoint));
+            }, this);
             observer.on('activate', function() {
                 //if observer is deactivated before drawing, 
                 //we can consider corresponding tile as already drawn
@@ -502,7 +506,7 @@
                     myLayer._tileLoaded();
                     isDrawnFirstTime = true;
                 }
-            })
+            });
             gmx.tileSubscriptions[zKey] = {
                 px: 256 * gmxTilePoint.x,
                 py: 256 *(1 + gmxTilePoint.y)
@@ -755,7 +759,11 @@
                         var idr = target.id,
                             changed = !lastHover || lastHover.id !== idr;
                         if (type === 'mousemove' && lastHover) {
-                            if (!changed) return idr;
+                            if (!changed) {
+                                ev.gmx = lastHover;
+                                this.fire(type, ev);
+                                return idr;
+                            }
                             gmx.lastHover = null;
                             chkHover('mouseout');
                         }

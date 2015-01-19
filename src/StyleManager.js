@@ -102,6 +102,7 @@
                 common = false;
             }
         }
+        if ('r2Function' in rg) common = false;
         return common ? Math.max(rg.r1, rg.r2) : null;
     }
 
@@ -193,6 +194,7 @@
         }
         if (st.common && !st.maxSize) {
             st.maxSize = st.iconGeomSize || st.weight || 0;
+            if ('iconScale' in st) st.maxSize *= st.iconScale;
         }
         return st;
     }
@@ -309,8 +311,10 @@
                 type = 'polygon';
             }
             if(pt.iconGeomSize) {
-                out.iconGeomSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
-                out.sx = out.sy = out.iconGeomSize;
+                var iconGeomSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
+                out.iconGeomSize = iconGeomSize;
+                if ('iconScale' in pt) out.iconGeomSize *= pt.iconScale;
+                out.sx = out.sy = iconGeomSize;
             }
             out.stroke = true;
             if('colorFunction' in pt || 'opacityFunction' in pt) {
