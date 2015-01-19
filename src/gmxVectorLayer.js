@@ -779,9 +779,10 @@
                         if (type === 'mousemove' && changed) {
                             lastHover = gmx.lastHover = ev.gmx;
                             var item = gmx.dataManager.getItem(idr),
-                                currentStyle = gmx.styleManager.getObjStyle(item);
+                                currentStyle = gmx.styleManager.getObjStyle(item),
+                                size = currentStyle.common ? currentStyle.maxSize : 256;
 
-                            lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.iconGeomSize);
+                            lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, size);
                             chkHover('mouseover');
                         }
                         this._map.doubleClickZoom.disable();
