@@ -1141,6 +1141,13 @@ gmxAPIutils.Bounds.prototype = {
             max2 = bounds.max;
         return max2.x + x > min.x && min2.x - x < max.x && max2.y + y > min.y && min2.y - y < max.y;
     },
+    isEqual: function (bounds) { // (Bounds) -> Boolean
+        var min = this.min,
+            max = this.max,
+            min2 = bounds.min,
+            max2 = bounds.max;
+        return max2.x === max.x && min2.x === min.x && max2.y === max.y && min2.y === min.y;
+    },
     clipPolygon: function (coords) { // (coords) -> clip coords
         var min = this.min,
             max = this.max,

@@ -260,6 +260,9 @@
 
         out.sx = pt.sx;
         out.sy = pt.sy;
+        if (pt.maxSize) {
+            out.maxSize = pt.maxSize;
+        }
         if(type === 'image') {
             out.type = type;
             if (pt.iconUrl) out.iconUrl = pt.iconUrl;
@@ -294,7 +297,7 @@
                     ;
                 colorStop.push([p0, p3]);
             }
-            out.sx = out.sy = out.iconGeomSize = r2;
+            out.maxSize = out.sx = out.sy = out.iconGeomSize = r2;
             out.fillRadialGradient = {
                 x1:x1, y1:y1, r1:r1, x2:x2, y2:y2, r2:r2,
                 addColorStop: colorStop
@@ -314,7 +317,7 @@
                 var iconGeomSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
                 out.iconGeomSize = iconGeomSize;
                 if ('iconScale' in pt) out.iconGeomSize *= pt.iconScale;
-                out.sx = out.sy = iconGeomSize;
+                out.maxSize = out.sx = out.sy = iconGeomSize;
             }
             out.stroke = true;
             if('colorFunction' in pt || 'opacityFunction' in pt) {

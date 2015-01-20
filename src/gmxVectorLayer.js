@@ -496,7 +496,10 @@
             var observer = gmx.dataManager.addObserver(attr, zKey);
             
             myLayer.on('stylechange', function() {
-                observer.setBounds(gmx.styleManager.getStyleBounds(gmxTilePoint));
+                var bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
+                if (observer.bbox.isEqual(bbox)) {
+                    observer.setBounds(bbox);
+                }
             }, this);
             observer.on('activate', function() {
                 //if observer is deactivated before drawing, 
@@ -780,8 +783,7 @@
                             lastHover = gmx.lastHover = ev.gmx;
                             var item = gmx.dataManager.getItem(idr),
                                 currentStyle = gmx.styleManager.getObjStyle(item),
-                                size = currentStyle.common ? currentStyle.maxSize : 256;
-
+                                size = currentStyle.maxSize || 256;
                             lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, size);
                             chkHover('mouseover');
                         }
@@ -828,7 +830,7 @@
 
         var pixelBounds = this._map.getPixelBounds(),
             minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta)/256),
-            maxY = 1 + Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta)/256),
+            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta)/256),
             minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x),
             minX = Math.floor((minX + shiftX - delta)/256),
             maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x),
