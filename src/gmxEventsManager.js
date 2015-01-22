@@ -61,7 +61,9 @@ var gmxEventsManager = L.Handler.extend({
             mousemove: eventCheck,
             contextmenu: eventCheck,
             layeradd: function (ev) {
-                this._layers.push(ev.layer._leaflet_id);
+                var layer = ev.layer,
+                    needCheck = 'gmxEventCheck' in layer && layer.options.clickable;
+                if (needCheck) this._layers.push(layer._leaflet_id);
             },
             layerremove: function (ev) {
                 var id = ev.layer._leaflet_id,

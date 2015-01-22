@@ -152,6 +152,9 @@
             map.on('moveend', this._moveEnd, this);
         }
         this.fire('add');
+        if (this.options.clickable === false) {
+            this._container.style.pointerEvents = 'none';
+        }
     },
 
     onRemove: function(map) {
