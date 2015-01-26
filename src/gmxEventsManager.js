@@ -18,10 +18,10 @@ var gmxEventsManager = L.Handler.extend({
                 _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
             }
         }
-        map.gmxDrawing.on('drawstart', function (ev) {
+        map.gmxDrawing.on('drawstart', function () {
             this._drawstart = true;
         }, this);
-        map.gmxDrawing.on('drawstop', function (ev) {
+        map.gmxDrawing.on('drawstop', function () {
             this._drawstart = false;
         }, this);
 
