@@ -11,12 +11,19 @@ var gmxEventsManager = L.Handler.extend({
         this._lastLayer = null;
         this._lastId = null;
         var _this = this;
+        this._drawstart = false;
 
         var clearLastHover = function () {
             if (_this._lastLayer) {
                 _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
             }
         }
+        map.gmxDrawing.on('drawstart', function (ev) {
+            this._drawstart = true;
+        }, this);
+        map.gmxDrawing.on('drawstop', function (ev) {
+            this._drawstart = false;
+        }, this);
 
         var eventCheck = function (ev) {
             var type = ev.type,
@@ -27,8 +34,10 @@ var gmxEventsManager = L.Handler.extend({
                 cursor = ''; //default
             _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
             
-            if(type === 'mousemove' &&  _this._map.gmxMouseDown) return;
+            if(_this._drawstart ||
+                (type === 'mousemove' &&  _this._map.gmxMouseDown)) return;
 
+            _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
             for (var i = arr.length - 1; i >= 0; i--) {
                 id = arr[i];
                 layer = _this._map._layers[id];
@@ -54,7 +63,13 @@ var gmxEventsManager = L.Handler.extend({
         }
 
         map.on({
-            click: eventCheck,
+            click: function (ev) {
+                if (_this.clickPointTimer) clearTimeout(_this.clickPointTimer);
+                _this.clickPointTimer = setTimeout(function () {
+                    clearTimeout(_this.clickPointTimer);
+                    eventCheck(ev);
+                }, 0);
+            },
             dblclick: eventCheck,
             mousedown: eventCheck,
             mouseup: eventCheck,

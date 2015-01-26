@@ -743,8 +743,12 @@
             || this.hasEventListeners('mouseout')
             || this.hasEventListeners(type)
             )) {
-            var zKey = ev.originalEvent.target.id,
-                observer = gmx.dataManager.getObserver(zKey);
+            var zKey = ev.originalEvent.target.id;
+            if (!zKey) {
+                var point = layer._map.gmxMousePos._add({x: gmx.shiftX, y: gmx.shiftY})._divideBy(256);
+                zKey = this._map._zoom + ':' + Math.floor(point.x) + ':' + Math.floor(point.y);
+            }
+            var observer = gmx.dataManager.getObserver(zKey);
             if (observer) {
                 var lng = ev.latlng.lng % 360,
                     latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
