@@ -16,10 +16,9 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
         layerParams[p] = options[p];
     }
     
-    var hostName = options.hostName || DEFAULT_HOSTNAME,
-        apiKey = options.apiKey || '';
+    var hostName = options.hostName || DEFAULT_HOSTNAME;
     
-    gmxMapManager.getMap(hostName, apiKey, mapID).then(
+    gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
         function() {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID);
             
@@ -54,10 +53,9 @@ L.gmx.loadMap = function(mapID, options) {
     options = options || {};
 
     var def = new gmxDeferred(),
-        hostName = options.hostName || DEFAULT_HOSTNAME,
-        apiKey = options.apiKey || '';
+        hostName = options.hostName || DEFAULT_HOSTNAME;
 
-    gmxMapManager.getMap(hostName, apiKey, mapID).then(function(mapInfo) {
+    gmxMapManager.getMap(hostName, options.apiKey, mapID).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
         
         var curZIndex = 0,
@@ -69,7 +67,9 @@ L.gmx.loadMap = function(mapID, options) {
                 layer = loadedMap.layers[l];
                 if (options.setZIndex) {
                     var zIndex = curZIndex++;
-                    if (layer._gmx.properties.type === 'Vector') zIndex += vectorLayersOffset;
+                    if (layer._gmx.properties.type === 'Vector') {
+                        zIndex += vectorLayersOffset;
+                    }
                     layer.options.zIndex = zIndex;
                 }
                 

@@ -11,11 +11,11 @@ var gmxSessionManager = {
             return this._scriptAPIKey;
         }
         
-        var scripts = document.getElementsByTagName("script");
-		for (var i = 0; i < scripts.length; i++) {
-			var src = scripts[i].getAttribute("src");
-			if(this.SCRIPT_REGEXP.exec(src)) {
-				var query = src.split('?')[1];
+        var scripts = document.getElementsByTagName('script');
+        for (var i = 0; i < scripts.length; i++) {
+            var src = scripts[i].getAttribute('src');
+            if (this.SCRIPT_REGEXP.exec(src)) {
+                var query = src.split('?')[1];
                 query && query.split('&').forEach(function(param) {
                     var parsedParam = param.split('=');
                     if (parsedParam[0] === _this.APIKEY_PARAM) {
@@ -23,38 +23,46 @@ var gmxSessionManager = {
                     }
                 });
                 break;
-			}
-		}
+            }
+        }
         this._scriptSearched = true;
-		return this._scriptAPIKey;
+        return this._scriptAPIKey;
     },
     
+    //we will search apiKey in script tags iff apiKey parameter is undefined.
+    //if it is defined as falsy (null, '', etc), we won't send any requests to server
     requestSessionKey: function(serverHost, apiKey) {
-        var keys = this._keys;
+        var keys = this._sessionKeys;
+        
         if (!(serverHost in keys)) {
-            apiKey = apiKey || this._searchScriptAPIKey();
+            apiKey = typeof apiKey === 'undefined' ? this._searchScriptAPIKey() : apiKey;
             keys[serverHost] = new gmxDeferred();
-            gmxAPIutils.requestJSONP(
-                "http://" + serverHost + "/ApiKey.ashx",
-                {
-                    WrapStyle: 'func',
-                    Key: apiKey,
-                }
-            ).then(function(response) {
-                if(response && response.Status === 'ok') {
-                    keys[serverHost].resolve(response.Result.Key);
-                } else {
-                    keys[serverHost].reject();
-                }
-            });
+            if (apiKey) {
+                gmxAPIutils.requestJSONP(
+                    "http://" + serverHost + "/ApiKey.ashx",
+                    {
+                        WrapStyle: 'func',
+                        Key: apiKey,
+                    }
+                ).then(function(response) {
+                    if (response && response.Status === 'ok') {
+                        keys[serverHost].resolve(response.Result.Key);
+                    } else {
+                        keys[serverHost].reject();
+                    }
+                });
+            } else {
+                keys[serverHost].resolve('');
+            }
         }
         return keys[serverHost];
     },
+    
     //get already received session key
     getSessionKey: function(serverHost) {
-        var keyPromise = this._keys[serverHost];
+        var keyPromise = this._sessionKeys[serverHost];
         
         return keyPromise && keyPromise.getFulfilledData() && keyPromise.getFulfilledData()[0];
     },
-    _keys: {} //deferred for each host
+    _sessionKeys: {} //deferred for each host
 }
