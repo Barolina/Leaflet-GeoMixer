@@ -1192,7 +1192,8 @@ gmxAPIutils.bounds = function(arr) {
     return new gmxAPIutils.Bounds(arr);
 };
 
-L.gmxUtil = {
+if (!L.gmxUtil) L.gmxUtil = {};
+L.extend(L.gmxUtil, {
     requestJSONP: gmxAPIutils.requestJSONP,
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
@@ -1210,7 +1211,7 @@ L.gmxUtil = {
     getGeometrySummary: gmxAPIutils.getGeometrySummary,
     getPropertiesHash: gmxAPIutils.getPropertiesHash,
     distVincenty: gmxAPIutils.distVincenty
-};
+});
 
 !function() {
 
