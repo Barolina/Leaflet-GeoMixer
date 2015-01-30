@@ -91,7 +91,10 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
     } else if (geoType === 'POLYGON' || geoType === 'MULTIPOLYGON') {
         if(style.image) { // set MULTIPOLYGON as marker
             dattr.coords = [(dataOption.bounds.min.x + dataOption.bounds.max.x)/2, (dataOption.bounds.min.y + dataOption.bounds.max.y)/2];
-            gmxAPIutils.pointToCanvas(dattr);
+            dattr.pointAttr = gmxAPIutils.getPixelPoint(dattr, dattr.coords);
+            if (dattr.pointAttr) {
+                gmxAPIutils.pointToCanvas(dattr);
+            }
         } else {
             dattr.flagPixels = false;
             if (!dataOption.pixels) dataOption.pixels = {};
