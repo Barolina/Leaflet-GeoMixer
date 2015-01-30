@@ -86,7 +86,7 @@
             }
         }
         
-        rg.addColorStop = rg.addColorStop || [[0, 0xFF0000, 0.5], [1, 0xFFFFFF, 0.5]];
+        rg.addColorStop = rg.addColorStop || [[0, 0xFF0000, 50], [1, 0xFFFFFF, 50]];
         rg.addColorStopFunctions = [];
         for (var i = 0, len = rg.addColorStop.length; i < len; i++) {
             var arr = rg.addColorStop[i],
@@ -97,7 +97,7 @@
                 ];
             rg.addColorStopFunctions.push(resFunc);
             if (resFunc[1] === null && resFunc[2] === null) {
-                arr.push(gmxAPIutils.dec2color(arr[1], arr[2]));
+                arr.push(gmxAPIutils.dec2color(arr[1], arr[2]/100));
             } else {
                 common = false;
             }

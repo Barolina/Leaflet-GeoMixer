@@ -212,12 +212,14 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
         hover = gmx.lastHover && gmx.lastHover.id === geoItem.id,
         item = gmx.dataManager.getItem(geoItem.id);
 
-    if (gmx.multiFilters) {
-        item.multiFilters.forEach(function(it) {
-            drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle);
-        });
-    } else {
-        drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys);
+    if (item) {
+        if (gmx.multiFilters) {
+            item.multiFilters.forEach(function(it) {
+                drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle);
+            });
+        } else {
+            drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys);
+        }
     }
     return true;
 }
