@@ -295,7 +295,7 @@
         var rgb = [0xff0000, 0x00ff00, 0x0000ff];
         for (var i = 0; i < count; i++) {
             var col = arr[i];
-            if(pattern.patternColorsFunction[i] != null) {
+            if(pattern.patternColorsFunction && pattern.patternColorsFunction[i] != null) {
                 col =  (prop != null ? pattern.patternColorsFunction[i](prop, indexes): rgb[i%3]);
                 notFunc = false;
             }

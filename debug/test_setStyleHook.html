@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>AREALL - Публичная карта</title>
+    <link href="/favicon.ico" rel="shortcut icon">
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+	<style>
+		html, body, #map {
+			height: 100%;
+			margin: 0px;
+		}
+	</style>
+	
+	
+
+</head>
+<body>
+	<div id="map"></div>
+
+		<script>
+        
+		var map = L.map( 'map' ).setView( [ 54.986718992633515, 73.37493896484376 ], 14 );
+		var osm = L.tileLayer( "http://{s}.tile.osm.org/{z}/{x}/{y}.png", 
+		{
+			maxZoom: 18
+        } ).addTo( map );
+
+        var styleIDS = {
+            color: 0x00FFFF,
+            fillColor: 0x0000FF
+        };
+        var ids = {
+            161: styleIDS,
+            169: {
+                color: 0x00FFFF,
+                fillColor: 0xFF0000,
+                fillOpacity: 0.5
+            },
+            29: {
+                fillPattern: {                  // fill.pattern
+                    style: 'diagonal1'          // могут быть заданны строки (horizontal, vertical, diagonal1, diagonal2, circle, cross) (по умолчанию: 'horizontal')
+                    ,colors: [0x00FFFF, 0xFF0000]    // массив цветов в формате UInt|Expression (по умолчанию: [])
+                }
+                ,fillOpacity: 0.3
+            }
+        };
+
+		// Подгружаем и отображаем слои
+		// Градостроительные зоны
+		var zones = L.gmx.loadLayer( 'D5A94F2679A3464A9C0B7FBC19AAAAF3', 'B65FEBCB86A24B4CB4D84AA796E22078' )
+		.then( function( my_layer )
+		{
+			// Перехватываем применение стиля объекта
+			my_layer.setStyleHook( function( map_object )
+			{
+				// Пытаемся изменить цвет рамки и цвет закраски
+				return ids[map_object.id];
+			} );
+	
+			// Прицепляем слой к карте
+			my_layer.addTo( map );
+		} );
+
+	</script>
+</body>
+</html>

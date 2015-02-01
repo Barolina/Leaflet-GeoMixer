@@ -56,11 +56,13 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
         tbounds = options.tbounds;
 
     var style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
+    item.currentStyle = L.extend({}, currentStyle);
     if (gmx.styleHook && !geoItem.styleExtend) {
         geoItem.styleExtend = gmx.styleManager.applyStyleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
     }
-
-    item.currentStyle = geoItem.styleExtend || currentStyle;
+    if (geoItem.styleExtend) {
+        item.currentStyle = L.extend(item.currentStyle, geoItem.styleExtend);
+    }
     setCanvasStyle(item, ctx, item.currentStyle);
 
     var geoType = geom.type,
@@ -143,8 +145,8 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
                 }
                 return out;
             }
-            var strokeStyle = currentStyle.strokeStyle || style.strokeStyle,
-                lineWidth = currentStyle.lineWidth || style.lineWidth;
+            var strokeStyle = item.currentStyle.strokeStyle || style.strokeStyle,
+                lineWidth = item.currentStyle.lineWidth || style.lineWidth;
             if(strokeStyle && lineWidth) {
                 var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas);
                 if(pixels) {
@@ -173,8 +175,8 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
                 coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
                 ctx.globalAlpha = 1;
             }
-            if (currentStyle.fillStyle || currentStyle.canvasPattern) {
-                ctx.fillStyle = currentStyle.fillStyle;
+            if (item.currentStyle.fillStyle || item.currentStyle.canvasPattern) {
+                ctx.fillStyle = item.currentStyle.canvasPattern || item.currentStyle.fillStyle;
                 coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
             }
         }
