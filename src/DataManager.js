@@ -479,6 +479,16 @@
     _chkProcessing: function(processing) {
         var tile = this.processingTile,
             _items = this._items;
+
+        for (var id in _items) {
+            var it = _items[id];
+            it.processing = false;
+            for (var vKey in it.options.fromTiles) {
+                if (!this._tiles[vKey]) {
+                    delete it.options.fromTiles[vKey];
+                }
+            }
+        }
         if (tile) {
             if (tile.data)
                 tile.data.forEach(function(it) {
@@ -513,7 +523,7 @@
                     return tile.z === 0 || !item.processing;
                 });
             } else {
-                tile.addData(data);
+                this.addData(data);
             }
         }
         if (tile) this._triggerObservers();
@@ -625,15 +635,16 @@
         var arr = layerProperties.tiles || [];
         var vers = layerProperties.tilesVers;
         var newActiveTileKeys = {};
+        this._tiles = {};
         for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
             var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1),
                 vKey = tile.vectorTileKey;
             this._tiles[vKey] = this._tiles[vKey] || {tile: tile};
             newActiveTileKeys[vKey] = true;
         }
-        
+
         this._updateActiveTilesList(newActiveTileKeys);
-        
+
         if (layerProperties.Processing) {
             this._chkProcessing(layerProperties.Processing);
         }
