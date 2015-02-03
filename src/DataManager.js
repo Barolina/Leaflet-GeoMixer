@@ -603,8 +603,9 @@
     },
 
     initTilesTree: function(layerProperties) {
-        var arr = layerProperties.TemporalTiles || [];
-        var vers = layerProperties.TemporalVers || [];
+        var arr = layerProperties.TemporalTiles || [],
+            vers = layerProperties.TemporalVers || [],
+            newTiles = {};
 
         for (var i = 0, len = arr.length; i < len; i++) {
             var arr1 = arr[i];
@@ -616,10 +617,11 @@
                 v = Number(vers[i]),
                 tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
 
-            this._tiles[tileKey] = this._tiles[tileKey] || {
+            newTiles[tileKey] = this._tiles[tileKey] || {
                 tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
             }
         }
+        this._tiles = newTiles;
 
         this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
@@ -631,22 +633,25 @@
     initTilesList: function(layerProperties) {
         var arr = layerProperties.tiles || [],
             vers = layerProperties.tilesVers,
+            newTiles = {},
             newActiveTileKeys = {};
 
         for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-            var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1),
-                vKey = tile.vectorTileKey;
-            this._tiles[vKey] = this._tiles[vKey] || {tile: tile};
-            newActiveTileKeys[vKey] = true;
+            var z = Number(arr[i+2]),
+                y = Number(arr[i+1]),
+                x = Number(arr[i]),
+                v = Number(vers[cnt]);
+                tileKey = gmxVectorTile.makeTileKey(x, y, z, v, -1, -1);
+                
+            newTiles[tileKey] = this._tiles[tileKey] || {
+                tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
+            }
+            newActiveTileKeys[tileKey] = true;
         }
+        this._tiles = newTiles;
 
         this._updateActiveTilesList(newActiveTileKeys);
 
-        for (var vKey in this._tiles) {
-            if (!newActiveTileKeys[vKey]) {
-                delete this._tiles[vKey];
-            }
-        }
         if (layerProperties.Processing) {
             this._chkProcessing(layerProperties.Processing);
         }
