@@ -489,11 +489,8 @@
                 }
             }
         }
+
         if (tile) {
-            if (tile.data)
-                tile.data.forEach(function(it) {
-                    if (_items[it[0]]) _items[it[0]].processing = false;
-                });
             tile.clear();
         }
         var skip = {};
@@ -632,10 +629,10 @@
         }
     },
     initTilesList: function(layerProperties) {
-        var arr = layerProperties.tiles || [];
-        var vers = layerProperties.tilesVers;
-        var newActiveTileKeys = {};
-        this._tiles = {};
+        var arr = layerProperties.tiles || [],
+            vers = layerProperties.tilesVers,
+            newActiveTileKeys = {};
+
         for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
             var tile = new gmxVectorTile(this._vectorTileDataProvider, Number(arr[i]), Number(arr[i+1]), Number(arr[i+2]), Number(vers[cnt]), -1, -1),
                 vKey = tile.vectorTileKey;
@@ -645,6 +642,11 @@
 
         this._updateActiveTilesList(newActiveTileKeys);
 
+        for (var vKey in this._tiles) {
+            if (!newActiveTileKeys[vKey]) {
+                delete this._tiles[vKey];
+            }
+        }
         if (layerProperties.Processing) {
             this._chkProcessing(layerProperties.Processing);
         }
