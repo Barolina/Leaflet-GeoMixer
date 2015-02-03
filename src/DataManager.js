@@ -640,7 +640,7 @@
             var z = Number(arr[i+2]),
                 y = Number(arr[i+1]),
                 x = Number(arr[i]),
-                v = Number(vers[cnt]);
+                v = Number(vers[cnt]),
                 tileKey = gmxVectorTile.makeTileKey(x, y, z, v, -1, -1);
                 
             newTiles[tileKey] = this._tiles[tileKey] || {
