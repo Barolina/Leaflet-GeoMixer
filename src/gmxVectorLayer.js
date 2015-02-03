@@ -30,27 +30,6 @@
                 if (!map) return 0;
                 var pos = map.getCenter();
                 return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
-            },
-            getScreenBboxArr: function() {
-                var map = _this._map;
-                if (!map) return [];
-                var deltaY = _this._gmx.getDeltaY(),
-                    screenBounds = map.getBounds(),
-                    p1 = map.options.crs.project(screenBounds.getNorthWest()),
-                    p2 = map.options.crs.project(screenBounds.getSouthEast()),
-                    ww2 = gmxAPIutils.tileSizes[0],
-                    bbox = gmxAPIutils.bounds([[p1.x % ww2, p1.y - deltaY], [p2.x % ww2, p2.y - deltaY]]),
-                    ww = gmxAPIutils.tileSizes[1];
-
-                var arr = [bbox];
-                if (bbox.max.x - bbox.min.x > ww2) {
-                    arr[0] = gmxAPIutils.bounds([[-ww, -ww], [ww, ww]]);
-                } else if (bbox.max.x > ww) {
-                    arr.push(gmxAPIutils.bounds([[bbox.min.x - ww2, bbox.min.y], [bbox.max.x - ww2, bbox.max.y]]));
-                } else if (bbox.min.x < -ww) {
-                    arr.push(gmxAPIutils.bounds([[bbox.min.x + ww2, bbox.min.y], [bbox.max.x + ww2, bbox.max.y]]));
-                }
-                return arr;
             }
         };
         if (options.crossOrigin) this._gmx.crossOrigin = options.crossOrigin;
@@ -410,7 +389,7 @@
             //L.TileVector will remove all tiles from other zooms.
             //But it will not remove subscriptions without tiles - we should do it ourself
             var dataManager = gmx.dataManager,
-                bboxArr = gmx.getScreenBboxArr();
+                bboxArr = gmxAPIutils.getNormalizeBounds(_this._map.getBounds(), _this._gmx.getDeltaY());
 
             for (var key in gmx.tileSubscriptions) {
                 var parsedKey = key.split(':');

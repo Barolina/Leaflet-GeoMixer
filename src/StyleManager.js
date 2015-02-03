@@ -193,7 +193,8 @@
             st.type = type;
         }
         if (st.common && !st.maxSize) {
-            st.maxSize = st.iconGeomSize || st.weight || 0;
+            st.maxSize = st.iconGeomSize || 0;
+            st.maxSize += st.weight ? st.weight : 0;
             if ('iconScale' in st) st.maxSize *= st.iconScale;
         }
         return st;
@@ -315,9 +316,11 @@
             }
             if(pt.iconGeomSize) {
                 var iconGeomSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
+                out.sx = out.sy = iconGeomSize;
+                iconGeomSize += pt.weight ? pt.weight : 0;
                 out.iconGeomSize = iconGeomSize;
                 if ('iconScale' in pt) out.iconGeomSize *= pt.iconScale;
-                out.maxSize = out.sx = out.sy = iconGeomSize;
+                out.maxSize = iconGeomSize;
             }
             out.stroke = true;
             if('colorFunction' in pt || 'opacityFunction' in pt) {

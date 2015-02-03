@@ -382,14 +382,16 @@
             iconScale = attr.iconScale || style.iconScale || 1,
             sx = currentStyle.sx || style.sx || 4,
             sy = currentStyle.sy || style.sy || 4,
+            weight = currentStyle.weight || style.weight || 0,
             px = attr.tpx,
             py = attr.tpy;
 
-        sx *= iconScale, sy *= iconScale;
+        sx *= iconScale;
+        sy *= iconScale;
         var px1 = coords[0] * mInPixel - px,
             py1 = py - coords[1] * mInPixel;
-        
-        return ((py1 - sy) > 255 || (px1 - sx) > 255 || (px1 + sx) < 0 || (py1 + sy) < 0) 
+
+        return ((py1 - sy - weight) > 256 || (px1 - sx - weight) > 256 || (px1 + sx + weight) < 0 || (py1 + sy + weight) < 0) 
             ? null
             : {
                 sx: sx,
@@ -976,6 +978,54 @@
             prev = p;
         }
         return hiddenLines;
+    },
+
+    getNormalizeBounds: function (screenBounds, mercDeltaY) { // get bounds array from -180 180 lng
+        var northWest = screenBounds.getNorthWest(),
+            southEast = screenBounds.getSouthEast(),
+            minX = northWest.lng,
+            maxX = southEast.lng,
+            w = (maxX - minX) / 2,
+            minX1 = null,
+            maxX1 = null;
+            out = [];
+        
+        if (w >= 180) {
+            minX = -180, maxX = 180;
+        } else if (maxX > 180 || minX < -180) {
+            var center = ((maxX + minX) / 2) % 360;
+            if (center > 180) center -= 360;
+            else if (center < -180) center += 360;
+            minX = center - w, maxX = center + w;
+            if (minX < -180) {
+                minX1 = minX + 360, maxX1 = 180, minX = -180;
+            } else if (maxX > 180) {
+                minX1 = -180, maxX1 = maxX - 360, maxX = 180;
+            }
+        }
+        var m1 = {x: minX, y: southEast.lat},
+            m2 = {x: maxX, y: northWest.lat};
+
+        if (mercDeltaY !== undefined) {
+            m1 = L.Projection.Mercator.project(new L.latLng([southEast.lat, minX]));
+            m2 = L.Projection.Mercator.project(new L.latLng([northWest.lat, maxX]));
+            m1.y -= mercDeltaY;
+            m2.y -= mercDeltaY;
+        }
+        out.push(gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]));
+
+        if (minX1) {
+            var m11 = {x: minX1, y: southEast.lat},
+                m12 = {x: maxX1, y: northWest.lat};
+            if (mercDeltaY !== undefined) {
+                m11 = L.Projection.Mercator.project(new L.latLng([southEast.lat, minX1])),
+                m12 = L.Projection.Mercator.project(new L.latLng([northWest.lat, maxX1]));
+                m11.y -= mercDeltaY;
+                m12.y -= mercDeltaY;
+            }
+            out.push(gmxAPIutils.bounds([[m11.x, m11.y], [m12.x, m12.y]]));
+        }
+        return out;
     },
 
     getTileBounds: function(x, y, z) {  //x, y, z - GeoMixer tile coordinates
