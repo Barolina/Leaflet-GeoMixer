@@ -987,7 +987,7 @@
             maxX = southEast.lng,
             w = (maxX - minX) / 2,
             minX1 = null,
-            maxX1 = null;
+            maxX1 = null,
             out = [];
         
         if (w >= 180) {
