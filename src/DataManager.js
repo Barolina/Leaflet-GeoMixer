@@ -631,29 +631,30 @@
         }
     },
     initTilesList: function(layerProperties) {
-        var arr = layerProperties.tiles || [],
-            vers = layerProperties.tilesVers,
-            newTiles = {},
-            newActiveTileKeys = {};
+        var newActiveTileKeys = {};
+        if (layerProperties.tiles) {
+            var arr = layerProperties.tiles || [],
+                vers = layerProperties.tilesVers,
+                newTiles = {};
 
-        for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-            var z = Number(arr[i+2]),
-                y = Number(arr[i+1]),
-                x = Number(arr[i]),
-                v = Number(vers[cnt]),
-                tileKey = gmxVectorTile.makeTileKey(x, y, z, v, -1, -1);
-                
-            newTiles[tileKey] = this._tiles[tileKey] || {
-                tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
+            for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
+                var z = Number(arr[i+2]),
+                    y = Number(arr[i+1]),
+                    x = Number(arr[i]),
+                    v = Number(vers[cnt]),
+                    tileKey = gmxVectorTile.makeTileKey(x, y, z, v, -1, -1);
+                    
+                newTiles[tileKey] = this._tiles[tileKey] || {
+                    tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
+                }
+                newActiveTileKeys[tileKey] = true;
             }
-            newActiveTileKeys[tileKey] = true;
-        }
-        this._tiles = newTiles;
+            this._tiles = newTiles;
 
+            if (layerProperties.Processing) {
+                this._chkProcessing(layerProperties.Processing);
+            }
+        }
         this._updateActiveTilesList(newActiveTileKeys);
-
-        if (layerProperties.Processing) {
-            this._chkProcessing(layerProperties.Processing);
-        }
     }
 });
