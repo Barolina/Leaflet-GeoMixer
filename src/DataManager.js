@@ -561,9 +561,7 @@
     },
 
     addData: function(data, options) {
-        if (!data || !data.length) {
-            return;
-        }
+        if (!data) data = [];
         
         var tileLink = this._getTileLink(options),
             chkKeys = this._getDataKeys(data),
