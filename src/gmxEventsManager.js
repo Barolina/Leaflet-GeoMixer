@@ -29,7 +29,7 @@ var gmxEventsManager = L.Handler.extend({
 
         var eventCheck = function (ev) {
             var type = ev.type,
-                arr = _this._layers,
+                arr = [],
                 id = 0,
                 objId = 0,
                 layer = null,
@@ -40,17 +40,25 @@ var gmxEventsManager = L.Handler.extend({
                 (type === 'mousemove' &&  _this._map.gmxMouseDown)) return;
 
             _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
-            for (var i = arr.length - 1; i >= 0; i--) {
-                id = arr[i];
+            _this._layers.map(function (id) {
                 layer = _this._map._layers[id];
-                var needCheck = 'gmxEventCheck' in layer && layer.options.clickable;
 
-                if (needCheck) {
-                    objId = layer.gmxEventCheck(ev);
-                    if(objId) {
-                        cursor = 'pointer';
-                        break;
-                    }
+                if ('gmxEventCheck' in layer && layer.options.clickable) {
+                    arr.push(layer);
+                }
+            });
+            arr = arr.sort(function(a, b) {
+                var oa = a.options, ob = b.options,
+                    za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
+                    zb = (ob.zoomOffset || 0) + (ob.zIndex || 0);
+                return zb - za;
+            });
+            for (var i = 0, len = arr.length; i < len; i++) {
+                layer = arr[i];
+                objId = layer.gmxEventCheck(ev);
+                if(objId) {
+                    cursor = 'pointer';
+                    break;
                 }
             }
             if (map._lastCursor !== cursor) map._container.style.cursor = cursor;
