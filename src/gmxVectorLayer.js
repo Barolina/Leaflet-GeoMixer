@@ -388,24 +388,22 @@
             
             //L.TileVector will remove all tiles from other zooms.
             //But it will not remove subscriptions without tiles - we should do it ourself
-            var dataManager = gmx.dataManager,
-                bboxArr = gmxAPIutils.getNormalizeBounds(_this._map.getBounds(), _this._gmx.getDeltaY());
-
+            var dataManager = gmx.dataManager;
             for (var key in gmx.tileSubscriptions) {
-                var parsedKey = key.split(':');
-                if (parsedKey[0] != zoom) {
+                var parsedKey = gmx.tileSubscriptions[key];
+                if (parsedKey.z !== zoom) {
                     _this._clearTileSubscription(key);
                 } else {    // deactivate observers for invisible Tiles
                     var observer = dataManager.getObserver(key);
-                    var active = false;
-                    for (var i = 0, len = bboxArr.length; i < len; i++) {
-                        if (observer.intersects(bboxArr[i])) {
-                            active = true;
-                            break;
-                        }
+                    if (parsedKey.x < tileBounds.min.x
+                        || parsedKey.x > tileBounds.max.x
+                        || parsedKey.y < tileBounds.min.y
+                        || parsedKey.y > tileBounds.max.y
+                    ) {
+                        observer.deactivate();
+                    } else {
+                        observer.activate();
                     }
-                    if (active) observer.activate();
-                    else observer.deactivate();
                 }
             }
         });
@@ -493,6 +491,9 @@
                 }
             });
             gmx.tileSubscriptions[zKey] = {
+                z: zoom,
+                x: tilePoint.x,
+                y: tilePoint.y,
                 px: 256 * gmxTilePoint.x,
                 py: 256 *(1 + gmxTilePoint.y)
             };
