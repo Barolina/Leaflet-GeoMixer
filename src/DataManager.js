@@ -1,5 +1,5 @@
-﻿var gmxDataManager = L.Class.extend({
-	includes: L.Mixin.Events,
+var gmxDataManager = L.Class.extend({
+    includes: L.Mixin.Events,
     initialize: function(gmx) {
         var _this = this,
             isTemporalLayer = gmx.properties.Temporal;
@@ -16,55 +16,55 @@
         this._freeSubscrID = 0;
         this._items = {};
         this._observers = {};
-        
+
         this._needCheckDateInterval = false;
         this._needCheckActiveTiles = true;
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
                 gmxVectorTileLoader.load(
-                    _this._gmx.tileSenderPrefix, 
+                    _this._gmx.tileSenderPrefix,
                     {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this._gmx.layerID}
                 ).then(callback, function() {
                     console.log('Error loading vector tile');
                     callback([]);
                     _this.fire('chkLayerUpdate', {dataProvider: _this});
-                })
+                });
             }
-        }
+        };
         if (isTemporalLayer) {
             this.addFilter('TemporalFilter', function(item, tile, observer) {
                 var unixTimeStamp = item.options.unixTimeStamp,
                     dates = observer.dateInterval;
                 return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
-            })
+            });
         }
     },
 
     _getActiveTileKeys: function() {
-    
+
         this._chkMaxDateInterval();
 
         if (!this._needCheckActiveTiles) {
             return this._activeTileKeys;
         }
-        
+
         this._needCheckActiveTiles = false;
-        
+
         if (this._isTemporalLayer) {
             var newTileKeys = {};
             if (this._beginDate && this._endDate) {
                 if (!this._tilesTree) {
                     this.initTilesTree(this._gmx.properties);
                 }
-                
+
                 newTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
             }
             this._updateActiveTilesList(newTileKeys);
         } else {
             this.initTilesList(this._gmx.properties);
         }
-        
+
         return this._activeTileKeys;
     },
 
@@ -83,15 +83,15 @@
     getItems: function(oId, bboxActive) {
         var resItems = [],
             observer = this._observers[oId];
-            
+
         if (!observer) {
             return [];
         }
-        
+
         //add internal filters
         var filters = observer.filters.concat('processingFilter');
         this._isTemporalLayer && filters.push('TemporalFilter');
-        
+
         var _this = this,
             isIntersects = function(bounds, dx, dy) {
                 return bboxActive ? bboxActive.intersectsWithDelta(bounds, dx, dy) : observer.intersects(bounds);
@@ -105,7 +105,7 @@
 
                 for (var j = 0, len1 = data.length; j < len1; j++) {
                     var dataOption = tile.dataOptions[j];
-                    if (!observer.intersects(dataOption.bounds)) continue;
+                    if (!observer.intersects(dataOption.bounds)) {continue;}
 
                     var it = data[j],
                         id = it[0],
@@ -122,7 +122,7 @@
                         }
                     }
 
-                    if (isFiltered) continue;
+                    if (isFiltered) {continue;}
 
                     var type = geom.type;
 
@@ -130,7 +130,7 @@
                     if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
                         tile.calcEdgeLines(j);
                     }
-                    
+
                     resItems.push({
                         id: id,
                         properties: it,
@@ -143,7 +143,9 @@
         for (var tkey in activeTileKeys) {
             putData(_this._tiles[tkey].tile);
         }
-        if (this.processingTile) putData(this.processingTile);
+        if (this.processingTile) {
+            putData(this.processingTile);
+        }
 
         return resItems;
     },
@@ -162,18 +164,20 @@
                 item = this._items[id];
             // TODO: old properties null = ''
             it.forEach(function(zn, j) {
-                if (zn === null) it[j] = '';
+                if (zn === null) {
+                    it[j] = '';
+                }
             });
-            if(item) {
-                if(item.type.indexOf('MULTI') == -1) {
+            if (item) {
+                if (item.type.indexOf('MULTI') === -1) {
                     item.type = 'MULTI' + item.type;
                 }
                 delete item.bounds;
             } else {
                 item = {
-                    id: id
-                    ,type: geom.type
-                    ,options: {
+                    id: id,
+                    type: geom.type,
+                    options: {
                         fromTiles: {}
                     }
                 };
@@ -181,9 +185,9 @@
             }
             item.properties = it;
             item.options.fromTiles[vectorTileKey] = i;
-            if(layerProp.TemporalColumnName) {
+            if (layerProp.TemporalColumnName) {
                 var zn = it[this._gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];
-                item.options.unixTimeStamp = zn*1000;
+                item.options.unixTimeStamp = zn * 1000;
             }
         }
         return len;
@@ -208,34 +212,36 @@
         var activeTileKeys = this._getActiveTileKeys();
         for (var key in activeTileKeys) (function(tile) {
 
-            if (!observer.intersects(tile.bounds)) return;
+            if (!observer.intersects(tile.bounds)) {
+                return;
+            }
 
             if (tile.state === 'notLoaded') {
                 tile.load().then(function() {
                     _this._updateItemsFromTile(tile);
-              
+
                     if (_this._tilesTree) {
                         var treeNode = _this._tilesTree.getNode(tile.d, tile.s);
                         treeNode && treeNode.count--; //decrease number of tiles to load inside this node
                     }
-                    
+
                     var observers = _this._observers;
                     for (var id in observers) {
                         var observer = observers[id];
                         if (observer.intersects(tile.bounds)) {
-                            if (_this._getNotLoadedTileCount(observer) == 0) { 
+                            if (_this._getNotLoadedTileCount(observer) === 0) {
                                 observer.updateData(_this.getItems(id));
                             }
                         }
                     }
-                })
+                });
             }
-            
+
             if (tile.state !== 'loaded') {
                 leftToLoad++;
             }
         })(this._tiles[key].tile);
-        
+
         return leftToLoad;
     },
 
@@ -248,14 +254,21 @@
             for (var oId in observers) {
                 var observer = observers[oId],
                     dateInterval = observer.dateInterval;
-                    
-                if (!dateInterval) continue;
-                    
-                if (!newBeginDate || dateInterval.beginDate < newBeginDate) newBeginDate = dateInterval.beginDate;
-                if (!newEndDate || dateInterval.endDate > newEndDate) newEndDate = dateInterval.endDate;
+
+                if (!dateInterval) {
+                    continue;
+                }
+
+                if (!newBeginDate || dateInterval.beginDate < newBeginDate) {
+                    newBeginDate = dateInterval.beginDate;
+                }
+
+                if (!newEndDate || dateInterval.endDate > newEndDate) {
+                    newEndDate = dateInterval.endDate;
+                }
             }
-            if (newBeginDate && newEndDate && (this._beginDate != newBeginDate || this._endDate != newEndDate)) {
-            
+            if (newBeginDate && newEndDate && (this._beginDate !== newBeginDate || this._endDate !== newEndDate)) {
+
                 this._beginDate = newBeginDate;
                 this._endDate = newEndDate;
                 this._needCheckActiveTiles = true;
@@ -264,20 +277,20 @@
     },
 
     addObserver: function(options, id) {
-        if (!id) id = 's'+(this._freeSubscrID++);
+        id = id || 's' + (this._freeSubscrID++);
         var _this = this,
             observer = new gmxObserver(options);
-            
+
         observer.id = id;
         observer.needRefresh = true;
-        
+
         observer
             .on('update', function(ev) {
                 observer.needRefresh = true;
                 if (ev.temporalFilter) {
                     _this._needCheckDateInterval = true;
                 }
-                
+
                 _this._waitCheckObservers();
             })
             .on('activate', function() {
@@ -289,7 +302,7 @@
         _this._needCheckDateInterval = true;
         this._observers[id] = observer;
         this._waitCheckObservers();
-        
+
         return observer;
     },
 
@@ -313,8 +326,9 @@
                     num = fromTiles[key];
                 arr.push(dataOptions[num].bounds);
             }
-            if (arr.length === 1) item.bounds = arr[0];
-            else {
+            if (arr.length === 1) {
+                item.bounds = arr[0];
+            } else {
                 item.bounds = gmxAPIutils.bounds();
                 arr.forEach(function(it) {
                     item.bounds.extendBounds(it);
@@ -349,7 +363,7 @@
     checkObserver: function(observer) {
         if (observer.needRefresh && observer.isActive()) {
             observer.needRefresh = false;
-            if (this._loadTiles(observer) == 0) {
+            if (this._loadTiles(observer) === 0) {
                 var data = this.getItems(observer.id);
                 observer.updateData(data);
             }
@@ -364,7 +378,10 @@
     },
 
     _waitCheckObservers: function() {
-        if (this._checkObserversTimer) clearTimeout(this._checkObserversTimer);
+        if (this._checkObserversTimer) {
+            clearTimeout(this._checkObserversTimer);
+        }
+
         this._checkObserversTimer = setTimeout(L.bind(this.checkObservers, this), 0);
     },
 
@@ -414,12 +431,12 @@
             (function(tile) {
                 loadDef.then(function() {
                     _this._updateItemsFromTile(tile);
-                    
+
                     if (_this._tilesTree) {
                         var treeNode = _this._tilesTree.getNode(tile.d, tile.s);
                         treeNode && treeNode.count--; //decrease number of tiles to load inside this node
                     }
-                })
+                });
             })(tile);
             loadingDefs.push(loadDef);
         }
@@ -430,10 +447,11 @@
     _updateActiveTilesList: function(newTilesList) {
 
         var oldTilesList = this._activeTileKeys || {};
-        
+
         var observersToUpdate = {},
-            _this = this;
-            
+            _this = this,
+            key;
+
         var checkSubscription = function(vKey) {
             var bounds = gmxVectorTile.boundsFromTileKey(vKey),
                 observers = _this._observers;
@@ -443,23 +461,26 @@
                     observersToUpdate[sid] = true;
                 }
             }
-        }
+        };
 
-        for (var key in newTilesList) {
+        for (key in newTilesList) {
             if (!oldTilesList[key]) {
                 checkSubscription(key);
             }
         }
 
-        for (var key in oldTilesList) {
+        for (key in oldTilesList) {
             if (!newTilesList[key]) {
                 checkSubscription(key);
             }
         }
-        
+
         this._activeTileKeys = newTilesList;
-        if (this.clientSideTile) this._activeTileKeys[this.clientSideTile] = true;
-        
+
+        if (this.clientSideTile) {
+            this._activeTileKeys[this.clientSideTile] = true;
+        }
+
         this._triggerObservers(observersToUpdate);
     },
 
@@ -478,9 +499,10 @@
 
     _chkProcessing: function(processing) {
         var tile = this.processingTile,
-            _items = this._items;
+            _items = this._items,
+            id;
 
-        for (var id in _items) {
+        for (id in _items) {
             var it = _items[id];
             it.processing = false;
             for (var vKey in it.options.fromTiles) {
@@ -493,26 +515,36 @@
         if (tile) {
             tile.clear();
         }
+
         var skip = {};
-        if (processing.Deleted)
+
+        if (processing.Deleted) {
             processing.Deleted.forEach(function(id) {
                 skip[id] = true;
-                if (_items[id]) _items[id].processing = true;
+                if (_items[id]) {
+                    _items[id].processing = true;
+                }
             });
+        }
 
         var out = {};
-        if (processing.Inserted)
+        if (processing.Inserted) {
             processing.Inserted.forEach(function(it) { if (!skip[it.id]) out[it.id] = it; });
+        }
 
-        if (processing.Updated)
+        if (processing.Updated) {
             processing.Updated.forEach(function(it) { if (!skip[it.id]) out[it.id] = it; });
+        }
 
         var data = [];
-        for (var id in out) {
-            if (this._items[id]) this._items[id].processing = true;
+        for (id in out) {
+            if (this._items[id]) {
+                this._items[id].processing = true;
+            }
+
             data.push(this._propertiesToArray(out[id]));
         }
-        
+
         if (data.length > 0) {
             if (!tile) {
                 this.processingTile = tile = this.addData(data);
@@ -523,7 +555,7 @@
                 this.addData(data);
             }
         }
-        if (tile) this._triggerObservers();
+        tile && this._triggerObservers();
     },
 
     _getDataKeys: function(data) {
@@ -537,12 +569,12 @@
     _getTileLink: function(options) {
         var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
         if (options) {
-            if ('x' in options) x = options.x;
-            if ('y' in options) y = options.y;
-            if ('z' in options) z = options.z;
-            if ('v' in options) v = options.v;
-            if ('s' in options) s = options.s;
-            if ('d' in options) d = options.d;
+            if ('x' in options) { x = options.x; }
+            if ('y' in options) { y = options.y; }
+            if ('z' in options) { z = options.z; }
+            if ('v' in options) { v = options.v; }
+            if ('s' in options) { s = options.s; }
+            if ('d' in options) { d = options.d; }
         }
         var tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d),
             tileLink = this._tiles[tileKey];
@@ -561,8 +593,10 @@
     },
 
     addData: function(data, options) {
-        if (!data) data = [];
-        
+        if (!data) {
+            data = [];
+        }
+
         var tileLink = this._getTileLink(options),
             chkKeys = this._getDataKeys(data),
             vTile = tileLink.tile;
@@ -579,11 +613,11 @@
         if (tileLink) {
             vTile = tileLink.tile;
             var chkKeys = {};
-            
+
             if (!data || !data.length) {
                 return vTile;
             }
-            
+
             for (var i = 0, len = data.length; i < len; i++) {
                 var id = data[i];
                 chkKeys[id] = true;
@@ -592,11 +626,11 @@
             this._removeDataFromObservers(chkKeys);
             vTile.removeData(chkKeys, true);
             this._updateItemsFromTile(vTile);
-            
+
             //TODO: trigger observers depending on tile position, not all observers
             this._triggerObservers();
         }
-        
+
         return vTile;
     },
 
@@ -617,7 +651,7 @@
 
             newTiles[tileKey] = this._tiles[tileKey] || {
                 tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
-            }
+            };
         }
         this._tiles = newTiles;
 
@@ -635,16 +669,17 @@
                 vers = layerProperties.tilesVers,
                 newTiles = {};
 
-            for (var i = 0, cnt = 0, len = arr.length; i < len; i+=3, cnt++) {
-                var z = Number(arr[i+2]),
-                    y = Number(arr[i+1]),
+            for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
+                var z = Number(arr[i + 2]),
+                    y = Number(arr[i + 1]),
                     x = Number(arr[i]),
                     v = Number(vers[cnt]),
                     tileKey = gmxVectorTile.makeTileKey(x, y, z, v, -1, -1);
-                    
+
                 newTiles[tileKey] = this._tiles[tileKey] || {
                     tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
-                }
+                };
+
                 newActiveTileKeys[tileKey] = true;
             }
             this._tiles = newTiles;

@@ -1,18 +1,18 @@
 ﻿var gmxAPIutils = {
-	lastMapId: 0,
-    
-	newId: function()
-	{
-		gmxAPIutils.lastMapId += 1;
-		return '_' + gmxAPIutils.lastMapId;
-	},
-    
-	uniqueGlobalName: function(thing)
-	{
-		var id = gmxAPIutils.newId();
-		window[id] = thing;
-		return id;
-	},
+    lastMapId: 0,
+
+    newId: function()
+    {
+        gmxAPIutils.lastMapId += 1;
+        return '_' + gmxAPIutils.lastMapId;
+    },
+
+    uniqueGlobalName: function(thing)
+    {
+        var id = gmxAPIutils.newId();
+        window[id] = thing;
+        return id;
+    },
 
     isPageHidden: function()	{		// Видимость окна браузера
         return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden || false;
@@ -1441,7 +1441,7 @@ L.extend(L.gmxUtil, {
         {
             form.parentNode.removeChild(form);
         }
-	}
-	//расширяем namespace
-	L.gmxUtil.sendCrossDomainPostRequest = gmxAPIutils.sendCrossDomainPostRequest = sendCrossDomainPostRequest;
+    }
+    //расширяем namespace
+    L.gmxUtil.sendCrossDomainPostRequest = gmxAPIutils.sendCrossDomainPostRequest = sendCrossDomainPostRequest;
 })();
