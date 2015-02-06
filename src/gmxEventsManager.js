@@ -30,7 +30,6 @@ var gmxEventsManager = L.Handler.extend({
         var eventCheck = function (ev) {
             var type = ev.type,
                 arr = [],
-                id = 0,
                 objId = 0,
                 layer = null,
                 cursor = ''; //default
