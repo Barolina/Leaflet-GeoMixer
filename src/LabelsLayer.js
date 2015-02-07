@@ -18,10 +18,13 @@ L.LabelsLayer = L.Class.extend({
 
         var chkData = function (data, layer) {
             if (!data.added && !data.removed) return;
-            var added = data.added || [],
+
+            var opt = layer.options,
+                added = map._zoom >= opt.minZoom && map._zoom <= opt.maxZoom ? data.added : [],
                 layerId = '_' + layer._leaflet_id,
                 gmx = layer._gmx,
                 labels = {};
+
             for (var i = 0, len = added.length; i < len; i++) {
                 var item = added[i].item,
                     currentStyle = item.currentStyle || item.parsedStyleKeys || {};
@@ -54,6 +57,7 @@ L.LabelsLayer = L.Class.extend({
                         }
                         options.label = {
                             width: width + 3,
+                            sx: style.sx || 0,
                             txt: txt,
                             style: {
                                 font: size + 'px "Arial"',
@@ -91,13 +95,15 @@ L.LabelsLayer = L.Class.extend({
         this._layeradd = function (ev) {
             var layer = ev.layer,
                 id = layer._leaflet_id;
-            if (layer._gmx && layer._gmx.labelsLayer) {
-                _this._updateBbox();
-                var observer = addObserver(layer);
-                _this._observers[id] = observer;
-                _this._labels['_' + id] = {};
-                _this.redraw();
-
+                gmx = layer._gmx;
+            if (gmx && gmx.labelsLayer) {
+                gmx.styleManager.deferred.then(function () {
+                    _this._updateBbox();
+                    var observer = addObserver(layer);
+                    _this._observers[id] = observer;
+                    _this._labels['_' + id] = {};
+                    _this.redraw();
+                });
             }
         }
         this._layerremove = function (ev) {
@@ -224,12 +230,24 @@ L.LabelsLayer = L.Class.extend({
                     ww = width / this.mInPixel2,
                     hh = size / this.mInPixel2,
                     center = options.center,
-                    bbox = gmxAPIutils.bounds([
-                        [center[0] - ww, center[1] - hh],
-                        [center[0] + ww, center[1] + hh]
-                    ]),
+                    pos = [center[0], center[1]],
                     isFiltered = false;
 
+                if (it.type === 'POINT') {
+                    var labelAlign = style.labelAlign || 'left',
+                        delta = label.sx / this.mInPixel;
+                    if (labelAlign === 'left') {
+                        pos[0] += ww + delta;
+                    } else if (labelAlign === 'center') {
+                        pos[0] -= ww - delta;
+                    } else if (labelAlign === 'right') {
+                        pos[0] -= 2 * ww + delta;
+                    }
+                }
+                var bbox = gmxAPIutils.bounds([
+                    [pos[0] - ww, pos[1] - hh],
+                    [pos[0] + ww, pos[1] + hh]
+                ]);
                 for (var i = 0, len1 = out.length; i < len1; i++) {
                     if(bbox.intersects(out[i].bbox)) {
                         isFiltered = true;
@@ -253,7 +271,7 @@ L.LabelsLayer = L.Class.extend({
                     ,bbox: bbox
                     ,txt: label.txt
                     ,style: options.labelStyle
-                    ,coord: gmxAPIutils.toPixels(center, width/2, size/2, this.mInPixel)
+                    ,coord: gmxAPIutils.toPixels(pos, width/2, size/2, this.mInPixel)
                 });
             }
         }

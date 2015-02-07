@@ -222,12 +222,11 @@
     }
 
     var getImageSize = function(pt, flag) {     // check image size
-        var url = pt.iconUrl;
+        var url = pt.iconUrl,
+            opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {};
 
         needLoadIcons++;
-        gmxImageLoader.unshift(url, {
-            crossOrigin: 'anonymous'
-        }).then(
+        gmxImageLoader.unshift(url, opt).then(
             function(it) {
                 pt.maxSize = Math.max(it.width, it.height);
                 pt.sx = it.width / 2;
