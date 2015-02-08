@@ -477,7 +477,7 @@
             
             myLayer.on('stylechange', function() {
                 var bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
-                if (observer.bbox.isEqual(bbox)) {
+                if (!observer.bbox.isEqual(bbox)) {
                     observer.setBounds(bbox);
                 }
             }, this);
@@ -515,7 +515,7 @@
             screenTile = null;
 
         if (!screenTiles[zKey]) {
-            screenTiles[zKey] = screenTile = new gmxScreenVectorTile(this, tilePoint, zoom);
+            screenTiles[zKey] = screenTile = new ScreenVectorTile(this, tilePoint, zoom);
         } else {
             screenTile = screenTiles[zKey];
         }
