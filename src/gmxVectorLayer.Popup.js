@@ -1,7 +1,7 @@
 ﻿L.gmx.VectorLayer.include({
     bindPopup: function (content, options) {
 
-        if (this._popup) this.unbindPopup();
+        if (this._popup) { this.unbindPopup(); }
         if (content instanceof L.Popup) {
             this._popup = content;
         } else {
@@ -49,7 +49,7 @@
 			latlng = latlng || this._latlng ||
 			         this._latlngs[Math.floor(this._latlngs.length / 2)];
 
-			if (!options) options = {};
+			options = options || {};
             options.latlng = latlng;
             this._openPopup(options);
 		}
@@ -96,16 +96,16 @@
                     }
                     var reg = /\[([^\]]+)\]/i;
                     var matches = reg.exec(templateBalloon);
-                    while(matches && matches.length > 1) {
-                        var key = matches[1],
-                            res = key in properties ? properties[key] : '';
-                        if (key === 'SUMMARY' && !res) {
+                    while (matches && matches.length > 1) {
+                        var key1 = matches[1],
+                            res = key1 in properties ? properties[key1] : '';
+                        if (key1 === 'SUMMARY' && !res) {
                             var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
                             res = outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, this._gmx.units);
                         }
                         // var hookID = gmxAPIutils.newId(),
                             // st = "<span id='" + hookID + "'>" + res + "</span>";
-                        // spanIDs[hookID] = key;
+                        // spanIDs[hookID] = key1;
                         //templateBalloon = templateBalloon.replace(matches[0], st);
                         templateBalloon = templateBalloon.replace(matches[0], res);
                         matches = reg.exec(templateBalloon);

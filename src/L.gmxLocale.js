@@ -1,16 +1,16 @@
-!function() {
+(function() {
     var DEFAULT_LANGUAGE = 'rus',
         _setKeyText = function(lang, key, item, hash) {
-            if (!hash[lang]) hash[lang] = {};
+            if (!hash[lang]) { hash[lang] = {}; }
             hash[lang][key] = item;
         };
     L.gmxLocale = {
 
-        setLanguage: function(lang){
+        setLanguage: function(lang) {
             this._language = lang;
         },
 
-        getLanguage: function(){
+        getLanguage: function() {
             return window.language || this._language || DEFAULT_LANGUAGE;
         }
     };
@@ -23,9 +23,9 @@
                 newHash = lang;
                 lang = null;
             }
-            for ( var k in newHash ) {
+            for (var k in newHash) {
                 if (lang === null) {
-                    for ( var k1 in newHash[k] ) {
+                    for (var k1 in newHash[k]) {
                         _setKeyText(k, k1, newHash[k][k1], this);
                     }
                 } else {
@@ -41,11 +41,11 @@
 
             var keyArr = key ? key.split(/\./) : [];
             for (var i = 0, len = keyArr.length; i < len; i++) {
-                if (!locale) break;
+                if (!locale) { break; }
                 locale = locale[keyArr[i]];
             }
             return locale;
         }
     };
     L.extend(L.gmxLocale, L.gmxLocaleMixin);
-}();
+})();

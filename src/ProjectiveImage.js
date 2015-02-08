@@ -1,10 +1,9 @@
 // ProjectiveImage - projective transform that maps [0,1]x[0,1] onto the given set of points.
 var ProjectiveImage = function() {
-	var Matrix = function (w, h, values) {
-	  this.w = w;
-	  this.h = h;
-	  this.values = values || allocate(h);
-	};
+	var cnt = 0,
+        limit = 4,
+        patchSize = 64,
+        transform = null;
 
 	var allocate = function (w, h) {
 	  var values = [];
@@ -15,7 +14,13 @@ var ProjectiveImage = function() {
 		}
 	  }
 	  return values;
-	}
+	};
+
+	var Matrix = function (w, h, values) {
+	  this.w = w;
+	  this.h = h;
+	  this.values = values || allocate(h);
+	};
 
 	var cloneValues = function (values) {
 		var clone = [];
@@ -23,11 +28,12 @@ var ProjectiveImage = function() {
 			clone[i] = [].concat(values[i]);
 		}
 		return clone;
-	}
+	};
+
 	Matrix.prototype = {
 		add : function (operand) {
-			if (operand.w != this.w || operand.h != this.h) {
-				throw new Error("Matrix add size mismatch");
+			if (operand.w !== this.w || operand.h !== this.h) {
+				throw new Error('Matrix add size mismatch');
 			}
 
 			var values = allocate(this.w, this.h);
@@ -47,7 +53,7 @@ var ProjectiveImage = function() {
 				}
 			}
 			var zn = out[out.length - 1];
-			if(zn) {
+			if (zn) {
 				var iz = 1 / (out[out.length - 1]);
 				for (y = 0; y < this.h; ++y) {
 					out[y] *= iz;
@@ -59,8 +65,8 @@ var ProjectiveImage = function() {
 			var values, x, y;
 			if (+operand !== operand) {
 				// Matrix mult
-				if (operand.h != this.w) {
-					throw new Error("Matrix mult size mismatch");
+				if (operand.h !== this.w) {
+					throw new Error('Matrix mult size mismatch');
 				}
 				values = allocate(this.w, this.h);
 				for (y = 0; y < this.h; ++y) {
@@ -87,7 +93,7 @@ var ProjectiveImage = function() {
 		},
 		rowEchelon : function () {
 			if (this.w <= this.h) {
-				throw new Error("Matrix rowEchelon size mismatch");
+				throw new Error('Matrix rowEchelon size mismatch');
 			}
 
 			var temp = cloneValues(this.values);
@@ -96,10 +102,10 @@ var ProjectiveImage = function() {
 			for (var yp = 0; yp < this.h; ++yp) {
 				// Look up pivot value.
 				var pivot = temp[yp][yp];
-				while (pivot == 0) {
+				while (pivot === 0) {
 					// If pivot is zero, find non-zero pivot below.
 					for (var ys = yp + 1; ys < this.h; ++ys) {
-						if (temp[ys][yp] != 0) {
+						if (temp[ys][yp] !== 0) {
 							// Swap rows.
 							var tmpRow = temp[ys];
 							temp[ys] = temp[yp];
@@ -107,7 +113,7 @@ var ProjectiveImage = function() {
 							break;
 						}
 					}
-					if (ys == this.h) {
+					if (ys === this.h) {
 						// No suitable pivot found. Abort.
 						return new Matrix(this.w, this.h, temp);
 					}
@@ -122,7 +128,7 @@ var ProjectiveImage = function() {
 				}
 				// Subtract this row from all other rows (scaled).
 				for (var y = 0; y < this.h; ++y) {
-					if (y == yp) continue;
+					if (y === yp) {continue;}
 					var factor = temp[y][yp];
 					temp[y][yp] = 0;
 					for (x = yp + 1; x < this.w; ++x) {
@@ -136,8 +142,8 @@ var ProjectiveImage = function() {
 		invert : function () {
 			var x, y;
 
-			if (this.w != this.h) {
-				throw new Error("Matrix invert size mismatch");
+			if (this.w !== this.h) {
+				throw new Error('Matrix invert size mismatch');
 			}
 
 			var temp = allocate(this.w * 2, this.h);
@@ -146,7 +152,7 @@ var ProjectiveImage = function() {
 			for (y = 0; y < this.h; ++y) {
 				for (x = 0; x < this.w; ++x) {
 					temp[y][x] = this.values[y][x];
-					temp[y][x + this.w] = (x == y) ? 1 : 0;
+					temp[y][x + this.w] = (x === y) ? 1 : 0;
 				}
 			}
 
@@ -167,15 +173,15 @@ var ProjectiveImage = function() {
 
 	var getProjectiveTransform = function (points) {
 	  var eqMatrix = new Matrix(9, 8, [
-		[ 1, 1, 1,   0, 0, 0, -points[2][0],-points[2][0],-points[2][0] ],
-		[ 0, 1, 1,   0, 0, 0,  0,-points[3][0],-points[3][0] ],
-		[ 1, 0, 1,   0, 0, 0, -points[1][0], 0,-points[1][0] ],
-		[ 0, 0, 1,   0, 0, 0,  0, 0,-points[0][0] ],
+		[1, 1, 1,   0, 0, 0, -points[2][0], -points[2][0], -points[2][0]],
+		[0, 1, 1,   0, 0, 0,  0, -points[3][0], -points[3][0]],
+		[1, 0, 1,   0, 0, 0, -points[1][0], 0, -points[1][0]],
+		[0, 0, 1,   0, 0, 0,  0, 0, -points[0][0]],
 
-		[ 0, 0, 0,  -1,-1,-1,  points[2][1], points[2][1], points[2][1] ],
-		[ 0, 0, 0,   0,-1,-1,  0, points[3][1], points[3][1] ],
-		[ 0, 0, 0,  -1, 0,-1,  points[1][1], 0, points[1][1] ],
-		[ 0, 0, 0,   0, 0,-1,  0, 0, points[0][1] ]
+		[0, 0, 0,  -1, -1, -1,  points[2][1], points[2][1], points[2][1]],
+		[0, 0, 0,   0, -1, -1,  0, points[3][1], points[3][1]],
+		[0, 0, 0,  -1,  0, -1,  points[1][1], 0, points[1][1]],
+		[0, 0, 0,   0,  0, -1,  0, 0, points[0][1]]
 
 	  ]);
 
@@ -186,7 +192,7 @@ var ProjectiveImage = function() {
 		[-kernel[6][8], -kernel[7][8],             1]
 	  ]);
 	  return transform;
-	}
+	};
 
 	var divide = function (u1, v1, u4, v4, p1, p2, p3, p4, limit, attr) {
 		if (limit) {
@@ -203,7 +209,7 @@ var ProjectiveImage = function() {
 
 			// Check area > patchSize pixels (note factor 4 due to not averaging d1 and d2)
 			// The non-affinity measure is used as a correction factor.
-			if ((u1 == 0 && u4 == 1) || ((.25 + r * 5) * area > (patchSize * patchSize))) {
+			if ((u1 === 0 && u4 === 1) || ((.25 + r * 5) * area > (patchSize * patchSize))) {
 				// Calculate subdivision points (middle, top, bottom, left, right).
 				var umid = (u1 + u4) / 2;
 				var vmid = (v1 + v4) / 2;
@@ -212,7 +218,7 @@ var ProjectiveImage = function() {
 				var pb   = transform.transformProjectiveVector([umid, v4, 1]);
 				var pl   = transform.transformProjectiveVector([u1, vmid, 1]);
 				var pr   = transform.transformProjectiveVector([u4, vmid, 1]);
-				
+
 				// Subdivide.
 				limit--;
 				divide.call(this, u1,   v1, umid, vmid,   p1,   pt,   pl, pmid, limit, attr);
@@ -241,25 +247,25 @@ var ProjectiveImage = function() {
 
 		// Align the transform along this corner.
 		// Calculate 1.05 pixel padding on vector basis.
-		if (amax == a1) {
+		if (amax === a1) {
 				ctx.setTransform(d12[0], d12[1], -d31[0], -d31[1], p1[0] + attr.deltaX, p1[1] + attr.deltaY);
-				if (u4 != 1) padx = 1.05 / Math.sqrt(d12[0] * d12[0] + d12[1] * d12[1]);
-				if (v4 != 1) pady = 1.05 / Math.sqrt(d31[0] * d31[0] + d31[1] * d31[1]);
-		} else if (amax == a2) {
+				if (u4 !== 1) { padx = 1.05 / Math.sqrt(d12[0] * d12[0] + d12[1] * d12[1]); }
+				if (v4 !== 1) { pady = 1.05 / Math.sqrt(d31[0] * d31[0] + d31[1] * d31[1]); }
+		} else if (amax === a2) {
 				ctx.setTransform(d12[0], d12[1],  d24[0],  d24[1], p2[0] + attr.deltaX, p2[1] + attr.deltaY);
-				if (u4 != 1) padx = 1.05 / Math.sqrt(d12[0] * d12[0] + d12[1] * d12[1]);
-				if (v4 != 1) pady = 1.05 / Math.sqrt(d24[0] * d24[0] + d24[1] * d24[1]);
+				if (u4 !== 1) { padx = 1.05 / Math.sqrt(d12[0] * d12[0] + d12[1] * d12[1]); }
+				if (v4 !== 1) { pady = 1.05 / Math.sqrt(d24[0] * d24[0] + d24[1] * d24[1]); }
 				dx = -1;
-		} else if (amax == a4) {
+		} else if (amax === a4) {
 				ctx.setTransform(-d43[0], -d43[1], d24[0], d24[1], p4[0] + attr.deltaX, p4[1] + attr.deltaY);
-				if (u4 != 1) padx = 1.05 / Math.sqrt(d43[0] * d43[0] + d43[1] * d43[1]);
-				if (v4 != 1) pady = 1.05 / Math.sqrt(d24[0] * d24[0] + d24[1] * d24[1]);
+				if (u4 !== 1) { padx = 1.05 / Math.sqrt(d43[0] * d43[0] + d43[1] * d43[1]); }
+				if (v4 !== 1) { pady = 1.05 / Math.sqrt(d24[0] * d24[0] + d24[1] * d24[1]); }
 				dx = -1;
 				dy = -1;
-		} else if (amax == a3) {
+		} else if (amax === a3) {
 				ctx.setTransform(-d43[0], -d43[1], -d31[0], -d31[1], p3[0] + attr.deltaX, p3[1] + attr.deltaY);
-				if (u4 != 1) padx = 1.05 / Math.sqrt(d43[0] * d43[0] + d43[1] * d43[1]);
-				if (v4 != 1) pady = 1.05 / Math.sqrt(d31[0] * d31[0] + d31[1] * d31[1]);
+				if (u4 !== 1) { padx = 1.05 / Math.sqrt(d43[0] * d43[0] + d43[1] * d43[1]); }
+				if (v4 !== 1) { pady = 1.05 / Math.sqrt(d31[0] * d31[0] + d31[1] * d31[1]); }
 				dy = -1;
 		}
 
@@ -284,14 +290,10 @@ var ProjectiveImage = function() {
             dx, dy,
             padx, pady
         );
-	}
+	};
 
-	var cnt = 0,
-        limit = 4,
-        patchSize = 64,
-        transform = null;
 	this.getCanvas = function (attr) {
-		cnt = 0;		
+		cnt = 0;
 		transform = getProjectiveTransform(attr.points);
 		// Begin subdivision process.
 
@@ -300,7 +302,7 @@ var ProjectiveImage = function() {
             pbl = transform.transformProjectiveVector([0, 1, 1]),
             pbr = transform.transformProjectiveVector([1, 1, 1]);
 
-		var canvas = document.createElement("canvas");
+		var canvas = document.createElement('canvas');
 		canvas.width = canvas.height = 256;
 		attr.canvas = canvas;
 		attr.ctx = canvas.getContext('2d');
@@ -308,23 +310,22 @@ var ProjectiveImage = function() {
 		var	boundsP = gmxAPIutils.bounds([ptl, ptr, pbr, pbl]),
             maxSize = Math.max(boundsP.max.x - boundsP.min.x, boundsP.max.y - boundsP.min.y);
 
-		limit = 'limit' in attr ? attr.limit: (maxSize < 200 ? 1 : 4);
-		patchSize = 'patchSize' in attr ? attr.patchSize : maxSize/8;
+		limit = 'limit' in attr ? attr.limit : (maxSize < 200 ? 1 : 4);
+		patchSize = 'patchSize' in attr ? attr.patchSize : maxSize / 8;
 
 		try {
-			divide( 0, 0, 1, 1, ptl, ptr, pbl, pbr, limit, attr );
+			divide(0, 0, 1, 1, ptl, ptr, pbl, pbr, limit, attr);
 		} catch(e) {
 			console.log('Error: ProjectiveImage event:', e);
 			canvas = null;
 		}
 		return {
-			'canvas': canvas
-			,'ptl': ptl
-			,'ptr': ptr
-			,'pbl': pbl
-			,'pbr': pbr
-			,'cnt': cnt
+			canvas: canvas,
+			ptl: ptl,
+			ptr: ptr,
+			pbl: pbl,
+			pbr: pbr,
+			cnt: cnt
 		};
-	}
+	};
 };
-
