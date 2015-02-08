@@ -1,13 +1,13 @@
 var gmxClusters = function(options) {
-    if (!options) options = {};
+    options = options || {};
     this.count = options.iterationCount || 1;       // K-means iteration count
     this.data = [];
 };
 
 function getCenterGeometry(arr) {
     var len = arr.length;
-    if (len === 1) return arr[0];
-    else if (len < 1) return null;
+    if (len === 1) { return arr[0]; }
+    else if (len < 1) { return null; }
 
     var xx = 0, yy = 0,
         lastID = null,
@@ -23,13 +23,13 @@ function getCenterGeometry(arr) {
     yy /= len;
 
     return {
-        id: lastID
-        ,type: 'Point'
-        ,x: xx
-        ,y: yy
-        ,propHiden: {
-            subType: 'cluster'
-            ,_members: members
+        id: lastID,
+        type: 'Point',
+        x: xx,
+        y: yy,
+        propHiden: {
+            subType: 'cluster',
+            _members: members
         }
     };
 }
@@ -37,12 +37,12 @@ function getCenterGeometry(arr) {
 function findGroup(item, centers) {
     var min = Number.MAX_VALUE,
         group = -1;
-    for(var i = 0, len = centers.length; i < len; i++) {
+    for (var i = 0, len = centers.length; i < len; i++) {
         var it = centers[i],
             x = item.x - it.x,
             y = item.y - it.y,
             d = x * x + y * y;
-        if(d < min){
+        if (d < min) {
             min = d;
             group = i;
         }
@@ -52,7 +52,7 @@ function findGroup(item, centers) {
 
 L.extend(gmxClusters.prototype, {
     add: function (data, clear) {
-        if (clear) this.data = [];
+        if (clear) { this.data = []; }
         this.data.push(data);
         return this;
     },
@@ -65,12 +65,12 @@ L.extend(gmxClusters.prototype, {
         var count = 0,
             grpCount = 0,
             grpHash = {};
-        
+
         this.data.forEach(function(data) {
             count += data.count;
             data.added.forEach(function(it) {
-                var id = it.id,
-                    arr = it.properties,
+                //var id = it.id,
+                var arr = it.properties,
                     geo = arr[arr.length - 1];
                 if (geo.type === 'POINT') {
                     var coord = geo.coordinates,
@@ -108,14 +108,14 @@ L.extend(gmxClusters.prototype, {
         function kmeansGroups(centers) {
             var newObjIndexes = [];
             var out = [];
-            for(var i = 0, len = _this.data.length; i < len; i++) {
-                for(var j = 0, arr = _this.data[i], len1 = arr.added.length; j < len1; j++) {
+            for (var i = 0, len = _this.data.length; i < len; i++) {
+                for (var j = 0, arr = _this.data[i], len1 = arr.added.length; j < len1; j++) {
                     var it = arr.added[j],
                         group = findGroup(it, centers);
                     if (group === -1) {
                         out.push(it);
                     } else {
-                        if (!newObjIndexes[group]) newObjIndexes[group] = [];
+                        if (!newObjIndexes[group]) { newObjIndexes[group] = []; }
                         newObjIndexes[group].push(it);
                     }
                 }
@@ -148,7 +148,7 @@ L.extend(gmxClusters.prototype, {
             return out;
         }
 
-        for(var i = 0; i < this.count; i++) {
+        for (var i = 0; i < this.count; i++) {
             centersGeometry = kmeansGroups(centersGeometry);
         }
         return {count: centersGeometry.length, added: centersGeometry};

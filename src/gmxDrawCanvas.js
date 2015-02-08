@@ -1,5 +1,6 @@
 ﻿var styleCanvasKeys = ['strokeStyle', 'fillStyle', 'lineWidth'],
-    styleCanvasKeysLen = styleCanvasKeys.length;
+    styleCanvasKeysLen = styleCanvasKeys.length,
+    utils = gmxAPIutils;
 
 var setCanvasStyle = function(item, ctx, style) {
     for (var i = 0; i < styleCanvasKeysLen; i++) {
@@ -9,7 +10,7 @@ var setCanvasStyle = function(item, ctx, style) {
             ctx[key] = valKey;
         }
     }
-    if(style.dashArray) {
+    if (style.dashArray) {
         var dashes = style.dashArray,
             dashOffset = style.dashOffset || 0;
         if ('setLineDash' in ctx) {     //Chrome
@@ -18,39 +19,43 @@ var setCanvasStyle = function(item, ctx, style) {
         } else {                        //Firefox
             ctx.mozDash = dashes;
             ctx.mozDashOffset = dashOffset;
-        }            
-        if (ctx.lineCap !== 'round') ctx.lineCap = 'round';
-        if (ctx.lineJoin !== 'round') ctx.lineJoin = 'round';
+        }
+        if (ctx.lineCap !== 'round') { ctx.lineCap = 'round'; }
+        if (ctx.lineJoin !== 'round') { ctx.lineJoin = 'round'; }
     }
 
-    if(style.canvasPattern) {
-        ctx.fillStyle = ctx.createPattern(style.canvasPattern.canvas, "repeat");
-    } else if(style.fillLinearGradient) {
-        var rgr = style.fillLinearGradient,
+    if (style.canvasPattern) {
+        ctx.fillStyle = ctx.createPattern(style.canvasPattern.canvas, 'repeat');
+    } else if (style.fillLinearGradient) {
+        var prop = item.properties,
+            rgr = style.fillLinearGradient,
             x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1,
             y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1,
             x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2,
             y2 = rgr.y2Function ? rgr.y2Function(prop) : rgr.y2,
-            lineargrad = ctx.createLinearGradient(x1,y1, x2, y2);  
-        for (var i = 0, len = rgr.addColorStop.length; i < len; i++) {
-            var arr1 = rgr.addColorStop[i],
-                arrFunc = rgr.addColorStopFunctions[i],
+            lineargrad = ctx.createLinearGradient(x1, y1, x2, y2);
+        for (var j = 0, len = rgr.addColorStop.length; j < len; j++) {
+            var arr1 = rgr.addColorStop[j],
+                arrFunc = rgr.addColorStopFunctions[j],
                 p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]),
                 p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2])),
-                p1 = gmxAPIutils.dec2color(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2/100);
+                p1 = utils.dec2color(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2 > 1 ? p2 / 100 : p2);
             lineargrad.addColorStop(p0, p1);
         }
-        ctx.fillStyle = lastStyles.fillStyle = lineargrad; 
+        ctx.fillStyle = lineargrad;
     }
-}
+};
 
 var drawGeoItem = function(geoItem, options, currentStyle) {
     var propsArr = geoItem.properties,
         idr = propsArr[0],
+        j = 0,
+        len = 0,
         gmx = options.gmx,
         ctx = options.ctx,
         item = gmx.dataManager.getItem(idr),
-        geom = propsArr[propsArr.length-1],
+        geom = propsArr[propsArr.length - 1],
+        coords = null,
         dataOption = geoItem.dataOption,
         rasters = options.rasters,
         tbounds = options.tbounds;
@@ -67,56 +72,56 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
 
     var geoType = geom.type,
         dattr = {
-            gmx: gmx
-            ,item: item
-            ,style: style
-            ,styleExtend: geoItem.styleExtend || {}
-            ,ctx: ctx
-            ,tpx: options.tpx
-            ,tpy: options.tpy
+            gmx: gmx,
+            item: item,
+            style: style,
+            styleExtend: geoItem.styleExtend || {},
+            ctx: ctx,
+            tpx: options.tpx,
+            tpy: options.tpy
         };
     if (geoType === 'POINT') {
-        dattr.pointAttr = gmxAPIutils.getPixelPoint(dattr, geom.coordinates);
-        if (!dattr.pointAttr) return false;   // point not in canvas tile
+        dattr.pointAttr = utils.getPixelPoint(dattr, geom.coordinates);
+        if (!dattr.pointAttr) { return false; }   // point not in canvas tile
     }
     if (geoType === 'POINT' || geoType === 'MULTIPOINT') {	// Отрисовка геометрии точек
-        var coords = geom.coordinates;
-        if(geoType === 'MULTIPOINT') {
-            for (var j = 0, len1 = coords.length; j < len1; j++) {
+        coords = geom.coordinates;
+        if (geoType === 'MULTIPOINT') {
+            for (j = 0, len = coords.length; j < len; j++) {
                 dattr.coords = coords[j];
-                gmxAPIutils.pointToCanvas(dattr);
+                utils.pointToCanvas(dattr);
             }
         } else {
             dattr.coords = coords;
-            gmxAPIutils.pointToCanvas(dattr);
+            utils.pointToCanvas(dattr);
         }
     } else if (geoType === 'POLYGON' || geoType === 'MULTIPOLYGON') {
-        if(style.image) { // set MULTIPOLYGON as marker
-            dattr.coords = [(dataOption.bounds.min.x + dataOption.bounds.max.x)/2, (dataOption.bounds.min.y + dataOption.bounds.max.y)/2];
-            dattr.pointAttr = gmxAPIutils.getPixelPoint(dattr, dattr.coords);
+        if (style.image) { // set MULTIPOLYGON as marker
+            dattr.coords = [(dataOption.bounds.min.x + dataOption.bounds.max.x) / 2, (dataOption.bounds.min.y + dataOption.bounds.max.y) / 2];
+            dattr.pointAttr = utils.getPixelPoint(dattr, dattr.coords);
             if (dattr.pointAttr) {
-                gmxAPIutils.pointToCanvas(dattr);
+                utils.pointToCanvas(dattr);
             }
         } else {
             dattr.flagPixels = false;
-            if (!dataOption.pixels) dataOption.pixels = {};
+            if (!dataOption.pixels) { dataOption.pixels = {}; }
+            coords = geom.coordinates;
             var hiddenLines = dataOption.hiddenLines || [],
-                coords = geom.coordinates,
-                pixels_map = {},
+                pixelsMap = {},
                 flagPixels = false;
 
-            if(geoType === 'POLYGON') coords = [coords];
+            if (geoType === 'POLYGON') { coords = [coords]; }
             var coordsToCanvas = function(func, flagFill) {
                 var out = null;
-                if(flagPixels) {
-                    coords = pixels_map.coords;
-                    hiddenLines = pixels_map.hidden;
+                if (flagPixels) {
+                    coords = pixelsMap.coords;
+                    hiddenLines = pixelsMap.hidden;
                     dattr.flagPixels = flagPixels;
                 } else {
-                    out = { coords: [], hidden: [] };
+                    out = {coords: [], hidden: []};
                     var pixels = [], hidden = [];
                 }
-                for (var j = 0, len1 = coords.length; j < len1; j++) {
+                for (j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j];
                     var hiddenLines1 = hiddenLines[j] || [];
                     if (out) {
@@ -133,26 +138,26 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
                         }
                     }
                     ctx.closePath();
-                    if (flagFill) ctx.fill();
+                    if (flagFill) { ctx.fill(); }
                     if (out) {
                         pixels.push(pixels1);
                         hidden.push(hidden1);
                     }
                 }
-                if(out) {
+                if (out) {
                     out.coords = pixels;
                     out.hidden = hidden;
                 }
                 return out;
-            }
+            };
             var strokeStyle = item.currentStyle.strokeStyle || style.strokeStyle,
                 lineWidth = item.currentStyle.lineWidth || style.lineWidth;
-            if(strokeStyle && lineWidth) {
-                var pixels = coordsToCanvas(gmxAPIutils.polygonToCanvas);
-                if(pixels) {
-                    pixels_map = pixels;
-                    pixels_map.z = gmx.currentZoom;
-                    dataOption.pixels = pixels_map;
+            if (strokeStyle && lineWidth) {
+                var pixels = coordsToCanvas(utils.polygonToCanvas);
+                if (pixels) {
+                    pixelsMap = pixels;
+                    pixelsMap.z = gmx.currentZoom;
+                    dataOption.pixels = pixelsMap;
                     flagPixels = true;
                 }
             }
@@ -162,54 +167,56 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
             if (dattr.styleExtend.skipRasters || item.skipRasters) {
                 delete dattr.bgImage;
             }
-                if(flagPixels) {
-                    coords = pixels_map.coords;
-                    hiddenLines = pixels_map.hidden;
-                }
+            if (flagPixels) {
+                coords = pixelsMap.coords;
+                hiddenLines = pixelsMap.hidden;
+            }
             if (dattr.bgImage && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                if(gmxAPIutils.isPatternNode(dattr.bgImage)) {
-                    if ('rasterOpacity' in gmx) ctx.globalAlpha = gmx.rasterOpacity;
-                    ctx.fillStyle = ctx.createPattern(dattr.bgImage, "no-repeat");
+                if (utils.isPatternNode(dattr.bgImage)) {
+                    if ('rasterOpacity' in gmx) { ctx.globalAlpha = gmx.rasterOpacity; }
+                    ctx.fillStyle = ctx.createPattern(dattr.bgImage, 'no-repeat');
                     style.bgImage = true;
                 }
-                coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
+                coordsToCanvas(utils.polygonToCanvasFill, true);
                 ctx.globalAlpha = 1;
             }
             if (item.currentStyle.fillStyle || item.currentStyle.canvasPattern) {
                 ctx.fillStyle = item.currentStyle.canvasPattern || item.currentStyle.fillStyle;
-                coordsToCanvas(gmxAPIutils.polygonToCanvasFill, true);
+                coordsToCanvas(utils.polygonToCanvasFill, true);
             }
         }
     } else if (geoType === 'LINESTRING' || geoType === 'MULTILINESTRING') {
-        var coords = geom.coordinates;
-        if(geoType === 'MULTILINESTRING') {
-            for (var j = 0, len1 = coords.length; j < len1; j++) {
+        coords = geom.coordinates;
+        if (geoType === 'MULTILINESTRING') {
+            for (j = 0, len = coords.length; j < len; j++) {
                 dattr.coords = coords[j];
-                gmxAPIutils.lineToCanvas(dattr);
+                utils.lineToCanvas(dattr);
             }
         } else {
             dattr.coords = coords;
-            gmxAPIutils.lineToCanvas(dattr);
+            utils.lineToCanvas(dattr);
         }
     }
     return true;
-}
+};
 
 L.gmxUtil.drawGeoItem = function(geoItem, options) {
-// geoItem
-//      properties: объект (в формате векторного тайла)
-//      dataOption: дополнительные свойства объекта
-// options
-//      ctx: canvas context
-//      tbounds: tile bounds
-//      tpx: X смещение тайла
-//      tpy: Y смещение тайла
-//      gmx: ссылка на layer._gmx
-//          gmx.dataManager
-//          gmx.styleManager
-//          gmx.currentZoom 
-//      style: стиль в новом формате
-//          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
+/*
+geoItem
+     properties: объект (в формате векторного тайла)
+     dataOption: дополнительные свойства объекта
+options
+     ctx: canvas context
+     tbounds: tile bounds
+     tpx: X смещение тайла
+     tpy: Y смещение тайла
+     gmx: ссылка на layer._gmx
+        gmx.dataManager
+        gmx.styleManager
+        gmx.currentZoom 
+     style: стиль в новом формате
+         style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
+*/
     var gmx = options.gmx,
         hover = gmx.lastHover && gmx.lastHover.id === geoItem.id,
         item = gmx.dataManager.getItem(geoItem.id);
@@ -224,4 +231,4 @@ L.gmxUtil.drawGeoItem = function(geoItem, options) {
         }
     }
     return true;
-}
+};
