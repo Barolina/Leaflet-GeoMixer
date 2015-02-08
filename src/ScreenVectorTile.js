@@ -433,8 +433,16 @@ ScreenVectorTile.prototype = {
             for (var i = 0; i < itemsLength; i++) {
                 L.gmxUtil.drawGeoItem(geoItems[i], dattr);
             }
-            def.resolve();
             _this.rasters = {}; // clear rasters
+            
+            //async chain
+            var res = new gmxDeferred();
+            res.resolve(tile);
+            gmx.renderHooks.forEach(function (f) {
+                res = res.then(f);
+            });
+            res.then(def.resolve, def.reject);
+            //def.resolve();
         };
 
         if (this.showRaster) {

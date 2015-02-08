@@ -30,7 +30,8 @@
                 if (!map) return 0;
                 var pos = map.getCenter();
                 return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
-            }
+            },
+            renderHooks: []
         };
         if (options.crossOrigin) this._gmx.crossOrigin = options.crossOrigin;
 
@@ -982,5 +983,10 @@
             properties[key] = propArray[indexes[key]];
         }
         return properties;
+    },
+
+    addRenderHook: function(renderHook) {
+        this._gmx.renderHooks.push(renderHook);
+        this.repaint();
     }
 });
