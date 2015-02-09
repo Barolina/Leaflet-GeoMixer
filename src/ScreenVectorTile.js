@@ -430,16 +430,26 @@ ScreenVectorTile.prototype = {
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
+            ctx.save();
             for (var i = 0; i < itemsLength; i++) {
                 L.gmxUtil.drawGeoItem(geoItems[i], dattr);
             }
+            ctx.restore();
             _this.rasters = {}; // clear rasters
             
             //async chain
-            var res = new gmxDeferred();
-            res.resolve(tile);
+            var res = new gmxDeferred(),
+                hookInfo = {
+                    x: _this.tilePoint.x,
+                    y: _this.tilePoint.y,
+                    z: _this.zoom
+                }
+            
+            res.resolve(tile, hookInfo);
             gmx.renderHooks.forEach(function (f) {
-                res = res.then(f);
+                res = res.then(function(tile) {
+                    return f(tile, hookInfo);
+                });
             });
             res.then(def.resolve, def.reject);
             //def.resolve();

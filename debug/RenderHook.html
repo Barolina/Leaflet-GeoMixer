@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0px;
+        }
+        
+        #infoPanel {
+            position: absolute;
+			left: 0px;
+			right: 0px;
+			top: 21px;
+            text-align: center;
+			z-index: 1;
+        }
+        
+        #info {
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            padding: 10px;
+        }
+        .leaflet-popup-content {
+            word-wrap: break-word;
+        }
+        .button-active {
+            background: #BBB;
+        }
+        
+        button {
+            border: 1px solid gray;
+            border-radius: 1px;
+            background: #EEE;
+        }
+    </style>
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+</head>
+<body>
+	<div id="map"></div>
+    <div id="infoPanel">
+        <span id="info">
+            Landsat 8 imagery. Select date interval:
+            <button data-begin="2014/11/17" data-end="2014/11/23" class="button-active">Nov 17-23</button>
+            <button data-begin="2014/11/24" data-end="2014/11/30">Nov 24-30</button>
+            <button data-begin="2014/12/1"  data-end="2014/12/7">Dec 1-7</button>
+        </span>
+    </div>
+
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    
+	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	
+    <script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+	<script>
+		var map = L.map('map').setView([60.22, 119.47], 8);
+
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+
+        //Load all the layers from GeoMixer map and add them to Leaflet map
+        L.gmx.loadLayer('BCE33233D65F4BEB94DDFE7604AB4CCE', '04DDB23F49F84B9A9122CBA6BC26D3ED').then(function(landsat8) {
+            var counts = {};
+            landsat8.addRenderHook(function(canvas, tileInfo) {
+                var def = new L.gmx.Deferred();
+                setTimeout(function() {
+                    var ctx = canvas.getContext('2d');
+                    ctx.beginPath();
+                    ctx.rect(0, 0, 256, 256);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = 'yellow';
+                    ctx.stroke();
+                    def.resolve(canvas);
+                }, 0);
+                return def;
+            })
+            landsat8.addRenderHook(function(canvas, tileInfo) {
+                var def = new L.gmx.Deferred();
+                setTimeout(function() {
+                    var key = tileInfo.x + ':' + tileInfo.y + ':' + tileInfo.z;
+                    counts[key] = counts[key] || 0;
+                    counts[key]++;
+                    var ctx = canvas.getContext('2d');
+                    ctx.font = '24px yellow';
+                    ctx.fillStyle = 'yellow';
+                    ctx.fillText(key + ' ' + counts[key], 5, 30);
+                    def.resolve(def);
+                }, 0);
+                return def;
+            })
+            //console.log(landsat8);
+            landsat8.setDateInterval(new Date('2014/11/17'), new Date('2014/11/23')).addTo(map);
+        
+            $('#info > button').click(function() {
+                landsat8.setDateInterval(new Date($(this).data('begin')), new Date($(this).data('end')));
+                $(this).addClass('button-active').siblings().removeClass('button-active');
+            })
+        });
+	</script>
+</body>
+</html>
