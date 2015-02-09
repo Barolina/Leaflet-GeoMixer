@@ -65,6 +65,14 @@ var gmxDataManager = L.Class.extend({
             this.initTilesList(this._gmx.properties);
         }
 
+        var processing = this._gmx.properties.Processing;
+        if (processing) {
+            if (Object.keys(processing).length) {
+                this._chkProcessing(processing);
+            }
+            delete this._gmx.properties.Processing;
+        }
+
         return this._activeTileKeys;
     },
 
@@ -142,9 +150,6 @@ var gmxDataManager = L.Class.extend({
         var activeTileKeys =  this._getActiveTileKeys();
         for (var tkey in activeTileKeys) {
             putData(_this._tiles[tkey].tile);
-        }
-        if (this.processingTile) {
-            putData(this.processingTile);
         }
 
         return resItems;
@@ -498,8 +503,7 @@ var gmxDataManager = L.Class.extend({
     },
 
     _chkProcessing: function(processing) {
-        var tile = this.processingTile,
-            _items = this._items,
+        var _items = this._items,
             id;
 
         for (id in _items) {
@@ -512,11 +516,12 @@ var gmxDataManager = L.Class.extend({
             }
         }
 
+        var tile = this.processingTile,
+            skip = {};
+
         if (tile) {
             tile.clear();
         }
-
-        var skip = {};
 
         if (processing.Deleted) {
             processing.Deleted.forEach(function(id) {
@@ -657,11 +662,8 @@ var gmxDataManager = L.Class.extend({
 
         this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
-
-        if (layerProperties.Processing) {
-            this._chkProcessing(layerProperties.Processing);
-        }
     },
+
     initTilesList: function(layerProperties) {
         var newActiveTileKeys = {};
         if (layerProperties.tiles) {
@@ -684,9 +686,6 @@ var gmxDataManager = L.Class.extend({
             }
             this._tiles = newTiles;
 
-            if (layerProperties.Processing) {
-                this._chkProcessing(layerProperties.Processing);
-            }
         }
         this._updateActiveTilesList(newActiveTileKeys);
     }
