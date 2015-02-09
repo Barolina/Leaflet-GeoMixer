@@ -31,16 +31,19 @@ L.gmx.VectorLayer.addInitHook(function () {
             getReorderArrays: function () {
                 var bottom = [],
                     top = [],
-                    arr = Object.keys(all).sort(function(a, b){
+                    arr = Object.keys(all).sort(function(a, b) {
                         return all[a] - all[b];
                     });
-                    
+
                 for (var i = 0, len = arr.length; i < len; i++) {
                     var id = arr[i];
-                    if (all[id] > 0) top.push(id);
-                    else bottom.push(id);
+                    if (all[id] > 0) {
+                        top.push(id); 
+                    } else {
+                        bottom.push(id);
+                    }
                 }
-                return { top: top, bottom: bottom };
+                return {top: top, bottom: bottom};
             },
 
             setReorderArrays: function (top, bottom) {
@@ -70,13 +73,13 @@ L.gmx.VectorLayer.addInitHook(function () {
         this._gmx.objectsReorder = new ObjectsReorder(this);
         L.extend(this, {
             bringToTopItem: function (id) {
-                if (this._gmx.objectsReorder) this._gmx.objectsReorder.addToReorder(id);
-                if (this._map) this.redrawItem(id);
+                if (this._gmx.objectsReorder) { this._gmx.objectsReorder.addToReorder(id); }
+                if (this._map) { this.redrawItem(id); }
             },
 
             bringToBottomItem: function (id) {
-                if (this._gmx.objectsReorder) this._gmx.objectsReorder.addToReorder(id, true);
-                if (this._map) this.redrawItem(id);
+                if (this._gmx.objectsReorder) { this._gmx.objectsReorder.addToReorder(id, true); }
+                if (this._map) { this.redrawItem(id); }
             },
 
             getReorderArrays: function () {
@@ -84,14 +87,14 @@ L.gmx.VectorLayer.addInitHook(function () {
             },
 
             setReorderArrays: function (top, bottom) {
-                if (this._gmx.objectsReorder) this._gmx.objectsReorder.setReorderArrays(top, bottom);
-                if (this._map) this.repaint();
+                if (this._gmx.objectsReorder) { this._gmx.objectsReorder.setReorderArrays(top, bottom); }
+                if (this._map) { this.repaint(); }
             },
 
             setSortFunc: function (func) {
-                if (this._gmx.objectsReorder) this._gmx.objectsReorder.setSortFunc(func);
-                if (this._map) this.repaint();
+                if (this._gmx.objectsReorder) { this._gmx.objectsReorder.setSortFunc(func); }
+                if (this._map) { this.repaint(); }
             }
-        });        
+        });
     }
 });

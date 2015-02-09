@@ -17,7 +17,7 @@ var gmxEventsManager = L.Handler.extend({
             if (_this._lastLayer) {
                 _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
             }
-        }
+        };
 		if (map.gmxDrawing) {
             map.gmxDrawing.on('drawstart', function () {
                 this._drawstart = true;
@@ -34,9 +34,9 @@ var gmxEventsManager = L.Handler.extend({
                 layer = null,
                 cursor = ''; //default
             _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
-            
-            if(_this._drawstart ||
-                (type === 'mousemove' &&  _this._map.gmxMouseDown)) return;
+
+            if (_this._drawstart ||
+                (type === 'mousemove' &&  _this._map.gmxMouseDown)) { return; }
 
             _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
             _this._layers.map(function (id) {
@@ -55,25 +55,25 @@ var gmxEventsManager = L.Handler.extend({
             for (var i = 0, len = arr.length; i < len; i++) {
                 layer = arr[i];
                 objId = layer.gmxEventCheck(ev);
-                if(objId) {
+                if (objId) {
                     cursor = 'pointer';
                     break;
                 }
             }
-            if (map._lastCursor !== cursor) map._container.style.cursor = cursor;
+            if (map._lastCursor !== cursor) { map._container.style.cursor = cursor; }
             map._lastCursor = cursor;
-            if (_this._lastId && (_this._lastLayer != layer || _this._lastId != objId)) {
+            if (_this._lastId && (_this._lastLayer !== layer || _this._lastId !== objId)) {
                 clearLastHover();
             }
             if (cursor) {
                 _this._lastLayer = layer;
                 _this._lastId = objId;
             }
-        }
+        };
 
         map.on({
             click: function (ev) {
-                if (_this.clickPointTimer) clearTimeout(_this.clickPointTimer);
+                if (_this.clickPointTimer) { clearTimeout(_this.clickPointTimer); }
                 _this.clickPointTimer = setTimeout(function () {
                     clearTimeout(_this.clickPointTimer);
                     eventCheck(ev);
@@ -87,13 +87,13 @@ var gmxEventsManager = L.Handler.extend({
             layeradd: function (ev) {
                 var layer = ev.layer,
                     needCheck = 'gmxEventCheck' in layer && layer.options.clickable;
-                if (needCheck) this._layers.push(layer._leaflet_id);
+                if (needCheck) { this._layers.push(layer._leaflet_id); }
             },
             layerremove: function (ev) {
                 var id = ev.layer._leaflet_id,
                     arr = this._layers;
                 for (var i = 0, len = arr.length; i < len; i++) {
-                    if(arr[i] === id) {
+                    if (arr[i] === id) {
                         arr.splice(i, 1);
                         break;
                     }
@@ -109,12 +109,13 @@ var gmxEventsManager = L.Handler.extend({
 
 L.Map.addInitHook(function () {
     // Check to see if handler has already been initialized.
-    if (this._gmxEventsManager) return;
-    this._gmxEventsManager = new gmxEventsManager(this);
+    if (!this._gmxEventsManager) {
+        this._gmxEventsManager = new gmxEventsManager(this);
 
-    this.on('remove', function () {
-        if (this._gmxEventsManager) {
-            this._gmxEventsManager.removeHooks();
-        }
-    });
+        this.on('remove', function () {
+            if (this._gmxEventsManager) {
+                this._gmxEventsManager.removeHooks();
+            }
+        });
+    }
 });

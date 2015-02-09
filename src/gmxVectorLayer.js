@@ -27,13 +27,15 @@
             _tilesToLoad: 0,
             getDeltaY: function() {
                 var map = _this._map;
-                if (!map) return 0;
+                if (!map) { return 0; }
                 var pos = map.getCenter();
                 return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
             },
             renderHooks: []
         };
-        if (options.crossOrigin) this._gmx.crossOrigin = options.crossOrigin;
+        if (options.crossOrigin) {
+            this._gmx.crossOrigin = options.crossOrigin;
+        }
 
         this.on('tileunload', function(e) {
             _this._clearTileSubscription(e.tile.id);
@@ -50,18 +52,17 @@
             delete gmx.tileSubscriptions[zKey];
         }
 
-        for (var i = this._drawQueue.length-1; i >= 0; i--) {
+        for (var i = this._drawQueue.length - 1; i >= 0; i--) {
             var elem = this._drawQueue[i];
             if (elem.zKey === zKey) {
                 elem.def.cancel();
                 this._drawQueue.splice(i, 1);
             }
         }
-        
+
         delete this._drawQueueHash[zKey];
-        
+
         if (screenTiles[zKey]) {
-            
             screenTiles[zKey].cancel();
             delete screenTiles[zKey];
         }
@@ -70,7 +71,7 @@
     _clearAllSubscriptions: function() {
         while (this._drawQueue.length) {
             this._drawQueue[0].def.cancel();
-        };        
+        }
 
         var gmx = this._gmx,
             subscriptions = gmx.tileSubscriptions;
@@ -107,7 +108,7 @@
 
     onAdd: function(map) {
         if (map.options.crs !== L.CRS.EPSG3857 && map.options.crs !== L.CRS.EPSG3395) {
-            throw "GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer";
+            throw 'GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer';
         }
         var gmx = this._gmx;
 
@@ -125,9 +126,9 @@
         } else {
             gmx.shiftY = 0;
         }
-        if (gmx.balloonEnable && !this._popup) this.bindPopup();
+        if (gmx.balloonEnable && !this._popup) { this.bindPopup(); }
         if (gmx.properties.type === 'Vector') {
-            if (!('chkUpdate' in this.options)) this.options.chkUpdate = true;
+            if (!('chkUpdate' in this.options)) { this.options.chkUpdate = true; }
             L.gmx.layersVersion.add(this);
             map.on('moveend', this._moveEnd, this);
         }
@@ -162,9 +163,9 @@
             apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName,
             sk = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.sessionKey = sk;
-        gmx.tileSenderPrefix = "http://" + gmx.hostName + "/" + 
-            "TileSender.ashx?WrapStyle=None" + 
-            "&key=" + encodeURIComponent(sk);
+        gmx.tileSenderPrefix = 'http://' + gmx.hostName + '/' +
+            'TileSender.ashx?WrapStyle=None' +
+            '&key=' + encodeURIComponent(sk);
 
         gmx.properties = ph.properties;
         gmx.geometry = ph.geometry;
@@ -230,17 +231,18 @@
         var gmx = this._gmx;
         gmx.beginDate = beginDate;
         gmx.endDate = endDate;
-        
+
         //gmx.dataManager.setDateInterval(beginDate, endDate);
-        
+
         var observer = null;
         for (var key in gmx.tileSubscriptions) {
             observer = gmx.dataManager.getObserver(key);
             observer.setDateInterval(beginDate, endDate);
         }
         observer = gmx.dataManager.getObserver('_Labels');
-        if (observer) observer.setDateInterval(beginDate, endDate);
-        
+        if (observer) {
+            observer.setDateInterval(beginDate, endDate);
+        }
         this.repaint();
         return this;
     },
@@ -271,7 +273,7 @@
             isEmpty = queue.length === 0,
             zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
             _this = this;
-            
+
         if (this._drawQueueHash[zKey]) {
             this._drawQueueHash[zKey].cancel();
         }
@@ -281,12 +283,12 @@
                 _this.fire('doneDraw');
                 return;
             }
-            
+
             var bbox = queue.shift();
             delete _this._drawQueueHash[bbox.zKey];
             if (_this._map && bbox.z === _this._map._zoom) {
                 bbox.drawDef = _this._gmxDrawTile(bbox.tp, bbox.z, bbox.data);
-                
+
                 bbox.drawDef.then(
                     bbox.def.resolve.bind(bbox.def, bbox.data),
                     bbox.def.reject.bind(bbox.def)
@@ -295,15 +297,15 @@
                 bbox.def.reject();
             }
             setTimeout(drawNextTile, 0);
-        }
-        
+        };
+
         var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var queueItem = {gtp: gtp, tp: tilePoint, z: zoom, zKey: zKey, data: data};
         var def = queueItem.def = new gmxDeferred(function() {
             queueItem.drawDef && queueItem.drawDef.cancel();
-            
+
             delete _this._drawQueueHash[zKey];
-            for (var i = queue.length-1; i >= 0; i--) {
+            for (var i = queue.length - 1; i >= 0; i--) {
                 var elem = queue[i];
                 if (elem.zKey === zKey) {
                     queue.splice(i, 1);
@@ -311,16 +313,16 @@
                 }
             }
         });
-        
+
         queue.push(queueItem);
-        
+
         this._drawQueueHash[zKey] = def;
-        
+
         if (isEmpty) {
             this.fire('startDraw');
             setTimeout(drawNextTile, 0);
         }
-        
+
         return def;
     },
 
@@ -351,7 +353,9 @@
     },
 
     setZIndexOffset: function (offset) {
-        if (arguments.length) this.options.zIndexOffset = offset;
+        if (arguments.length) {
+            this.options.zIndexOffset = offset;
+        }
         var options = this.options,
             zIndex = options.zIndex,
             zIndexOffset = options.zIndexOffset;
@@ -369,10 +373,10 @@
     _update: function () {
         var gmx = this._gmx,
             _this = this;
-        if (!this._map || gmx.zoomstart) return;
+        if (!this._map || gmx.zoomstart) { return; }
 
         gmx.styleManager.deferred.then(function () {
-            if (!_this._map) return;
+            if (!_this._map) { return; }
 
             var zoom = _this._map.getZoom();
             if (zoom > _this.options.maxZoom || zoom < _this.options.minZoom) {
@@ -386,7 +390,7 @@
             if (_this.options.unloadInvisibleTiles || _this.options.reuseTiles) {
                 _this._removeOtherTiles(tileBounds);
             }
-            
+
             //L.TileVector will remove all tiles from other zooms.
             //But it will not remove subscriptions without tiles - we should do it ourself
             var dataManager = gmx.dataManager;
@@ -419,8 +423,8 @@
             shiftY = this._gmx.shiftY || 0,     // Сдвиг слоя + OSM
             tileSize = this.options.tileSize;
 
-        bounds.min.y += shiftY, bounds.max.y += shiftY;
-        bounds.min.x -= shiftX, bounds.max.x -= shiftX;
+        bounds.min.y += shiftY; bounds.max.y += shiftY;
+        bounds.min.x -= shiftX; bounds.max.x -= shiftX;
 
         var nwTilePoint = new L.Point(
                 Math.floor(bounds.min.x / tileSize),
@@ -430,8 +434,8 @@
                 Math.floor(bounds.max.x / tileSize),
                 Math.floor(bounds.max.y / tileSize));
 
-        if (nwTilePoint.y < 0) nwTilePoint.y = 0;
-        if (seTilePoint.y >= pz) seTilePoint.y = pz - 1;
+        if (nwTilePoint.y < 0) { nwTilePoint.y = 0; }
+        if (seTilePoint.y >= pz) { seTilePoint.y = pz - 1; }
         return new L.Bounds(nwTilePoint, seTilePoint);
     },
 
@@ -473,9 +477,9 @@
             if (gmx.layerType === 'VectorTemporal') {
                 attr.dateInterval = [gmx.beginDate, gmx.endDate];
             }
-            
+
             var observer = gmx.dataManager.addObserver(attr, zKey);
-            
+
             myLayer.on('stylechange', function() {
                 var bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
                 if (!observer.bbox.isEqual(bbox)) {
@@ -483,7 +487,7 @@
                 }
             }, this);
             observer.on('activate', function() {
-                //if observer is deactivated before drawing, 
+                //if observer is deactivated before drawing,
                 //we can consider corresponding tile as already drawn
                 if (!observer.isActive() && !isDrawnFirstTime) {
                     gmx._tilesToLoad--;
@@ -496,7 +500,7 @@
                 x: tilePoint.x,
                 y: tilePoint.y,
                 px: 256 * gmxTilePoint.x,
-                py: 256 *(1 + gmxTilePoint.y)
+                py: 256 * (1 + gmxTilePoint.y)
             };
         }
     },
@@ -504,13 +508,13 @@
     _gmxDrawTile: function (tilePoint, zoom, data) {
         var gmx = this._gmx,
             def = new gmxDeferred();
-            
-        if(gmx.zoomstart || !this._map) {
+
+        if (gmx.zoomstart || !this._map) {
             def.reject();
             return def;
-        };
+        }
 
-        if (!zoom) zoom = this._map._zoom;
+        zoom = zoom || this._map._zoom;
         var screenTiles = gmx.screenTiles,
             zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
             screenTile = null;
@@ -520,12 +524,12 @@
         } else {
             screenTile = screenTiles[zKey];
         }
-        
+
        gmx.styleManager.deferred.then(function () {
             screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject.bind(def));
        });
-        
-        return def;
+
+       return def;
     },
 
     gmxGetCanvasTile: function (tilePoint) {
@@ -554,12 +558,12 @@
     },
 
     _getLoadedTilesPercentage: function (container) {
-        if(!container) return 0;
+        if (!container) { return 0; }
         var len = 0, count = 0;
         var arr = ['img', 'canvas'];
         for (var key in arr) {
             var tiles = container.getElementsByTagName(arr[key]);
-            if(tiles && tiles.length > 0) {
+            if (tiles && tiles.length > 0) {
                 len += tiles.length;
                 for (var i = 0, len1 = tiles.length; i < len1; i++) {
                     if (tiles[i]._tileComplete) {
@@ -568,8 +572,8 @@
                 }
             }
         }
-        if(len < 1) return 0;
-        return count / len;	
+        if (len < 1) { return 0; }
+        return count / len;
     },
 
     _tileLoaded: function () {
@@ -586,7 +590,7 @@
     },
 
     _tileOnLoad: function (tile) {
-        if (tile) L.DomUtil.addClass(tile, 'leaflet-tile-loaded');
+        if (tile) { L.DomUtil.addClass(tile, 'leaflet-tile-loaded'); }
         this._tileLoaded();
     },
 
@@ -613,10 +617,13 @@
                 dx = (sx + lineWidth) / mInPixel,
                 dy = (sy + lineWidth) / mInPixel;
 
-            if (dx > dy) dx = dy;
-            else dy = dx;
+            if (dx > dy) {
+                dx = dy;
+            } else {
+                dy = dx;
+            }
 
-            if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) continue;
+            if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) {continue;}
 
             var geom = geoItem[geoItem.length - 1],
                 fill = currentStyle.fillStyle || parsedStyle.bgImage,
@@ -633,10 +640,10 @@
                     boundsArr: boundsArr
                 };
 
-            if(type === 'MULTIPOLYGON' || type === 'POLYGON') {
-                if(marker) {
+            if (type === 'MULTIPOLYGON' || type === 'POLYGON') {
+                if (marker) {
                     chktype = 'POINT';
-                } else if(!fill) {
+                } else if (!fill) {
                     if (type === 'POLYGON') {
                         chktype = 'MULTILINESTRING';
                         hiddenLines = hiddenLines[0];
@@ -647,9 +654,9 @@
                 }
             }
 
-            if(chktype === 'LINESTRING') {
-                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) continue;
-            } else if(chktype === 'LIKEMULTILINESTRING') {
+            if (chktype === 'LINESTRING') {
+                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) {continue;}
+            } else if (chktype === 'LIKEMULTILINESTRING') {
                 var flag = false;
                 ph.delta = lineWidth / mInPixel;
                 for (var j = 0, len = coords.length; j < len; j++) {
@@ -661,17 +668,17 @@
                         break;
                     }
                 }
-                if (!flag) continue;
-            } else if(chktype === 'MULTILINESTRING') {
+                if (!flag) {continue;}
+            } else if (chktype === 'MULTILINESTRING') {
                 ph.delta = lineWidth / mInPixel;
                 ph.hidden = hiddenLines;
                 if (!gmxAPIutils.isPointInLines(ph)) {
                     continue;
                 }
-            } else if(chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
+            } else if (chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
                 var flag = false,
                     chkPoint = mercPoint;
-                if(chktype === 'POLYGON') {
+                if (chktype === 'POLYGON') {
                     coords = [geom.coordinates];
                     boundsArr = [dataOption.boundsArr];
                 }
@@ -688,17 +695,18 @@
                         }
                     }
                 }
-                if (!flag) continue;
-            } else if(chktype === 'POINT') {
+                if (!flag) {continue;}
+            } else if (chktype === 'POINT') {
                 coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx * iconScale, dy * iconScale);
-                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) continue;
+                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) {continue;}
             }
 
-            return { id: idr
-                ,properties: item.properties
-                ,geometry: geom
-                ,bounds: item.bounds
-                ,parsedStyle: parsedStyle
+            return {
+                id: idr,
+                properties: item.properties,
+                geometry: geom,
+                bounds: item.bounds,
+                parsedStyle: parsedStyle
             };
         }
         return null;
@@ -726,8 +734,8 @@
             )) {
             var zKey = ev.originalEvent.target.id;
             if (!zKey) {
-                var point = layer._map.gmxMousePos._add({x: gmx.shiftX, y: gmx.shiftY})._divideBy(256);
-                zKey = this._map._zoom + ':' + Math.floor(point.x) + ':' + Math.floor(point.y);
+                var p = layer._map.gmxMousePos._add({x: gmx.shiftX, y: gmx.shiftY})._divideBy(256);
+                zKey = this._map._zoom + ':' + Math.floor(p.x) + ':' + Math.floor(p.y);
             }
             var observer = gmx.dataManager.getObserver(zKey);
             if (observer) {
@@ -743,8 +751,8 @@
                 var geoItems = gmx.dataManager.getItems(zKey, bounds);
 
                 if (geoItems && geoItems.length) {
-                    if (gmx.sortItems) geoItems = geoItems.sort(gmx.sortItems);
-                    
+                    if (gmx.sortItems) { geoItems = geoItems.sort(gmx.sortItems); }
+
                     var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
                     if (target) {
                         var idr = target.id,
@@ -760,13 +768,13 @@
                         }
 
                         ev.gmx = {
-                            targets: geoItems
-                            ,target: target
-                            ,templateBalloon: gmx.styleManager.getItemBalloon(idr)
-                            ,properties: layer.getItemProperties(target.properties)
-                            ,id: idr
+                            targets: geoItems,
+                            target: target,
+                            templateBalloon: gmx.styleManager.getItemBalloon(idr),
+                            properties: layer.getItemProperties(target.properties),
+                            id: idr
                         };
-                        if (this.hasEventListeners(type)) this.fire(type, ev);
+                        if (this.hasEventListeners(type)) { this.fire(type, ev); }
                         if (type === 'mousemove' && changed) {
                             lastHover = gmx.lastHover = ev.gmx;
                             var item = gmx.dataManager.getItem(idr),
@@ -788,7 +796,7 @@
         this._map.doubleClickZoom.enable();
         return 0;
     },
-    
+
     _getTilesByBounds: function (bounds, delta) {    // Получить список gmxTiles по bounds
         var gmx = this._gmx,
             zoom = this._map._zoom,
@@ -814,15 +822,15 @@
         var minPoint = this._map.project(minLatLng),
             maxPoint = this._map.project(maxLatLng);
 
-        if (!delta) delta = 0;
+        delta = delta || 0;
 
         var pixelBounds = this._map.getPixelBounds(),
-            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta)/256),
-            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta)/256),
+            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta) / 256),
+            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta) / 256),
             minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x),
-            minX = Math.floor((minX + shiftX - delta)/256),
+            minX = Math.floor((minX + shiftX - delta) / 256),
             maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x),
-            maxX = Math.floor((maxX + shiftX + delta)/256),
+            maxX = Math.floor((maxX + shiftX + delta) / 256),
             gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
@@ -840,7 +848,7 @@
     redrawItem: function (id) {
         var item = this._gmx.dataManager.getItem(id),
             gmxTiles = this._getTilesByBounds(item.bounds);
-            
+
         this._redrawTilesHash(gmxTiles);
     },
 
@@ -849,7 +857,7 @@
         //TODO: just trigger observer, don't get and pass data directly
         for (var key in observersToUpdate) {
             var observer = dataManager.getObserver(key);
-            if (observer) observer.updateData(dataManager.getItems(key));
+            if (observer) { observer.updateData(dataManager.getItems(key)); }
         }
     },
 
@@ -858,12 +866,12 @@
             prop = layerDescription.properties,
             type = prop.type || 'Vector';
 
-        if (prop.Temporal) type += 'Temporal';
+        if (prop.Temporal) { type += 'Temporal'; }
         gmx.items = {};
         gmx.tileCount = 0;
 
         var cnt;
-        if(type === 'VectorTemporal') {
+        if (type === 'VectorTemporal') {
             cnt = prop.TemporalTiles;
             gmx.TemporalColumnName = prop.TemporalColumnName;
             gmx.TemporalPeriods = prop.TemporalPeriods || [];
@@ -874,10 +882,10 @@
                 (arr.length > 1 ? arr[1] - 1 : 0),
                 (arr.length > 0 ? arr[0] : 1)
                 );
-            gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset()*60000);	// UTC начальная дата шкалы
+            gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);	// UTC начальная дата шкалы
             gmx.ZeroUT = gmx.ZeroDate.getTime() / 1000;
         }
-        
+
         gmx.tileCount = cnt;
         gmx.layerType = type;   // VectorTemporal Vector
         gmx.identityField = prop.identityField; // ogc_fid
@@ -887,37 +895,37 @@
             gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.properties[0]) - Number(b.properties[0]); });
         }
 
-        if('MetaProperties' in prop) {
+        if ('MetaProperties' in prop) {
             var meta = prop.MetaProperties;
-            if('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя
+            if ('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя
                 gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
                 gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
             }
-            if('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров объектов слоя
-                if(meta.shiftXfield) gmx.shiftXfield = meta.shiftXfield.Value;
-                if(meta.shiftYfield) gmx.shiftYfield = meta.shiftYfield.Value;
+            if ('shiftXfield' in meta || 'shiftYfield' in meta) {    // поля сдвига растров объектов слоя
+                if (meta.shiftXfield) { gmx.shiftXfield = meta.shiftXfield.Value; }
+                if (meta.shiftYfield) { gmx.shiftYfield = meta.shiftYfield.Value; }
             }
-            if('quicklookPlatform' in meta) {    // тип спутника
+            if ('quicklookPlatform' in meta) {    // тип спутника
                 gmx.quicklookPlatform = meta.quicklookPlatform.Value;
             }
-            if('quicklookX1' in meta) gmx.quicklookX1 = meta.quicklookX1.Value;
-            if('quicklookY1' in meta) gmx.quicklookY1 = meta.quicklookY1.Value;
-            if('quicklookX2' in meta) gmx.quicklookX2 = meta.quicklookX2.Value;
-            if('quicklookY2' in meta) gmx.quicklookY2 = meta.quicklookY2.Value;
-            if('quicklookX3' in meta) gmx.quicklookX3 = meta.quicklookX3.Value;
-            if('quicklookY3' in meta) gmx.quicklookY3 = meta.quicklookY3.Value;
-            if('quicklookX4' in meta) gmx.quicklookX4 = meta.quicklookX4.Value;
-            if('quicklookY4' in meta) gmx.quicklookY4 = meta.quicklookY4.Value;
+            if ('quicklookX1' in meta) { gmx.quicklookX1 = meta.quicklookX1.Value; }
+            if ('quicklookY1' in meta) { gmx.quicklookY1 = meta.quicklookY1.Value; }
+            if ('quicklookX2' in meta) { gmx.quicklookX2 = meta.quicklookX2.Value; }
+            if ('quicklookY2' in meta) { gmx.quicklookY2 = meta.quicklookY2.Value; }
+            if ('quicklookX3' in meta) { gmx.quicklookX3 = meta.quicklookX3.Value; }
+            if ('quicklookY3' in meta) { gmx.quicklookY3 = meta.quicklookY3.Value; }
+            if ('quicklookX4' in meta) { gmx.quicklookX4 = meta.quicklookX4.Value; }
+            if ('quicklookY4' in meta) { gmx.quicklookY4 = meta.quicklookY4.Value; }
 
-            if('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
-                gmx.multiFilters = meta.multiFilters.Value == 1 ? true : false;
+            if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
+                gmx.multiFilters = meta.multiFilters.Value === 1 ? true : false;
             }
         }
 
         var tileAttributeIndexes = {};
         if (prop.attributes) {
             var attrs = prop.attributes;
-            if (gmx.identityField) tileAttributeIndexes[gmx.identityField] = 0;
+            if (gmx.identityField) { tileAttributeIndexes[gmx.identityField] = 0; }
             for (var a = 0; a < attrs.length; a++) {
                 tileAttributeIndexes[attrs[a]] = a + 1;
             }
@@ -925,33 +933,33 @@
         gmx.tileAttributeIndexes = tileAttributeIndexes;
         gmx.getPropItem = function(prop, key) {
             return gmx.tileAttributeIndexes ? prop[gmx.tileAttributeIndexes[key]] : '';
-        }
+        };
 
-        if(prop.IsRasterCatalog) {
+        if (prop.IsRasterCatalog) {
             gmx.IsRasterCatalog = prop.IsRasterCatalog;
-            var layerLink = gmx.tileAttributeIndexes['GMX_RasterCatalogID'];
-            if(layerLink) {
+            var layerLink = gmx.tileAttributeIndexes.GMX_RasterCatalogID;
+            if (layerLink) {
                 gmx.rasterBGfunc = function(x, y, z, item) {
                     var properties = item.properties;
                     return 'http://' + gmx.hostName
-                        +'/TileSender.ashx?ModeKey=tile'
-                        +'&x=' + x
-                        +'&y=' + y
-                        +'&z=' + z
-                        +'&LayerName=' + properties[layerLink]
-                        +'&MapName=' + gmx.mapName
-                        +'&key=' + encodeURIComponent(gmx.sessionKey);
+                        + '/TileSender.ashx?ModeKey=tile'
+                        + '&x=' + x
+                        + '&y=' + y
+                        + '&z=' + z
+                        + '&LayerName=' + properties[layerLink]
+                        + '&MapName=' + gmx.mapName
+                        + '&key=' + encodeURIComponent(gmx.sessionKey);
                 };
                 gmx.imageQuicklookProcessingHook = gmxImageTransform;
             }
         }
-        if(prop.Quicklook) {
+        if (prop.Quicklook) {
             var template = gmx.Quicklook = prop.Quicklook;
             gmx.quicklookBGfunc = function(item) {
                 var url = template,
                     reg = /\[([^\]]+)\]/,
                     matches = reg.exec(url);
-                while(matches && matches.length > 1) {
+                while (matches && matches.length > 1) {
                     url = url.replace(matches[0], item.properties[gmx.tileAttributeIndexes[matches[1]]]);
                     matches = reg.exec(url);
                 }
