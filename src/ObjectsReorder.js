@@ -15,8 +15,9 @@ L.gmx.VectorLayer.addInitHook(function () {
 
     ObjectsReorder.prototype = {
         clickFunc: function (ev) {
-            this.addToReorder(ev.gmx.id, ev.originalEvent.ctrlKey);
-            layer.repaint();
+            var id = ev.gmx.id;
+            this.addToReorder(id, ev.originalEvent.ctrlKey);
+            layer.redrawItem(id);
         },
 
         addToReorder: function (id, botoomFlag) {
@@ -74,12 +75,12 @@ L.gmx.VectorLayer.addInitHook(function () {
         L.extend(this, {
             bringToTopItem: function (id) {
                 reorder.addToReorder(id);
-                layer.repaint();
+                layer.redrawItem(id);
             },
 
             bringToBottomItem: function (id) {
                 reorder.addToReorder(id, true);
-                layer.repaint();
+                layer.redrawItem(id);
             },
 
             getReorderArrays: reorder.getReorderArrays,

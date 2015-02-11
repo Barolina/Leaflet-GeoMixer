@@ -657,9 +657,11 @@
             if (chktype === 'LINESTRING') {
                 if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) {continue;}
             } else if (chktype === 'LIKEMULTILINESTRING') {
-                var flag = false;
                 ph.delta = lineWidth / mInPixel;
-                for (var j = 0, len = coords.length; j < len; j++) {
+                var flag = false,
+                    j,
+                    len;
+                for (j = 0, len = coords.length; j < len; j++) {
                     ph.coords = coords[j];
                     ph.hidden = hiddenLines[j];
                     ph.boundsArr = boundsArr[j];
@@ -676,13 +678,13 @@
                     continue;
                 }
             } else if (chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
-                var flag = false,
-                    chkPoint = mercPoint;
+                var chkPoint = mercPoint;
+                flag = false;
                 if (chktype === 'POLYGON') {
                     coords = [geom.coordinates];
                     boundsArr = [dataOption.boundsArr];
                 }
-                for (var j = 0, len = coords.length; j < len; j++) {
+                for (j = 0, len = coords.length; j < len; j++) {
                     var arr = coords[j],
                         bbox = boundsArr[j];
                     for (var j1 = 0, len1 = arr.length; j1 < len1; j1++) {
@@ -797,7 +799,7 @@
         return 0;
     },
 
-    _getTilesByBounds: function (bounds, delta) {    // Получить список gmxTiles по bounds
+    _getTilesByBounds: function (bounds, delta, ignoreMapSize) {    // Получить список gmxTiles по bounds
         var gmx = this._gmx,
             zoom = this._map._zoom,
             shiftX = gmx.shiftX || 0,   // Сдвиг слоя
@@ -819,19 +821,27 @@
         minLatLng.lng += dx;
         maxLatLng.lng += dx;
 
-        var minPoint = this._map.project(minLatLng),
+        var pixelBounds = ignoreMapSize ? null : this._map.getPixelBounds(),
+            minPoint = this._map.project(minLatLng),
             maxPoint = this._map.project(maxLatLng);
 
         delta = delta || 0;
 
-        var pixelBounds = this._map.getPixelBounds(),
-            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta) / 256),
-            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta) / 256),
-            minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x),
-            minX = Math.floor((minX + shiftX - delta) / 256),
-            maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x),
-            maxX = Math.floor((maxX + shiftX + delta) / 256),
-            gmxTiles = {};
+        var minY, maxY, minX, maxX;
+        if (pixelBounds) {
+            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta) / 256);
+            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta) / 256);
+            minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x);
+            minX = Math.floor((minX + shiftX - delta) / 256);
+            maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x);
+            maxX = Math.floor((maxX + shiftX + delta) / 256);
+        } else {
+            minY = Math.floor((maxPoint.y + shiftY - delta) / 256);
+            maxY = Math.floor((minPoint.y + shiftY + delta) / 256);
+            minX = Math.floor((minPoint.x + shiftX - delta) / 256);
+            maxX = Math.floor((maxPoint.x + shiftX + delta) / 256);
+        }
+        var gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
                 var zKey = zoom + ':' + x + ':' + y;
@@ -849,7 +859,7 @@
 
     redrawItem: function (id) {
         var item = this._gmx.dataManager.getItem(id),
-            gmxTiles = this._getTilesByBounds(item.bounds);
+            gmxTiles = this._getTilesByBounds(item.bounds, 0, true);
 
         this._redrawTilesHash(gmxTiles);
     },
