@@ -842,7 +842,9 @@
     },
 
     repaint: function () {
-        this._gmx.dataManager._triggerObservers();
+        if (this._map) {
+            this._gmx.dataManager._triggerObservers();
+        }
     },
 
     redrawItem: function (id) {
@@ -892,7 +894,7 @@
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-            gmx.objectsReorder.setSortFunc(function(a, b) { return Number(a.properties[0]) - Number(b.properties[0]); });
+            gmx.objectsReorder.setSortFunc(function(a, b) { return a.properties[0] - b.properties[0]; });
         }
 
         if ('MetaProperties' in prop) {
