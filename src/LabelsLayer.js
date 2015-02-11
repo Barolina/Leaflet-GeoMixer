@@ -11,6 +11,7 @@ L.LabelsLayer = L.Class.extend({
     initialize: function (map, options) {
         L.setOptions(this, options);
         this._observers = {};
+        this._styleManagers = {};
         this._labels = {};
         var _this = this;
 
@@ -100,7 +101,12 @@ L.LabelsLayer = L.Class.extend({
                 gmx.styleManager.deferred.then(function () {
                     _this._updateBbox();
                     var observer = addObserver(layer);
+                    if (!gmx.styleManager.isVisibleAtZoom(_this._map._zoom)) {
+                        observer.deactivate();
+                    }
                     _this._observers[id] = observer;
+                    _this._styleManagers[id] = gmx.styleManager;
+
                     _this._labels['_' + id] = {};
                     _this.redraw();
                 });
@@ -114,6 +120,7 @@ L.LabelsLayer = L.Class.extend({
                     dataManager = gmx.dataManager;
                 dataManager.removeObserver(_this._observers[id].id);
                 delete _this._observers[id];
+                delete _this._styleManagers[id];
                 delete _this._labels['_' + id];
                 _this.redraw();
             }
@@ -199,7 +206,13 @@ L.LabelsLayer = L.Class.extend({
     _reset: function () {
         this._updateBbox();
         for (var id in this._observers) {
-            this._observers[id].fire('update');
+            var observer = this._observers[id];
+            if (!observer.isActive() &&
+                this._styleManagers[id].isVisibleAtZoom(this._map._zoom)
+            ) {
+                observer.activate();
+            }
+            observer.fire('update');
         }
     },
 
