@@ -380,8 +380,11 @@
 
             var zoom = _this._map.getZoom();
             if (zoom > _this.options.maxZoom || zoom < _this.options.minZoom) {
-                clearTimeout(_this._clearBgBufferTimer);
-                _this._clearBgBufferTimer = setTimeout(L.bind(_this._clearBgBuffer, _this), 500);
+                // if (_this._clearBgBufferTimer) clearTimeout(_this._clearBgBufferTimer);
+                // _this._clearBgBufferTimer = setTimeout(L.bind(_this._clearBgBuffer, _this), 500);
+                // if (_this._animated) {
+                    // L.DomUtil.addClass(_this._tileContainer, 'leaflet-zoom-animated');
+                // }
                 return;
             }
             var tileBounds = _this._getScreenTileBounds();
@@ -577,14 +580,16 @@
     },
 
     _tileLoaded: function () {
+        if (this._animated) {
+            L.DomUtil.addClass(this._tileContainer, 'leaflet-zoom-animated');
+        }
         if (this._gmx._tilesToLoad === 0) {
             this.fire('load');
 
             if (this._animated) {
-                L.DomUtil.addClass(this._tileContainer, 'leaflet-zoom-animated');
                 // clear scaled tiles after all new tiles are loaded (for performance)
-                clearTimeout(this._clearBgBufferTimer);
-                this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 500);
+                if (this._clearBgBufferTimer) { clearTimeout(this._clearBgBufferTimer); }
+                this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 1500);
             }
         }
     },
