@@ -325,11 +325,12 @@ var gmxDataManager = L.Class.extend({
         if (item && !item.bounds) {
             var fromTiles = item.options.fromTiles,
                 arr = [];
-            for (var key in fromTiles) {
-                var tile = this._tiles[key].tile,
-                    dataOptions = tile.dataOptions,
-                    num = fromTiles[key];
-                arr.push(dataOptions[num].bounds);
+            for (var key in fromTiles) {    // get full object bounds
+                if (this._tiles[key]) {
+                    var dataOptions = this._tiles[key].tile.dataOptions,
+                        num = fromTiles[key];
+                    arr.push(dataOptions[num].bounds);
+                }
             }
             if (arr.length === 1) {
                 item.bounds = arr[0];

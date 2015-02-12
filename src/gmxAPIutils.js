@@ -18,11 +18,11 @@
         return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden || false;
     },
 
-    /** Sends JSONP requests 
+    /** Sends JSONP requests
      * @param {String} url - request URL
      * @param {Object} params - request params
      * @param {Object} [options] - additional request options
-     * @param {String} [options.callbackParamName=CallbackName] - Name of param, that will be used for callback id. 
+     * @param {String} [options.callbackParamName=CallbackName] - Name of param, that will be used for callback id.
        If callbackParamName is set to null, no params will be added (StaticJSONP)
      * @return {gmxDeferred} Promise with server JSON response or with error status
     */
@@ -247,15 +247,15 @@
 
         var notFunc = true,
             pattern = style.fillPattern,
-            prop = (item ? item.properties : {}),
-            step = (pattern.step > 0 ? pattern.step : 0),		// шаг между линиями
-            patternDefaults = {					// настройки для pattern стилей
-                 minWidth: 1,
+            prop = item ? item.properties : {},
+            step = pattern.step > 0 ? pattern.step : 0,
+            patternDefaults = {
+                minWidth: 1,
                 maxWidth: 1000,
                 minStep: 0,
                 maxStep: 1000
             };
-        if (pattern.patternStepFunction != null && prop != null) {
+        if (pattern.patternStepFunction && prop !== null) {
             step = pattern.patternStepFunction(prop, indexes);
             notFunc = false;
         }
@@ -266,8 +266,8 @@
             step = patternDefaults.minStep;
         }
 
-        var size = (pattern.width > 0 ? pattern.width : 8);		// толщина линий
-        if (pattern.patternWidthFunction !== null && prop !== null) {
+        var size = pattern.width > 0 ? pattern.width : 8;
+        if (pattern.patternWidthFunction && prop !== null) {
             size = pattern.patternWidthFunction(prop, indexes);
             notFunc = false;
         }
@@ -278,7 +278,7 @@
         }
 
         var op = style.fillOpacity;
-        if (style.opacityFunction !== null && prop !== null) {
+        if (style.opacityFunction && prop !== null) {
             op = style.opacityFunction(prop, indexes) / 100;
             notFunc = false;
         }
