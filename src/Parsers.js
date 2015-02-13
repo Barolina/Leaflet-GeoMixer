@@ -269,8 +269,8 @@
 				var fieldValue = props[indexes[fieldName]];
 				if (fieldValue === null) { return false; }
 				if (matchPattern !== null) { return matchPattern(fieldValue);
-				} else if ((op === '=') || (op === '==')) { return (fieldValue === referenceValue);
-				} else if ((op === '!=') || (op === '<>')) { return (fieldValue !== referenceValue);
+				} else if ((op === '=') || (op === '==')) { return (fieldValue == referenceValue);
+				} else if ((op === '!=') || (op === '<>')) { return (fieldValue != referenceValue);
 				} else {
                     var f1, f2;
 					if (applyParser(referenceValue, numberLiteral).head === referenceValue.length) {
