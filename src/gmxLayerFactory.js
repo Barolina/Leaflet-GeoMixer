@@ -2,6 +2,16 @@
 
 var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
 
+//Build in layer classes
+L.gmx._layerClasses = {
+    'Raster': L.gmx.RasterLayer,
+    'Vector': L.gmx.VectorLayer,
+}
+
+L.gmx.addLayerClass = function(type, layerClass) {
+    L.gmx._layerClasses[type] = layerClass;
+}
+
 L.gmx.loadLayer = function(mapID, layerID, options) {
 
     var promise = new gmxDeferred(),
@@ -23,14 +33,18 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID);
             
             if (!layerInfo) {
-                promise.reject("There are no layer " + layerID + " in map " + mapID);
+                promise.reject("There is no layer " + layerID + " in map " + mapID);
                 return;
             }
             var layer = L.gmx.createLayer(layerInfo, layerParams);
-            layer.initPromise.then(function() {
-                promise.resolve(layer);
-            })
             
+            if (layer) {
+                layer.initPromise.then(function() {
+                    promise.resolve(layer);
+                })
+            } else {
+                promise.reject("Unknown type of layer " + layerID);
+            }
         },
         function(response) {
             promise.reject("Can't load layer " + layerID + " from map " + mapID + ": " + response.error);
@@ -92,11 +106,14 @@ L.gmx.loadMap = function(mapID, options) {
 L.gmx.createLayer = function(layerInfo, options) {
     if (!layerInfo) layerInfo = {};
     if (!layerInfo.properties) layerInfo.properties = { type: 'Vector'};
-    var layer = layerInfo.properties.type === 'Raster'
-        ? new L.gmx.RasterLayer(options)
-        : new L.gmx.VectorLayer(options)
-    ;
 
-    layer.initFromDescription(layerInfo);
+    var type = layerInfo.properties.type,
+        layer;
+
+    if (type in L.gmx._layerClasses) {
+        layer = new L.gmx._layerClasses[type](options);
+        layer.initFromDescription(layerInfo);
+    }
+
     return layer;
 }
