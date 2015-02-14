@@ -5,7 +5,7 @@ var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
 //Build in layer classes
 L.gmx._layerClasses = {
     'Raster': L.gmx.RasterLayer,
-    'Vector': L.gmx.VectorLayer,
+    'Vector': L.gmx.VectorLayer
 }
 
 L.gmx.addLayerClass = function(type, layerClass) {
@@ -39,9 +39,7 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
             var layer = L.gmx.createLayer(layerInfo, layerParams);
             
             if (layer) {
-                layer.initPromise.then(function() {
-                    promise.resolve(layer);
-                })
+                promise.resolve(layer);
             } else {
                 promise.reject("Unknown type of layer " + layerID);
             }
@@ -107,12 +105,12 @@ L.gmx.createLayer = function(layerInfo, options) {
     if (!layerInfo) layerInfo = {};
     if (!layerInfo.properties) layerInfo.properties = { type: 'Vector'};
 
-    var type = layerInfo.properties.type,
+    var type = layerInfo.properties.ContentID || layerInfo.properties.type,
         layer;
 
     if (type in L.gmx._layerClasses) {
         layer = new L.gmx._layerClasses[type](options);
-        layer.initFromDescription(layerInfo);
+        layer = layer.initFromDescription(layerInfo);
     }
 
     return layer;

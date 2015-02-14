@@ -174,6 +174,7 @@
         gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
         this.initPromise.resolve();
+        return this;
     },
 
     setRasterOpacity: function (opacity) {
