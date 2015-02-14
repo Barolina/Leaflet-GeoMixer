@@ -1,4 +1,4 @@
-﻿var gmxImageRequest = function(id, url, options) {
+var gmxImageRequest = function(id, url, options) {
     this._id = id;
     this.def = new gmxDeferred(gmxImageLoader._cancelRequest.bind(gmxImageLoader, this));
     this.url = url;
@@ -107,7 +107,7 @@ var gmxImageLoader = {
             i = 0;
         for (var iP in this.inProgress) {
             var requests = this.inProgress[iP].requests;
-            for (i = 0; i < loadingImg.requests.length; i++) {
+            for (i = 0; i < requests.length; i++) {
                 if (requests[i].options.layerID === layerID) {
                     requestsToCancel.push(requests[i]);
                 }
