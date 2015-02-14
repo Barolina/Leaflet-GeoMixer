@@ -1,4 +1,4 @@
-﻿L.gmx.VectorLayer.include({
+L.gmx.VectorLayer.include({
     bindPopup: function (content, options) {
 
         if (this._popup) { this.unbindPopup(); }

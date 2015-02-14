@@ -1,4 +1,4 @@
-﻿//tree for fast tiles selection inside temporal interval
+//tree for fast tiles selection inside temporal interval
 var gmxTilesTree = function(periods, dateZero) {
     var _rootNodes = [];
     this.initFromTiles = function(tiles) {
@@ -10,34 +10,36 @@ var gmxTilesTree = function(periods, dateZero) {
                 return;
             }
 
-            var childrenCount = periods[d] / periods[d-1];
+            var childrenCount = periods[d] / periods[d - 1];
 
             if (!('children' in node)) {
                 node.children = new Array(childrenCount);
             }
 
-            var sChild = Math.floor(tile.s * tile.d / periods[d-1]);
-            var ds = sChild - node.s*childrenCount;
+            var sChild = Math.floor(tile.s * tile.d / periods[d - 1]);
+            var ds = sChild - node.s * childrenCount;
 
             if (!node.children[ds]) {
                 node.children[ds] = {
-                    d: d-1,
+                    d: d - 1,
                     s: sChild,
-                    t1: sChild * periods[d-1] * gmxAPIutils.oneDay + dateZero,
-                    t2: (sChild + 1) * periods[d-1] * gmxAPIutils.oneDay + dateZero,
+                    t1: sChild * periods[d - 1] * gmxAPIutils.oneDay + dateZero,
+                    t2: (sChild + 1) * periods[d - 1] * gmxAPIutils.oneDay + dateZero,
                     count: 0,
                     tiles: []
-                }
+                };
             }
 
             addTile(node.children[ds], tile, key);
-        }
+        };
 
         var smin = Number.MAX_VALUE,
-            dmax = periods.length - 1;
+            dmax = periods.length - 1,
+            key,
+            t;
 
-        for (var key in tiles) {
-            var t = tiles[key].tile;
+        for (key in tiles) {
+            t = tiles[key].tile;
             if (t.d === periods[dmax]) {
                 smin = Math.min(smin, t.s);
             }
@@ -45,16 +47,16 @@ var gmxTilesTree = function(periods, dateZero) {
 
         _rootNodes = [];
 
-        for (var key in tiles) {
-            var t = tiles[key].tile;
-            
+        for (key in tiles) {
+            t = tiles[key].tile;
+
             if (t.d < 0) {
                 continue;
             }
-            
+
             var ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
                 cs = ds + smin;
-                
+
             _rootNodes[ds] = _rootNodes[ds] || {
                 d: dmax,
                 s: cs,
@@ -62,11 +64,11 @@ var gmxTilesTree = function(periods, dateZero) {
                 t2: (cs + 1) * periods[dmax] * gmxAPIutils.oneDay + dateZero,
                 count: 0,
                 tiles: []
-            }
+            };
 
             addTile(_rootNodes[ds], t, key);
         }
-    }
+    };
 
     this.selectTiles = function(t1, t2) {
         var t1Val = t1.valueOf() / 1000,
@@ -83,12 +85,13 @@ var gmxTilesTree = function(periods, dateZero) {
                     tiles: node.tiles,
                     count: node.count,
                     nodes: [node]
-                }
+                };
             }
 
-            var childrenCount = 0; //number of tiles if we use shorter intervals
-            var childrenRes = [];
-            for (var ds = 0; ds < node.children.length; ds++) {
+            var childrenCount = 0, //number of tiles if we use shorter intervals
+                childrenRes = [],
+                ds;
+            for (ds = 0; ds < node.children.length; ds++) {
                 if (node.children[ds]) {
                     childrenRes[ds] = selectTilesForNode(node.children[ds], Math.max(t1, node.t1), Math.min(t2, node.t2));
                 } else {
@@ -100,7 +103,7 @@ var gmxTilesTree = function(periods, dateZero) {
             if (childrenCount < node.count) {
                 var resTilesArr = [],
                     resNodesArr = [];
-                for (var ds = 0; ds < childrenRes.length; ds++) {
+                for (ds = 0; ds < childrenRes.length; ds++) {
                     resNodesArr.push(childrenRes[ds].nodes);
                     resTilesArr.push(childrenRes[ds].tiles);
                 }
@@ -109,15 +112,15 @@ var gmxTilesTree = function(periods, dateZero) {
                     tiles: [].concat.apply([], resTilesArr),
                     count: childrenCount,
                     nodes: [].concat.apply([], resNodesArr)
-                }
+                };
             } else {
                 return {
                     tiles: node.tiles,
                     count: node.count,
                     nodes: [node]
-                }
+                };
             }
-        }
+        };
 
         var resTiles = [];
         var resNodes = [];
@@ -128,7 +131,7 @@ var gmxTilesTree = function(periods, dateZero) {
                 resNodes = resNodes.concat(nodeSelection.nodes);
             }
         }
-        
+
         var resTilesHash = {};
         for (var t = 0; t < resTiles.length; t++) {
             resTilesHash[resTiles[t]] = true;
@@ -143,18 +146,18 @@ var gmxTilesTree = function(periods, dateZero) {
         }
 
         var findNode = function(node, d, s) {
-            if (!node) return null;
+            if (!node) { return null; }
 
             if (periods[node.d] === d) {
                 return node.s === s ? node : null;
             }
 
-            var childrenCount = periods[node.d] / periods[node.d-1];
-            var sChild = Math.floor(s * d / periods[node.d-1]);
-            var ds = sChild - node.s*childrenCount;
+            var childrenCount = periods[node.d] / periods[node.d - 1];
+            var sChild = Math.floor(s * d / periods[node.d - 1]);
+            var ds = sChild - node.s * childrenCount;
 
             return node.children[ds] ? findNode(node.children[ds], d, s) : null;
-        }
+        };
 
         for (var ds = 0; ds < _rootNodes.length; ds++) {
             var node = findNode(_rootNodes[ds], d, s);
@@ -164,5 +167,5 @@ var gmxTilesTree = function(periods, dateZero) {
         }
 
         return null;
-    }
-}
+    };
+};

@@ -1,4 +1,4 @@
-﻿// Single tile on screen with vector data
+// Single tile on screen with vector data
 function ScreenVectorTile(layer, tilePoint, zoom) {
     this.layer = layer;
     this.tilePoint = tilePoint;
@@ -436,15 +436,15 @@ ScreenVectorTile.prototype = {
             }
             ctx.restore();
             _this.rasters = {}; // clear rasters
-            
+
             //async chain
             var res = new gmxDeferred(),
                 hookInfo = {
                     x: _this.tilePoint.x,
                     y: _this.tilePoint.y,
                     z: _this.zoom
-                }
-            
+                };
+
             res.resolve(tile, hookInfo);
             gmx.renderHooks.forEach(function (f) {
                 res = res.then(function(tile) {

@@ -1,4 +1,4 @@
-﻿var gmxAPIutils = {
+var gmxAPIutils = {
     lastMapId: 0,
 
     newId: function()
@@ -423,7 +423,7 @@
                 ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
             } else if (style.rotateRes) {
                 ctx.translate(px1, py1);
-                ctx.rotate(gmxAPIutils.deg_rad(style.rotateRes));
+                ctx.rotate(gmxAPIutils.degRad(style.rotateRes));
                 ctx.translate(-px1, -py1);
                 ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -580,21 +580,21 @@
         ctx.fillText(txt, x, y);
     },
     worldWidthMerc: 20037508,
-    r_major: 6378137.000,
-    deg_rad: function(ang) {
+    rMajor: 6378137.000,
+    degRad: function(ang) {
         return ang * (Math.PI / 180.0);
     },
 
 	distVincenty: function(lon1, lat1, lon2, lat2) {
 		var p1 = {
-            lon: gmxAPIutils.deg_rad(lon1),
-            lat: gmxAPIutils.deg_rad(lat1)
+            lon: gmxAPIutils.degRad(lon1),
+            lat: gmxAPIutils.degRad(lat1)
         },
             p2 = {
-            lon: gmxAPIutils.deg_rad(lon2),
-            lat: gmxAPIutils.deg_rad(lat2)
+            lon: gmxAPIutils.degRad(lon2),
+            lat: gmxAPIutils.degRad(lat2)
         },
-            a = gmxAPIutils.r_major,
+            a = gmxAPIutils.rMajor,
             b = 6356752.3142,
             f = 1 / 298.257223563;  // WGS-84 ellipsiod
 
@@ -652,21 +652,21 @@
 		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + "'" + a3 + '"';
 	},
 
-	LatLon_formatCoordinates: function(x, y) {
+	LatLonFormatCoordinates: function(x, y) {
 		return  gmxAPIutils.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
 	},
 
 	formatCoordinates: function(x, y) {
-		return  gmxAPIutils.LatLon_formatCoordinates(x, y);
+		return  gmxAPIutils.LatLonFormatCoordinates(x, y);
 	},
 
-	LatLon_formatCoordinates2: function(x, y) {
+	LatLonFormatCoordinates2: function(x, y) {
 		return  gmxAPIutils.trunc(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.trunc(Math.abs(x)) + (x > 0 ? ' E' : ' W');
 	},
 	formatCoordinates2: function(x, y) {
-		return  gmxAPIutils.LatLon_formatCoordinates2(x, y);
+		return  gmxAPIutils.LatLonFormatCoordinates2(x, y);
 	},
 
     getPixelScale: function(zoom) {
@@ -838,7 +838,7 @@
         for (var i = 0, len = arr.length; i < len; i++) {
             var ipp = (i === (len - 1) ? 0 : i + 1),
                 p1 = arr[i], p2 = arr[ipp];
-            area += p1.lng * Math.sin(gmxAPIutils.deg_rad(p2.lat)) - p2.lng * Math.sin(gmxAPIutils.deg_rad(p1.lat));
+            area += p1.lng * Math.sin(gmxAPIutils.degRad(p2.lat)) - p2.lng * Math.sin(gmxAPIutils.degRad(p1.lat));
         }
         var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY / 2);
         return out;
@@ -1053,12 +1053,13 @@
 
         for (var key in gmxAPIutils.styleKeys) {
             var keys = gmxAPIutils.styleKeys[key];
-            keys.client.forEach(function(key1, i) {
+            for (var i = 0, len = keys.client.length; i < len; i++) {
+                var key1 = keys.client[i];
                 if (key1 in style) {
                     if (!out[key]) { out[key] = {}; }
                     out[key][keys.server[i]] = style[key1];
                 }
-            });
+            }
         }
         if ('iconAnchor' in style) {
             if (!out.marker) { out.marker = {}; }
@@ -1069,21 +1070,23 @@
     },
 
     fromServerStyle: function(style) {   // Style Scanex->leaflet
-        var st = null,
+        var st, i, len, key1,
             out = {
-            type: ''    // 'polygon', 'line', 'circle', 'square', 'image'
-        };
+                type: ''    // 'polygon', 'line', 'circle', 'square', 'image'
+            };
 
         for (var key in gmxAPIutils.styleKeys) {
             var keys = gmxAPIutils.styleKeys[key];
-            keys.client.forEach(function(key1) {
+            for (i = 0, len = keys.client.length; i < len; i++) {
+                key1 = keys.client[i];
                 if (key1 in style) {
                     out[key1] = style[key1];
                 }
-            });
+            }
             st = style[key];
             if (st && typeof (st) === 'object') {
-                keys.server.forEach(function(key1, i) {
+                for (i = 0, len = keys.server.length; i < len; i++) {
+                    key1 = keys.server[i];
                     if (key1 in st) {
                         var newKey = keys.client[i],
                             zn = st[key1];
@@ -1100,7 +1103,7 @@
                         }
                         out[newKey] = zn;
                     }
-                });
+                }
             }
         }
         if (style.marker) {
@@ -1351,11 +1354,11 @@ L.extend(L.gmxUtil, {
 	* @namespace utilities
     * @ignore
 	* @function
-	* 
+	*
 	* @param url {string} - URL запроса
 	* @param params {object} - хэш параметров-запросов
 	* @param callback {function} - callback, который вызывается при приходе ответа с сервера. Единственный параметр ф-ции - собственно данные
-	* @param baseForm {DOMElement} - базовая форма запроса. Используется, когда нужно отправить на сервер файл. 
+	* @param baseForm {DOMElement} - базовая форма запроса. Используется, когда нужно отправить на сервер файл.
 	*                                В функции эта форма будет модифицироваться, но после отправления запроса будет приведена к исходному виду.
 	*/
 	function sendCrossDomainPostRequest(url, params, callback, baseForm) {

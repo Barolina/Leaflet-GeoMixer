@@ -20,7 +20,23 @@
   "globals": {
     "L": true,
     "module": false,
-    "define": false
+    "define": false,
+    "gmxDeferred": true,
+    "gmxImageLoader": true,
+    "gmxParsers": true,
+    "gmxSessionManager": true,
+    "gmxDataManager": true,
+    "gmxStyleManager": true,
+    "ScreenVectorTile": true,
+    "gmxImageTransform": true,
+    "ProjectiveImage": true,
+    "gmxVectorTile": true,
+    "gmxObserver": true,
+    "gmxVectorTileLoader": true,
+    "gmxTilesTree": true,
+    "gmxMapManager": true,
+    "gmxMap": true,
+    "gmxAPIutils": true
   },
   "env": {
     "browser": true

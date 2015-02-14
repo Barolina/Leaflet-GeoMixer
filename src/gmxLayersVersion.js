@@ -1,13 +1,14 @@
-﻿var delay = 20000,
+var delay = 20000,
     layers = {},
     script = '/Layer/CheckVersion.ashx',
     intervalID = null;
 
 var getRequestParams = function(layer) {
-    var hosts = {};
+    var hosts = {},
+        _gmx;
     if (layer) {
-        var _gmx = layer._gmx,
-            prop = _gmx.properties;
+        _gmx = layer._gmx;
+        var prop = _gmx.properties;
         hosts[_gmx.hostName] = {
             Name: prop.layerID,
             Version: prop.LayerVersion
@@ -16,11 +17,11 @@ var getRequestParams = function(layer) {
         for (var id in layers) {
             var obj = layers[id];
             if (obj.options.chkUpdate) {
-                var _gmx = obj._gmx,
-                    hostName = _gmx.hostName,
+                _gmx = obj._gmx;
+                var hostName = _gmx.hostName,
                     pt = {Name: id, Version: _gmx.properties.LayerVersion || 0};
-                if (hosts[hostName]) hosts[hostName].push(pt);
-                else hosts[hostName] = [pt];
+                if (hosts[hostName]) { hosts[hostName].push(pt); }
+                else { hosts[hostName] = [pt]; }
             }
         }
     }
@@ -42,14 +43,14 @@ var chkVersion = function (layer, callback) {
                             prop = item.properties,
                             id = prop.name,
                             layer = layers[id];
-                        if (layer && 'updateVersion' in layer) layer.updateVersion(item);
+                        if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
                     }
                 }
-                if(callback) callback(response);
+                if (callback) { callback(response); }
             });
         }
     }
-}
+};
 
 var layersVersion = {
 
@@ -64,14 +65,14 @@ var layersVersion = {
     add: function(layer) {
         var _gmx = layer._gmx,
             prop = _gmx.properties;
-        
+
         if ('LayerVersion' in prop) {
             layers[_gmx.layerID] = layer;
             _gmx._chkVersion = function () {
                 chkVersion(layer);
-            }
+            };
             _gmx.dataManager.on('chkLayerUpdate', _gmx._chkVersion);
-            
+
             layersVersion.start();
         }
     },
@@ -79,18 +80,18 @@ var layersVersion = {
     chkVersion: chkVersion,
 
     stop: function() {
-        if(intervalID) clearInterval(intervalID);
+        if (intervalID) { clearInterval(intervalID); }
         intervalID = null;
     },
 
     start: function(msec) {
-        if (msec) delay = msec;
+        if (msec) { delay = msec; }
         layersVersion.stop();
         intervalID = setInterval(chkVersion, delay);
     }
 };
 
-if (!L.gmx) L.gmx = {};
+if (!L.gmx) { L.gmx = {}; }
 L.gmx.layersVersion = layersVersion;
 
 L.gmx.VectorLayer.include({
@@ -104,9 +105,9 @@ L.gmx.VectorLayer.include({
                 gmx.dataManager._needCheckActiveTiles = true;
                 gmx.dataManager._getActiveTileKeys(); //force list update
             }
-            if (layerDescription.geometry) {
+            //if (layerDescription.geometry) {
                 // todo: update layer geometry
-            }
+            //}
         }
     }
 });

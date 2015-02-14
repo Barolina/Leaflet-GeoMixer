@@ -1,4 +1,4 @@
-﻿/** Asynchronously request session keys from GeoMixer servers (given apiKey and server host)
+/** Asynchronously request session keys from GeoMixer servers (given apiKey and server host)
 */
 var gmxSessionManager = {
     APIKEY_PARAM: 'key',
@@ -10,7 +10,7 @@ var gmxSessionManager = {
         if (this._scriptSearched) {
             return this._scriptAPIKey;
         }
-        
+
         var scripts = document.getElementsByTagName('script');
         for (var i = 0; i < scripts.length; i++) {
             var src = scripts[i].getAttribute('src');
@@ -28,21 +28,21 @@ var gmxSessionManager = {
         this._scriptSearched = true;
         return this._scriptAPIKey;
     },
-    
+
     //we will search apiKey in script tags iff apiKey parameter is undefined.
     //if it is defined as falsy (null, '', etc), we won't send any requests to server
     requestSessionKey: function(serverHost, apiKey) {
         var keys = this._sessionKeys;
-        
+
         if (!(serverHost in keys)) {
             apiKey = typeof apiKey === 'undefined' ? this._searchScriptAPIKey() : apiKey;
             keys[serverHost] = new gmxDeferred();
             if (apiKey) {
                 gmxAPIutils.requestJSONP(
-                    "http://" + serverHost + "/ApiKey.ashx",
+                    'http://' + serverHost + '/ApiKey.ashx',
                     {
                         WrapStyle: 'func',
-                        Key: apiKey,
+                        Key: apiKey
                     }
                 ).then(function(response) {
                     if (response && response.Status === 'ok') {
@@ -57,12 +57,12 @@ var gmxSessionManager = {
         }
         return keys[serverHost];
     },
-    
+
     //get already received session key
     getSessionKey: function(serverHost) {
         var keyPromise = this._sessionKeys[serverHost];
-        
+
         return keyPromise && keyPromise.getFulfilledData() && keyPromise.getFulfilledData()[0];
     },
     _sessionKeys: {} //deferred for each host
-}
+};

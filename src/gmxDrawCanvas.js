@@ -1,4 +1,4 @@
-﻿var styleCanvasKeys = ['strokeStyle', 'fillStyle', 'lineWidth'],
+var styleCanvasKeys = ['strokeStyle', 'fillStyle', 'lineWidth'],
     styleCanvasKeysLen = styleCanvasKeys.length,
     utils = gmxAPIutils;
 
@@ -213,7 +213,7 @@ options
      gmx: ссылка на layer._gmx
         gmx.dataManager
         gmx.styleManager
-        gmx.currentZoom 
+        gmx.currentZoom
      style: стиль в новом формате
          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
 */

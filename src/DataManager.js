@@ -533,13 +533,14 @@ var gmxDataManager = L.Class.extend({
             });
         }
 
-        var out = {};
+        var out = {},
+            chkSkip = function(it) { if (!skip[it.id]) {out[it.id] = it;} };
         if (processing.Inserted) {
-            processing.Inserted.forEach(function(it) { if (!skip[it.id]) out[it.id] = it; });
+            processing.Inserted.forEach(chkSkip);
         }
 
         if (processing.Updated) {
-            processing.Updated.forEach(function(it) { if (!skip[it.id]) out[it.id] = it; });
+            processing.Updated.forEach(chkSkip);
         }
 
         var data = [];

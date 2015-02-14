@@ -1,7 +1,6 @@
-﻿//Single observer with vector data
+//Single observer with vector data
 var gmxObserver = L.Class.extend({
     includes: L.Mixin.Events,
-    
     /* options : {
             type: 'resend | update',     // `resend` - send all data (like screen tile observer)
                                          // `update` - send only changed data
@@ -10,9 +9,8 @@ var gmxObserver = L.Class.extend({
             bbox: bbox,                  // bbox to observe
             filters: [String]            // filter keys array
         }
-    */    
+    */
     initialize: function(options) {
-    
         this.type = options.type || 'update';
         this._callback = options.callback;
         this._items = {};
@@ -25,7 +23,7 @@ var gmxObserver = L.Class.extend({
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
             this.world = true;
         }
-        
+
         if (options.dateInterval) {
             this._setDateInterval(options.dateInterval[0], options.dateInterval[1]);
         }
@@ -42,7 +40,7 @@ var gmxObserver = L.Class.extend({
         this.fire('activate');
         return this;
     },
-    
+
     toggleActive: function(isActive) {
         return isActive ? this.activate() : this.deactivate();
     },
@@ -50,12 +48,11 @@ var gmxObserver = L.Class.extend({
     isActive: function() {
         return this.active;
     },
-    
+
     updateData: function(data) {
         var len = data.length,
             out = {count: len};
-            
-            
+
         if (this.type === 'update') {
             //calculate difference with previous data
             var prevItems = this._items,
@@ -63,63 +60,64 @@ var gmxObserver = L.Class.extend({
                 addedFlag = false,
                 removedFlag = false,
                 added = [],
-                removed = [];
-            
-            for (var i = 0; i < len; i++) {
-                var it = data[i],
-                    id = it.properties[0];
+                removed = [],
+                id;
 
+            for (var i = 0; i < len; i++) {
+                var it = data[i];
+
+                id = it.properties[0];
                 newItems[id] = it;
-                
+
                 if (!prevItems[id]) {
                     added.push(it);
                     addedFlag = true;
                 }
             }
-                
-            for (var id in prevItems) {
+
+            for (id in prevItems) {
                 if (!newItems[id]) {
                     removed.push(prevItems[id]);
                     removedFlag = true;
                 }
             }
-            
+
             if (addedFlag) {
                 out.added = added;
             }
             if (removedFlag) {
                 out.removed = removed;
             }
-            
+
             this._items = newItems;
-            
+
         } else {
             out.added = data;
         }
         this._callback(out);
-        
+
         return this;
     },
-    
+
     removeData: function(keys) {
         if (this.type !== 'update') {
-            return;
+            return this;
         }
-        
+
         var items = this._items,
             removed = [];
-            
+
         for (var id in keys) {
             if (items[id]) {
                 removed.push(items[id]);
                 delete items[id];
             }
         }
-        
+
         if (removed.length) {
             this._callback({removed: removed});
         }
-        
+
         return this;
     },
 
@@ -146,17 +144,17 @@ var gmxObserver = L.Class.extend({
 
         this.world = false;
         if (w >= 180) {
-            minX = -180, maxX = 180;
+            minX = -180; maxX = 180;
             this.world = true;
         } else if (maxX > 180 || minX < -180) {
             var center = ((maxX + minX) / 2) % 360;
-            if (center > 180) center -= 360;
-            else if (center < -180) center += 360;
-            minX = center - w, maxX = center + w;
+            if (center > 180) { center -= 360; }
+            else if (center < -180) { center += 360; }
+            minX = center - w; maxX = center + w;
             if (minX < -180) {
-                minX1 = minX + 360, maxX1 = 180, minX = -180;
+                minX1 = minX + 360; maxX1 = 180; minX = -180;
             } else if (maxX > 180) {
-                minX1 = -180, maxX1 = maxX - 360, maxX = 180;
+                minX1 = -180; maxX1 = maxX - 360; maxX = 180;
             }
         }
         var m1 = L.Projection.Mercator.project(new L.latLng([minY, minX])),
@@ -165,11 +163,11 @@ var gmxObserver = L.Class.extend({
         this.bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         this.bbox1 = null;
         if (minX1) {
-            m1 = L.Projection.Mercator.project(new L.latLng([minY, minX1])),
+            m1 = L.Projection.Mercator.project(new L.latLng([minY, minX1]));
             m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX1]));
             this.bbox1 = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         }
-        
+
         this.fire('update');
         return this;
     },

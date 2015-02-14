@@ -1,4 +1,4 @@
-﻿var gmxImageTransform = function(img, hash) {
+var gmxImageTransform = function(img, hash) {
     var ready = false,
         gmx = hash.gmx,
         gmxTilePoint = hash.gmxTilePoint,

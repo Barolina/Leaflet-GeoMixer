@@ -1,4 +1,4 @@
-﻿L.gmx = L.gmx || {};
+L.gmx = L.gmx || {};
 
 var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
 
@@ -6,11 +6,11 @@ var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
 L.gmx._layerClasses = {
     'Raster': L.gmx.RasterLayer,
     'Vector': L.gmx.VectorLayer
-}
+};
 
 L.gmx.addLayerClass = function(type, layerClass) {
     L.gmx._layerClasses[type] = layerClass;
-}
+};
 
 L.gmx.loadLayer = function(mapID, layerID, options) {
 
@@ -19,47 +19,47 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
             mapID: mapID,
             layerID: layerID
         };
-    
+
     options = options || {};
-    
+
     for (var p in options) {
         layerParams[p] = options[p];
     }
-    
+
     var hostName = options.hostName || DEFAULT_HOSTNAME;
-    
+
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
         function() {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID);
-            
+
             if (!layerInfo) {
-                promise.reject("There is no layer " + layerID + " in map " + mapID);
+                promise.reject('There is no layer ' + layerID + ' in map ' + mapID);
                 return;
             }
             var layer = L.gmx.createLayer(layerInfo, layerParams);
-            
+
             if (layer) {
                 promise.resolve(layer);
             } else {
-                promise.reject("Unknown type of layer " + layerID);
+                promise.reject('Unknown type of layer ' + layerID);
             }
         },
         function(response) {
-            promise.reject("Can't load layer " + layerID + " from map " + mapID + ": " + response.error);
+            promise.reject('Can\'t load layer ' + layerID + ' from map ' + mapID + ': ' + response.error);
         }
     );
 
     return promise;
-}
+};
 
 L.gmx.loadLayers = function(layers, globalOptions) {
     var defs = layers.map(function(layerInfo) {
         var options = L.extend({}, globalOptions, layerInfo.options);
-        return L.gmx.loadLayer(layerInfo.mapID, layerInfo.layerID, options)
+        return L.gmx.loadLayer(layerInfo.mapID, layerInfo.layerID, options);
     });
-    
+
     return gmxDeferred.all.apply(null, defs);
-}
+};
 
 L.gmx.loadMap = function(mapID, options) {
     options = options || {};
@@ -69,11 +69,11 @@ L.gmx.loadMap = function(mapID, options) {
 
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
-        
+
         var curZIndex = 0,
             vectorLayersOffset = 2000000,
             layer;
-            
+
         if (options.leafletMap || options.setZIndex) {
             for (var l = loadedMap.layers.length - 1; l >= 0 ; l--) {
                 layer = loadedMap.layers[l];
@@ -84,28 +84,26 @@ L.gmx.loadMap = function(mapID, options) {
                     }
                     layer.options.zIndex = zIndex;
                 }
-                
+
                 if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
                     layer.addTo(options.leafletMap);
                 }
-                
             }
         }
-        
+
         def.resolve(loadedMap);
     },
     function(response) {
-        def.reject("Can't load map " + mapID + " from " + hostName + ": " + response.ErrorInfo.ErrorMessage);
+        def.reject('Can\'t load map ' + mapID + ' from ' + hostName + ': ' + response.ErrorInfo.ErrorMessage);
     });
     return def;
-}
-
+};
 
 L.gmx.createLayer = function(layerInfo, options) {
-    if (!layerInfo) layerInfo = {};
-    if (!layerInfo.properties) layerInfo.properties = { type: 'Vector'};
+    if (!layerInfo) { layerInfo = {}; }
+    if (!layerInfo.properties) { layerInfo.properties = {type: 'Vector'}; }
 
-    var type = layerInfo.properties.ContentID || layerInfo.properties.type,
+    var type = layerInfo.properties.ContentID || layerInfo.properties.type || 'Vector',
         layer;
 
     if (type in L.gmx._layerClasses) {
@@ -114,4 +112,4 @@ L.gmx.createLayer = function(layerInfo, options) {
     }
 
     return layer;
-}
+};

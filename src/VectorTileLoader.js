@@ -1,4 +1,4 @@
-﻿window.gmxAPI = window.gmxAPI || {};
+window.gmxAPI = window.gmxAPI || {};
 window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || function(data) {
     var key = gmxVectorTileLoader._getKey({
         layerID: data.LayerName,
@@ -8,10 +8,10 @@ window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || functio
         d: data.level,
         s: data.span,
         v: data.v
-    })
-    
+    });
+
     gmxVectorTileLoader._loadedTiles[key] && gmxVectorTileLoader._loadedTiles[key].resolve(data.values);
-}
+};
 
 var gmxVectorTileLoader = {
     _loadedTiles: {},
@@ -20,11 +20,11 @@ var gmxVectorTileLoader = {
     },
     load: function(tileSenderPrefix, tileInfo) {
         var key = gmxVectorTileLoader._getKey(tileInfo);
-        
+
         if (!this._loadedTiles[key]) {
             var def = new gmxDeferred();
             this._loadedTiles[key] = def;
-            
+
             var requestParams = {
                 ModeKey: 'tile',
                 r: 'j',
@@ -33,18 +33,18 @@ var gmxVectorTileLoader = {
                 x: tileInfo.x,
                 y: tileInfo.y,
                 v: tileInfo.v
-            }
-            
+            };
+
             if (tileInfo.d !== -1) {
                 requestParams.Level = tileInfo.d;
                 requestParams.Span = tileInfo.s;
             }
-            
+
             gmxAPIutils.requestJSONP(tileSenderPrefix, requestParams, {callbackParamName: null}).then(null, function() {
                 def.reject();
-            });            
+            });
         }
-        
+
         return this._loadedTiles[key];
     }
-}
+};

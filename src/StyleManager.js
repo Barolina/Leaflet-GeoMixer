@@ -1,4 +1,4 @@
-﻿var gmxStyleManager = function(gmx) {
+var gmxStyleManager = function(gmx) {
     var MAX_STYLE_SIZE = 256,
         DEFAULT_STYLE = {outline: {color: 255, thickness: 1, size: 4}},
         needLoadIcons = 0,

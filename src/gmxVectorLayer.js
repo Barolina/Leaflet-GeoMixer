@@ -1,4 +1,4 @@
-﻿L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
+L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
         clickable: true
