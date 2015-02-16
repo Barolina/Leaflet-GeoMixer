@@ -19,6 +19,7 @@
     "VectorTileLoader.js",
     "gmxVectorLayer.js",
     "gmxVectorLayer.Popup.js",
+    "gmxVectorLayer.Hover.js",
     "gmxRasterLayer.js",
     "gmxLayerFactory.js",
     "gmxLayersVersion.js",
