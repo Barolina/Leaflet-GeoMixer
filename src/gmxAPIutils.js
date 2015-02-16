@@ -877,7 +877,7 @@ var gmxAPIutils = {
     },
 
     geometryToGeoJSON: function (geom) {
-        return L.GeoJSON.asFeature({
+        return {
             type: geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
                 : geom.type === 'POLYGON' ? 'Polygon'
                 : geom.type === 'MULTILINESTRING' ? 'MultiLineString'
@@ -886,7 +886,7 @@ var gmxAPIutils = {
                 : geom.type === 'POINT' ? 'Point'
                 : geom.type,
             coordinates: geom.coordinates
-        });
+        };
     },
 
     geoArea: function(geom) {
