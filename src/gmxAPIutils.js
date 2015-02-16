@@ -1252,7 +1252,8 @@ L.extend(L.gmxUtil, {
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
     getGeometrySummary: gmxAPIutils.getGeometrySummary,
     getPropertiesHash: gmxAPIutils.getPropertiesHash,
-    distVincenty: gmxAPIutils.distVincenty
+    distVincenty: gmxAPIutils.distVincenty,
+    geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON
 });
 
 (function() {
