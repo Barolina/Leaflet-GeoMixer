@@ -808,8 +808,13 @@ var gmxAPIutils = {
         if (latlngs && latlngs.length) {
             var lng = false, lat = false;
             latlngs.forEach(function(latlng) {
-                if (L.Util.isArray(latlng)) {   // From Mercator array
-                    latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
+                if (L.Util.isArray(latlng)) {
+                    if (latlng.length === 2) {   // From Mercator array
+                        latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
+                    } else {
+                        length += gmxAPIutils.getLength(latlng);
+                        return length;
+                    }
                 }
                 if (lng !== false && lat !== false) {
                     length += parseFloat(gmxAPIutils.distVincenty(lng, lat, latlng.lng, latlng.lat));
