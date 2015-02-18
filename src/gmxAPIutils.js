@@ -838,6 +838,33 @@ var gmxAPIutils = {
         return Math.round(length / 1000) + km;
     },
 
+    geoJSONGetArea: function(geoJSON) {
+        var out = 0;
+
+        if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
+            var coords = geoJSON.coordinates;
+            if (geoJSON.type === 'Polygon') {coords = [coords];}
+            for (var i = 0, len = coords.length; i < len; i++) {
+                out += gmxAPIutils.getRingArea(coords[i][0]);
+                for (var j = 1, len1 = coords[i].length; j < len1; j++) {
+                    out -= gmxAPIutils.getRingArea(coords[i][j]);
+                }
+            }
+        }
+        return out;
+    },
+
+    getRingArea: function(arr) {
+        var area = 0;
+        for (var i = 0, len = arr.length; i < len; i++) {
+            var ipp = (i === (len - 1) ? 0 : i + 1),
+                p1 = arr[i], p2 = arr[ipp];
+            area += p1[0] * Math.sin(gmxAPIutils.degRad(p2[1])) - p2[0] * Math.sin(gmxAPIutils.degRad(p1[1]));
+        }
+        var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY / 2);
+        return out;
+    },
+
     getArea: function(arr) {
         var area = 0;
         for (var i = 0, len = arr.length; i < len; i++) {
@@ -1258,7 +1285,8 @@ L.extend(L.gmxUtil, {
     getGeometrySummary: gmxAPIutils.getGeometrySummary,
     getPropertiesHash: gmxAPIutils.getPropertiesHash,
     distVincenty: gmxAPIutils.distVincenty,
-    geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON
+    geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
+    geoJSONGetArea: gmxAPIutils.geoJSONGetArea
 });
 
 (function() {
