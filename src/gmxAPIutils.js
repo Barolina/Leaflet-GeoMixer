@@ -838,10 +838,65 @@ var gmxAPIutils = {
         return Math.round(length / 1000) + km;
     },
 
+    geoJSONGetLength: function(geoJSON) {
+        var out = 0,
+            i, j, len, len1;
+
+        if (geoJSON.type === 'GeometryCollection') {
+            out += geoJSON.geometries.forEach(gmxAPIutils.geoJSONGetLength);
+        } else if (geoJSON.type === 'Feature') {
+            out += gmxAPIutils.geoJSONGetLength(geoJSON.geometry);
+        } else if (geoJSON.type === 'FeatureCollection') {
+            out += geoJSON.features.forEach(gmxAPIutils.geoJSONGetLength);
+        } if (geoJSON.type === 'LineString' || geoJSON.type === 'MultiLineString') {
+            var coords = geoJSON.coordinates;
+            if (geoJSON.type === 'LineString') {coords = [coords];}
+            for (i = 0, len = coords.length; i < len; i++) {
+                out += gmxAPIutils.getRingLength(coords[i]);
+            }
+        } if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
+            var coords = geoJSON.coordinates;
+            if (geoJSON.type === 'Polygon') {coords = [coords];}
+            for (i = 0, len = coords.length; i < len; i++) {
+                for (j = 0, len1 = coords[i].length; j < len1; j++) {
+                    out += gmxAPIutils.getRingLength(coords[i][j]);
+                }
+            }
+        }
+        return out;
+    },
+
+    getRingLength: function(coords) {
+        var length = 0;
+        if (coords && coords.length) {
+            var lng = false, lat = false;
+            coords.forEach(function(lnglat) {
+                if (L.Util.isArray(lnglat)) {
+                    if (lnglat.length > 2) {
+                        length += gmxAPIutils.getRingLength(lnglat);
+                        return length;
+                    }
+                }
+                if (lng !== false && lat !== false) {
+                    length += parseFloat(gmxAPIutils.distVincenty(lng, lat, lnglat[0], lnglat[1]));
+                }
+                lng = lnglat[0];
+                lat = lnglat[1];
+            });
+        }
+        return length;
+    },
+
     geoJSONGetArea: function(geoJSON) {
         var out = 0;
 
-        if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
+        if (geoJSON.type === 'GeometryCollection') {
+            out += geoJSON.geometries.forEach(gmxAPIutils.geoJSONGetArea);
+        } else if (geoJSON.type === 'Feature') {
+            out += gmxAPIutils.geoJSONGetArea(geoJSON.geometry);
+        } else if (geoJSON.type === 'FeatureCollection') {
+            out += geoJSON.features.forEach(gmxAPIutils.geoJSONGetArea);
+        } if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
             var coords = geoJSON.coordinates;
             if (geoJSON.type === 'Polygon') {coords = [coords];}
             for (var i = 0, len = coords.length; i < len; i++) {
@@ -854,11 +909,11 @@ var gmxAPIutils = {
         return out;
     },
 
-    getRingArea: function(arr) {
+    getRingArea: function(coords) {
         var area = 0;
-        for (var i = 0, len = arr.length; i < len; i++) {
+        for (var i = 0, len = coords.length; i < len; i++) {
             var ipp = (i === (len - 1) ? 0 : i + 1),
-                p1 = arr[i], p2 = arr[ipp];
+                p1 = coords[i], p2 = coords[ipp];
             area += p1[0] * Math.sin(gmxAPIutils.degRad(p2[1])) - p2[0] * Math.sin(gmxAPIutils.degRad(p1[1]));
         }
         var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY / 2);
@@ -1286,7 +1341,8 @@ L.extend(L.gmxUtil, {
     getPropertiesHash: gmxAPIutils.getPropertiesHash,
     distVincenty: gmxAPIutils.distVincenty,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
-    geoJSONGetArea: gmxAPIutils.geoJSONGetArea
+    geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
+    geoJSONGetLength: gmxAPIutils.geoJSONGetLength
 });
 
 (function() {
