@@ -9,10 +9,10 @@ var getRequestParams = function(layer) {
     if (layer) {
         _gmx = layer._gmx;
         var prop = _gmx.properties;
-        hosts[_gmx.hostName] = {
-            Name: prop.layerID,
+        hosts[_gmx.hostName] = [{
+            Name: prop.name,
             Version: prop.LayerVersion
-        };
+        }];
     } else {
         for (var id in layers) {
             var obj = layers[id];

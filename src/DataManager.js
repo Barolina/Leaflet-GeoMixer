@@ -28,7 +28,7 @@ var gmxDataManager = L.Class.extend({
                 ).then(callback, function() {
                     console.log('Error loading vector tile');
                     callback([]);
-                    _this.fire('chkLayerUpdate', {dataProvider: _this});
+                    _this.fire('chkLayerUpdate', {dataProvider: _this}); //TODO: do we really need event here?
                 });
             }
         };
