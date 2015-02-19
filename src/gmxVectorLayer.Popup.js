@@ -86,7 +86,7 @@ L.gmx.VectorLayer.include({
         }
     },
 
-    _outPopup: function (options) {
+    _outPopup: function () {
         if (!this._popup.options.closeButton) {
             this.closePopup();
         }
