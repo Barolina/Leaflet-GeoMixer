@@ -137,8 +137,10 @@ L.gmx.VectorLayer.include({
             )) {
             var zKey = ev.originalEvent.target.id;
             if (!zKey) {
-                var p = layer._map.gmxMousePos._add({x: gmx.shiftX, y: gmx.shiftY})._divideBy(256);
-                zKey = this._map._zoom + ':' + Math.floor(p.x) + ':' + Math.floor(p.y);
+                var pos = layer._map.gmxMousePos,
+                    px = pos.x + gmx.shiftX,
+                    py = pos.y + gmx.shiftY;
+                zKey = this._map._zoom + ':' + Math.floor(px / 256) + ':' + Math.floor(py / 256);
             }
             var observer = gmx.dataManager.getObserver(zKey);
             if (observer) {

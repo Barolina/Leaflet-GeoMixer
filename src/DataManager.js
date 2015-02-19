@@ -664,6 +664,11 @@ var gmxDataManager = L.Class.extend({
 
         this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
+        if (this.processingTile) {
+            this._tiles[gmxVectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1)] = {
+                tile: this.processingTile
+            };
+        }
     },
 
     initTilesList: function(layerProperties) {
@@ -687,7 +692,11 @@ var gmxDataManager = L.Class.extend({
                 newActiveTileKeys[tileKey] = true;
             }
             this._tiles = newTiles;
-
+            if (this.processingTile) {
+                this._tiles[gmxVectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1)] = {
+                    tile: this.processingTile
+                };
+            }
         }
         this._updateActiveTilesList(newActiveTileKeys);
     }
