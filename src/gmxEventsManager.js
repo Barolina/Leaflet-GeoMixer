@@ -12,6 +12,7 @@ var GmxEventsManager = L.Handler.extend({
         this._lastId = null;
         var _this = this;
         this._drawstart = false;
+        this._lastCursor = '';
 
         if (map.gmxDrawing) {
             map.gmxDrawing.on('drawstart', function () {
@@ -69,8 +70,8 @@ var GmxEventsManager = L.Handler.extend({
                     }
                 }
             }
-            if (map._lastCursor !== cursor) { map._container.style.cursor = cursor; }
-            map._lastCursor = cursor;
+            if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
+            _this._lastCursor = cursor;
             if (_this._lastLayer && (_this._lastLayer !== layer || _this._lastId !== objId) &&  !_this._map.gmxMouseDown) {
                 _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
             }

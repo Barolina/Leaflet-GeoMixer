@@ -187,9 +187,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     setStyle: function (style, num) {
-        var _this = this;
+        var _this = this,
+            gmx = this._gmx;
         this.initPromise.then(function() {
-            _this._gmx.styleManager.setStyle(style, num);
+            gmx.balloonEnable = gmx.styleManager.setStyle(style, num);
+            if (gmx.balloonEnable && !_this._popup) {
+                _this.bindPopup();
+            }
             _this.fire('stylechange', {num: num || 0});
             _this.repaint();
         });

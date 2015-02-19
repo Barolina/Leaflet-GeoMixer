@@ -1,6 +1,7 @@
 var gmxStyleManager = function(gmx) {
     var MAX_STYLE_SIZE = 256,
         DEFAULT_STYLE = {outline: {color: 255, thickness: 1, size: 4}},
+        DEFAULTKEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'],
         needLoadIcons = 0,
         styles = [],
         imagesSize = {},
@@ -183,8 +184,8 @@ var gmxStyleManager = function(gmx) {
             MinZoom: style.MinZoom || 0,
             MaxZoom: style.MaxZoom || 50,
             Filter: style.Filter || null,
-            onMouseOver: !style.DisableBalloonOnMouseMove,
-            onMouseClick: !style.DisableBalloonOnClick,
+            DisableBalloonOnMouseMove: style.DisableBalloonOnMouseMove || false,
+            DisableBalloonOnClick: style.DisableBalloonOnClick || false,
             Balloon: style.Balloon || '',
             BalloonEnable: style.BalloonEnable || false,
             RenderStyle: (style.RenderStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {}),
@@ -193,7 +194,7 @@ var gmxStyleManager = function(gmx) {
         };
 
         if ('Filter' in style) {
-            var ph = parsers.parseSQL(style.Filter);
+            var ph = parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'));
             if (ph) { pt.filterFunction = ph; }
         }
         return pt;
@@ -226,7 +227,9 @@ var gmxStyleManager = function(gmx) {
     };
 
     this.setStyle = function(st, num) {
-        var end = num;
+        var end = num,
+            balloonEnable = gmx.balloonEnable;
+
         if (num === undefined) {
             num = 0;
             end = styles.length - 1;
@@ -238,9 +241,23 @@ var gmxStyleManager = function(gmx) {
                 styles[i] = style;
             }
             style.version++;
+            if ('Filter' in st) {
+                style.Filter = st.Filter;
+                var type = typeof (st.Filter);
+                style.filterFunction = type === 'string' ? parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'))
+                    : type === 'function' ? style.Filter : null;
+            }
+            DEFAULTKEYS.forEach(function(key) {
+                if (key in st) { style[key] = st[key]; }
+            });
+            if (style.DisableBalloonOnMouseMove === false || style.DisableBalloonOnClick === false) {
+                balloonEnable = true;
+                style.BalloonEnable = true;
+            }
             if (st.regularStyle) { style.RenderStyle = parseStyle(st.regularStyle); }
             if (st.hoveredStyle) { style.HoverStyle = parseStyle(st.hoveredStyle); }
         }
+        return balloonEnable;
     };
 
     var itemStyleParser = function(item, pt) {
@@ -424,7 +441,13 @@ var gmxStyleManager = function(gmx) {
     this.getItemBalloon = function(id) {
         var item = gmx.dataManager.getItem(id),
             style = styles[item.currentFilter];
-        return style ? style.Balloon : null;
+        return style ? {
+                DisableBalloonOnMouseMove: style.DisableBalloonOnMouseMove || false,
+                DisableBalloonOnClick: style.DisableBalloonOnClick || false,
+                templateBalloon: style.Balloon || null
+            }
+            : null
+        ;
     };
 
     // apply styleHook func

@@ -15,6 +15,9 @@ L.gmx.VectorLayer.include({
         if (!this._popupHandlersAdded) {
             this
                 .on('click', this._openPopup, this)
+                .on('mousemove', this._movePopup, this)
+                .on('mouseover', this._overPopup, this)
+                .on('mouseout', this._outPopup, this)
                 .on('remove', this.closePopup, this);
 
             this._popupHandlersAdded = true;
@@ -32,8 +35,11 @@ L.gmx.VectorLayer.include({
 		if (this._popup) {
 			this._popup = null;
 			this
-			    .off('click', this._openPopup)
-			    .off('remove', this.closePopup);
+			    .off('click', this._openPopup, this)
+                .off('mousemove', this._movePopup, this)
+			    .off('mouseover', this._overPopup, this)
+                .off('mouseout', this._outPopup, this)
+			    .off('remove', this.closePopup, this);
 
             this._popupopen = null;
 			this._popupHandlersAdded = false;
@@ -65,18 +71,52 @@ L.gmx.VectorLayer.include({
 		return this;
 	},
 
+    _movePopup: function (options) {
+        if (!this._popup.options.closeButton) {
+            this._popup.setLatLng(options.latlng);
+        }
+    },
+
+    _overPopup: function (options) {
+        if (!this._popup._map) {
+            this._openPopup(options);
+        }
+        if (!this._popup.options.closeButton) {
+            this._popup.setLatLng(options.latlng);
+        }
+    },
+
+    _outPopup: function (options) {
+        if (!this._popup.options.closeButton) {
+            this.closePopup();
+        }
+    },
+
 	_openPopup: function (options) {
         var originalEvent = options.originalEvent || {},
             skip = originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
-            var gmx = options.gmx || {},
-                properties = gmx.properties,
+            var type = options.type,
+                gmx = options.gmx || {},
+                balloonData = gmx.balloonData || {};
+            if (type === 'click') {
+                if (balloonData.DisableBalloonOnClick) {return;}
+                this._popup.options.closeButton = true;
+                this._popup._initLayout();
+            } else if (type === 'mouseover') {
+                if (balloonData.DisableBalloonOnMouseMove) {return;}
+                this._popup.options.closeButton = false;
+                this._popup._initLayout();
+            } else {
+                return;
+            }
+            var properties = gmx.properties,
                 target = gmx.target,
                 geometry = target.geometry,
                 latlng = options.latlng,
                 //spanIDs = {},
-                templateBalloon = this._popup._initContent || gmx.templateBalloon,
+                templateBalloon = this._popup._initContent || balloonData.templateBalloon,
                 outItem = {
                     id: gmx.id,
                     properties: gmx.properties

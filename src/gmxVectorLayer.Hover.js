@@ -173,7 +173,7 @@ L.gmx.VectorLayer.include({
                         ev.gmx = {
                             targets: geoItems,
                             target: target,
-                            templateBalloon: gmx.styleManager.getItemBalloon(idr),
+                            balloonData: gmx.styleManager.getItemBalloon(idr),
                             properties: layer.getItemProperties(target.properties),
                             id: idr
                         };
