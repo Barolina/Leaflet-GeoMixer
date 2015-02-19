@@ -192,7 +192,7 @@ L.gmx.VectorLayer.include({
                 }
             }
         }
-        if (!skipOver && type !== 'mousedown' && type !== 'mouseup') {
+        if (skipOver && type !== 'mousedown' && type !== 'mouseup') {
             gmx.lastHover = null;
             chkHover('mouseout');
         }
