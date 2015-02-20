@@ -102,11 +102,11 @@ L.gmx.VectorLayer.include({
                 balloonData = gmx.balloonData || {};
             if (type === 'click') {
                 if (balloonData.DisableBalloonOnClick) {return;}
-                this._popup.options.closeButton = true;
+                this._popup.options.closeButton = this._popup.options.autoPan = true;
                 this._popup._initLayout();
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {return;}
-                this._popup.options.closeButton = false;
+                this._popup.options.closeButton = this._popup.options.autoPan = false;
                 this._popup._initLayout();
             } else {
                 return;
