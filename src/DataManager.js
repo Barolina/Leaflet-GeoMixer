@@ -19,6 +19,7 @@ var gmxDataManager = L.Class.extend({
 
         this._needCheckDateInterval = false;
         this._needCheckActiveTiles = true;
+        this._processingTileKey = gmxVectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1);
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -51,6 +52,12 @@ var gmxDataManager = L.Class.extend({
 
         this._needCheckActiveTiles = false;
 
+        var processing = this._gmx.properties.Processing;
+        if (processing) {
+            this._chkProcessing(processing);
+            delete this._gmx.properties.Processing;
+        }
+
         if (this._isTemporalLayer) {
             var newTileKeys = {};
             if (this._beginDate && this._endDate) {
@@ -63,14 +70,6 @@ var gmxDataManager = L.Class.extend({
             this._updateActiveTilesList(newTileKeys);
         } else {
             this.initTilesList(this._gmx.properties);
-        }
-
-        var processing = this._gmx.properties.Processing;
-        if (processing) {
-            if (Object.keys(processing).length) {
-                this._chkProcessing(processing);
-            }
-            delete this._gmx.properties.Processing;
         }
 
         return this._activeTileKeys;
@@ -507,20 +506,19 @@ var gmxDataManager = L.Class.extend({
         var _items = this._items,
             id;
 
-        for (id in _items) {
-            var it = _items[id];
-            it.processing = false;
-            for (var vKey in it.options.fromTiles) {
-                if (!this._tiles[vKey]) {
-                    delete it.options.fromTiles[vKey];
-                }
-            }
-        }
-
         var tile = this.processingTile,
             skip = {};
 
         if (tile) {
+            var zKey = this._processingTileKey;
+            tile.data.forEach(function(it) {
+                id = it[0];
+                if (_items[id]) {
+                    var item = _items[id];
+                    item.processing = false;
+                    delete item.options.fromTiles[zKey];
+                }
+            });
             tile.clear();
         }
 
@@ -665,7 +663,7 @@ var gmxDataManager = L.Class.extend({
         this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
         if (this.processingTile) {
-            this._tiles[gmxVectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1)] = {
+            this._tiles[this._processingTileKey] = {
                 tile: this.processingTile
             };
         }
@@ -693,7 +691,7 @@ var gmxDataManager = L.Class.extend({
             }
             this._tiles = newTiles;
             if (this.processingTile) {
-                this._tiles[gmxVectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1)] = {
+                this._tiles[this._processingTileKey] = {
                     tile: this.processingTile
                 };
             }
