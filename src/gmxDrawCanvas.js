@@ -42,7 +42,7 @@ var setCanvasStyle = function(item, ctx, style) {
                 p1 = utils.dec2color(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2 > 1 ? p2 / 100 : p2);
             lineargrad.addColorStop(p0, p1);
         }
-        ctx.fillStyle = lineargrad;
+        ctx.fillStyle = style.fillStyle = lineargrad;
     }
 };
 

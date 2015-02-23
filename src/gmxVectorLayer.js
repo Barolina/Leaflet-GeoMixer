@@ -186,6 +186,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this;
     },
 
+    getStyles: function () {
+        return this._gmx.styleManager.getStyles();
+    },
+
     setStyle: function (style, num) {
         var _this = this,
             gmx = this._gmx;

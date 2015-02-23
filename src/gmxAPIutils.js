@@ -283,11 +283,11 @@ var gmxAPIutils = {
             notFunc = false;
         }
 
-        var arr = (pattern.colors != null ? pattern.colors : []);
-        var count = arr.length;
-        var resColors = [];
-        var rgb = [0xff0000, 0x00ff00, 0x0000ff];
-        var i = 0;
+        var rgb = [0xff0000, 0x00ff00, 0x0000ff],
+            arr = (pattern.colors != null ? pattern.colors : rgb),
+            count = arr.length,
+            resColors = [],
+            i = 0;
         for (i = 0; i < count; i++) {
             var col = arr[i];
             if (pattern.patternColorsFunction && pattern.patternColorsFunction[i] !== null) {
@@ -304,7 +304,7 @@ var gmxAPIutils = {
             rad = 0,
             hh = allSize,				// высота битмапа
             ww = allSize,				// ширина битмапа
-            type = pattern.style,
+            type = pattern.style || 'horizontal',
             flagRotate = false;
 
         if (type === 'diagonal1' || type === 'diagonal2' || type === 'cross' || type === 'cross1') {
@@ -314,6 +314,10 @@ var gmxAPIutils = {
             center = Math.floor(ww / 2);	// центр круга
             //radius = Math.floor(size / 2);	// радиус
             rad = 2 * Math.PI / count;		// угол в рад.
+        } else if (type === 'vertical') {
+            hh = 1;
+        } else if (type === 'horizontal') {
+            ww = 1;
         }
         if (ww * hh > patternDefaults.maxWidth) {
             console.log({'func': 'getPatternIcon', 'Error': 'MAX_PATTERN_SIZE', 'alert': 'Bitmap from pattern is too big'});
@@ -1131,6 +1135,8 @@ var gmxAPIutils = {
         'iconGeomSize': 'iconGeomSizeFunction',
         'iconAngle': 'rotateFunction',
         'iconScale': 'scaleFunction',
+        'opacity': 'opacityFunction',
+        'fillOpacity': 'fillOpacityFunction',
         'color': 'colorFunction',
         'fillColor': 'fillColorFunction'
     },

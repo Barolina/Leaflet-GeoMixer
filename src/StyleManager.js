@@ -117,12 +117,17 @@ var gmxStyleManager = function(gmx) {
         //		opacity — прозрачность
         var i = 0,
             arr = ['x1', 'y1', 'x2', 'y2'],
+            def = [0, 0, 0, 256],
             len = arr.length;
         for (i = 0; i < len; i++) {
             var it = arr[i];
-            if (typeof (lg[it]) === 'string') {
-                lg[it + 'Function'] = parsers.parseExpression(lg[it]);
-                common = false;
+            if (it in lg) {
+                if (typeof (lg[it]) === 'string') {
+                    lg[it + 'Function'] = parsers.parseExpression(lg[it]);
+                    common = false;
+                }
+            } else {
+                lg[it] = def[i];
             }
         }
 
@@ -141,6 +146,18 @@ var gmxStyleManager = function(gmx) {
 
     var parseStyle = function(st) {
         if (st) {
+            for (var key in st) {
+                if (gmxAPIutils.styleFuncKeys[key]) {
+                    var fkey = gmxAPIutils.styleFuncKeys[key],
+                        val = st[key];
+                    if (typeof (val) === 'string') {
+                        st[fkey] = gmxParsers.parseExpression(val);
+                    } else if (typeof (val) === 'function') {
+                        st[fkey] = val;
+                    }
+                }
+            }
+
             var type = '';
             if (st.iconUrl) {
                 type = 'image';
@@ -170,11 +187,11 @@ var gmxStyleManager = function(gmx) {
                 }
             }
             st.type = type;
-        }
-        if (st.common && !st.maxSize) {
-            st.maxSize = st.iconGeomSize || 0;
-            st.maxSize += st.weight ? st.weight : 0;
-            if ('iconScale' in st) { st.maxSize *= st.iconScale; }
+            if (st.common && !st.maxSize) {
+                st.maxSize = st.iconGeomSize || 0;
+                st.maxSize += st.weight ? st.weight : 0;
+                if ('iconScale' in st) { st.maxSize *= st.iconScale; }
+            }
         }
         return st;
     };
@@ -225,6 +242,40 @@ var gmxStyleManager = function(gmx) {
         }
         gmx.balloonEnable = balloonEnable;
     };
+
+    var getStyleKeys = function(style) {
+        var out = {};
+        for (var key in gmxAPIutils.styleKeys) {
+            var keys = gmxAPIutils.styleKeys[key];
+            for (var i = 0, len = keys.client.length; i < len; i++) {
+                var key1 = keys.client[i];
+                if (key1 in style) {
+                    out[key1] = JSON.parse(JSON.stringify(style[key1]));
+                    if (key1 === 'fillPattern') {delete out[key1].patternColorsFunction;}
+                    if (key1 === 'fillLinearGradient') {delete out[key1].addColorStopFunctions;}
+                }
+            }
+        }
+        return out;
+    };
+
+    this.getStyles = function () {
+        var out = [];
+        if (initStyles) {
+            this.initStyles();
+        }
+        for (var i = 0, len = styles.length; i < len; i++) {
+            var style = L.extend({}, styles[i]);
+            style.RenderStyle = getStyleKeys(style.RenderStyle);
+            style.HoverStyle = getStyleKeys(style.HoverStyle);
+            delete style.filterFunction;
+            delete style.version;
+            delete style.common;
+            delete style.type;
+            out.push(style);
+        }
+        return out;
+    },
 
     this.setStyle = function(st, num) {
         var end = num,
@@ -322,6 +373,8 @@ var gmxStyleManager = function(gmx) {
                 create: [x1, y1, r1, x2, y2, r2],
                 colorStop: colorStop
             };
+        } else if (pt.fillLinearGradient) {
+            out.fillLinearGradient = pt.fillLinearGradient;
         } else {
             if (pt.fillPattern) {
                 out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : utils.getPatternIcon(item, pt, indexes));
@@ -395,7 +448,7 @@ var gmxStyleManager = function(gmx) {
             for (var i = 0, len = styles.length; i < len; i++) {
                 var st = styles[i];
                 if (zoom > st.MaxZoom || zoom < st.MinZoom
-                    || ('filterFunction' in st && !st.filterFunction(properties, indexes))) {
+                    || (st.filterFunction && !st.filterFunction(properties, indexes))) {
                     continue;
                 }
                 item.currentFilter = i;

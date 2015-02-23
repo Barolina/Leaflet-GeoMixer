@@ -93,11 +93,10 @@ L.LabelsLayer = L.Class.extend({
             }
             return gmx.dataManager.addObserver(options, '_Labels');
         };
-        this._layeradd = function (ev) {
-            var layer = ev.layer,
-                id = layer._leaflet_id,
+        this.add = function (layer) {
+            var id = layer._leaflet_id,
                 gmx = layer._gmx;
-            if (gmx && gmx.labelsLayer) {
+            if (!_this._observers[id] && gmx && gmx.labelsLayer && id) {
                 gmx.styleManager.deferred.then(function () {
                     _this._updateBbox();
                     var observer = addObserver(layer);
@@ -112,9 +111,8 @@ L.LabelsLayer = L.Class.extend({
                 });
             }
         };
-        this._layerremove = function (ev) {
-            var layer = ev.layer,
-                id = ev.layer._leaflet_id;
+        this.remove = function (layer) {
+            var id = layer._leaflet_id;
             if (_this._observers[id]) {
                 var gmx = layer._gmx,
                     dataManager = gmx.dataManager;
@@ -124,6 +122,12 @@ L.LabelsLayer = L.Class.extend({
                 delete _this._labels['_' + id];
                 _this.redraw();
             }
+        };
+        this._layeradd = function (ev) {
+            _this.add(ev.layer);
+        };
+        this._layerremove = function (ev) {
+            _this.remove(ev.layer);
         };
     },
 
