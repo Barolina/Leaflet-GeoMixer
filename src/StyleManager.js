@@ -305,8 +305,8 @@ var gmxStyleManager = function(gmx) {
                 balloonEnable = true;
                 style.BalloonEnable = true;
             }
-            if (st.regularStyle) { style.RenderStyle = parseStyle(st.regularStyle); }
-            if (st.hoveredStyle) { style.HoverStyle = parseStyle(st.hoveredStyle); }
+            if (st.RenderStyle) { style.RenderStyle = parseStyle(st.RenderStyle); }
+            if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle); }
         }
         return balloonEnable;
     };

@@ -39,7 +39,7 @@
 
         #styleInfo {
             height: 100%;
-            width: 320px;
+            width: 400px;
         }
 
     </style>
@@ -61,7 +61,7 @@
 				<option>fillPattern</option>
 				<option>fillLinearGradient</option>
 			</select>
-<!--			<button id="seStyles">seStyles</button>-->
+			<button id="setStyle">setStyle</button>
         </span>
             <br>
             <br>
@@ -155,19 +155,19 @@
            hoveredStyle: HoverStyle       // hover стиль (Тип данных Style)  
         };
         var styleInfo = document.getElementById("styleInfo");
-        var seStyles = document.getElementById("seStyles");
+        var setStyle = document.getElementById("setStyle");
 
         L.gmx.loadLayer('CA1D1CFB8020457CA6773067CFCF5A5E', '6640682CD6CA41CD87B09F4D44980585').then(function(testLayer) {
             testLayer.addTo(map);
             
-            styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            styleInfo.value = JSON.stringify(testLayer.getStyles()[0], null, 2);
             var updateStyle = function(ev) {
                 var nm = ev ? ev.target.selectedIndex : 0,
                     currentStyle = L.extend({}, style);
 
                 if (nm === 1) {
-                    currentStyle.hoveredStyle = 
-                    currentStyle.regularStyle = {
+                    currentStyle.HoverStyle = 
+                    currentStyle.RenderStyle = {
                         color:  '255 * ([CLOUDS]*15 - 1)',                      // цвет границы объекта (по умолчанию: 0) - outline.color <UInt|Expression>,
                         weight: 2,                      // ширина линии границ объекта (по умолчанию: 0) - outline.thickness
                         opacity: 1, // '[op]',                     // opacity линии границ объекта (от 0.0 до 1.0 по умолчанию: 1) - outline.opacity (от 0 до 100)
@@ -176,8 +176,8 @@
                         fillOpacity: '[IsDay]'
                     };
                 } else if (nm === 2) {
-                    currentStyle.hoveredStyle = 
-                    currentStyle.regularStyle = {
+                    currentStyle.HoverStyle = 
+                    currentStyle.RenderStyle = {
                         fillPattern: {                  // fill.pattern
                             colors: [0xFFFFFF, 0x0000ff, 0xFF0000],                 // массив цветов в формате UInt|Expression (по умолчанию: [])
                             //style: 'horizontal',        // могут быть заданны строки (horizontal, vertical, diagonal1, diagonal2, circle, cross) (по умолчанию: 'horizontal')
@@ -186,13 +186,13 @@
                         }
                     };
                 } else if (nm === 3) {
-                    currentStyle.hoveredStyle = 
-                    currentStyle.regularStyle = {
+                    currentStyle.HoverStyle = 
+                    currentStyle.RenderStyle = {
                         fillLinearGradient: {}              // default linearGradient
                     };
                 } else if (nm === 4) {
-                    currentStyle.hoveredStyle = 
-                    currentStyle.regularStyle = {
+                    currentStyle.HoverStyle = 
+                    currentStyle.RenderStyle = {
                         labelField: 'name'//,            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
                         // labelColor: <UInt>,              // цвет текстовой метки (по умолчанию: 0) - label.color
                         // labelHaloColor: <UInt>,          // цвет Glow вокруг метки (по умолчанию: -1) - label.haloColor
@@ -203,14 +203,17 @@
                     };
                 }
                 testLayer.setStyle(currentStyle);
-                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+                styleInfo.value = JSON.stringify(testLayer.getStyles()[0], null, 2);
             }
             var select = document.getElementById("style");
             select.selectedIndex = 0;
             select.onchange = updateStyle;
             
-            //seStyles.onclick = function(ev) {
-            //};
+            setStyle.onclick = function(ev) {
+                var st = JSON.parse(styleInfo.value);
+console.log(st);
+                testLayer.setStyle(st);
+            };
         });
 	</script>
 </body>
