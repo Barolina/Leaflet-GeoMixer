@@ -33,20 +33,32 @@ var chkVersion = function (layer, callback) {
     if (document.body && !gmxAPIutils.isPageHidden()) {
         var hosts = getRequestParams(layer);
         for (var hostName in hosts) {
-            gmxAPIutils.sendCrossDomainPostRequest('http://' + hostName + script, {
-                WrapStyle: 'message',
-                layers: JSON.stringify(hosts[hostName])
-            }, function(response) {
-                if (response && response.Status === 'ok' && response.Result) {
-                    for (var i = 0, len = response.Result.length; i < len; i++) {
-                        var item = response.Result[i],
-                            prop = item.properties,
-                            id = prop.name,
-                            layer = layers[id];
-                        if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
+            var formData = 'WrapStyle=None';
+            formData += '&layers=' + encodeURIComponent(JSON.stringify(hosts[hostName]));
+            gmxAPIutils.request({
+                url: 'http://' + hostName + script,
+                async: true,
+                headers: {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                },
+                type: 'POST',
+                params: formData,
+                callback: function(response) {
+                    var res = JSON.parse(response);
+                    if (res && res.Status === 'ok' && res.Result) {
+                        for (var i = 0, len = res.Result.length; i < len; i++) {
+                            var item = res.Result[i],
+                                prop = item.properties,
+                                id = prop.name,
+                                layer = layers[id];
+                            if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
+                        }
                     }
+                    if (callback) { callback(res); }
+                },
+                onError: function(response) {
+                    console.log('Error: LayerVersion ', response);
                 }
-                if (callback) { callback(response); }
             });
         }
     }

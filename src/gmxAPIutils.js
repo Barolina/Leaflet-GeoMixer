@@ -79,29 +79,38 @@ var gmxAPIutils = {
         return xmlhttp;
     },
     request: function(ph) { // {'type': 'GET|POST', 'url': 'string', 'callback': 'func'}
-      try {
         var xhr = gmxAPIutils.getXmlHttp();
-        xhr.open((ph.type ? ph.type : 'GET'), ph.url, ph.async || false);
-        xhr.send((ph.params ? ph.params : null));
-        if (ph.async) {
-            xhr.withCredentials = true;
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    //self.log('xhr.status ' + xhr.status);
-                    if (xhr.status === 200) {
-                        ph.callback(xhr.responseText);
-                        xhr = null;
-                    }
+        if (xhr) {
+            xhr.open((ph.type ? ph.type : 'GET'), ph.url, ph.async || false);
+            if (ph.headers) {
+                for (var key in ph.headers) {
+                    xhr.setRequestHeader(key, ph.headers[key]);
                 }
-            };
-        } else if (xhr.status === 200) {
-            ph.callback(xhr.responseText);
+            }
+            if (ph.async) {
+                //xhr.withCredentials = true;
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            ph.callback(xhr.responseText);
+                            xhr = null;
+                        } else if (ph.onError) {
+                            ph.onError(xhr);
+                        }
+                    }
+                };
+            }
+            xhr.send((ph.params ? ph.params : null));
+            if (!ph.async && xhr.status === 200) {
+                ph.callback(xhr.responseText);
+                return xhr.status;
+            }
+            return true;
         }
-        return xhr.status;
-      } catch (e) {
-        if (ph.onError) { ph.onError(xhr.responseText); }
-        return e.description; // turn all errors into empty results
-      }
+        if (ph.onError) {
+            ph.onError({Error: 'bad XMLHttpRequest!'});
+        }
+        return false;
     },
 
     tileSizes: [], // Размеры тайла по zoom
@@ -653,7 +662,7 @@ var gmxAPIutils = {
 		var a1 = Math.floor(angle);
 		var a2 = Math.floor(60 * (angle - a1));
 		var a3 = gmxAPIutils.pad2(3600 * (angle - a1 - a2 / 60)).substring(0, 2);
-		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + "'" + a3 + '"';
+		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + '\'' + a3 + '"';
 	},
 
 	LatLonFormatCoordinates: function(x, y) {
@@ -844,7 +853,7 @@ var gmxAPIutils = {
 
     geoJSONGetLength: function(geoJSON) {
         var out = 0,
-            i, j, len, len1;
+            i, j, len, len1, coords;
 
         if (geoJSON.type === 'GeometryCollection') {
             out += geoJSON.geometries.forEach(gmxAPIutils.geoJSONGetLength);
@@ -853,13 +862,13 @@ var gmxAPIutils = {
         } else if (geoJSON.type === 'FeatureCollection') {
             out += geoJSON.features.forEach(gmxAPIutils.geoJSONGetLength);
         } if (geoJSON.type === 'LineString' || geoJSON.type === 'MultiLineString') {
-            var coords = geoJSON.coordinates;
+            coords = geoJSON.coordinates;
             if (geoJSON.type === 'LineString') {coords = [coords];}
             for (i = 0, len = coords.length; i < len; i++) {
                 out += gmxAPIutils.getRingLength(coords[i]);
             }
         } if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
-            var coords = geoJSON.coordinates;
+            coords = geoJSON.coordinates;
             if (geoJSON.type === 'Polygon') {coords = [coords];}
             for (i = 0, len = coords.length; i < len; i++) {
                 for (j = 0, len1 = coords[i].length; j < len1; j++) {
@@ -1469,19 +1478,17 @@ L.extend(L.gmxUtil, {
             originalFormAction = form.getAttribute('action');
             form.setAttribute('action', url);
             form.target = id;
+        } else if (L.Browser.ielt9) {
+            var str = '<form id=' + id + '" enctype="multipart/form-data" style="display:none" target="' + id + '" action="' + url + '" method="post"></form>';
+            form = document.createElement(str);
         } else {
-            if (L.Browser.ielt9) {
-                var str = '<form id=' + id + '" enctype="multipart/form-data" style="display:none" target="' + id + '" action="' + url + '" method="post"></form>';
-                form = document.createElement(str);
-            } else {
-                form = document.createElement('form');
-                form.style.display = 'none';
-                form.setAttribute('enctype', 'multipart/form-data');
-                form.target = id;
-                form.setAttribute('method', 'POST');
-                form.setAttribute('action', url);
-                form.id = id;
-            }
+            form = document.createElement('form');
+            form.style.display = 'none';
+            form.setAttribute('enctype', 'multipart/form-data');
+            form.target = id;
+            form.setAttribute('method', 'POST');
+            form.setAttribute('action', url);
+            form.id = id;
         }
 
         var hiddenParamsDiv = document.createElement('div');
