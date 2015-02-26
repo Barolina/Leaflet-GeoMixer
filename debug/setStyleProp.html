@@ -72,11 +72,32 @@
             row = 7,
             maxRow = 33,
             mapID = 'CA1D1CFB8020457CA6773067CFCF5A5E';
+            
+        var styleAdd = {
+            "color": 255,
+            "weight": 1,
+            "fillColor": 0xff0000,
+            "fillOpacity": 0.3
+        };
 
         prop.value = row;
         L.gmx.loadLayers([
             {mapID: mapID, layerID: '6640682CD6CA41CD87B09F4D44980585'}
         ]).then(function(testLayer) {
+            var originalStyles = testLayer.getStyles();
+            // originalStyles[0].DisableBalloonOnMouseMove = originalStyles[0].DisableBalloonOnClick = true;
+            testLayer.on('click', function(event) {
+                var path = event.gmx.properties.PATH;
+                var json = {
+                    Filter: "[PATH] = " + path,
+                    // DisableBalloonOnMouseMove: true,
+                    // DisableBalloonOnClick: true,
+                    RenderStyle: styleAdd
+                };
+                
+                testLayer.setStyles([json].concat(originalStyles));
+            })
+            
             map.addLayer(testLayer);
             var style_1 = testLayer.getStyles()[0];
             setStyle.onclick = function(ev) {
