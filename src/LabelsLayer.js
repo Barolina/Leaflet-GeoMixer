@@ -29,7 +29,7 @@ L.LabelsLayer = L.Class.extend({
             for (var i = 0, len = added.length; i < len; i++) {
                 var item = added[i].item,
                     isPoint = item.type === 'POINT' || item.type === 'MULTIPOINT',
-                    currentStyle = item.currentStyle || item.parsedStyleKeys || {};
+                    currentStyle = item.parsedStyleKeys || item.currentStyle || {};
 
                 if (gmx.styleHook) {
                     currentStyle = gmx.styleManager.applyStyleHook(item, gmx.lastHover && item.id === gmx.lastHover.id);

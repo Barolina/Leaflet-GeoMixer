@@ -1122,6 +1122,19 @@ var gmxAPIutils = {
         return gmxAPIutils.bounds([[minx, miny], [minx + tileSize, miny + tileSize]]);
     },
 
+    parseTemplate: function(str, properties) {
+        var reg = /\[([^\]]+)\]/i,
+            matches = reg.exec(str);
+        while (matches && matches.length > 1) {
+            var key1 = matches[1],
+                res = key1 in properties ? properties[key1] : '';
+
+            str = str.replace(matches[0], res);
+            matches = reg.exec(str);
+        }
+        return str;
+    },
+
     styleKeys: {
         marker: {
             server: ['image',   'angle',     'scale',     'minScale',     'maxScale',     'size',         'circle',     'center',     'color'],
@@ -1136,8 +1149,8 @@ var gmxAPIutils = {
             client: ['fillColor', 'fillOpacity', 'fillImage', 'fillPattern', 'fillRadialGradient', 'fillLinearGradient']
         },
         label: {
-            server: ['text',      'field',      'color',      'haloColor',      'size',          'spacing',      'align'],
-            client: ['labelText', 'labelField', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
+            server: ['text',      'field',      'template',      'color',      'haloColor',      'size',          'spacing',      'align'],
+            client: ['labelText', 'labelField', 'labelTemplate', 'labelColor', 'labelHaloColor', 'labelFontSize', 'labelSpacing', 'labelAlign']
         }
     },
     styleFuncKeys: {

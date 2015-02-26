@@ -15,7 +15,7 @@
 			right: 0px;
 			top: 21px;
             text-align: center;
-			z-index: 1;
+			z-index: 1000;
         }
         
         #info {
@@ -55,13 +55,20 @@
 	<div id="map"></div>
     <div id="infoPanel">
         <span id="info">
+			<select id="geoType">
+				<option selected>polygons</option>
+				<option>lines</option>
+				<option>points</option>
+			</select>
 			<select id="style">
 				<option selected>Выбрать стиль</option>
 				<option>fill</option>
 				<option>fillPattern</option>
 				<option>fillLinearGradient</option>
+				<option>labels</option>
 			</select>
 			<button id="setStyle">setStyle</button>
+			<button id="setStyles">setStyles</button>
         </span>
             <br>
             <br>
@@ -69,7 +76,7 @@
             </textarea>
     </div>
 	<script>
-		var map = L.map('map').setView([65.73, 87.59], 3);
+		var map = L.map('map').setView([55.788407, 37.326049], 8);
 
 		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			maxZoom: 18,
@@ -154,13 +161,30 @@
            regularStyle: RenderStyle,    // стиль (Тип данных Style)  
            hoveredStyle: HoverStyle       // hover стиль (Тип данных Style)  
         };
-        var styleInfo = document.getElementById("styleInfo");
-        var setStyle = document.getElementById("setStyle");
+        var testLayer = null,
+            styleInfo = document.getElementById("styleInfo"),
+            select = document.getElementById("style"),
+            setStyle = document.getElementById("setStyle"),
+            setStyles = document.getElementById("setStyles"),
+            geoType = document.getElementById("geoType");
 
-        L.gmx.loadLayer('CA1D1CFB8020457CA6773067CFCF5A5E', '6640682CD6CA41CD87B09F4D44980585').then(function(testLayer) {
-            testLayer.addTo(map);
+        var mapID = 'CA1D1CFB8020457CA6773067CFCF5A5E';
+        L.gmx.loadLayers([
+            {mapID: mapID, layerID: '6640682CD6CA41CD87B09F4D44980585'},    // Polygons
+            {mapID: mapID, layerID: 'E76C4BA7552748938889E154D9B5D701'},    // LineString
+            {mapID: mapID, layerID: 'B2CC196063834EF48A163EC14C392FAE'}     // Points
+        ]).then(function(polygons, lines, points) {
             
-            styleInfo.value = JSON.stringify(testLayer.getStyles()[0], null, 2);
+            var layers = arguments;
+            var updateType = function() {
+                if (testLayer) map.removeLayer(testLayer);
+                var index = geoType.selectedIndex;
+                testLayer = layers[index];
+                select.style.visibility = index === 0 ? 'visible' : 'hidden';
+                map.addLayer(testLayer);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            };
+            
             var updateStyle = function(ev) {
                 var nm = ev ? ev.target.selectedIndex : 0,
                     currentStyle = L.extend({}, style);
@@ -193,7 +217,7 @@
                 } else if (nm === 4) {
                     currentStyle.HoverStyle = 
                     currentStyle.RenderStyle = {
-                        labelField: 'name'//,            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
+                        labelField: 'SCENEID'//,            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
                         // labelColor: <UInt>,              // цвет текстовой метки (по умолчанию: 0) - label.color
                         // labelHaloColor: <UInt>,          // цвет Glow вокруг метки (по умолчанию: -1) - label.haloColor
                         // labelFontSize: <UInt>,           // FontSize метки  (по умолчанию: 0) - label.size
@@ -203,16 +227,28 @@
                     };
                 }
                 testLayer.setStyle(currentStyle);
-                styleInfo.value = JSON.stringify(testLayer.getStyles()[0], null, 2);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
             }
-            var select = document.getElementById("style");
             select.selectedIndex = 0;
             select.onchange = updateStyle;
             
+            geoType.selectedIndex = 0;
+            geoType.onchange = updateType;
+            updateType();
+            
             setStyle.onclick = function(ev) {
                 var st = JSON.parse(styleInfo.value);
-console.log(st);
-                testLayer.setStyle(st);
+                testLayer.setStyle(st[0]);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            };
+            
+            setStyles.onclick = function(ev) {
+                var st = JSON.parse(styleInfo.value);
+                // st.forEach(function(it, i) {
+                    // testLayer.setStyle(it, i);
+                // });
+                testLayer.setStyles(st);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
             };
         });
 	</script>

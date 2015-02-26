@@ -110,7 +110,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (map.options.crs !== L.CRS.EPSG3857 && map.options.crs !== L.CRS.EPSG3395) {
             throw 'GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer';
         }
-        var gmx = this._gmx;
+        var _this = this,
+            gmx = this._gmx;
 
         gmx.map = map;
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
@@ -126,7 +127,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         } else {
             gmx.shiftY = 0;
         }
-        if (gmx.balloonEnable && !this._popup) { this.bindPopup(); }
         if (gmx.properties.type === 'Vector') {
             if (!('chkUpdate' in this.options)) { this.options.chkUpdate = true; }
             L.gmx.layersVersion.add(this);
@@ -136,6 +136,22 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (this.options.clickable === false) {
             this._container.style.pointerEvents = 'none';
         }
+        if (gmx.balloonEnable && !this._popup) { this.bindPopup(); }
+        this.on('stylechange', function() {
+            if (!gmx.balloonEnable && _this._popup) {
+                _this.unbindPopup();
+            } else if (gmx.balloonEnable && !_this._popup) {
+                _this.bindPopup();
+            }
+            if (_this._map) {
+                if (gmx.labelsLayer) {
+                    _this._map._labelsLayer.add(_this);
+                } else if (!gmx.labelsLayer) {
+                    _this._map._labelsLayer.remove(_this);
+                }
+            }
+        });
+        
     },
 
     onRemove: function(map) {
@@ -190,14 +206,28 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this._gmx.styleManager.getStyles();
     },
 
-    setStyle: function (style, num) {
+    setStyles: function (styles) {
+        var _this = this,
+            gmx = this._gmx;
+
+        this.initPromise.then(function() {
+            _this._gmx.styleManager.clearStyles();
+            (styles || []).forEach(function(it, i) {
+                _this.setStyle(it, i, true);
+            });
+        });
+        return this;
+    },
+
+    getStyle: function (num) {
+        return this.getStyles()[num];
+    },
+
+    setStyle: function (style, num, createFlag) {
         var _this = this,
             gmx = this._gmx;
         this.initPromise.then(function() {
-            gmx.balloonEnable = gmx.styleManager.setStyle(style, num);
-            if (gmx.balloonEnable && !_this._popup) {
-                _this.bindPopup();
-            }
+            gmx.styleManager.setStyle(style, num, createFlag);
             _this.fire('stylechange', {num: num || 0});
             _this.repaint();
         });
@@ -743,7 +773,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('quicklookY4' in meta) { gmx.quicklookY4 = meta.quicklookY4.Value; }
 
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
-                gmx.multiFilters = meta.multiFilters.Value === 1 ? true : false;
+                gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
             }
         }
 
