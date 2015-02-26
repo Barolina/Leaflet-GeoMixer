@@ -151,7 +151,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 }
             }
         });
-        
     },
 
     onRemove: function(map) {
@@ -207,8 +206,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     setStyles: function (styles) {
-        var _this = this,
-            gmx = this._gmx;
+        var _this = this;
 
         this.initPromise.then(function() {
             _this._gmx.styleManager.clearStyles();

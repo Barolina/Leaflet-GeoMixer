@@ -2,6 +2,7 @@ var gmxStyleManager = function(gmx) {
     var MAX_STYLE_SIZE = 256,
         DEFAULT_STYLE = {outline: {color: 255, thickness: 1, size: 4}},
         DEFAULTKEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'],
+        maxVersion = 0,
         needLoadIcons = 0,
         styles = [],
         imagesSize = {},
@@ -296,7 +297,7 @@ var gmxStyleManager = function(gmx) {
             out.push(style);
         }
         return out;
-    },
+    };
 
     this.clearStyles = function () {
         styles = [];
@@ -312,7 +313,8 @@ var gmxStyleManager = function(gmx) {
                 style = parseItem({});
                 styles[num] = style;
             }
-            style.version++;
+            maxVersion++;
+            style.version = maxVersion;
             if ('Filter' in st) {
                 style.Filter = st.Filter;
                 var type = typeof (st.Filter);
