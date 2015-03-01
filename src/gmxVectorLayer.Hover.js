@@ -1,5 +1,5 @@
 L.gmx.VectorLayer.include({
-    _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // Получить верхний обьект по координатам mouseClick
+    _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // РџРѕР»СѓС‡РёС‚СЊ РІРµСЂС…РЅРёР№ РѕР±СЊРµРєС‚ РїРѕ РєРѕРѕСЂРґРёРЅР°С‚Р°Рј mouseClick
         var gmx = this._gmx,
             mInPixel = gmx.mInPixel,
             bounds = gmxAPIutils.bounds([mercPoint]);
@@ -27,8 +27,8 @@ L.gmx.VectorLayer.include({
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) {continue;}
 
             var geom = geoItem[geoItem.length - 1],
-                fill = currentStyle.fillStyle || parsedStyle.bgImage,
-                marker = parsedStyle.image,
+                fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage,
+                marker = parsedStyle ? parsedStyle.image : null,
                 type = geom.type,
                 chktype = type,
                 hiddenLines = dataOption.hiddenLines,
@@ -122,11 +122,13 @@ L.gmx.VectorLayer.include({
             lastHover = gmx.lastHover,
             chkHover = function (evType) {
                 if (lastHover && type === 'mousemove') {
-                    if (layer.hasEventListeners(evType)) {
+                    if (evType && layer.hasEventListeners(evType)) {
                         ev.gmx = lastHover;
                         layer.fire(evType, ev);
                     }
-                    layer._redrawTilesHash(lastHover.observersToUpdate);    // reset hover
+                    if (lastHover.observersToUpdate) {
+                        layer._redrawTilesHash(lastHover.observersToUpdate);
+                    }
                 }
             };
         if (!skipOver && ev.originalEvent &&
@@ -161,6 +163,7 @@ L.gmx.VectorLayer.include({
                     var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
                     if (target) {
                         var idr = target.id,
+                            item = gmx.dataManager.getItem(idr),
                             changed = !lastHover || lastHover.id !== idr;
                         if (type === 'mousemove' && lastHover) {
                             if (!changed) {
@@ -168,8 +171,8 @@ L.gmx.VectorLayer.include({
                                 this.fire(type, ev);
                                 return idr;
                             }
+                            chkHover(item.currentFilter !== lastHover.currentFilter ? 'mouseout' : '');
                             gmx.lastHover = null;
-                            chkHover('mouseout');
                         }
 
                         ev.gmx = {
@@ -177,15 +180,16 @@ L.gmx.VectorLayer.include({
                             target: target,
                             balloonData: gmx.styleManager.getItemBalloon(idr),
                             properties: layer.getItemProperties(target.properties),
+                            currentFilter: item.currentFilter,
                             id: idr
                         };
                         if (this.hasEventListeners(type)) { this.fire(type, ev); }
                         if (type === 'mousemove' && changed) {
                             lastHover = gmx.lastHover = ev.gmx;
-                            var item = gmx.dataManager.getItem(idr),
-                                currentStyle = gmx.styleManager.getObjStyle(item),
-                                size = currentStyle.maxSize || 256;
-                            lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, size);
+                            var currentStyle = gmx.styleManager.getObjStyle(item);
+                            if (currentStyle) {
+                                lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.maxSize || 256);
+                            }
                             chkHover('mouseover');
                         }
                         this._map.doubleClickZoom.disable();

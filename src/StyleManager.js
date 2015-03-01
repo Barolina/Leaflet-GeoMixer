@@ -207,9 +207,11 @@ var gmxStyleManager = function(gmx) {
             Balloon: style.Balloon || '',
             BalloonEnable: style.BalloonEnable || false,
             RenderStyle: (style.RenderStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {}),
-            HoverStyle: (style.HoverStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle)) : {}),
             version: 0
         };
+        if (style.HoverStyle) {
+            pt.HoverStyle = parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle));
+        }
 
         if ('Filter' in style) {
             var ph = parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'));
@@ -227,7 +229,7 @@ var gmxStyleManager = function(gmx) {
         for (var i = 0; i < len; i++) {
             var gmxStyle = gmx.styles[i] || arr[i];
             if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = DEFAULT_STYLE; }
-            if (gmxStyle.HoverStyle === undefined && gmxStyle.RenderStyle) {
+            if (gmxStyle.HoverStyle === undefined) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
                 if (hoveredStyle.marker && hoveredStyle.marker.size) { hoveredStyle.marker.size += 1; }
                 if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
@@ -289,7 +291,9 @@ var gmxStyleManager = function(gmx) {
         for (var i = 0, len = styles.length; i < len; i++) {
             var style = L.extend({}, styles[i]);
             style.RenderStyle = getStyleKeys(style.RenderStyle);
-            style.HoverStyle = getStyleKeys(style.HoverStyle);
+            if (style.HoverStyle) {
+                style.HoverStyle = getStyleKeys(style.HoverStyle);
+            }
             delete style.filterFunction;
             delete style.version;
             delete style.common;
@@ -538,9 +542,14 @@ var gmxStyleManager = function(gmx) {
         if (!style) {
             return null;
         }
-        if (gmx.lastHover && item.id === gmx.lastHover.id && style.HoverStyle) {
-            item.parsedStyleHover = itemStyleParser(item, style.HoverStyle);
-            return style.HoverStyle;
+        if (gmx.lastHover && item.id === gmx.lastHover.id) {
+            if (style.HoverStyle) {
+                item.parsedStyleHover = itemStyleParser(item, style.HoverStyle);
+                return style.HoverStyle;
+            } else {
+                delete item.parsedStyleHover;
+            }
+            return null;
         }
         return style.RenderStyle;
     };

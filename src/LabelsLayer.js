@@ -49,23 +49,24 @@ L.LabelsLayer = L.Class.extend({
                     var txt = labelText || gmx.getPropItem(item.properties, labelField);
                     if (!('label' in options) || options.label.txt !== txt) {
                         var size = fontSize || 12,
-                            width = gmxAPIutils.getLabelWidth(txt, style);
+                            labelStyle = {
+                                font: size + 'px "Arial"',
+                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || 0,
+                                labelColor: currentStyle.labelColor || style.labelColor,
+                                labelAlign: currentStyle.labelAlign || style.labelAlign,
+                                labelFontSize: fontSize
+                            },
+                            width = gmxAPIutils.getLabelWidth(txt, labelStyle);
                         if (!width) {
                             delete labels[id];
                             continue;
                         }
                         options.label = {
                             isPoint: isPoint,
-                            width: width + 3,
+                            width: width + 4,
                             sx: style.sx || 0,
                             txt: txt,
-                            style: {
-                                font: size + 'px "Arial"',
-                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor,
-                                labelColor: currentStyle.labelColor || style.labelColor,
-                                labelAlign: currentStyle.labelAlign || style.labelAlign,
-                                labelFontSize: fontSize
-                            }
+                            style: labelStyle
                         };
                     }
                     if (options.label.width) {
@@ -95,7 +96,13 @@ L.LabelsLayer = L.Class.extend({
         };
         this.add = function (layer) {
             var id = layer._leaflet_id,
+                labels = _this._labels['_' + id],
                 gmx = layer._gmx;
+
+            for (var gid in labels) {
+                delete labels[gid].options.labelStyle;
+                delete labels[gid].options.label;
+            }
             if (!_this._observers[id] && gmx && gmx.labelsLayer && id) {
                 gmx.styleManager.deferred.then(function () {
                     _this._updateBbox();
@@ -271,7 +278,7 @@ L.LabelsLayer = L.Class.extend({
                 if (isFiltered) { continue; }
 
                 if (!('labelStyle' in options)) {
-                    var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor || 0, 1);
+                    var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor, 1);
                     options.labelStyle = {
                         font: size + 'px "Arial"',
                         strokeStyle: strokeStyle,

@@ -72,12 +72,11 @@ var GmxEventsManager = L.Handler.extend({
             }
             if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
             _this._lastCursor = cursor;
-            if (_this._lastLayer && (_this._lastLayer !== layer || _this._lastId !== objId) &&  !_this._map.gmxMouseDown) {
-                _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
-            }
             if (cursor) {
                 _this._lastLayer = layer;
                 _this._lastId = objId;
+            } else if (_this._lastLayer && (_this._lastLayer !== layer || _this._lastId !== objId) &&  !_this._map.gmxMouseDown) {
+                _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
             }
         };
 

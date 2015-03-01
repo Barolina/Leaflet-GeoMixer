@@ -267,6 +267,9 @@
 
 			return function(props, indexes) {
 				var fieldValue = props[indexes[fieldName]];
+                if (typeof fieldValue === 'boolean' && typeof referenceValue === 'string') {
+                    fieldValue = fieldValue ? 'True' : 'False';
+                }
 				if (fieldValue === null) { return false; }
 				if (matchPattern !== null) { return matchPattern(fieldValue);
 				} else if ((op === '=') || (op === '==')) { return (fieldValue == referenceValue);

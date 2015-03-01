@@ -46,7 +46,7 @@ var setCanvasStyle = function(item, ctx, style) {
     }
 };
 
-var drawGeoItem = function(geoItem, options, currentStyle) {
+var drawGeoItem = function(geoItem, options, currentStyle, style) {
     var propsArr = geoItem.properties,
         idr = propsArr[0],
         j = 0,
@@ -60,7 +60,7 @@ var drawGeoItem = function(geoItem, options, currentStyle) {
         rasters = options.rasters,
         tbounds = options.tbounds;
 
-    var style = gmx.styleManager.getObjStyle(item); //call each time because of possible style can depends from item properties
+    style = style || {};
     item.currentStyle = L.extend({}, currentStyle);
     if (gmx.styleHook && !geoItem.styleExtend) {
         geoItem.styleExtend = gmx.styleManager.applyStyleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
@@ -218,16 +218,17 @@ options
          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
 */
     var gmx = options.gmx,
-        hover = gmx.lastHover && gmx.lastHover.id === geoItem.id,
-        item = gmx.dataManager.getItem(geoItem.id);
+        item = gmx.dataManager.getItem(geoItem.id),
+        style = gmx.styleManager.getObjStyle(item);
 
+    var hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
     if (item) {
         if (gmx.multiFilters) {
             item.multiFilters.forEach(function(it) {
-                drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle);
+                drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle, style);
             });
         } else {
-            drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys);
+            drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
         }
     }
     return true;
