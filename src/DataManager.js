@@ -335,7 +335,14 @@ var gmxDataManager = L.Class.extend({
                 item.bounds = arr[0];
             } else {
                 item.bounds = gmxAPIutils.bounds();
+                var w = gmxAPIutils.worldWidthMerc;
                 arr.forEach(function(it) {
+                    if (item.bounds.max.x - it.min.x > w) {
+                        it = gmxAPIutils.bounds([
+                            [it.min.x + 2 * w, it.min.y],
+                            [it.max.x + 2 * w, it.max.y]
+                        ]);
+                    }
                     item.bounds.extendBounds(it);
                 });
             }

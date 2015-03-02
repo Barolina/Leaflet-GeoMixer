@@ -105,13 +105,13 @@ L.LabelsLayer = L.Class.extend({
             }
             if (!_this._observers[id] && gmx && gmx.labelsLayer && id) {
                 gmx.styleManager.deferred.then(function () {
-                    _this._updateBbox();
                     var observer = addObserver(layer);
                     if (!gmx.styleManager.isVisibleAtZoom(_this._map._zoom)) {
                         observer.deactivate();
                     }
                     _this._observers[id] = observer;
                     _this._styleManagers[id] = gmx.styleManager;
+                    _this._updateBbox();
 
                     _this._labels['_' + id] = {};
                     _this.redraw();
@@ -198,20 +198,17 @@ L.LabelsLayer = L.Class.extend({
             screenBounds = _map.getBounds(),
             southWest = screenBounds.getSouthWest(),
             northEast = screenBounds.getNorthEast(),
-            ww = gmxAPIutils.worldWidthMerc,
-            ww2 = 2 * ww,
             m1 = L.Projection.Mercator.project(southWest),
-            m2 = L.Projection.Mercator.project(northEast),
-            w = (m2.x - m1.x) / 2,
-            center = (m1.x + m2.x) / 2;
-        center %= ww2;
-        center += center > ww ? -ww2 : center < -ww ? ww2 : 0;
+            m2 = L.Projection.Mercator.project(northEast);
 
         this.mInPixel = gmxAPIutils.getPixelScale(_map._zoom);
-        this.mInPixel2 = 2 * this.mInPixel;
-        this._ctxShift = [(w - center) * this.mInPixel, m2.y * this.mInPixel];
-        this.bbox.min.x = center - w; this.bbox.min.y = m1.y;
-        this.bbox.max.x = center + w; this.bbox.max.y = m2.y;
+        this._ctxShift = [m1.x * this.mInPixel, m2.y * this.mInPixel];
+        for (var id in this._observers) {
+            this._observers[id].setBounds({
+                min: {x: southWest.lng, y: southWest.lat},
+                max: {x: northEast.lng, y: northEast.lat}
+            });
+        }
     },
 
     _reset: function () {
@@ -238,8 +235,8 @@ L.LabelsLayer = L.Class.extend({
         _canvas.width = mapSize.x; _canvas.height = mapSize.y;
         L.DomUtil.setPosition(_canvas, topLeft);
 
-        var ctx = _canvas.getContext('2d');
-        ctx.translate(this._ctxShift[0], this._ctxShift[1]);
+        var w2 = 2 * this.mInPixel * gmxAPIutils.worldWidthMerc,
+            ctx = _canvas.getContext('2d');
 
         for (var layerId in this._labels) {
             var labels = this._labels[layerId];
@@ -249,58 +246,64 @@ L.LabelsLayer = L.Class.extend({
                     label = options.label,
                     style = label.style,
                     width = label.width,
+                    width2 = width / 2,
                     size = style.labelFontSize || 12,
-                    ww = width / this.mInPixel2,
-                    hh = size / this.mInPixel2,
+                    size2 = size / 2,
                     center = options.center,
-                    pos = [center[0], center[1]],
+                    pos = [center[0] * this.mInPixel, center[1] * this.mInPixel],
                     isFiltered = false;
 
                 if (label.isPoint) {
                     var labelAlign = style.labelAlign || 'left',
-                        delta = label.sx / this.mInPixel;
+                        delta = label.sx;
                     if (labelAlign === 'left') {
-                        pos[0] += ww + delta;
+                        pos[0] += width2 + delta;
                     } else if (labelAlign === 'right') {
-                        pos[0] -= 2 * ww + delta;
+                        pos[0] -= width + delta;
                     }
                 }
-                var bbox = gmxAPIutils.bounds([
-                    [pos[0] - ww, pos[1] - hh],
-                    [pos[0] + ww, pos[1] + hh]
-                ]);
-                for (var i = 0, len1 = out.length; i < len1; i++) {
-                    if (bbox.intersects(out[i].bbox)) {
-                        isFiltered = true;
-                        break;
-                    }
-                }
-                if (isFiltered) { continue; }
+                pos[0] -= width2 + this._ctxShift[0];
+                pos[1] = size2 - pos[1] + this._ctxShift[1];
 
-                if (!('labelStyle' in options)) {
-                    var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor, 1);
-                    options.labelStyle = {
-                        font: size + 'px "Arial"',
-                        strokeStyle: strokeStyle,
-                        fillStyle: gmxAPIutils.dec2color(style.labelColor || 0, 1),
-                        shadowBlur: 4,
-                        shadowColor: strokeStyle
-                    };
+                for (var tx = pos[0] + w2 * Math.floor((this._ctxShift[0] - pos[0]) / w2); tx < mapSize.x; tx += w2) {
+                    var coord = [tx, pos[1]],
+                        bbox = gmxAPIutils.bounds([
+                            [coord[0] - width2, coord[1] - size2],
+                            [coord[0] + width2, coord[1] + size2]
+                        ]);
+                    for (var i = 0, len1 = out.length; i < len1; i++) {
+                        if (bbox.intersects(out[i].bbox)) {
+                            isFiltered = true;
+                            break;
+                        }
+                    }
+                    if (isFiltered) { continue; }
+
+                    if (!('labelStyle' in options)) {
+                        var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor, 1);
+                        options.labelStyle = {
+                            font: size + 'px "Arial"',
+                            strokeStyle: strokeStyle,
+                            fillStyle: gmxAPIutils.dec2color(style.labelColor || 0, 1),
+                            shadowBlur: 4,
+                            shadowColor: strokeStyle
+                        };
+                    }
+                    out.push({
+                        arr: it.properties,
+                        bbox: bbox,
+                        txt: label.txt,
+                        style: options.labelStyle,
+                        coord: coord
+                    });
                 }
-                out.push({
-                    arr: it.properties,
-                    bbox: bbox,
-                    txt: label.txt,
-                    style: options.labelStyle,
-                    coord: gmxAPIutils.toPixels(pos, width / 2, size / 2, this.mInPixel)
-                });
             }
         }
         if (out.length) {
             if (!_canvas.parentNode) {
                 this._map.getPanes()[this.options.pane].appendChild(_canvas);
             }
-            ctx.clearRect(-this._ctxShift[0], -this._ctxShift[1], _canvas.width, _canvas.height);
+            ctx.clearRect(0, 0, _canvas.width, _canvas.height);
             out.forEach(function(it) {
                 gmxAPIutils.setLabel(ctx, it.txt, it.coord, it.style);
             });

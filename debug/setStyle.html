@@ -146,10 +146,10 @@
         
         var HoverStyle = RenderStyle;
         var style = {
-           MinZoom: 3,                  // мин. zoom (по умолчанию: 1)
+           MinZoom: 1,                  // мин. zoom (по умолчанию: 1)
            MaxZoom: 18,                  // макс.zoom (по умолчанию: 21)
            //Filter: '"name" = \'ПЧ-26\'',                // Функция фильтра (ранее <String>  // SQL выражение)
-           //Filter: "[name] = 'ПЧ-26'",                // Функция фильтра (ранее <String>  // SQL выражение)
+           //Filter: "[SCENEID] = 'LC81651972015048LGN00'",                // Функция фильтра (ранее <String>  // SQL выражение)
            // Filter: function(propsArr) {
                 // return propsArr[1] === 'ПЧ-26';
            // },
@@ -217,9 +217,9 @@
                 } else if (nm === 4) {
                     currentStyle.HoverStyle = 
                     currentStyle.RenderStyle = {
-                        labelField: 'SCENEID'//,            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
+                        labelField: 'SCENEID',            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
+                        labelHaloColor: -1              // цвет Glow вокруг метки (по умолчанию: 0) - label.haloColor
                         // labelColor: <UInt>,              // цвет текстовой метки (по умолчанию: 0) - label.color
-                        // labelHaloColor: <UInt>,          // цвет Glow вокруг метки (по умолчанию: -1) - label.haloColor
                         // labelFontSize: <UInt>,           // FontSize метки  (по умолчанию: 0) - label.size
                         // labelSpacing: <UInt>,            // растояние между символами (по умолчанию: 0) - label.spacing
                         // labelAlign: <String>,            // выравнивание могут быть заданны строки (left, right, center) (по умолчанию: left) - label.align
