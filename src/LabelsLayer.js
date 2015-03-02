@@ -236,6 +236,7 @@ L.LabelsLayer = L.Class.extend({
         L.DomUtil.setPosition(_canvas, topLeft);
 
         var w2 = 2 * this.mInPixel * gmxAPIutils.worldWidthMerc,
+            start = w2 * Math.floor(_map.getPixelBounds().min.x / w2),
             ctx = _canvas.getContext('2d');
 
         for (var layerId in this._labels) {
@@ -264,9 +265,8 @@ L.LabelsLayer = L.Class.extend({
                 }
                 pos[0] -= width2 + this._ctxShift[0];
                 pos[1] = size2 - pos[1] + this._ctxShift[1];
-
-                for (var tx = pos[0] + w2 * Math.floor((this._ctxShift[0] - pos[0]) / w2); tx < mapSize.x; tx += w2) {
-                    var coord = [tx, pos[1]],
+                for (var tx = pos[0] + start; tx < mapSize.x; tx += w2) {
+                    var coord = [Math.floor(tx), Math.floor(pos[1])],
                         bbox = gmxAPIutils.bounds([
                             [coord[0] - width2, coord[1] - size2],
                             [coord[0] + width2, coord[1] + size2]
