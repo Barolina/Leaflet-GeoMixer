@@ -105,14 +105,26 @@ L.gmx.VectorLayer.include({
             outItem = {
                 id: gmx.id,
                 latlng: options.latlng,
-                properties: gmx.properties
+                properties: gmx.properties,
+                templateBalloon: templateBalloon
             };
 
         if (geometry.type === 'POINT') {
             var coord = geometry.coordinates;
             outItem.latlng = L.Projection.Mercator.unproject({x: coord[0], y: coord[1]});
         }
-        if (!(templateBalloon instanceof L.Popup)) {
+
+        if (this._popupopen) {
+            this._popupopen({
+                popup: this._popup,
+                latlng: outItem.latlng,
+                layerPoint: options.layerPoint,
+                contentNode: this._popup._contentNode,
+                containerPoint: options.containerPoint,
+                originalEvent: options.originalEvent,
+                gmx: outItem
+            });
+        } else if (!(templateBalloon instanceof L.Popup)) {
             if (!(templateBalloon instanceof HTMLElement)) {
                 if (!templateBalloon) {
                     templateBalloon = '';
@@ -139,8 +151,8 @@ L.gmx.VectorLayer.include({
             }
 
             this._popup.setContent(templateBalloon);
+            outItem.templateBalloon = templateBalloon;
         }
-        outItem.templateBalloon = templateBalloon;
         this._popup.options._gmxID = gmx.id;
         return outItem;
     },
