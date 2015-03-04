@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0px;
+        }
+        
+        #infoPanel {
+            position: absolute;
+			height: 80%;
+			right: 0px;
+			top: 21px;
+            text-align: center;
+			z-index: 1000;
+        }
+        
+        #info {
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            padding: 10px;
+        }
+        .leaflet-popup-content {
+            word-wrap: break-word;
+        }
+        .button-active {
+            background: #BBB;
+        }
+        
+        button {
+            border: 1px solid gray;
+            border-radius: 1px;
+            background: #EEE;
+        }
+
+        #styleInfo {
+            height: 100%;
+            width: 400px;
+        }
+
+    </style>
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    
+	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	
+    <script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+</head>
+<body>
+	<div id="map"></div>
+    <div id="infoPanel">
+        <span id="info">
+			<select id="style">
+				<option selected>Выбрать стиль</option>
+				<option>Icon1</option>
+			</select>
+			<button id="setStyle">setStyle</button>
+			<button id="setStyles">setStyles</button>
+        </span>
+            <br>
+            <br>
+            <textarea id="styleInfo">
+            </textarea>
+    </div>
+	<script>
+		var map = L.map('map').setView([55.788407, 37.326049], 8);
+
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+
+        var RenderStyle = {
+            // iconUrl: '',                    // marker.image - URL иконки маркера
+            // iconAngle: 0,                  // marker.angle - угол поворота маркера (по умолчанию: 0)
+            // iconSize: [0, 0],               // размер иконки - зависит от marker.size
+            // iconScale: 1,                   // масштабирование маркера (по умолчанию: 1) - marker.scale
+            // iconMinScale: 1,                // минимальный scale (по умолчанию: 0.01) - marker.minScale
+            // iconMaxScale: 5,                // максимальный scale (по умолчанию: 1000) - marker.maxScale
+            // iconCircle: false,              // Отображение круга (по умолчанию: false) - marker.circle
+            // iconCenter: false,              // marker.center - флаг центрирования маркера (по умолчанию: false)
+            // iconAnchor: [0, 0],             // marker.dx, marker.dy - смещение X,Y
+            // iconColor: 0xff00ff,            // marker.color - замена цвета 0xff00ff на color в маркере (по умолчанию: 0xff00ff)
+            // fillRadialGradient: {                // fill.radialGradient
+                    // x1: <UInt|Expression>     // сдвиг по оси X центра первой окружности; (по умолчанию: 0)
+                    // y1: <UInt|Expression>     // сдвиг по оси Y центра первой окружности; (по умолчанию: 0)
+                    // r1: <UInt|Expression>     // радиус первой окружности; (по умолчанию: 0)
+                    // x2: <UInt|Expression>     // сдвиг по оси X центра второй окружности; (по умолчанию: 0)
+                    // y2: <UInt|Expression>     // сдвиг по оси Y центра второй окружности; (по умолчанию: 0)
+                    // r2: <UInt|Expression>     // радиус второй окружности; (по умолчанию: 0)
+                    // colorStop: [[0, 0xFF0000,0.5], [1, 0xFFFFFF,1]]     // массив стоп цветов объекта градиента
+                      // position — положение цвета в градиенте. Значение должно быть в диапазоне 0.0 (начало) до 1.0 (конец);
+                      // color — код цвета или формула.
+                      // opacity — прозрачность
+                      // (по умолчанию: addColorStop = [[0, 0xFF0000,0.5], [1, 0xFFFFFF,1]])
+            // },
+
+                //stroke: true,                   // признак отрисовки границы объекта - наличие outline
+            // color:  '[emergency] - 255',                      // цвет границы объекта (по умолчанию: 0) - outline.color <UInt|Expression>,
+            // weight: 5,                      // ширина линии границ объекта (по умолчанию: 0) - outline.thickness
+            // opacity: 1, // '[op]',                     // opacity линии границ объекта (от 0.0 до 1.0 по умолчанию: 1) - outline.opacity (от 0 до 100)
+            // dashArray: [3,4],                  // описание пунктирной линии [dash pattern](https://developer.mozilla.org/en/SVG/Attribute/stroke-dasharray) (по умолчанию: null) - зависит от outline.dashes 
+            // fillColor: '[emergency] + 255', //0xFF0000,                   // цвет заполнения (по умолчанию: 0) - fill.color   <UInt|Expression>,
+            // fillOpacity: '1 - [op]'
+            // ,               // opacity заполнения объекта (от 0.0 до 1.0 по умолчанию: 1) - fill.opacity (от 0 до 100)
+            // fillImage: '',                  // URL BitMap которое берется в качестве подложки заполнения (по умолчанию: '') - fill.image 
+            // fillLinearGradient: {              // fill.linearGradient
+                    // x1: <UInt|Expression>     // сдвиг по оси X начальной точки (по умолчанию: 0)
+                    // y1: <UInt|Expression>     // сдвиг по оси Y начальной точки (по умолчанию: 0)
+                    // x2: <UInt|Expression>     // сдвиг по оси X конечной точки (по умолчанию: 0)
+                    // y2: <UInt|Expression>     // сдвиг по оси Y конечной точки (по умолчанию: 0)
+                    // colorStop: [[position, color, opacity]...]     // массив стоп цветов объекта градиента
+                      // position — положение цвета в градиенте. Значение должно быть в диапазоне 0.0 (начало) до 1.0 (конец);
+                      // color — код цвета или формула.
+                      // opacity — прозрачность (по умолчанию: addColorStop = [[0, 0xFF0000,100], [1, 0xFFFFFF,100]])
+            // },
+            // fillPattern: {                  // fill.pattern
+                //colors: [0xFF0000,2,3,0xff00ff],                 // массив цветов в формате UInt|Expression (по умолчанию: [])
+                //style: 'horizontal',        // могут быть заданны строки (horizontal, vertical, diagonal1, diagonal2, circle, cross) (по умолчанию: 'horizontal')
+                //width: 4,                   // ширина каждого цвета в пикселах (по умолчанию: 8)
+                //step: 2                     // отступ в пикселах после каждого цвета (для circle от края)
+            // }
+            //,
+
+            // labelField: <String>,            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
+            // labelColor: <UInt>,              // цвет текстовой метки (по умолчанию: 0) - label.color
+            // labelHaloColor: <UInt>,          // цвет Glow вокруг метки (по умолчанию: -1) - label.haloColor
+            // labelFontSize: <UInt>,           // FontSize метки  (по умолчанию: 0) - label.size
+            // labelSpacing: <UInt>,            // растояние между символами (по умолчанию: 0) - label.spacing
+            // labelAlign: <String>,            // выравнивание могут быть заданны строки (left, right, center) (по умолчанию: left) - label.align
+            // labelAnchor: [<UInt>, <UInt>]    // смещение label X,Y - зависит от label.dx, label.dy, label.align
+        };
+        
+        var HoverStyle = RenderStyle;
+        var style = {
+           MinZoom: 1,                  // мин. zoom (по умолчанию: 1)
+           MaxZoom: 18,                  // макс.zoom (по умолчанию: 21)
+           //Filter: '"name" = \'ПЧ-26\'',                // Функция фильтра (ранее <String>  // SQL выражение)
+           //Filter: "[ogc_fid] = 177",                // Функция фильтра (ранее <String>  // SQL выражение)
+           // Filter: function(propsArr) {
+                // return propsArr[1] === 'ПЧ-26';
+           // },
+           Balloon: '`[SCENEID]` - привет от старых щтиблет!',
+           //BalloonEnable: false,
+           //DisableBalloonOnMouseMove: false,
+           // DisableBalloonOnClick: true,
+           DisableBalloonOnClick: false,
+           RenderStyle: RenderStyle,    // стиль (Тип данных Style)  
+           HoverStyle: HoverStyle       // hover стиль (Тип данных Style)  
+        };
+        var testLayer = null,
+            styleInfo = document.getElementById("styleInfo"),
+            select = document.getElementById("style"),
+            setStyle = document.getElementById("setStyle"),
+            setStyles = document.getElementById("setStyles");
+
+        var mapID = 'CA1D1CFB8020457CA6773067CFCF5A5E';
+        L.gmx.loadLayers([
+            {mapID: mapID, layerID: 'B2CC196063834EF48A163EC14C392FAE'}     // Points
+        ]).then(function(points) {
+            
+            testLayer = points;
+            styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            map.addLayer(testLayer);
+            
+            var updateStyle = function(ev) {
+                var nm = ev ? ev.target.selectedIndex : 0,
+                    currentStyle = L.extend({}, style);
+
+                if (nm === 1) {
+                    currentStyle.HoverStyle = 
+                    currentStyle.RenderStyle = {
+                        "iconUrl": "http://maps.kosmosnimki.ru/api/img/Shanirak.png",
+                        "iconCenter": true
+                    };
+                } else if (nm === 2) {
+                }
+                testLayer.setStyle(currentStyle, 0);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            }
+            select.selectedIndex = 0;
+            select.onchange = updateStyle;
+            
+            setStyle.onclick = function(ev) {
+                var st = JSON.parse(styleInfo.value);
+                testLayer.setStyle(st[0]);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            };
+            
+            setStyles.onclick = function(ev) {
+                var st = JSON.parse(styleInfo.value);
+                // st.forEach(function(it, i) {
+                    // testLayer.setStyle(it, i);
+                // });
+                testLayer.setStyles(st);
+                styleInfo.value = JSON.stringify(testLayer.getStyles(), null, 2);
+            };
+        });
+	</script>
+</body>
+</html>

@@ -227,7 +227,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.initPromise.then(function() {
             gmx.styleManager.setStyle(style, num, createFlag);
             _this.fire('stylechange', {num: num || 0});
-            _this.repaint();
+            gmx.styleManager.deferred.then(function () {
+                _this.repaint();
+            });
         });
         return this;
     },
@@ -285,14 +287,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     addObserver: function (options) {
-        if (options.filters) {
-            for (var i = 0, len = options.filters.length; i < len; i++) {
-                if (options.filters[i] === 'styleFilter') {
-                    this._gmx.styleManager.initStyles();
-                    break;
-                }
-            }
-        }
         return this._gmx.dataManager.addObserver(options);
     },
 

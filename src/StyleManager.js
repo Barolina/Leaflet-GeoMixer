@@ -4,6 +4,7 @@ var gmxStyleManager = function(gmx) {
         DEFAULTKEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'],
         maxVersion = 0,
         needLoadIcons = 0,
+        deferredIcons = [],
         styles = [],
         imagesSize = {},
         parsers = gmxParsers,
@@ -42,9 +43,11 @@ var gmxStyleManager = function(gmx) {
         var url = pt.iconUrl,
             opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {};
 
+        opt.layerID = gmx.layerID;
         needLoadIcons++;
         gmxImageLoader.unshift(url, opt).then(
             function(it) {
+                pt.version = ++maxVersion;
                 pt.maxSize = Math.max(it.width, it.height);
                 pt.sx = it.width / 2;
                 pt.sy = it.height / 2;
@@ -56,6 +59,7 @@ var gmxStyleManager = function(gmx) {
                 _this._chkReady();
             },
             function() {
+                pt.version = ++maxVersion;
                 pt.sx = 1;
                 pt.sy = 0;
                 pt.image = null;
@@ -159,12 +163,13 @@ var gmxStyleManager = function(gmx) {
                 }
             }
 
+            st.common = true;
             var type = '';
             if (st.iconUrl) {
                 type = 'image';
-                getImageSize(st, true);
+                st.maxSize = 256;
+                deferredIcons.push(st);
             } else {
-                st.common = true;
                 if (st.fillPattern) {
                     type = 'square';
                     st.common = parsePattern(st.fillPattern);
@@ -197,7 +202,7 @@ var gmxStyleManager = function(gmx) {
         return st;
     };
 
-    var parseItem = function(style) {			// Style Scanex->leaflet
+    var prepareItem = function(style) {			// Style Scanex->leaflet
         var pt = {
             MinZoom: style.MinZoom || 0,
             MaxZoom: style.MaxZoom || 50,
@@ -207,7 +212,7 @@ var gmxStyleManager = function(gmx) {
             Balloon: style.Balloon || '',
             BalloonEnable: style.BalloonEnable || false,
             RenderStyle: (style.RenderStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {}),
-            version: 0
+            version: ++maxVersion
         };
         if (style.HoverStyle) {
             pt.HoverStyle = parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle));
@@ -220,7 +225,7 @@ var gmxStyleManager = function(gmx) {
         return pt;
     };
 
-    var initStyles = function() {
+    var parseServerStyles = function() {
         var props = gmx.properties,
             balloonEnable = false,
             arr = props.styles || [{RenderStyle: DEFAULT_STYLE}],
@@ -238,13 +243,14 @@ var gmxStyleManager = function(gmx) {
             } else if (gmxStyle.HoverStyle === null) {
                 delete gmxStyle.HoverStyle;
             }
-            var pt = parseItem(gmxStyle);
+            var pt = prepareItem(gmxStyle);
             if (!balloonEnable && pt.BalloonEnable) { balloonEnable = true; }
             styles.push(pt);
             if (gmxStyle.RenderStyle.label) { gmx.labelsLayer = true; }
         }
         gmx.balloonEnable = balloonEnable;
     };
+    parseServerStyles();
 
     var getStyleKeys = function(style) {
         var out = {};
@@ -285,9 +291,6 @@ var gmxStyleManager = function(gmx) {
 
     this.getStyles = function () {
         var out = [];
-        if (initStyles) {
-            this.initStyles();
-        }
         for (var i = 0, len = styles.length; i < len; i++) {
             var style = L.extend({}, styles[i]);
             style.RenderStyle = getStyleKeys(style.RenderStyle);
@@ -314,11 +317,11 @@ var gmxStyleManager = function(gmx) {
         if (num < styles.length || createFlag) {
             var style = styles[num];
             if (!style) {
-                style = parseItem({});
+                style = prepareItem({});
                 styles[num] = style;
             }
-            maxVersion++;
-            style.version = maxVersion;
+            this.deferred = new gmxDeferred();
+            style.version = ++maxVersion;
             if ('Filter' in st) {
                 style.Filter = st.Filter;
                 var type = typeof (st.Filter);
@@ -331,6 +334,7 @@ var gmxStyleManager = function(gmx) {
             if (st.RenderStyle) { style.RenderStyle = parseStyle(st.RenderStyle); }
             if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle); }
             checkStyles();
+            this.initStyles();
         }
     };
 
@@ -497,10 +501,6 @@ var gmxStyleManager = function(gmx) {
                         });
                     }
                 }
-
-                // if (item.parsedStyleKeys && item.parsedStyleKeys.size) {
-                    // item.options.size = item.parsedStyleKeys.size;
-                // }
                 item.styleVersion = st.version;
                 if (!gmx.multiFilters) {
                     break;      // Один обьект в один фильтр
@@ -544,12 +544,17 @@ var gmxStyleManager = function(gmx) {
         }
         if (gmx.lastHover && item.id === gmx.lastHover.id) {
             if (style.HoverStyle) {
-                item.parsedStyleHover = itemStyleParser(item, style.HoverStyle);
+                if (style.HoverStyle.version !== item.styleVersion) {
+                    item.parsedStyleHover = itemStyleParser(item, style.HoverStyle);
+                }
                 return style.HoverStyle;
             } else {
                 delete item.parsedStyleHover;
             }
             return null;
+        }
+        if (style.RenderStyle.version !== item.styleVersion) {
+            item.parsedStyleKeys = itemStyleParser(item, style.RenderStyle);
         }
         return style.RenderStyle;
     };
@@ -564,13 +569,13 @@ var gmxStyleManager = function(gmx) {
             var style = styles[i];
             if (zoom > style.MaxZoom || zoom < style.MinZoom) { continue; }
             var RenderStyle = style.RenderStyle;
-            if (!RenderStyle || !RenderStyle.common || needLoadIcons) {
+            if (needLoadIcons || !RenderStyle || !RenderStyle.common || !RenderStyle.maxSize) {
                 maxSize = MAX_STYLE_SIZE;
                 break;
             }
-            maxSize = RenderStyle.maxSize;
+            maxSize = Math.max(RenderStyle.maxSize, maxSize);
         }
-        return maxSize;
+        return maxSize || 256;
     };
 
     this._maxStyleSize = 0;
@@ -603,10 +608,10 @@ var gmxStyleManager = function(gmx) {
         }
     };
     this.initStyles = function() {
-        if (initStyles) {
-            initStyles();
-        }
-        initStyles = null;
+        deferredIcons.forEach(function(it) {
+            getImageSize(it, true);
+        });
+        deferredIcons = [];
         this._chkReady();
     };
 };
