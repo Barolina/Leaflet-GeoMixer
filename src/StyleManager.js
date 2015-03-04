@@ -6,7 +6,6 @@ var gmxStyleManager = function(gmx) {
         needLoadIcons = 0,
         deferredIcons = [],
         styles = [],
-        imagesSize = {},
         parsers = gmxParsers,
         utils = gmxAPIutils,
         _this = this;
@@ -39,7 +38,7 @@ var gmxStyleManager = function(gmx) {
         return common;
     };
 
-    var getImageSize = function(pt, flag) {     // check image size
+    var getImageSize = function(pt) {     // check image size
         var url = pt.iconUrl,
             opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {};
 
@@ -51,10 +50,7 @@ var gmxStyleManager = function(gmx) {
                 pt.maxSize = Math.max(it.width, it.height);
                 pt.sx = it.width / 2;
                 pt.sy = it.height / 2;
-                if (flag) {
-                    pt.image = it;
-                }
-                imagesSize[url] = pt;
+                pt.image = it;
                 needLoadIcons--;
                 _this._chkReady();
             },
@@ -63,7 +59,6 @@ var gmxStyleManager = function(gmx) {
                 pt.sx = 1;
                 pt.sy = 0;
                 pt.image = null;
-                imagesSize[url] = pt;
                 needLoadIcons--;
                 _this._chkReady();
                 console.log({url: url, func: 'getImageSize', Error: 'image not found'});
@@ -598,8 +593,27 @@ var gmxStyleManager = function(gmx) {
                 return true;
             }
         }
-
         return false;
+    };
+    this.getIcons = function(callback) {
+        this.deferred.then(function() {
+            var out = [];
+            for (var i = 0, len = styles.length; i < len; i++) {
+                var style = styles[i],
+                    pt = {};
+                if (style.RenderStyle) {
+                    pt.RenderStyle = {image: style.RenderStyle.image};
+                }
+                if (style.HoverStyle) {
+                    pt.HoverStyle = {image: style.HoverStyle.image};
+                }
+                out.push(pt);
+            }
+            if (callback) {
+                callback(out);
+            }
+        });
+        this.initStyles();
     };
 
     this._chkReady = function() {
@@ -609,7 +623,7 @@ var gmxStyleManager = function(gmx) {
     };
     this.initStyles = function() {
         deferredIcons.forEach(function(it) {
-            getImageSize(it, true);
+            getImageSize(it);
         });
         deferredIcons = [];
         this._chkReady();

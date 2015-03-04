@@ -205,6 +205,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this._gmx.styleManager.getStyles();
     },
 
+    getIcons: function (callback) {
+        this._gmx.styleManager.getIcons(callback);
+        return this;
+    },
+
     setStyles: function (styles) {
         var _this = this;
 
