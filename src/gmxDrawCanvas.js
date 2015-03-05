@@ -218,11 +218,11 @@ options
          style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
 */
     var gmx = options.gmx,
-        item = gmx.dataManager.getItem(geoItem.id),
-        style = gmx.styleManager.getObjStyle(item);
+        item = gmx.dataManager.getItem(geoItem.id);
 
-    var hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
     if (item) {
+        var style = gmx.styleManager.getObjStyle(item),
+            hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
         if (gmx.multiFilters) {
             item.multiFilters.forEach(function(it) {
                 drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle, style);
@@ -230,6 +230,7 @@ options
         } else {
             drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
         }
+        return true;
     }
-    return true;
+    return false;
 };
