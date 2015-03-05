@@ -976,17 +976,44 @@ var gmxAPIutils = {
         return ret;
     },
 
-    geometryToGeoJSON: function (geom) {
-        return {
-            type: geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
+    geometryToGeoJSON: function (geom, mercFlag) {
+        var type = geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
                 : geom.type === 'POLYGON' ? 'Polygon'
                 : geom.type === 'MULTILINESTRING' ? 'MultiLineString'
                 : geom.type === 'LINESTRING' ? 'LineString'
                 : geom.type === 'MULTIPOINT' ? 'MultiPoint'
                 : geom.type === 'POINT' ? 'Point'
                 : geom.type,
-            coordinates: geom.coordinates
+            coords = geom.coordinates;
+        if (mercFlag) {
+            coords = gmxAPIutils.coordsFromMercator(type, coords);
+        }
+        return {
+            type: type,
+            coordinates: coords
         };
+    },
+
+    coordsFromMercator: function(type, coords) {
+        var i, len, latlng,
+            latlngs = [];
+        if (type === 'Point') {
+            latlng = L.Projection.Mercator.unproject({y: coords[1], x: coords[0]});
+            latlngs = [latlng.lng, latlng.lat];
+        } else if (type === 'LineString' || type === 'MultiPoint') {
+            for (i = 0, len = coords.length; i < len; i++) {
+                latlngs.push(gmxAPIutils.coordsFromMercator('Point', coords[i]));
+            }
+        } else if (type === 'Polygon' || type === 'MultiLineString') {
+            for (i = 0, len = coords.length; i < len; i++) {
+                latlngs.push(gmxAPIutils.coordsFromMercator('MultiPoint', coords[i]));
+            }
+        } else if (type === 'MultiPolygon') {
+            for (i = 0, len = coords.length; i < len; i++) {
+                latlngs.push(gmxAPIutils.coordsFromMercator('Polygon', coords[i]));
+            }
+        }
+        return latlngs;
     },
 
     geoArea: function(geom) {
