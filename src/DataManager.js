@@ -354,12 +354,14 @@ var gmxDataManager = L.Class.extend({
         var fromTiles = this._items[id].options.fromTiles,
             geomItems = [];
         for (var key in fromTiles) {
-            var data = this._tiles[key].tile.data;
-            for (var j = 0, len1 = data.length; j < len1; j++) {
-                var prop = data[j];
-                if (id === prop[0]) {
-                    geomItems.push(prop[prop.length - 1]);
-                    break;
+            if (this._tiles[key]) {
+                var data = this._tiles[key].tile.data;
+                for (var j = 0, len1 = data.length; j < len1; j++) {
+                    var prop = data[j];
+                    if (id === prop[0]) {
+                        geomItems.push(prop[prop.length - 1]);
+                        break;
+                    }
                 }
             }
         }
