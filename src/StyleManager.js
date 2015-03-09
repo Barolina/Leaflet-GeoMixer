@@ -359,6 +359,9 @@ var gmxStyleManager = function(gmx) {
                 }
                 out.rotate = rotateRes || 0;
             }
+            if ('iconColor' in pt) {
+                out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
+            }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
                 r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
