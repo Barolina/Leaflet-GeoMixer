@@ -164,28 +164,26 @@ var gmxStyleManager = function(gmx) {
                 type = 'image';
                 st.maxSize = 256;
                 deferredIcons.push(st);
-            } else {
-                if (st.fillPattern) {
-                    type = 'square';
-                    st.common = parsePattern(st.fillPattern);
-                    st.canvasPattern = utils.getPatternIcon(null, st);
-                } else if (st.iconCircle) {
-                    type = 'circle';
-                    if (!('iconGeomSize' in st)) { st.iconGeomSize = 4; }
-                } else if (st.fillRadialGradient) {
-                    type = 'circle';
-                    var size = parseRadialGradient(st.fillRadialGradient);
-                    if (size === null) {
-                        st.common = false;
-                    } else {
-                        st.iconGeomSize = size;
-                    }
-                } else if (st.fillLinearGradient) {
-                    type = 'square';
-                    st.common = parseLinearGradient(st.fillLinearGradient);
-                } else if (st.iconGeomSize) {
-                    type = 'square';
+            } else if (st.fillPattern) {
+                type = 'square';
+                st.common = parsePattern(st.fillPattern);
+                st.canvasPattern = utils.getPatternIcon(null, st);
+            } else if (st.iconCircle) {
+                type = 'circle';
+                if (!('iconGeomSize' in st)) { st.iconGeomSize = 4; }
+            } else if (st.fillRadialGradient) {
+                type = 'circle';
+                var size = parseRadialGradient(st.fillRadialGradient);
+                if (size === null) {
+                    st.common = false;
+                } else {
+                    st.iconGeomSize = size;
                 }
+            } else if (st.fillLinearGradient) {
+                type = 'square';
+                st.common = parseLinearGradient(st.fillLinearGradient);
+            } else if (st.iconGeomSize) {
+                type = 'square';
             }
             st.type = type;
             if (st.common && !st.maxSize) {
@@ -222,7 +220,7 @@ var gmxStyleManager = function(gmx) {
 
     var isLabel = function(st) {
         var indexes = gmx.tileAttributeIndexes;
-        return (st && (st.labelTemplate || (st.labelField && indexes[st.labelField])));
+        return (st && (st.labelTemplate || (st.labelField && st.labelField in indexes)));
     };
 
     var parseServerStyles = function() {
@@ -544,13 +542,15 @@ var gmxStyleManager = function(gmx) {
     // только для item прошедших через chkStyleFilter
     this.getObjStyle = function(item) {
         chkStyleFilter(item);
-        var style = styles[item.currentFilter];
+        var style = styles[item.currentFilter],
+            version;
         if (!style) {
             return null;
         }
         if (gmx.lastHover && item.id === gmx.lastHover.id) {
             if (style.HoverStyle) {
-                if (style.HoverStyle.version !== item.styleVersion) {
+                version = style.HoverStyle.version || -1;
+                if (version !== item.styleVersion) {
                     item.parsedStyleHover = itemStyleParser(item, style.HoverStyle);
                 }
                 return style.HoverStyle;
@@ -559,7 +559,8 @@ var gmxStyleManager = function(gmx) {
             }
             return null;
         }
-        if (style.RenderStyle.version !== item.styleVersion) {
+        version = style.RenderStyle.version || -1;
+        if (version !== item.styleVersion) {
             item.parsedStyleKeys = itemStyleParser(item, style.RenderStyle);
         }
         return style.RenderStyle;

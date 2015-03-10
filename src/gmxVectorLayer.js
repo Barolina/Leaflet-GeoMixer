@@ -784,7 +784,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         gmx.tileAttributeIndexes = tileAttributeIndexes;
         gmx.getPropItem = function(prop, key) {
-            return gmx.tileAttributeIndexes ? prop[gmx.tileAttributeIndexes[key]] : '';
+            var indexes = gmx.tileAttributeIndexes;
+            return key in indexes ? prop[indexes[key]] : '';
         };
 
         if (prop.IsRasterCatalog) {

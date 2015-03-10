@@ -28,7 +28,7 @@ L.gmx.VectorLayer.include({
 
             var geom = geoItem[geoItem.length - 1],
                 fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage,
-                marker = parsedStyle ? parsedStyle.image : null,
+                marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
                 type = geom.type,
                 chktype = type,
                 hiddenLines = dataOption.hiddenLines,

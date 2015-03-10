@@ -1017,15 +1017,14 @@ var gmxAPIutils = {
     },
 
     geoArea: function(geom) {
-        var i = 0,
-            len = 0,
-            ret = 0;
-        if (geom.type === 'MULTIPOLYGON') {
+        var i, len, ret,
+            type = geom.type || '';
+        if (type === 'MULTIPOLYGON') {
             for (i = 0, len = geom.coordinates.length; i < len; i++) {
                 ret += gmxAPIutils.geoArea({type: 'POLYGON', coordinates: geom.coordinates[i]});
             }
             return ret;
-        } else if (geom.type === 'POLYGON') {
+        } else if (type === 'POLYGON') {
             ret = gmxAPIutils.geoArea(geom.coordinates[0]);
             for (i = 1, len = geom.coordinates.length; i < len; i++) {
                 ret -= gmxAPIutils.geoArea(geom.coordinates[i]);

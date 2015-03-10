@@ -11,6 +11,7 @@ L.gmx.VectorLayer.include({
             this._popup.setContent(content);
         }
         this._popup._initContent = content;
+        this._popup._state = '';
 
         if (!this._popupHandlersAdded) {
             this
@@ -73,7 +74,8 @@ L.gmx.VectorLayer.include({
 
     _movePopup: function (options) {
         if (this._popup._state === 'mouseover') {
-            if (this._popup.options._gmxID !== options.gmx.id) {
+            var id = this._popup.options._gmxID || -1;
+            if (id !== options.gmx.id) {
                 this._setPopupContent(options);
             }
             this._popup.setLatLng(options.latlng);
