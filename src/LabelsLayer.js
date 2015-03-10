@@ -37,16 +37,16 @@ L.LabelsLayer = L.Class.extend({
                 var style = gmx.styleManager.getObjStyle(item),
                     labelText = currentStyle.labelText || style.labelText,
                     labelField = currentStyle.labelField || style.labelField,
+                    txt = labelText || gmx.getPropItem(item.properties, labelField),
                     fontSize = currentStyle.labelFontSize || style.labelFontSize,
                     id = '_' + item.id,
                     options = item.options;
 
-                if (labelText || labelField) {
+                if (txt) {
                     if (!('center' in options)) {
                         var bounds = item.bounds;
                         options.center = isPoint ? [bounds.min.x, bounds.min.y] : [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2];
                     }
-                    var txt = labelText || gmx.getPropItem(item.properties, labelField);
                     if (!('label' in options) || options.label.txt !== txt) {
                         var size = fontSize || 12,
                             labelStyle = {

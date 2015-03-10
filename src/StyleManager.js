@@ -220,6 +220,11 @@ var gmxStyleManager = function(gmx) {
         return pt;
     };
 
+    var isLabel = function(st) {
+        var indexes = gmx.tileAttributeIndexes;
+        return (st && (st.labelTemplate || (st.labelField && indexes[st.labelField])));
+    };
+
     var parseServerStyles = function() {
         var props = gmx.properties,
             balloonEnable = false,
@@ -241,7 +246,7 @@ var gmxStyleManager = function(gmx) {
             var pt = prepareItem(gmxStyle);
             if (!balloonEnable && pt.BalloonEnable) { balloonEnable = true; }
             styles.push(pt);
-            if (gmxStyle.RenderStyle.label) { gmx.labelsLayer = true; }
+            if (isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
         }
         gmx.balloonEnable = balloonEnable;
     };
@@ -274,8 +279,7 @@ var gmxStyleManager = function(gmx) {
                 st.BalloonEnable = true;
             }
             if (st.RenderStyle && !labelsLayer) {
-                var rst = st.RenderStyle;
-                if (rst.labelField || rst.labelTemplate) {
+                if (isLabel(st.RenderStyle)) {
                     labelsLayer = true;
                 }
             }
@@ -453,11 +457,15 @@ var gmxStyleManager = function(gmx) {
 
         utils.styleKeys.label.client.forEach(function(it) {
             if (it in pt) {
-                out[it] = pt[it];
-                if (it === 'labelTemplate') {
+                if (it === 'labelField') {
+                    if (!indexes[pt[it]]) {
+                        return;
+                    }
+                } else if (it === 'labelTemplate') {
                     var properties = gmxAPIutils.getPropertiesHash(prop, indexes);
                     out.labelText = utils.parseTemplate(pt[it], properties);
                 }
+                out[it] = pt[it];
             }
         });
         return out;
