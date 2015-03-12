@@ -173,7 +173,7 @@ ScreenVectorTile.prototype = {
                     urlFunction = function(gtp) {
                         return gmx.rasterBGfunc(gtp.x, gtp.y, gtp.z, item);
                     },
-                    onLoadFunction = function(gtp) {
+                    onLoadFunction = function(gtp, p) {
                         var img = gtp.image;
                         if (!img) {
                             skipRasterFunc();
@@ -202,9 +202,9 @@ ScreenVectorTile.prototype = {
                                 canvas.width = canvas.height = 256;
                                 var ptx = canvas.getContext('2d');
                                 ptx.drawImage(imageElement, Math.floor(pos.x), Math.floor(pos.y), pos.size, pos.size, 0, 0, 256, 256);
-                                gtp.resImage = canvas;
+                                p.resImage = canvas;
                             } else {
-                                gtp.resImage = imageElement;
+                                p.resImage = imageElement;
                             }
                             chkReadyRasters();
                         };
@@ -231,10 +231,13 @@ ScreenVectorTile.prototype = {
                         }
                         prepareItem(img);
                     };
-
                 for (var i = 0; i < len; i++) {
-                    var loader = _this._loadTileRecursive(arr[i], urlFunction);
-                    loader.then(onLoadFunction, skipRasterFunc);
+                    var p = arr[i],
+                        loader = _this._loadTileRecursive(p, urlFunction);
+
+                    loader.then(function(gtp) {
+                            onLoadFunction(gtp, p);
+                        }, skipRasterFunc);
                     recursiveLoaders.push(loader);
                 }
                 return itemRastersPromise;

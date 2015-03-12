@@ -639,5 +639,6 @@ var gmxStyleManager = function(gmx) {
         });
         deferredIcons = [];
         this._chkReady();
+        return this.deferred;
     };
 };
