@@ -1172,7 +1172,7 @@ var gmxAPIutils = {
         },
         fill: {
             server: ['color',     'opacity',   'image',       'pattern',     'radialGradient',     'linearGradient'],
-            client: ['fillColor', 'fillOpacity', 'fillImage', 'fillPattern', 'fillRadialGradient', 'fillLinearGradient']
+            client: ['fillColor', 'fillOpacity', 'fillIconUrl', 'fillPattern', 'fillRadialGradient', 'fillLinearGradient']
         },
         label: {
             server: ['text',      'field',      'template',      'color',      'haloColor',      'size',          'spacing',      'align'],

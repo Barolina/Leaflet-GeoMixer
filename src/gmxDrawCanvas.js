@@ -171,7 +171,9 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
                 coords = pixelsMap.coords;
                 hiddenLines = pixelsMap.hidden;
             }
-            if (dattr.bgImage && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
+            if (style.imagePattern) {
+                item.currentStyle.fillStyle = ctx.createPattern(style.imagePattern, 'repeat');
+            } else if (dattr.bgImage && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 if (utils.isPatternNode(dattr.bgImage)) {
                     if ('rasterOpacity' in gmx) { ctx.globalAlpha = gmx.rasterOpacity; }
                     ctx.fillStyle = ctx.createPattern(dattr.bgImage, 'no-repeat');

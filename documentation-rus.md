@@ -179,7 +179,7 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
 
         fillColor: <UInt|Expression>,   // цвет заполнения (по умолчанию: 0) - fill.color
         fillOpacity: <Float>,           // opacity заполнения объекта (от 0.0 до 1.0 по умолчанию: 1) - fill.opacity (от 0 до 100)
-        fillImage: <String>,            // URL BitMap которое берется в качестве подложки заполнения (по умолчанию: '') - fill.image 
+        fillIconUrl: <String>,          // URL BitMap которое берется в качестве подложки заполнения (по умолчанию: '') - fill.image 
         fillPattern: {                  // fill.pattern
                 colors: <UInt>[]        // массив цветов в формате UInt|Expression (по умолчанию: [])
                 style: String,          // могут быть заданны строки (horizontal, vertical, diagonal1, diagonal2, circle, cross)

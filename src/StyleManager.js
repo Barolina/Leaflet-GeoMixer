@@ -39,7 +39,7 @@ var gmxStyleManager = function(gmx) {
     };
 
     var getImageSize = function(pt) {     // check image size
-        var url = pt.iconUrl,
+        var url = pt.iconUrl || pt.fillIconUrl,
             opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {};
 
         opt.layerID = gmx.layerID;
@@ -47,10 +47,14 @@ var gmxStyleManager = function(gmx) {
         gmxImageLoader.unshift(url, opt).then(
             function(it) {
                 pt.version = ++maxVersion;
-                pt.maxSize = Math.max(it.width, it.height);
-                pt.sx = it.width / 2;
-                pt.sy = it.height / 2;
-                pt.image = it;
+                if (pt.fillIconUrl) {
+                    pt.imagePattern = it;
+                } else {
+                    pt.maxSize = Math.max(it.width, it.height);
+                    pt.sx = it.width / 2;
+                    pt.sy = it.height / 2;
+                    pt.image = it;
+                }
                 needLoadIcons--;
                 _this._chkReady();
             },
@@ -163,6 +167,9 @@ var gmxStyleManager = function(gmx) {
             if (st.iconUrl) {
                 type = 'image';
                 st.maxSize = 256;
+                deferredIcons.push(st);
+            } else if (st.fillIconUrl) {
+                type = 'square';
                 deferredIcons.push(st);
             } else if (st.fillPattern) {
                 type = 'square';
