@@ -350,6 +350,28 @@ var gmxDataManager = L.Class.extend({
         return item;
     },
 
+    getItemMembers: function(id) {
+        var fromTiles = this._items[id].options.fromTiles,
+            members = [];
+        for (var key in fromTiles) {
+            if (this._tiles[key]) {
+                var tile = this._tiles[key].tile,
+                    data = tile.data;
+                for (var j = 0, len1 = data.length; j < len1; j++) {
+                    var prop = data[j];
+                    if (id === prop[0]) {
+                        members.push({
+                            geo: prop[prop.length - 1],
+                            dataOption: tile.dataOptions[j]
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+        return members;
+    },
+
     getItemGeometries: function(id) {
         var fromTiles = this._items[id].options.fromTiles,
             geomItems = [];

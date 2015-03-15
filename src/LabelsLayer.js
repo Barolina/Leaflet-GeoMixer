@@ -34,6 +34,15 @@ L.LabelsLayer = L.Class.extend({
                 if (gmx.styleHook) {
                     currentStyle = gmx.styleManager.applyStyleHook(item, gmx.lastHover && item.id === gmx.lastHover.id);
                 }
+                if (item.multiFilters) {
+                    for (var j = 0, len1 = item.multiFilters.length; j < len1; j++) {
+                        var st = item.multiFilters[j].parsedStyle;
+                        if ('labelField' in st || 'labelText' in st) {
+                            currentStyle = st;
+                            break;
+                        }
+                    }
+                }
                 var style = gmx.styleManager.getObjStyle(item),
                     labelText = currentStyle.labelText || style.labelText,
                     labelField = currentStyle.labelField || style.labelField,
@@ -44,8 +53,9 @@ L.LabelsLayer = L.Class.extend({
 
                 if (txt) {
                     if (!('center' in options)) {
-                        var bounds = item.bounds;
-                        options.center = isPoint ? [bounds.min.x, bounds.min.y] : [(bounds.min.x + bounds.max.x) / 2, (bounds.min.y + bounds.max.y) / 2];
+                        var center = gmxAPIutils.getItemCenter(item, gmx.dataManager.getItemMembers(item.id));
+                        if (!center) {continue;}
+                        options.center = center;
                     }
                     if (!('label' in options) || options.label.txt !== txt) {
                         var size = fontSize || 12,

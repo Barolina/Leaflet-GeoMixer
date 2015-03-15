@@ -742,6 +742,79 @@ var gmxAPIutils = {
 		return {x1: x1, y1: y1, x2: x2, y2: y2, x3: x3, y3: y3, x4: x4, y4: y4};
 	},
 
+    getItemCenter: function(item, geoItems) {
+        var bounds = item.bounds,
+            min = bounds.min, max = bounds.max,
+            type = item.type,
+            isPoint = type === 'POINT' || type === 'MULTIPOINT',
+            center = isPoint ? [min.x, min.y] : [(min.x + max.x) / 2, (min.y + max.y) / 2];
+
+        if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+            for (var i = 0, len = geoItems.length; i < len; i++) {
+                var it = geoItems[i],
+                    geom = it.geo,
+                    coords = geom.coordinates,
+                    dataOption = it.dataOption,
+                    bbox = dataOption.bounds;
+
+                if (bbox.contains(center)) {
+                    if (geom.type === 'POLYGON') {coords = [coords];}
+                    for (var j = 0, len1 = coords.length; j < len1; j++) {
+                        for (var j1 = 0, coords1 = coords[j], len2 = coords1.length; j1 < len2; j1++) {
+                            var pt = gmxAPIutils.getHSegmentsInPolygon(center[1], coords1[j1]);
+                            if (pt) {
+                                return pt.max.center;
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (type === 'POINT' || type === 'MULTIPOINT') {
+            return center;
+        } else if (type === 'LINESTRING' || type === 'MULTILINESTRING') {
+            return center;
+        }
+        return null;
+    },
+
+    getHSegmentsInPolygon: function(y, poly) {
+        var s = [], i, len, out,
+            p1 = poly[0],
+            isGt1 = y > p1[1];
+        for (i = 1, len = poly.length; i < len; i++) {
+            var p2 = poly[i],
+                isGt2 = y > p2[1];
+            if (isGt1 !== isGt2) {
+                s.push(p1[0] - (p1[0] - p2[0]) * (p1[1] - y) / (p1[1] - p2[1]));
+            }
+            p1 = p2;
+            isGt1 = isGt2;
+        }
+        len = s.length;
+        if (len) {
+            s = s.sort();
+            var max = 0,
+                index = -1;
+            for (i = 1; i < len; i++) {
+                var j = i - 1,
+                    d = s[i] - s[j];
+                if (d > max) {
+                    max = d;
+                    index = j;
+                }
+            }
+            out = {
+                y: y,
+                segArr: s,
+                max: {
+                    width: max,
+                    center: [(s[index] + s[index + 1]) / 2, y]
+                }
+            };
+        }
+        return out;
+    },
+
     isPointInPolygonArr: function(chkPoint, poly) { // Проверка точки на принадлежность полигону в виде массива
         var isIn = false,
             x = chkPoint[0],
