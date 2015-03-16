@@ -178,7 +178,6 @@ L.gmx.VectorLayer.include({
             } else {
                 return;
             }
-            this._popup._initLayout();
             var outItem = this._setPopupContent(options);
             this._popup.setLatLng(outItem.latlng);
 
@@ -186,6 +185,7 @@ L.gmx.VectorLayer.include({
                 popup: this._popup,
                 gmx: outItem
             });
+            this._popup._initLayout();
             this._map.openPopup(this._popup);
         }
     }
