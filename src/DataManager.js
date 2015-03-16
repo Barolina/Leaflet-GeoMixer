@@ -360,16 +360,21 @@ var gmxDataManager = L.Class.extend({
                 for (var j = 0, len1 = data.length; j < len1; j++) {
                     var prop = data[j];
                     if (id === prop[0]) {
+                        var dataOption = tile.dataOptions[j],
+                            bbox = dataOption.bounds;
                         members.push({
                             geo: prop[prop.length - 1],
-                            dataOption: tile.dataOptions[j]
+                            width: bbox.max.x - bbox.min.x,
+                            dataOption: dataOption
                         });
                         break;
                     }
                 }
             }
         }
-        return members;
+        return members.sort(function(a, b) {
+            return b.width - a.width;
+        });
     },
 
     getItemGeometries: function(id) {

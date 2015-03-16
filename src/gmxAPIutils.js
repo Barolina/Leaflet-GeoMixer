@@ -1379,7 +1379,7 @@ gmxAPIutils.Bounds.prototype = {
     contains: function (point) { // ([x, y]) -> Boolean
         var min = this.min, max = this.max,
             x = point[0], y = point[1];
-        return x > min.x && x < max.x && y > min.y && y < max.y;
+        return x >= min.x && x <= max.x && y >= min.y && y <= max.y;
     },
     intersects: function (bounds) { // (Bounds) -> Boolean
         var min = this.min,
