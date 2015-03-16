@@ -67,8 +67,8 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
                 if (geom.type === 'POLYGON') {
                     coords = [coords];
                 }
-                var edgeBounds = gmxAPIutils.bounds().extendBounds(this.bounds)
-                    .addBuffer((this.bounds.min.x - this.bounds.max.x) / 10000);
+                var edgeBounds = gmxAPIutils.bounds().extendBounds(this.bounds).addBuffer(-0.05);
+                    //.addBuffer((this.bounds.min.x - this.bounds.max.x) / 10000);
                 for (var j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j],
                         hiddenLines1 = [];
