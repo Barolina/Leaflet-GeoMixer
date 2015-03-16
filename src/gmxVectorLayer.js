@@ -585,15 +585,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         tile._tileComplete = true;
         tile._tilePoint = tilePoint;
         this._tiles[tKey] = tile;
+        this.tileDrawn(tile);
+        return this._tiles[tKey];
+    },
+
+    appendTileToContainer: function (tile) {
         this._tileContainer.appendChild(tile);
 
-        var tilePos = this._getTilePos(tilePoint);
+        var tilePos = this._getTilePos(tile._tilePoint);
         tilePos.x += this._gmx.shiftX || 0;
         tilePos.y -= this._gmx.shiftY || 0; // Сдвиг слоя
         L.DomUtil.setPosition(tile, tilePos, L.Browser.chrome || L.Browser.android23);
-
-        this.tileDrawn(tile);
-        return this._tiles[tKey];
     },
 
     _getLoadedTilesPercentage: function (container) {

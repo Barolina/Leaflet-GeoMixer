@@ -172,14 +172,13 @@ L.gmx.VectorLayer.include({
             if (type === 'click') {
                 if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) {return;}
                 this._popup.options.closeButton = this._popup.options.autoPan = true;
-                this._popup._initLayout();
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {return;}
                 this._popup.options.closeButton = this._popup.options.autoPan = false;
-                this._popup._initLayout();
             } else {
                 return;
             }
+            this._popup._initLayout();
             var outItem = this._setPopupContent(options);
             this._popup.setLatLng(outItem.latlng);
 
