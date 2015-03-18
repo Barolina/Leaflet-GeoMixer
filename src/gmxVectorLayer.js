@@ -409,7 +409,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _update: function () {
         var gmx = this._gmx,
             _this = this;
-        if (!this._map || gmx.zoomstart) { return; }
+        if (!this._map) { return; }
 
         gmx.styleManager.deferred.then(function () {
             if (!_this._map) { return; }
@@ -548,7 +548,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             def = new gmxDeferred();
 
-        if (gmx.zoomstart || !this._map) {
+        if (!this._map) {
             def.reject();
             return def;
         }
@@ -627,7 +627,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if (this._animated) {
                 // clear scaled tiles after all new tiles are loaded (for performance)
                 if (this._clearBgBufferTimer) { clearTimeout(this._clearBgBufferTimer); }
-                this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 1500);
+                this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 0);
             }
         }
     },
@@ -746,7 +746,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
         if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-            gmx.objectsReorder.setSortFunc(function(a, b) { return a.properties[0] - b.properties[0]; });
+            gmx.objectsReorder.setSortFunc(function(a, b) {
+                return a.id - b.id;
+            });
         }
 
         if ('MetaProperties' in prop) {

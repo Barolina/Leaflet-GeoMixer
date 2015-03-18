@@ -158,7 +158,7 @@ L.gmx.VectorLayer.include({
                 var geoItems = gmx.dataManager.getItems(zKey, bounds);
 
                 if (geoItems && geoItems.length) {
-                    if (gmx.sortItems) { geoItems = geoItems.sort(gmx.sortItems); }
+                    if (geoItems.length > 1 && gmx.sortItems) { geoItems = geoItems.sort(gmx.sortItems); }
 
                     var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
                     if (target) {

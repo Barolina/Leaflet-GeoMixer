@@ -43,7 +43,7 @@ L.LabelsLayer = L.Class.extend({
                         }
                     }
                 }
-                var style = gmx.styleManager.getObjStyle(item),
+                var style = gmx.styleManager.getObjStyle(item) || {},
                     labelText = currentStyle.labelText || style.labelText,
                     labelField = currentStyle.labelField || style.labelField,
                     txt = labelText || gmx.getPropItem(item.properties, labelField),
@@ -61,7 +61,7 @@ L.LabelsLayer = L.Class.extend({
                         var size = fontSize || 12,
                             labelStyle = {
                                 font: size + 'px "Arial"',
-                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || 0,
+                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || -1,
                                 labelColor: currentStyle.labelColor || style.labelColor,
                                 labelAlign: currentStyle.labelAlign || style.labelAlign,
                                 labelFontSize: fontSize
@@ -247,7 +247,8 @@ L.LabelsLayer = L.Class.extend({
 
         var w2 = 2 * this.mInPixel * gmxAPIutils.worldWidthMerc,
             start = w2 * Math.floor(_map.getPixelBounds().min.x / w2),
-            ctx = _canvas.getContext('2d');
+            ctx = _canvas.getContext('2d'),
+            i, len;
 
         for (var layerId in this._labels) {
             var labels = this._labels[layerId];
@@ -281,7 +282,7 @@ L.LabelsLayer = L.Class.extend({
                             [coord[0] - width2, coord[1] - size2],
                             [coord[0] + width2, coord[1] + size2]
                         ]);
-                    for (var i = 0, len1 = out.length; i < len1; i++) {
+                    for (i = 0, len = out.length; i < len; i++) {
                         if (bbox.intersects(out[i].bbox)) {
                             isFiltered = true;
                             break;
@@ -290,14 +291,16 @@ L.LabelsLayer = L.Class.extend({
                     if (isFiltered) { continue; }
 
                     if (!('labelStyle' in options)) {
-                        var strokeStyle = gmxAPIutils.dec2color(style.labelHaloColor, 1);
                         options.labelStyle = {
                             font: size + 'px "Arial"',
-                            strokeStyle: strokeStyle,
                             fillStyle: gmxAPIutils.dec2color(style.labelColor || 0, 1),
-                            shadowBlur: 4,
-                            shadowColor: strokeStyle
+                            shadowBlur: 4
                         };
+                        if (style.labelHaloColor !== -1) {
+                            options.labelStyle.strokeStyle =
+                            options.labelStyle.shadowColor =
+                                gmxAPIutils.dec2color(style.labelHaloColor, 1);
+                        }
                     }
                     out.push({
                         arr: it.properties,
@@ -314,9 +317,10 @@ L.LabelsLayer = L.Class.extend({
                 this._map.getPanes()[this.options.pane].appendChild(_canvas);
             }
             ctx.clearRect(0, 0, _canvas.width, _canvas.height);
-            out.forEach(function(it) {
+            for (i = 0, len = out.length; i < len; i++) {
+                var it = out[i];
                 gmxAPIutils.setLabel(ctx, it.txt, it.coord, it.style);
-            });
+            }
         } else if (_canvas.parentNode) {
             _canvas.parentNode.removeChild(_canvas);
         }

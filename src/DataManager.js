@@ -167,11 +167,9 @@ var gmxDataManager = L.Class.extend({
                 id = it[0],
                 item = this._items[id];
             // TODO: old properties null = ''
-            it.forEach(function(zn, j) {
-                if (zn === null) {
-                    it[j] = '';
-                }
-            });
+            for (var j = 0, len1 = it.length; j < len1; j++) {
+                if (it[j] === null) {it[j] = '';}
+            }
             if (item) {
                 if (item.type.indexOf('MULTI') === -1) {
                     item.type = 'MULTI' + item.type;
@@ -336,7 +334,8 @@ var gmxDataManager = L.Class.extend({
             } else {
                 item.bounds = gmxAPIutils.bounds();
                 var w = gmxAPIutils.worldWidthMerc;
-                arr.forEach(function(it) {
+                for (var i = 0, len = arr.length; i < len; i++) {
+                    var it = arr[i];
                     if (item.bounds.max.x - it.min.x > w) {
                         it = gmxAPIutils.bounds([
                             [it.min.x + 2 * w, it.min.y],
@@ -344,7 +343,7 @@ var gmxDataManager = L.Class.extend({
                         ]);
                     }
                     item.bounds.extendBounds(it);
-                });
+                }
             }
         }
         return item;
@@ -540,41 +539,48 @@ var gmxDataManager = L.Class.extend({
 
     _chkProcessing: function(processing) {
         var _items = this._items,
-            id;
+            id, i, len;
 
         var tile = this.processingTile,
             skip = {};
 
         if (tile) {
             var zKey = this._processingTileKey;
-            tile.data.forEach(function(it) {
+            for (i = 0, len = tile.data.length; i < len; i++) {
+                var it = tile.data[i];
                 id = it[0];
                 if (_items[id]) {
                     var item = _items[id];
                     item.processing = false;
                     delete item.options.fromTiles[zKey];
                 }
-            });
+            }
             tile.clear();
         }
 
         if (processing.Deleted) {
-            processing.Deleted.forEach(function(id) {
+            for (i = 0, len = processing.Deleted.length; i < len; i++) {
+                id = processing.Deleted[i];
                 skip[id] = true;
                 if (_items[id]) {
                     _items[id].processing = true;
                 }
-            });
+            }
         }
 
-        var out = {},
-            chkSkip = function(it) { if (!skip[it.id]) {out[it.id] = it;} };
+        var out = {};
         if (processing.Inserted) {
-            processing.Inserted.forEach(chkSkip);
+            for (i = 0, len = processing.Inserted.length; i < len; i++) {
+                var it = processing.Inserted[i];
+                if (!skip[it.id]) {out[it.id] = it;}
+            }
         }
 
         if (processing.Updated) {
-            processing.Updated.forEach(chkSkip);
+            for (i = 0, len = processing.Updated.length; i < len; i++) {
+                var it = processing.Updated[i];
+                if (!skip[it.id]) {out[it.id] = it;}
+            }
         }
 
         var data = [];

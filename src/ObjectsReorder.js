@@ -50,18 +50,23 @@ L.gmx.VectorLayer.addInitHook(function () {
             top.map(function (id) { this.addToReorder(id); });
             layer.repaint();
         },
+        getSortedItems: function (arr) {
+            return arr.sort(count > 0 ? this.gmx.sortItems : this.sortFunc);
+        },
 
         setSortFunc: function (func) {
             this.sortFunc = func;
             var _this = this;
             this.gmx.sortItems = function(a, b) {
-                var ap = _this.all[a.properties[0]],
-                    bp = _this.all[b.properties[0]];
+                if (count > 0) {
+                    var ap = _this.all[a.id],
+                        bp = _this.all[b.id];
 
-                if (ap || bp) {
-                    ap = ap ? ap + (ap > 0 ? max : -max) : 0;
-                    bp = bp ? bp + (bp > 0 ? max : -max) : 0;
-                    return ap - bp;
+                    if (ap || bp) {
+                        ap = ap ? ap + (ap > 0 ? max : -max) : 0;
+                        bp = bp ? bp + (bp > 0 ? max : -max) : 0;
+                        return ap - bp;
+                    }
                 }
                 return _this.sortFunc ? _this.sortFunc(a, b) : 0;
             };

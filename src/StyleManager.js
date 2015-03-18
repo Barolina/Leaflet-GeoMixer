@@ -332,9 +332,13 @@ var gmxStyleManager = function(gmx) {
                 style.filterFunction = type === 'string' ? parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'))
                     : type === 'function' ? style.Filter : null;
             }
-            DEFAULTKEYS.forEach(function(key) {
+            for (var i = 0, len = DEFAULTKEYS.length; i < len; i++) {
+                var key = DEFAULTKEYS[i];
                 if (key in st) { style[key] = st[key]; }
-            });
+            }
+            // DEFAULTKEYS.forEach(function(key) {
+                // if (key in st) { style[key] = st[key]; }
+            // });
             if (st.RenderStyle) { style.RenderStyle = parseStyle(st.RenderStyle); }
             if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle); }
             checkStyles();
@@ -460,19 +464,23 @@ var gmxStyleManager = function(gmx) {
         if ('dashArray' in pt) { out.dashArray = pt.dashArray; }
         if ('dashOffset' in pt) { out.dashOffset = pt.dashOffset; }
 
-        utils.styleKeys.label.client.forEach(function(it) {
-            if (it in pt) {
-                if (it === 'labelField') {
-                    if (!indexes[pt[it]]) {
-                        return;
+        if (gmx.labelsLayer) {
+            var arr = utils.styleKeys.label.client;
+            for (var i = 0, len = arr.length; i < len; i++) {
+                var it = arr[i];
+                if (it in pt) {
+                    if (it === 'labelField') {
+                        if (!indexes[pt[it]]) {
+                            return;
+                        }
+                    } else if (it === 'labelTemplate') {
+                        var properties = gmxAPIutils.getPropertiesHash(prop, indexes);
+                        out.labelText = utils.parseTemplate(pt[it], properties);
                     }
-                } else if (it === 'labelTemplate') {
-                    var properties = gmxAPIutils.getPropertiesHash(prop, indexes);
-                    out.labelText = utils.parseTemplate(pt[it], properties);
+                    out[it] = pt[it];
                 }
-                out[it] = pt[it];
             }
-        });
+        }
         return out;
     };
 
@@ -641,9 +649,12 @@ var gmxStyleManager = function(gmx) {
         }
     };
     this.initStyles = function() {
-        deferredIcons.forEach(function(it) {
-            getImageSize(it);
-        });
+        for (var i = 0, len = deferredIcons.length; i < len; i++) {
+            getImageSize(deferredIcons[i]);
+        }
+        // deferredIcons.forEach(function(it) {
+            // getImageSize(it);
+        // });
         deferredIcons = [];
         this._chkReady();
         return this.deferred;
