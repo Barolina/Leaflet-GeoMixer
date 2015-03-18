@@ -212,13 +212,14 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
                     (по умолчанию: addColorStop = [[0, 0xFF0000,100], [1, 0xFFFFFF,100]])
         },
 
+        labelTemplate: <String>,         // Шаблон текста метки, поля заключаются в квадратные скобки (по умолчанию: '')
         labelField: <String>,            // текст метки брать из атрибута объекта (по умолчанию: '') - label.field
         labelColor: <UInt>,              // цвет текстовой метки (по умолчанию: 0) - label.color
         labelHaloColor: <UInt>,          // цвет Glow вокруг метки (по умолчанию: -1) - label.haloColor
         labelFontSize: <UInt>,           // FontSize метки  (по умолчанию: 0) - label.size
         labelSpacing: <UInt>,            // растояние между символами (по умолчанию: 0) - label.spacing
-        labelAlign: <String>,            // выравнивание могут быть заданны строки (left, right, center) (по умолчанию: left) - label.align
-        labelAnchor: [<UInt>, <UInt>],   // смещение label X,Y - зависит от label.dx, label.dy, label.align
+        labelAlign: <String>,            // выравнивание могут быть заданны строки (left, right, center) (по умолчанию: left) - только для точечных объектов
+        labelAnchor: [<UInt>, <UInt>],   // смещение label X,Y - зависит от label.dx, label.dy, label.align - только для точечных объектов
     }
 
 **Expression** - строка арифметического выражения результатом которой должно быть число (**Float**)
