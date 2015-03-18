@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0px;
+        }
+        
+        #infoPanel {
+            position: absolute;
+			right: 0px;
+			top: 21px;
+            text-align: center;
+			z-index: 1000;
+        }
+        
+        #info {
+			background-color: #ffffff;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+            padding: 10px;
+        }
+        .leaflet-popup-content {
+            word-wrap: break-word;
+        }
+        .button-active {
+            background: #BBB;
+        }
+        
+        button {
+            border: 1px solid gray;
+            border-radius: 1px;
+            background: #EEE;
+        }
+        
+        #prop {
+            width: 20px;
+        }
+
+    </style>
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    
+	<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	
+    <script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+</head>
+<body>
+	<div id="map"></div>
+    <div id="infoPanel">
+        <span id="info">
+			ROW: <input id="prop" value=''>
+			<button id="setStyle">setStyle</button>
+        </span>
+    </div>
+	<script>
+		var map = L.map('map').setView([65.788407, 87.326049], 4);
+
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+
+        var setStyle = document.getElementById("setStyle");
+            prop = document.getElementById("prop");
+
+        var minRow = 7,
+            row = 7,
+            maxRow = 33,
+            mapID = 'CA1D1CFB8020457CA6773067CFCF5A5E';
+            
+        var styleAdd = {
+            "color": 255,
+            "weight": 1,
+            "fillColor": 0xff0000,
+            "fillOpacity": 0.3,
+            labelTemplate: 'ROW: [ROW]'
+        };
+
+        prop.value = row;
+        L.gmx.loadLayers([
+            {mapID: mapID, layerID: '6640682CD6CA41CD87B09F4D44980585'}
+        ]).then(function(testLayer) {
+            var originalStyles = testLayer.getStyles();
+            testLayer.on('click', function(event) {
+                var path = event.gmx.properties.PATH;
+                var json = {
+                    Filter: "[PATH] = " + path,
+                    DisableBalloonOnMouseMove: true,
+                    DisableBalloonOnClick: true,
+                    RenderStyle: styleAdd
+                };
+                
+                testLayer.setStyles([json].concat(originalStyles));
+            })
+            
+            map.addLayer(testLayer);
+            var style_1 = testLayer.getStyles()[0];
+            setStyle.onclick = function(ev) {
+                var styleAdd = {
+                    color: 255,
+                    weight: 1,
+                    fillColor: 0xff0000,
+                    fillOpacity: 0.3,
+                    labelTemplate: '[ROW] x [PATH]'
+                };
+                if (row > maxRow) row = minRow;
+                prop.value = row;
+                var json = {
+                    Filter: "[ROW] = " + row,
+                    RenderStyle: styleAdd,
+                    HoverStyle: styleAdd
+                };
+                testLayer.setStyles([json, style_1]);
+                row++;
+            };
+        });
+	</script>
+</body>
+</html>
