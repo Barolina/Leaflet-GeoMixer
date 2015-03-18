@@ -348,7 +348,7 @@ var gmxStyleManager = function(gmx) {
 
     var itemStyleParser = function(item, pt) {
         pt = pt || {};
-        var out = {},
+        var out = {}, arr, i, len,
             indexes = gmx.tileAttributeIndexes,
             prop = item.properties,
             itemType = item.type,
@@ -386,14 +386,14 @@ var gmxStyleManager = function(gmx) {
             if (rgr.r2max) {
                 r2 = Math.min(r2, rgr.r2max);
             }
-            var colorStop = [],
-                len = rgr.addColorStop.length;
+            var colorStop = [];
+            len = rgr.addColorStop.length;
             if (!rgr.addColorStopFunctions) {
                 rgr.addColorStopFunctions = new Array(len);
             }
-            for (var i = 0; i < len; i++) {
-                var arr = rgr.addColorStop[i],
-                    arrFunc = rgr.addColorStopFunctions[i] || [],
+            for (i = 0; i < len; i++) {
+                arr = rgr.addColorStop[i];
+                var arrFunc = rgr.addColorStopFunctions[i] || [],
                     p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
                     p3 = arr[3];
                 if (arr.length < 4) {
@@ -465,13 +465,13 @@ var gmxStyleManager = function(gmx) {
         if ('dashOffset' in pt) { out.dashOffset = pt.dashOffset; }
 
         if (gmx.labelsLayer) {
-            var arr = utils.styleKeys.label.client;
-            for (var i = 0, len = arr.length; i < len; i++) {
+            arr = utils.styleKeys.label.client;
+            for (i = 0, len = arr.length; i < len; i++) {
                 var it = arr[i];
                 if (it in pt) {
                     if (it === 'labelField') {
                         if (!indexes[pt[it]]) {
-                            return;
+                            continue;
                         }
                     } else if (it === 'labelTemplate') {
                         var properties = gmxAPIutils.getPropertiesHash(prop, indexes);

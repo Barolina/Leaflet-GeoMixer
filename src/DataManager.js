@@ -539,7 +539,7 @@ var gmxDataManager = L.Class.extend({
 
     _chkProcessing: function(processing) {
         var _items = this._items,
-            id, i, len;
+            id, i, len, it;
 
         var tile = this.processingTile,
             skip = {};
@@ -547,7 +547,7 @@ var gmxDataManager = L.Class.extend({
         if (tile) {
             var zKey = this._processingTileKey;
             for (i = 0, len = tile.data.length; i < len; i++) {
-                var it = tile.data[i];
+                it = tile.data[i];
                 id = it[0];
                 if (_items[id]) {
                     var item = _items[id];
@@ -571,14 +571,14 @@ var gmxDataManager = L.Class.extend({
         var out = {};
         if (processing.Inserted) {
             for (i = 0, len = processing.Inserted.length; i < len; i++) {
-                var it = processing.Inserted[i];
+                it = processing.Inserted[i];
                 if (!skip[it.id]) {out[it.id] = it;}
             }
         }
 
         if (processing.Updated) {
             for (i = 0, len = processing.Updated.length; i < len; i++) {
-                var it = processing.Updated[i];
+                it = processing.Updated[i];
                 if (!skip[it.id]) {out[it.id] = it;}
             }
         }

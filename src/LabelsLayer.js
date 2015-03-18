@@ -248,13 +248,13 @@ L.LabelsLayer = L.Class.extend({
         var w2 = 2 * this.mInPixel * gmxAPIutils.worldWidthMerc,
             start = w2 * Math.floor(_map.getPixelBounds().min.x / w2),
             ctx = _canvas.getContext('2d'),
-            i, len;
+            i, len, it;
 
         for (var layerId in this._labels) {
             var labels = this._labels[layerId];
             for (var id in labels) {
-                var it = labels[id],
-                    options = it.options,
+                it = labels[id];
+                var options = it.options,
                     label = options.label,
                     style = label.style,
                     width = label.width,
@@ -318,7 +318,7 @@ L.LabelsLayer = L.Class.extend({
             }
             ctx.clearRect(0, 0, _canvas.width, _canvas.height);
             for (i = 0, len = out.length; i < len; i++) {
-                var it = out[i];
+                it = out[i];
                 gmxAPIutils.setLabel(ctx, it.txt, it.coord, it.style);
             }
         } else if (_canvas.parentNode) {
