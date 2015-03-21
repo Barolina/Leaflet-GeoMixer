@@ -207,10 +207,7 @@ var gmxStyleManager = function(gmx) {
             MinZoom: style.MinZoom || 0,
             MaxZoom: style.MaxZoom || 50,
             Filter: style.Filter || null,
-            DisableBalloonOnMouseMove: style.DisableBalloonOnMouseMove || false,
-            DisableBalloonOnClick: style.DisableBalloonOnClick || false,
             Balloon: style.Balloon || '',
-            BalloonEnable: style.BalloonEnable || false,
             RenderStyle: (style.RenderStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {}),
             version: ++maxVersion
         };
@@ -230,9 +227,31 @@ var gmxStyleManager = function(gmx) {
         return (st && (st.labelTemplate || (st.labelField && st.labelField in indexes)));
     };
 
+    var checkStyles = function() {
+        var balloonEnable = false,
+            labelsLayer = false;
+
+        for (var i = 0, len = styles.length; i < len; i++) {
+            var st = styles[i];
+
+            st.DisableBalloonOnMouseMove = st.DisableBalloonOnMouseMove === false ? false : true;
+            st.DisableBalloonOnClick = st.DisableBalloonOnClick || false;
+            if (st.DisableBalloonOnMouseMove === false || st.DisableBalloonOnClick === false) {
+                balloonEnable = true;
+                st.BalloonEnable = true;
+            }
+            if (st.RenderStyle && !labelsLayer) {
+                if (isLabel(st.RenderStyle)) {
+                    labelsLayer = true;
+                }
+            }
+        }
+        gmx.balloonEnable = balloonEnable;
+        gmx.labelsLayer = labelsLayer;
+    };
+
     var parseServerStyles = function() {
         var props = gmx.properties,
-            balloonEnable = false,
             arr = props.styles || [{RenderStyle: DEFAULT_STYLE}],
             len = Math.max(arr.length, gmx.styles.length);
 
@@ -249,11 +268,10 @@ var gmxStyleManager = function(gmx) {
                 delete gmxStyle.HoverStyle;
             }
             var pt = prepareItem(gmxStyle);
-            if (!balloonEnable && pt.BalloonEnable) { balloonEnable = true; }
             styles.push(pt);
             if (isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
         }
-        gmx.balloonEnable = balloonEnable;
+        checkStyles();
     };
     parseServerStyles();
 
@@ -271,26 +289,6 @@ var gmxStyleManager = function(gmx) {
             }
         }
         return out;
-    };
-
-    var checkStyles = function() {
-        var balloonEnable = false,
-            labelsLayer = false;
-
-        for (var i = 0, len = styles.length; i < len; i++) {
-            var st = styles[i];
-            if (st.DisableBalloonOnMouseMove === false || st.DisableBalloonOnClick === false) {
-                balloonEnable = true;
-                st.BalloonEnable = true;
-            }
-            if (st.RenderStyle && !labelsLayer) {
-                if (isLabel(st.RenderStyle)) {
-                    labelsLayer = true;
-                }
-            }
-        }
-        gmx.balloonEnable = balloonEnable;
-        gmx.labelsLayer = labelsLayer;
     };
 
     this.getStyles = function () {

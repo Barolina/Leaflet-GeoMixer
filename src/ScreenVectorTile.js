@@ -363,11 +363,12 @@ ScreenVectorTile.prototype = {
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                var geom = geo.properties[geo.properties.length - 1],
-                    coords = geom.coordinates[0];
-                if (geom.type === 'MULTIPOLYGON') { coords = coords[0]; }
-                var clip = tbounds.clipPolygon(coords);
-                if (clip.length) {
+                var flag = true,
+                    geom = geo.properties[geo.properties.length - 1];
+                if (geom.type === 'POLYGON' && !tbounds.clipPolygon(geom.coordinates[0]).length) {
+                    flag = false;
+                }
+                if (flag) {
                     needLoadRasters++;
                     var itemRasterPromise = _this._getItemRasters(geo);
                     itemRasterPromise.then(function() {
