@@ -388,7 +388,7 @@ var gmxAPIutils = {
             item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys || {},
             style = attr.style || {},
-            iconScale = attr.iconScale || style.iconScale || 1,
+            iconScale = currentStyle.iconScale || style.iconScale || 1,
             sx = currentStyle.sx || style.sx || 4,
             sy = currentStyle.sy || style.sy || 4,
             weight = currentStyle.weight || style.weight || 0,
@@ -410,8 +410,65 @@ var gmxAPIutils = {
             }
         ;
     },
+    getImageData: function(img) {
+        var canvas = document.createElement('canvas'),
+            ww = img.width,
+            hh = img.height;
 
-    pointToCanvas: function(attr) {				// Точку в canvas
+        canvas.width = ww; canvas.height = hh;
+        var ptx = canvas.getContext('2d');
+        ptx.drawImage(img, 0, 0);
+        return ptx.getImageData(0, 0, ww, hh).data;
+    },
+    DEFAULT_REPLACEMENT_COLOR: 0xff00ff,
+    replaceColor: function(img, color, fromData) {
+        var canvas = document.createElement('canvas'),
+            ww = img.width,
+            hh = img.height;
+
+        canvas.width = ww; canvas.height = hh;
+        var ptx = canvas.getContext('2d');
+
+        if (typeof color === 'string') {
+            color = parseInt('0x' + color.replace(/#/, ''));
+        }
+        if (color !== this.DEFAULT_REPLACEMENT_COLOR) {
+            var r = (color >> 16) & 255,
+                g = (color >> 8) & 255,
+                b = color & 255,
+                flag = false,
+                imageData;
+
+            if (fromData) {
+                imageData = ptx.createImageData(ww, hh);
+            } else {
+                ptx.drawImage(img, 0, 0);
+                imageData = ptx.getImageData(0, 0, ww, hh);
+                fromData = imageData.data;
+            }
+            var toData = imageData.data;
+            for (var i = 0, len = fromData.length; i < len; i += 4) {
+                if (fromData[i] === 0xff
+                    && fromData[i + 1] === 0
+                    && fromData[i + 2] === 0xff
+                    ) {
+                    toData[i] = r;
+                    toData[i + 1] = g;
+                    toData[i + 2] = b;
+                    toData[i + 3] = fromData[i + 3];
+                    flag = true;
+                }
+            }
+            if (flag) {
+                ptx.putImageData(imageData, 0, 0);
+            }
+        } else {
+            ptx.drawImage(img, 0, 0);
+        }
+        return canvas;
+    },
+
+    pointToCanvas: function(attr) { // Точку в canvas
         var gmx = attr.gmx,
             pointAttr = attr.pointAttr,
             style = attr.style || {},
@@ -428,20 +485,24 @@ var gmxAPIutils = {
             ctx = attr.ctx;
 
         if (style.image) {
+            var image = style.image;
+            if ('iconColor' in style) {
+                image = this.replaceColor(image, currentStyle.iconColor, attr.imageData);
+            }
             style.rotateRes = currentStyle.rotate || 0;
             if ('opacity' in style) { ctx.globalAlpha = currentStyle.opacity || style.opacity; }
             if (gmx.transformFlag) {
                 ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
-                ctx.drawImage(style.image, px1sx, -py1sy, sx2, sy2);
+                ctx.drawImage(image, px1sx, -py1sy, sx2, sy2);
                 ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
             } else if (style.rotateRes) {
                 ctx.translate(px1, py1);
                 ctx.rotate(gmxAPIutils.degRad(style.rotateRes));
                 ctx.translate(-px1, -py1);
-                ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
+                ctx.drawImage(image, px1sx, py1sy, sx2, sy2);
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             } else {
-                ctx.drawImage(style.image, px1sx, py1sy, sx2, sy2);
+                ctx.drawImage(image, px1sx, py1sy, sx2, sy2);
             }
             if ('opacity' in style) { ctx.globalAlpha = 1; }
         } else if (style.fillColor || currentStyle.fillRadialGradient) {

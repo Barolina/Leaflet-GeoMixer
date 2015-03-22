@@ -148,14 +148,18 @@ var gmxStyleManager = function(gmx) {
         return common;
     };
 
-    var parseStyle = function(st) {
+    var parseStyle = function(st, renderStyle) {
         if (st) {
             for (var key in st) {
                 if (gmxAPIutils.styleFuncKeys[key]) {
                     var fkey = gmxAPIutils.styleFuncKeys[key],
                         val = st[key];
                     if (typeof (val) === 'string') {
-                        st[fkey] = gmxParsers.parseExpression(val);
+                        if (renderStyle && renderStyle[key] === val) {
+                            st[fkey] = renderStyle[fkey];
+                        } else {
+                            st[fkey] = gmxParsers.parseExpression(val);
+                        }
                     } else if (typeof (val) === 'function') {
                         st[fkey] = val;
                     }
@@ -212,7 +216,7 @@ var gmxStyleManager = function(gmx) {
             version: ++maxVersion
         };
         if (style.HoverStyle) {
-            pt.HoverStyle = parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle));
+            pt.HoverStyle = parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle), pt.RenderStyle);
         }
 
         if ('Filter' in style) {
@@ -225,6 +229,15 @@ var gmxStyleManager = function(gmx) {
     var isLabel = function(st) {
         var indexes = gmx.tileAttributeIndexes;
         return (st && (st.labelTemplate || (st.labelField && st.labelField in indexes)));
+    };
+
+    var checkDiff = function(st, st1) {
+        for (var key in st) {
+            if (st[key] !== st1[key]) {
+                return key;
+            }
+        }
+        return null;
     };
 
     var checkStyles = function() {
@@ -240,9 +253,15 @@ var gmxStyleManager = function(gmx) {
                 balloonEnable = true;
                 st.BalloonEnable = true;
             }
-            if (st.RenderStyle && !labelsLayer) {
-                if (isLabel(st.RenderStyle)) {
-                    labelsLayer = true;
+            st.hoverDiff = null;
+            if (st.RenderStyle) {
+                if (!labelsLayer) {
+                    if (isLabel(st.RenderStyle)) {
+                        labelsLayer = true;
+                    }
+                }
+                if (st.HoverStyle) {
+                    st.hoverDiff = checkDiff(st.RenderStyle, st.HoverStyle);
                 }
             }
         }
@@ -260,8 +279,8 @@ var gmxStyleManager = function(gmx) {
             if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = DEFAULT_STYLE; }
             if (gmxStyle.HoverStyle === undefined) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
-                if (hoveredStyle.marker && hoveredStyle.marker.size) { hoveredStyle.marker.size += 1; }
-                if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
+                //if (hoveredStyle.marker && hoveredStyle.marker.size) { hoveredStyle.marker.size += 1; }
+                //if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
                 //if (hoveredStyle.outline) hoveredStyle.outline.color = 0xff0000;
                 gmxStyle.HoverStyle = hoveredStyle;
             } else if (gmxStyle.HoverStyle === null) {
@@ -338,7 +357,7 @@ var gmxStyleManager = function(gmx) {
                 // if (key in st) { style[key] = st[key]; }
             // });
             if (st.RenderStyle) { style.RenderStyle = parseStyle(st.RenderStyle); }
-            if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle); }
+            if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle, style.RenderStyle); }
             checkStyles();
             this.initStyles();
         }
@@ -372,6 +391,9 @@ var gmxStyleManager = function(gmx) {
             }
             if ('iconColor' in pt) {
                 out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
+            }
+            if ('iconScale' in pt) {
+                out.iconScale = 'scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale;
             }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
@@ -499,6 +521,7 @@ var gmxStyleManager = function(gmx) {
                     || (st.filterFunction && !st.filterFunction(properties, indexes))) {
                     continue;
                 }
+                item.hoverDiff = st.hoverDiff;
                 item.currentFilter = i;
                 if (needParse || fnum !== i) {
                     var parsed = itemStyleParser(item, st.RenderStyle),
@@ -560,7 +583,7 @@ var gmxStyleManager = function(gmx) {
         if (!style) {
             return null;
         }
-        if (gmx.lastHover && item.id === gmx.lastHover.id) {
+        if (style.hoverDiff && gmx.lastHover && item.id === gmx.lastHover.id) {
             if (style.HoverStyle) {
                 version = style.HoverStyle.version || -1;
                 if (version !== item.styleVersion) {

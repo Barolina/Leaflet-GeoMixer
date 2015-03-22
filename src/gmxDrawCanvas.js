@@ -86,6 +86,14 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
     }
     if (geoType === 'POINT' || geoType === 'MULTIPOINT') {	// Отрисовка геометрии точек
         coords = geom.coordinates;
+        if ('iconColor' in style && style.image) {
+            if (style.lastImage !== style.image) {
+                style.lastImage = style.image;
+                style.lastImageData = utils.getImageData(style.image);
+            }
+            dattr.imageData = style.lastImageData;
+        }
+
         if (geoType === 'MULTIPOINT') {
             for (j = 0, len = coords.length; j < len; j++) {
                 dattr.coords = coords[j];

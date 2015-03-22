@@ -186,9 +186,11 @@ L.gmx.VectorLayer.include({
                         if (this.hasEventListeners(type)) { this.fire(type, ev); }
                         if (type === 'mousemove' && changed) {
                             lastHover = gmx.lastHover = ev.gmx;
-                            var currentStyle = gmx.styleManager.getObjStyle(item);
-                            if (currentStyle) {
-                                lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.maxSize || 256);
+                            if (item.hoverDiff) {
+                                var currentStyle = gmx.styleManager.getObjStyle(item);
+                                if (currentStyle) {
+                                    lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.maxSize || 256);
+                                }
                             }
                             chkHover('mouseover');
                         }
