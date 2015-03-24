@@ -1151,7 +1151,7 @@ var gmxAPIutils = {
     },
 
     geoArea: function(geom) {
-        var i, len, ret,
+        var i, len, ret = 0,
             type = geom.type || '';
         if (type === 'MULTIPOLYGON') {
             for (i = 0, len = geom.coordinates.length; i < len; i++) {
