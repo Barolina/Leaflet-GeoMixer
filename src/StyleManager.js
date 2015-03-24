@@ -279,8 +279,8 @@ var gmxStyleManager = function(gmx) {
             if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = DEFAULT_STYLE; }
             if (gmxStyle.HoverStyle === undefined) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
-                //if (hoveredStyle.marker && hoveredStyle.marker.size) { hoveredStyle.marker.size += 1; }
-                //if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
+                if (hoveredStyle.marker && hoveredStyle.marker.size) { hoveredStyle.marker.size += 1; }
+                if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
                 //if (hoveredStyle.outline) hoveredStyle.outline.color = 0xff0000;
                 gmxStyle.HoverStyle = hoveredStyle;
             } else if (gmxStyle.HoverStyle === null) {
