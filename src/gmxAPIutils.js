@@ -1388,6 +1388,36 @@ var gmxAPIutils = {
             }
         }
         return out;
+    },
+
+    getUTCdate: function(utime) {
+        var dt = new Date(utime * 1000);
+
+        return [
+            dt.getUTCFullYear(),
+            gmxAPIutils.pad2(dt.getUTCMonth() + 1),
+            gmxAPIutils.pad2(dt.getUTCDate())
+        ].join('.');
+    },
+
+    getUTCtime: function(utime) {
+        var h = Math.floor(utime / 3600),
+            m = Math.floor((utime - h * 3600) / 60),
+            s = Math.floor(utime - h * 3600 - m * 60);
+
+        return [
+            //gmxAPIutils.pad2(h - new Date().getTimezoneOffset() / 60),
+            gmxAPIutils.pad2(h),
+            gmxAPIutils.pad2(m),
+            gmxAPIutils.pad2(s)
+        ].join(':');
+    },
+
+    getUTCdateTime: function(utime) {
+        return [
+            gmxAPIutils.getUTCdate(utime),
+            gmxAPIutils.getUTCtime(utime % (3600 * 24))
+        ].join(' ');
     }
 };
 
@@ -1516,6 +1546,9 @@ L.extend(L.gmxUtil, {
     toServerStyle: gmxAPIutils.toServerStyle,
     bounds: gmxAPIutils.bounds,
     tileSizes: gmxAPIutils.tileSizes,
+    getUTCdate: gmxAPIutils.getUTCdate,
+    getUTCtime: gmxAPIutils.getUTCtime,
+    getUTCdateTime: gmxAPIutils.getUTCdateTime,
     formatCoordinates: function (latlng, type) {
         return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
     },

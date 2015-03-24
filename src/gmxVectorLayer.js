@@ -778,14 +778,19 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             }
         }
 
-        var tileAttributeIndexes = {};
+        var tileAttributeIndexes = {},
+            tileAttributeTypes = {};
         if (prop.attributes) {
-            var attrs = prop.attributes;
+            var attrs = prop.attributes,
+                attrTypes = prop.attrTypes;
             if (gmx.identityField) { tileAttributeIndexes[gmx.identityField] = 0; }
             for (var a = 0; a < attrs.length; a++) {
-                tileAttributeIndexes[attrs[a]] = a + 1;
+                var key = attrs[a];
+                tileAttributeIndexes[key] = a + 1;
+                tileAttributeTypes[key] = attrTypes[a];
             }
         }
+        gmx.tileAttributeTypes = tileAttributeTypes;
         gmx.tileAttributeIndexes = tileAttributeIndexes;
         gmx.getPropItem = function(prop, key) {
             var indexes = gmx.tileAttributeIndexes;

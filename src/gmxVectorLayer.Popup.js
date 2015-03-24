@@ -138,8 +138,15 @@ L.gmx.VectorLayer.include({
                 var matches = reg.exec(templateBalloon);
                 while (matches && matches.length > 1) {
                     var key1 = matches[1],
+                        type = this._gmx.tileAttributeTypes[key1],
                         res = key1 in properties ? properties[key1] : '';
-                    if (key1 === 'SUMMARY' && !res) {
+                    if (type === 'date') {
+                        res = L.gmxUtil.getUTCdate(res);
+                    } else if (type === 'time') {
+                        res = L.gmxUtil.getUTCtime(res);
+                    } else if (type === 'datetime') {
+                        res = L.gmxUtil.getUTCdateTime(res);
+                    } else if (key1 === 'SUMMARY' && !res) {
                         var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
                         res = outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, this._gmx.units);
                     }
@@ -173,7 +180,10 @@ L.gmx.VectorLayer.include({
                 if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) {return;}
                 this._popup.options.closeButton = this._popup.options.autoPan = true;
             } else if (type === 'mouseover') {
-                if (balloonData.DisableBalloonOnMouseMove) {return;}
+                if (balloonData.DisableBalloonOnMouseMove) {
+                    this._popup._state = '';
+                    return;
+                }
                 this._popup.options.closeButton = this._popup.options.autoPan = false;
             } else {
                 return;
