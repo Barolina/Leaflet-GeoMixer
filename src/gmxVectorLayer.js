@@ -780,14 +780,14 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         var tileAttributeIndexes = {},
             tileAttributeTypes = {};
-        if (prop.attributes && prop.attrTypes) {
+        if (prop.attributes) {
             var attrs = prop.attributes,
-                attrTypes = prop.attrTypes;
+                attrTypes = prop.attrTypes || null;
             if (gmx.identityField) { tileAttributeIndexes[gmx.identityField] = 0; }
             for (var a = 0; a < attrs.length; a++) {
                 var key = attrs[a];
                 tileAttributeIndexes[key] = a + 1;
-                tileAttributeTypes[key] = attrTypes[a];
+                tileAttributeTypes[key] = attrTypes ? attrTypes[a] : 'string';
             }
         }
         gmx.tileAttributeTypes = tileAttributeTypes;
