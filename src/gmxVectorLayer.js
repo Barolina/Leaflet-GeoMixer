@@ -780,7 +780,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         var tileAttributeIndexes = {},
             tileAttributeTypes = {};
-        if (prop.attributes) {
+        if (prop.attributes && prop.attrTypes) {
             var attrs = prop.attributes,
                 attrTypes = prop.attrTypes;
             if (gmx.identityField) { tileAttributeIndexes[gmx.identityField] = 0; }
