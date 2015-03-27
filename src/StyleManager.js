@@ -215,6 +215,8 @@ var gmxStyleManager = function(gmx) {
             RenderStyle: (style.RenderStyle ? parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {}),
             version: ++maxVersion
         };
+        pt.DisableBalloonOnMouseMove = style.DisableBalloonOnMouseMove === false ? false : true;
+        pt.DisableBalloonOnClick = style.DisableBalloonOnClick || false;
         if (style.HoverStyle) {
             pt.HoverStyle = parseStyle(L.gmxUtil.fromServerStyle(style.HoverStyle), pt.RenderStyle);
         }
