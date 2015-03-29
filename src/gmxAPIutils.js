@@ -388,7 +388,8 @@ var gmxAPIutils = {
             item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys || {},
             style = attr.style || {},
-            iconScale = currentStyle.iconScale || style.iconScale || 1,
+            //iconScale = currentStyle.iconScale || style.iconScale || 1,
+            iconScale = currentStyle.iconScale || 1,
             sx = currentStyle.sx || style.sx || 4,
             sy = currentStyle.sy || style.sy || 4,
             weight = currentStyle.weight || style.weight || 0,
@@ -411,6 +412,7 @@ var gmxAPIutils = {
         ;
     },
     getImageData: function(img) {
+        if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) {return null;}
         var canvas = document.createElement('canvas'),
             ww = img.width,
             hh = img.height;
@@ -421,7 +423,11 @@ var gmxAPIutils = {
         return ptx.getImageData(0, 0, ww, hh).data;
     },
     DEFAULT_REPLACEMENT_COLOR: 0xff00ff,
+    isIE: function(v) {
+        return RegExp('msie' + (!isNaN(v) ? ('\\s' + v) : ''), 'i').test(navigator.userAgent || '');
+    },
     replaceColor: function(img, color, fromData) {
+        if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) {return img;}
         var canvas = document.createElement('canvas'),
             ww = img.width,
             hh = img.height;
@@ -484,9 +490,9 @@ var gmxAPIutils = {
             sx2 = 2 * sx, sy2 = 2 * sy,
             ctx = attr.ctx;
 
-        if (style.image) {
-            var image = style.image;
-            if ('iconColor' in style) {
+        var image = currentStyle.image || style.image;
+        if (image) {
+            if ('iconColor' in currentStyle) {
                 image = this.replaceColor(image, currentStyle.iconColor, attr.imageData);
             }
             style.rotateRes = currentStyle.rotate || 0;
@@ -1317,6 +1323,7 @@ var gmxAPIutils = {
         'iconGeomSize': 'iconGeomSizeFunction',
         'iconAngle': 'rotateFunction',
         'iconScale': 'scaleFunction',
+        'iconColor': 'iconColorFunction',
         'opacity': 'opacityFunction',
         'fillOpacity': 'fillOpacityFunction',
         'color': 'colorFunction',
@@ -1541,6 +1548,8 @@ gmxAPIutils.bounds = function(arr) {
 
 if (!L.gmxUtil) { L.gmxUtil = {}; }
 L.extend(L.gmxUtil, {
+    isIE9: gmxAPIutils.isIE(9),
+    isIE10: gmxAPIutils.isIE(10),
     requestJSONP: gmxAPIutils.requestJSONP,
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
