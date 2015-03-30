@@ -38,7 +38,7 @@ var GmxEventsManager = L.Handler.extend({
             var type = ev.type;
             _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
 
-            if (_this._drawstart || (type === 'mousemove' &&  _this._map.gmxMouseDown)) {
+            if (_this._map._animatingZoom || _this._drawstart || (type === 'mousemove' &&  _this._map.gmxMouseDown)) {
                 return;
             }
 
