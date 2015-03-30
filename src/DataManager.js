@@ -5,7 +5,7 @@ var gmxDataManager = L.Class.extend({
             isTemporalLayer = gmx.properties.Temporal;
 
         this._tilesTree = null;
-        this._activeTileKeys = null;
+        this._activeTileKeys = {};
         this._endDate = null;
         this._beginDate = null;
 
@@ -605,6 +605,12 @@ var gmxDataManager = L.Class.extend({
         tile && this._triggerObservers();
     },
 
+    updateVersion: function() {
+        this._tilesTree = null;
+        this._needCheckActiveTiles = true;
+        this._getActiveTileKeys(); //force list update
+    },
+
     _getDataKeys: function(data) {
         var chkKeys = {};
         for (var i = 0, len = data.length; i < len; i++) {
@@ -643,7 +649,6 @@ var gmxDataManager = L.Class.extend({
         if (!data) {
             data = [];
         }
-
         var tileLink = this._getTileLink(options),
             chkKeys = this._getDataKeys(data),
             vTile = tileLink.tile;

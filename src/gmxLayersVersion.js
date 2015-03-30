@@ -121,11 +121,8 @@ L.gmx.VectorLayer.include({
         if (layerDescription) {
             var gmx = this._gmx;
             if (layerDescription.properties) {
-                // todo: relocate to dataManager
                 gmx.properties = layerDescription.properties;
-                gmx.dataManager._tilesTree = null;
-                gmx.dataManager._needCheckActiveTiles = true;
-                gmx.dataManager._getActiveTileKeys(); //force list update
+                gmx.dataManager.updateVersion();
             }
             //if (layerDescription.geometry) {
                 // todo: update layer geometry
