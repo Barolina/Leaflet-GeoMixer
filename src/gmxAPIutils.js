@@ -956,16 +956,20 @@ var gmxAPIutils = {
         return false;
     },
 
-    getLength: function(latlngs) {
+    getLength: function(latlngs, isMerc) {
         var length = 0;
         if (latlngs && latlngs.length) {
-            var lng = false, lat = false;
+            var lng = false,
+                lat = false,
+                isMerc = isMerc === undefined || isMerc;
             latlngs.forEach(function(latlng) {
                 if (L.Util.isArray(latlng)) {
                     if (latlng.length === 2) {   // From Mercator array
-                        latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
+                        if (isMerc) {
+                            latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
+                        }
                     } else {
-                        length += gmxAPIutils.getLength(latlng);
+                        length += gmxAPIutils.getLength(latlng, isMerc);
                         return length;
                     }
                 }
@@ -1104,13 +1108,14 @@ var gmxAPIutils = {
     },
 
     geoLength: function(geom) {
-        var ret = 0;
-        if (geom.type === 'MULTILINESTRING') {
+        var ret = 0,
+            type = geom.type;
+        if (type === 'MULTILINESTRING' || type === 'MultiLineString') {
             for (var i = 0, len = geom.coordinates.length; i < len; i++) {
                 ret += gmxAPIutils.geoLength({type: 'LINESTRING', coordinates: geom.coordinates[i]});
             }
             return ret;
-        } else if (geom.type === 'LINESTRING') {
+        } else if (type === 'LINESTRING' || type === 'LineString') {
             ret = gmxAPIutils.getLength(geom.coordinates);
         }
         return ret;
@@ -1156,28 +1161,60 @@ var gmxAPIutils = {
         return latlngs;
     },
 
-    geoArea: function(geom) {
+    geoArea: function(geom, isMerc) {
         var i, len, ret = 0,
+            isMerc = isMerc === undefined || isMerc;
             type = geom.type || '';
-        if (type === 'MULTIPOLYGON') {
+        if (type === 'MULTIPOLYGON' || type === 'MultiPolygon') {
             for (i = 0, len = geom.coordinates.length; i < len; i++) {
-                ret += gmxAPIutils.geoArea({type: 'POLYGON', coordinates: geom.coordinates[i]});
+                ret += gmxAPIutils.geoArea({type: 'POLYGON', coordinates: geom.coordinates[i]}, isMerc);
             }
             return ret;
-        } else if (type === 'POLYGON') {
-            ret = gmxAPIutils.geoArea(geom.coordinates[0]);
+        } else if (type === 'POLYGON' || type === 'Polygon') {
+            ret = gmxAPIutils.geoArea(geom.coordinates[0], isMerc);
             for (i = 1, len = geom.coordinates.length; i < len; i++) {
-                ret -= gmxAPIutils.geoArea(geom.coordinates[i]);
+                ret -= gmxAPIutils.geoArea(geom.coordinates[i], isMerc);
             }
             return ret;
         } else if (geom.length) {
             var latlngs = [];
             gmxAPIutils.forEachPoint(geom, function(p) {
-                latlngs.push(L.Projection.Mercator.unproject({y: p[1], x: p[0]}));
+                latlngs.push(
+                    isMerc ?
+                    L.Projection.Mercator.unproject({y: p[1], x: p[0]}) :
+                    {lat: p[1], lng: p[0]}
+                );
             });
             return gmxAPIutils.getArea(latlngs);
         }
         return 0;
+    },
+
+    getGeoJSONSummary: function(geom, isMerc) {
+        var type = geom.type,
+            out = 0,
+            i, len, coords;
+        if (type === 'Point') {
+            coords = geom.coordinates;
+            out = gmxAPIutils.formatCoordinates(coords[0], coords[1]);
+        } else if (type === 'Polygon') {
+            out = gmxAPIutils.prettifyArea(gmxAPIutils.geoArea(geom, isMerc), 'km2');
+        } else if (type === 'MultiPolygon') {
+            coords = geom.coordinates;
+            for (i = 0, len = coords.length; i < len; i++) {
+                out += gmxAPIutils.geoArea({type: 'Polygon', coordinates: coords[i]}, isMerc);
+            }
+            out = gmxAPIutils.prettifyArea(out, 'km2');
+        } else if (type === 'LineString') {
+            out = gmxAPIutils.prettifyDistance(gmxAPIutils.geoJSONGetLength(geom, isMerc));
+        } else if (type === 'MultiLineString') {
+            coords = geom.coordinates;
+            for (i = 0, len = coords.length; i < len; i++) {
+                out += gmxAPIutils.geoJSONGetLength({type: 'LineString', coordinates: coords[i]}, isMerc);
+            }
+            out = gmxAPIutils.prettifyDistance(out);
+        }
+        return out;
     },
 
     getGeometriesSummary: function(arr, units) {
@@ -1186,7 +1223,7 @@ var gmxAPIutils = {
             res = 0;
         arr.forEach(function(geom) {
             if (geom) {
-                type = geom.type;
+                type = geom.type.toUpperCase();
                 if (type.indexOf('POINT') !== -1) {
                     var latlng = L.Projection.Mercator.unproject({y: geom.coordinates[1], x: geom.coordinates[0]});
                     out = '<b>' + L.gmxLocale.getText('Coordinates') + '</b>: '
@@ -1211,7 +1248,7 @@ var gmxAPIutils = {
     },
 
     getGeometrySummary: function(geom, units) {
-        return gmxAPIutils.getGeometriesSummary([geom], units);
+        return gmxAPIutils.getGeometriesSummary([geom], units || {});
     },
 
     chkOnEdge: function(p1, p2, ext) { // отрезок на границе
@@ -1568,6 +1605,7 @@ L.extend(L.gmxUtil, {
     geoArea: gmxAPIutils.geoArea,
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
     getGeometrySummary: gmxAPIutils.getGeometrySummary,
+    getGeoJSONSummary: gmxAPIutils.getGeoJSONSummary,
     getPropertiesHash: gmxAPIutils.getPropertiesHash,
     distVincenty: gmxAPIutils.distVincenty,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
