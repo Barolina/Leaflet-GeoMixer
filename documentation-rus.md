@@ -127,6 +127,19 @@ setStyle|`setStyle(<`[StyleFilter](#user-content-stylefilter---объект-ст
 setRasterOpacity|`setRasterOpacity(<Float>)`|`this`|Изменение opacity растровых снимков объектов слоя (в дипазоне от `0` до `1`).
 setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещения контейнера слоя(по умолчанию: `0`)
 
+#### Events
+
+| Type | Property | Description
+| --- | --- |:---
+| click | `<Event>` | click на объекте векторного слоя
+| dblclick | `<Event>` | dblclick на объекте векторного слоя
+| mousedown | `<Event>` | mousedown на объекте векторного слоя
+| mouseup | `<Event>` | mouseup на объекте векторного слоя
+| mousemove | `<Event>` | mousemove на объекте векторного слоя
+| mouseover | `<Event>` | mouseover на объекте векторного слоя
+| mouseout | `<Event>` | mouseout на объекте векторного слоя
+| contextmenu | `<Event>` | contextmenu на объекте векторного слоя
+
 ## StyleFilter - объект стиля слоя
 
       // массив стилевых фильтров слоя (по умолчанию: '[стилевой фильтр по умолчанию]')  
