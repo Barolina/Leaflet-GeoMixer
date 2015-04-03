@@ -412,7 +412,7 @@ var gmxAPIutils = {
         ;
     },
     getImageData: function(img) {
-        if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) {return null;}
+        if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) { return null; }
         var canvas = document.createElement('canvas'),
             ww = img.width,
             hh = img.height;
@@ -427,7 +427,7 @@ var gmxAPIutils = {
         return RegExp('msie' + (!isNaN(v) ? ('\\s' + v) : ''), 'i').test(navigator.userAgent || '');
     },
     replaceColor: function(img, color, fromData) {
-        if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) {return img;}
+        if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) { return img; }
         var canvas = document.createElement('canvas'),
             ww = img.width,
             hh = img.height;
@@ -716,6 +716,55 @@ var gmxAPIutils = {
 		return s;
 	},
 
+    parseCoordinates: function(text) {
+        // should understand the following formats:
+        // 55.74312, 37.61558
+        // 55°44'35" N, 37°36'56" E
+        // 4187347, 7472103
+
+        if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
+            return false;
+        }
+        if (text.indexOf(' ') !== -1) {
+            text = text.replace(/,/g, '.');
+        }
+        var regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
+        var results = [];
+        var t = null;
+        while (t = regex.exec(text)) {
+            results.push(t[1]);
+        }
+        if (results.length < 2) {
+            return false;
+        }
+        var ii = Math.floor(results.length / 2),
+            x = 0,
+            mul = 1,
+            i;
+        for (i = 0; i < ii; i++) {
+            x += parseFloat(results[i]) * mul;
+            mul /= 60;
+        }
+        var y = 0;
+        mul = 1;
+        for (i = ii; i < results.length; i++) {
+            y += parseFloat(results[i]) * mul;
+            mul /= 60;
+        }
+        if (Math.abs(x) > 180 || Math.abs(y) > 180) {
+            var pos = L.Projection.Mercator.unproject(new L.Point(x, y));
+            x = pos.lng;
+            y = pos.lat;
+        }
+        if (text.indexOf('W') !== -1) {
+            x = -x;
+        }
+        if (text.indexOf('S') !== -1) {
+            y = -y;
+        }
+        return [x, y];
+    },
+
 	pad2: function(t) {
 		return (t < 10) ? ('0' + t) : ('' + t);
 	},
@@ -825,7 +874,7 @@ var gmxAPIutils = {
                     bbox = dataOption.bounds;
 
                 if (bbox.contains(center)) {
-                    if (geom.type === 'POLYGON') {coords = [coords];}
+                    if (geom.type === 'POLYGON') { coords = [coords]; }
                     for (var j = 0, len1 = coords.length; j < len1; j++) {
                         for (var j1 = 0, coords1 = coords[j], len2 = coords1.length; j1 < len2; j1++) {
                             var pt = gmxAPIutils.getHSegmentsInPolygon(center[1], coords1[j1]);
@@ -960,8 +1009,9 @@ var gmxAPIutils = {
         var length = 0;
         if (latlngs && latlngs.length) {
             var lng = false,
-                lat = false,
-                isMerc = isMerc === undefined || isMerc;
+                lat = false;
+
+            isMerc = isMerc === undefined || isMerc;
             latlngs.forEach(function(latlng) {
                 if (L.Util.isArray(latlng)) {
                     if (latlng.length === 2) {   // From Mercator array
@@ -1007,13 +1057,13 @@ var gmxAPIutils = {
             out += geoJSON.features.forEach(gmxAPIutils.geoJSONGetLength);
         } if (geoJSON.type === 'LineString' || geoJSON.type === 'MultiLineString') {
             coords = geoJSON.coordinates;
-            if (geoJSON.type === 'LineString') {coords = [coords];}
+            if (geoJSON.type === 'LineString') { coords = [coords]; }
             for (i = 0, len = coords.length; i < len; i++) {
                 out += gmxAPIutils.getRingLength(coords[i]);
             }
         } if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
             coords = geoJSON.coordinates;
-            if (geoJSON.type === 'Polygon') {coords = [coords];}
+            if (geoJSON.type === 'Polygon') { coords = [coords]; }
             for (i = 0, len = coords.length; i < len; i++) {
                 for (j = 0, len1 = coords[i].length; j < len1; j++) {
                     out += gmxAPIutils.getRingLength(coords[i][j]);
@@ -1055,7 +1105,7 @@ var gmxAPIutils = {
             out += geoJSON.features.forEach(gmxAPIutils.geoJSONGetArea);
         } if (geoJSON.type === 'Polygon' || geoJSON.type === 'MultiPolygon') {
             var coords = geoJSON.coordinates;
-            if (geoJSON.type === 'Polygon') {coords = [coords];}
+            if (geoJSON.type === 'Polygon') { coords = [coords]; }
             for (var i = 0, len = coords.length; i < len; i++) {
                 out += gmxAPIutils.getRingArea(coords[i][0]);
                 for (var j = 1, len1 = coords[i].length; j < len1; j++) {
@@ -1163,8 +1213,8 @@ var gmxAPIutils = {
 
     geoArea: function(geom, isMerc) {
         var i, len, ret = 0,
-            isMerc = isMerc === undefined || isMerc;
             type = geom.type || '';
+        isMerc = isMerc === undefined || isMerc;
         if (type === 'MULTIPOLYGON' || type === 'MultiPolygon') {
             for (i = 0, len = geom.coordinates.length; i < len; i++) {
                 ret += gmxAPIutils.geoArea({type: 'POLYGON', coordinates: geom.coordinates[i]}, isMerc);
@@ -1598,6 +1648,11 @@ L.extend(L.gmxUtil, {
     formatCoordinates: function (latlng, type) {
         return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
     },
+    formatDegrees: gmxAPIutils.formatDegrees,
+    pad2: gmxAPIutils.pad2,
+    trunc: gmxAPIutils.trunc,
+    LatLonFormatCoordinates: gmxAPIutils.LatLonFormatCoordinates,
+    LatLonFormatCoordinates2: gmxAPIutils.LatLonFormatCoordinates2,
     getLength: gmxAPIutils.getLength,
     prettifyDistance: gmxAPIutils.prettifyDistance,
     getArea: gmxAPIutils.getArea,
@@ -1608,6 +1663,7 @@ L.extend(L.gmxUtil, {
     getGeoJSONSummary: gmxAPIutils.getGeoJSONSummary,
     getPropertiesHash: gmxAPIutils.getPropertiesHash,
     distVincenty: gmxAPIutils.distVincenty,
+    parseCoordinates: gmxAPIutils.parseCoordinates,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength

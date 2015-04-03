@@ -54,7 +54,7 @@ L.LabelsLayer = L.Class.extend({
                 if (txt) {
                     if (!('center' in options)) {
                         var center = gmxAPIutils.getItemCenter(item, gmx.dataManager.getItemMembers(item.id));
-                        if (!center) {continue;}
+                        if (!center) { continue; }
                         options.center = center;
                     }
                     if (!('label' in options) || options.label.txt !== txt) {

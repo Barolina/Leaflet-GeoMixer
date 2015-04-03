@@ -24,7 +24,7 @@ L.gmx.VectorLayer.include({
                 dy = dx;
             }
 
-            if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) {continue;}
+            if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) { continue; }
 
             var geom = geoItem[geoItem.length - 1],
                 fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage,
@@ -56,7 +56,7 @@ L.gmx.VectorLayer.include({
             }
 
             if (chktype === 'LINESTRING') {
-                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) {continue;}
+                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) { continue; }
             } else if (chktype === 'LIKEMULTILINESTRING') {
                 ph.delta = lineWidth / mInPixel;
                 var flag = false,
@@ -71,7 +71,7 @@ L.gmx.VectorLayer.include({
                         break;
                     }
                 }
-                if (!flag) {continue;}
+                if (!flag) { continue; }
             } else if (chktype === 'MULTILINESTRING') {
                 ph.delta = lineWidth / mInPixel;
                 ph.hidden = hiddenLines;
@@ -98,10 +98,10 @@ L.gmx.VectorLayer.include({
                         }
                     }
                 }
-                if (!flag) {continue;}
+                if (!flag) { continue; }
             } else if (chktype === 'POINT') {
                 coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx * iconScale, dy * iconScale);
-                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) {continue;}
+                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) { continue; }
             }
 
             return {

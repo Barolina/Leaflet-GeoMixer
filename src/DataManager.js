@@ -112,7 +112,7 @@ var gmxDataManager = L.Class.extend({
 
                 for (var j = 0, len1 = data.length; j < len1; j++) {
                     var dataOption = tile.dataOptions[j];
-                    if (!observer.intersects(dataOption.bounds)) {continue;}
+                    if (!observer.intersects(dataOption.bounds)) { continue; }
 
                     var it = data[j],
                         id = it[0],
@@ -129,7 +129,7 @@ var gmxDataManager = L.Class.extend({
                         }
                     }
 
-                    if (isFiltered) {continue;}
+                    if (isFiltered) { continue; }
 
                     var type = geom.type;
 
@@ -168,7 +168,7 @@ var gmxDataManager = L.Class.extend({
                 item = this._items[id];
             // TODO: old properties null = ''
             for (var j = 0, len1 = it.length; j < len1; j++) {
-                if (it[j] === null) {it[j] = '';}
+                if (it[j] === null) { it[j] = ''; }
             }
             if (item) {
                 if (item.type.indexOf('MULTI') === -1) {
@@ -572,14 +572,14 @@ var gmxDataManager = L.Class.extend({
         if (processing.Inserted) {
             for (i = 0, len = processing.Inserted.length; i < len; i++) {
                 it = processing.Inserted[i];
-                if (!skip[it.id]) {out[it.id] = it;}
+                if (!skip[it.id]) { out[it.id] = it; }
             }
         }
 
         if (processing.Updated) {
             for (i = 0, len = processing.Updated.length; i < len; i++) {
                 it = processing.Updated[i];
-                if (!skip[it.id]) {out[it.id] = it;}
+                if (!skip[it.id]) { out[it.id] = it; }
             }
         }
 

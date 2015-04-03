@@ -96,9 +96,9 @@ var gmxStyleManager = function(gmx) {
         for (i = 0, len = rg.addColorStop.length; i < len; i++) {
             arr = rg.addColorStop[i];
             var resFunc = [
-                    (typeof (arr[0]) === 'string' ? parsers.parseExpression(arr[0]) : null)
-                    ,(typeof (arr[1]) === 'string' ? parsers.parseExpression(arr[1]) : null)
-                    ,(typeof (arr[2]) === 'string' ? parsers.parseExpression(arr[2]) : null)
+                    (typeof (arr[0]) === 'string' ? parsers.parseExpression(arr[0]) : null),
+                    (typeof (arr[1]) === 'string' ? parsers.parseExpression(arr[1]) : null),
+                    (typeof (arr[2]) === 'string' ? parsers.parseExpression(arr[2]) : null)
                 ];
             rg.addColorStopFunctions.push(resFunc);
             if (resFunc[1] === null && resFunc[2] === null) {
@@ -140,9 +140,9 @@ var gmxStyleManager = function(gmx) {
         for (i = 0, len = lg.addColorStop.length; i < len; i++) {
             arr = lg.addColorStop[i];
             lg.addColorStopFunctions.push([
-                (typeof (arr[0]) === 'string' ? parsers.parseExpression(arr[0]) : null)
-                ,(typeof (arr[1]) === 'string' ? parsers.parseExpression(arr[1]) : null)
-                ,(typeof (arr[2]) === 'string' ? parsers.parseExpression(arr[2]) : null)
+                (typeof (arr[0]) === 'string' ? parsers.parseExpression(arr[0]) : null),
+                (typeof (arr[1]) === 'string' ? parsers.parseExpression(arr[1]) : null),
+                (typeof (arr[2]) === 'string' ? parsers.parseExpression(arr[2]) : null)
             ]);
         }
         return common;
@@ -304,8 +304,8 @@ var gmxStyleManager = function(gmx) {
                 var key1 = keys.client[i];
                 if (key1 in style) {
                     out[key1] = JSON.parse(JSON.stringify(style[key1]));
-                    if (key1 === 'fillPattern') {delete out[key1].patternColorsFunction;}
-                    if (key1 === 'fillLinearGradient') {delete out[key1].addColorStopFunctions;}
+                    if (key1 === 'fillPattern') { delete out[key1].patternColorsFunction; }
+                    if (key1 === 'fillLinearGradient') { delete out[key1].addColorStopFunctions; }
                 }
             }
         }

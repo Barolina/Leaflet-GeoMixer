@@ -128,7 +128,7 @@ var ProjectiveImage = function() {
 				}
 				// Subtract this row from all other rows (scaled).
 				for (var y = 0; y < this.h; ++y) {
-					if (y === yp) {continue;}
+					if (y === yp) { continue; }
 					var factor = temp[y][yp];
 					temp[y][yp] = 0;
 					for (x = yp + 1; x < this.w; ++x) {

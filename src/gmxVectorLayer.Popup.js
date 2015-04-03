@@ -177,7 +177,7 @@ L.gmx.VectorLayer.include({
 
             this._popup._state = type;
             if (type === 'click') {
-                if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) {return;}
+                if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
                 this._popup.options.closeButton = this._popup.options.autoPan = true;
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {

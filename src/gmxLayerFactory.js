@@ -75,7 +75,7 @@ L.gmx.loadMap = function(mapID, options) {
             layer;
 
         if (options.leafletMap || options.setZIndex) {
-            for (var l = loadedMap.layers.length - 1; l >= 0 ; l--) {
+            for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                 layer = loadedMap.layers[l];
                 if (options.setZIndex) {
                     var zIndex = curZIndex++;
