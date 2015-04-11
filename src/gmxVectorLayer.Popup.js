@@ -198,6 +198,9 @@ L.gmx.VectorLayer.include({
                 gmx: outItem
             });
             this._popup._initLayout();
+            if (type === 'mouseover') {
+                this._popup._container.style.marginBottom = '7px';
+            }
             this._map.openPopup(this._popup);
         }
     }

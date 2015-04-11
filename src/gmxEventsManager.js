@@ -34,6 +34,11 @@ var GmxEventsManager = L.Handler.extend({
             return 0;
         };
 
+        var skipNodeName = {
+            IMG: true,
+            path: true
+        };
+
         var eventCheck = function (ev) {
             var type = ev.type;
             _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
@@ -41,32 +46,34 @@ var GmxEventsManager = L.Handler.extend({
             if (_this._map._animatingZoom || _this._drawstart || (type === 'mousemove' &&  _this._map.gmxMouseDown)) {
                 return;
             }
-
             _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
 
             var objId = 0,
                 layer,
                 cursor = '';
-            var arr = Object.keys(_this._layers).sort(function(a, b) {
-                var la = _this._map._layers[a],
-                    lb = _this._map._layers[b];
-                if (la && lb) {
-                    var oa = la.options, ob = lb.options,
-                        za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
-                        zb = (ob.zoomOffset || 0) + (ob.zIndex || 0),
-                        delta = zb - za;
-                    return delta ? delta : _this._layers[b] - _this._layers[a];
-                }
-                return 0;
-            });
-            for (var i = 0, len = arr.length; i < len; i++) {
-                var id = arr[i];
-                layer = _this._map._layers[id];
-                if (layer && !layer._animating) {
-                    objId = layer.gmxEventCheck(ev);
-                    if (objId) {
-                        cursor = 'pointer';
-                        break;
+
+            if (!skipNodeName[ev.originalEvent.target.nodeName]) {
+                var arr = Object.keys(_this._layers).sort(function(a, b) {
+                    var la = _this._map._layers[a],
+                        lb = _this._map._layers[b];
+                    if (la && lb) {
+                        var oa = la.options, ob = lb.options,
+                            za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
+                            zb = (ob.zoomOffset || 0) + (ob.zIndex || 0),
+                            delta = zb - za;
+                        return delta ? delta : _this._layers[b] - _this._layers[a];
+                    }
+                    return 0;
+                });
+                for (var i = 0, len = arr.length; i < len; i++) {
+                    var id = arr[i];
+                    layer = _this._map._layers[id];
+                    if (layer && !layer._animating) {
+                        objId = layer.gmxEventCheck(ev);
+                        if (objId) {
+                            cursor = 'pointer';
+                            break;
+                        }
                     }
                 }
             }
