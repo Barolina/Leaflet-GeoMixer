@@ -113,7 +113,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var _this = this,
             gmx = this._gmx;
 
-        gmx.map = map;
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
 
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
@@ -858,5 +857,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     addRenderHook: function(renderHook) {
         this._gmx.renderHooks.push(renderHook);
         this.repaint();
+    }, 
+    
+    getGmxProperties: function() {
+        return this._gmx.properties;
     }
 });
