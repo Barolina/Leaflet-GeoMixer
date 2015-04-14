@@ -20,15 +20,14 @@ Build
 
 [NodeJS](http://nodejs.org/) is required to build the plugin.
 
-Install `jake` (globally) and other plugins dependencies:
+Install plugins dependencies:
 ```
-npm install -g jake
 npm install
 ```
 
 Run the following command to build production version:
 ```
-jake
+npm run-script build
 ```
 
 File `leaflet-geomixer.js` will appear in `dist` forder. Do not commit this file to the repository!
