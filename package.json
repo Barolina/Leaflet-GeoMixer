@@ -11,5 +11,8 @@
 		"type": "git",
 		"url": "git://github.com/ScanEx/Leaflet-GeoMixer.git"
 	},
-	"keywords": ["gis", "leaflet", "geomixer"]
+	"keywords": ["gis", "leaflet", "geomixer"],
+	"scripts": {
+		"build": "./node_modules/jake/bin/cli.js"
+	}
 }
