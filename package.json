@@ -13,6 +13,6 @@
 	},
 	"keywords": ["gis", "leaflet", "geomixer"],
 	"scripts": {
-		"build": "./node_modules/jake/bin/cli.js"
+		"build": "jake"
 	}
 }
