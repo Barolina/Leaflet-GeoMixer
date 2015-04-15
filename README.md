@@ -20,18 +20,18 @@ Build
 
 [NodeJS](http://nodejs.org/) is required to build the plugin.
 
-Install plugins dependencies:
+Install plugin dependencies:
 ```
 npm install
 ```
 
 Run the following command to build production version:
 ```
-npm run-script build
+npm run build
 ```
 
 File `leaflet-geomixer.js` will appear in `dist` forder. Do not commit this file to the repository!
 
-You can use plugin without building including file `build/leaflet-geomixer-dev.js`. Note, that this script loads all the sources dynamically and should not be used for production deployment.
+The plugin can be used without building, by including file `build/leaflet-geomixer-dev.js`. Note, that this script loads all the sources dynamically and should not be used for production deployment.
 
 List of source files is maintained in file `build/deps.js`. It should be updated properly for correct builds.
