@@ -88,6 +88,10 @@ var layersVersion = {
         var _gmx = layer._gmx,
             prop = _gmx.properties;
 
+        if (_gmx.layerID in layers) {
+            return;
+        }
+
         if ('LayerVersion' in prop) {
             layers[_gmx.layerID] = layer;
             _gmx._chkVersion = function () {

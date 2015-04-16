@@ -30,14 +30,18 @@ var gmxObserver = L.Class.extend({
     },
 
     activate: function() {
-        this.active = true;
-        this.fire('activate');
+        if (!this.active) {
+            this.active = true;
+            this.fire('activate');
+        }
         return this;
     },
 
     deactivate: function() {
-        this.active = false;
-        this.fire('activate');
+        if (this.active) {
+            this.active = false;
+            this.fire('activate');
+        }
         return this;
     },
 

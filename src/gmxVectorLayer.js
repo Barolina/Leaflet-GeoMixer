@@ -127,8 +127,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.shiftY = 0;
         }
         if (gmx.properties.type === 'Vector') {
-            if (!('chkUpdate' in this.options)) { this.options.chkUpdate = true; }
-            L.gmx.layersVersion.add(this);
             map.on('moveend', this._moveEnd, this);
         }
         this.fire('add');
@@ -165,7 +163,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             map.off('moveend', this._updateShiftY, this);
         }
         if (gmx.properties.type === 'Vector') {
-            L.gmx.layersVersion.remove(this);
             map.off('moveend', this._moveEnd, this);
         }
         this.fire('remove');
@@ -187,6 +184,19 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.initLayerData(ph);
         gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
+        
+        gmx.dataManager.on('observeractivate', function() {
+            if (gmx.dataManager.getActiveObserversCount()) {
+                L.gmx.layersVersion.add(this);
+            } else {
+                L.gmx.layersVersion.remove(this);
+            }
+        }, this)
+        
+        if (gmx.properties.type === 'Vector' && !('chkUpdate' in this.options)) {
+            this.options.chkUpdate = true; //Check updates for vector layers by default
+        }
+        
         this.initPromise.resolve();
         return this;
     },
