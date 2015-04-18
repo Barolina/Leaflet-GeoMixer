@@ -140,6 +140,25 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
 | mouseout | `<Event>` | mouseout на объекте векторного слоя
 | contextmenu | `<Event>` | contextmenu на объекте векторного слоя
 
+###Event object
+
+Расширяет [Leaflet Event](http://leafletjs.com/reference.html#event-objects)
+
+Свойство|Тип|Описание
+------|:---------:|-----------
+gmx.target|`<VectorTile item>`| Объект векторного слоя на котором произошло событие.
+gmx.id|`<UInt>`| Идентификатор объекта.
+gmx.layer|`<gmxVectorLayer>`| Слой которому принадлежит `gmx.target`.
+
+###VectorTile item
+
+Свойство|Тип|Описание
+------|:---------:|-----------
+id|`<UInt>`| Идентификатор объекта.
+properties|`<attribute[]>`| Массив атрибутов (первый элемент - id объекта, последний - геометрия части объекта).
+dataOption|`<Object>`| Дополнительная информация.
+item|`<Object>`| Дополнительная информация объекта.
+
 ## StyleFilter - объект стиля слоя
 
       // массив стилевых фильтров слоя (по умолчанию: '[стилевой фильтр по умолчанию]')  
