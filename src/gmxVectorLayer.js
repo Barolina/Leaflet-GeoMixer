@@ -180,7 +180,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         gmx.properties = ph.properties;
         gmx.geometry = ph.geometry;
-        
+
         // Original properties from the server.
         // Descendant classes can override this property
         // Not so good solution, but it works
@@ -189,7 +189,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.initLayerData(ph);
         gmx.dataManager = new gmxDataManager(gmx, ph);
         gmx.styleManager = new gmxStyleManager(gmx);
-        
+
         gmx.dataManager.on('observeractivate', function() {
             if (gmx.dataManager.getActiveObserversCount()) {
                 L.gmx.layersVersion.add(this);
@@ -197,11 +197,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 L.gmx.layersVersion.remove(this);
             }
         }, this)
-        
+
         if (gmx.properties.type === 'Vector' && !('chkUpdate' in this.options)) {
             this.options.chkUpdate = true; //Check updates for vector layers by default
         }
-        
+
         this.initPromise.resolve();
         return this;
     },
@@ -872,8 +872,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     addRenderHook: function(renderHook) {
         this._gmx.renderHooks.push(renderHook);
         this.repaint();
-    }, 
-    
+    },
+
     //get original properties from the server
     getGmxProperties: function() {
         return this._gmx.rawProperties;

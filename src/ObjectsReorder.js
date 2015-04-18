@@ -2,9 +2,9 @@
  * ObjectsReorder  - Reorder objects in Gemixer layer
  */
 !function() {
-    
+
 var MAX = 1000000;
-    
+
 var ObjectsReorder = function (layer) {
     this.all = {};
     this.layer = layer;
@@ -55,7 +55,7 @@ ObjectsReorder.prototype = {
         top.map(function (id) { this.addToReorder(id); });
         this.layer.repaint();
     },
-    
+
     getSortedItems: function (arr) {
         return arr.sort(this.count > 0 ? this.gmx.sortItems : this.sortFunc);
     },
@@ -78,9 +78,9 @@ ObjectsReorder.prototype = {
         };
         this.layer.repaint();
     },
-    
-    disableFlip: function() {this.disabled = true;},
-    enableFlip: function() {this.disabled = false;}
+
+    disableFlip: function() { this.disabled = true; },
+    enableFlip: function() { this.disabled = false; }
 };
 
 L.gmx.VectorLayer.addInitHook(function () {

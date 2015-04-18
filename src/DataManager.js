@@ -305,18 +305,18 @@ var gmxDataManager = L.Class.extend({
         _this._needCheckDateInterval = true;
         this._observers[id] = observer;
         this._waitCheckObservers();
-        
+
         if (observer.isActive()) {
             this.fire('observeractivate');
         }
 
         return observer;
     },
-    
+
     getActiveObserversCount: function() {
         var count = 0;
         for (var k in this._observers) {
-            if (this._observers[k].isActive()) { count++; };
+            if (this._observers[k].isActive()) { count++; }
         }
         return count;
     },
@@ -328,9 +328,9 @@ var gmxDataManager = L.Class.extend({
     removeObserver: function(id) {
         if (this._observers[id]) {
             var isActive = this._observers[id].isActive();
-            
+
             delete this._observers[id];
-            
+
             if (isActive) {
                 this.fire('observeractivate');
             }
