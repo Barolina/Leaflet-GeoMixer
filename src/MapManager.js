@@ -103,8 +103,14 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
 
         layer.initFromDescription(layerInfo);
 
-        _this.layers.push(layer);
-        _this.layersByTitle[props.title] = layer;
-        _this.layersByID[props.name] = layer;
+        _this.addLayer(layer);
     });
 };
+
+gmxMap.prototype.addLayer = function(layer) {
+    var props = layer.getGmxProperties();
+    
+    this.layers.push(layer);
+    this.layersByTitle[props.title] = layer;
+    this.layersByID[props.name] = layer;
+}
