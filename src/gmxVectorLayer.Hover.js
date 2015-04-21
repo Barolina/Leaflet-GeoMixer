@@ -137,7 +137,7 @@ L.gmx.VectorLayer.include({
             || this.hasEventListeners('mouseout')
             || this.hasEventListeners(type)
             )) {
-            var zKey = ev.originalEvent.target.id;
+            var zKey = ev.originalEvent.target.zKey;
             if (!zKey) {
                 var pos = layer._map.gmxMousePos,
                     px = pos.x + gmx.shiftX,

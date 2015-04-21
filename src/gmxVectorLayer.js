@@ -38,7 +38,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
 
         this.on('tileunload', function(e) {
-            _this._clearTileSubscription(e.tile.id);
+            _this._clearTileSubscription(e.tile.zKey);
         });
     },
 
@@ -593,7 +593,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
 
         var tile = this._getTile();
-        tile.id = tKey;
+        //tile.id = tKey;
         tile._zoom = this._map._zoom;
         tile._layer = this;
         tile._tileComplete = true;

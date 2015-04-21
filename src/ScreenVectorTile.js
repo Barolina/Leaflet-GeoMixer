@@ -427,7 +427,7 @@ ScreenVectorTile.prototype = {
                 ctx: ctx
             };
 
-        tile.id = this.zKey;
+        tile.zKey = this.zKey;
         if (gmx.sortItems) {
             geoItems = gmx.objectsReorder.getSortedItems(geoItems);
         }
