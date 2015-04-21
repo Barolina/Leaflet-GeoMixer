@@ -49,9 +49,6 @@
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
 	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
 
-    <link rel="stylesheet" href="http://scanex.github.io/gmxControls/src/css/L.Control.gmxCenter.css" />
-	<script src="http://scanex.github.io/gmxControls/src/js/L.Control.gmxCenter.js"></script>
-
 	<script>
 		var map = L.map('map').setView([55.726456, 37.760009], 1);
 
@@ -59,8 +56,6 @@
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
 		}).addTo(map);
-
-        map.addControl(L.control.gmxCenter({color: 'black'}));// default options = {color: '#216b9c'}
 
         var canvas = document.createElement('canvas');
         canvas.width = 200, canvas.height = 500;
@@ -96,8 +91,6 @@
                     }
                 }
               });
-
-            //testLayer.addTo(map);
 
             document.getElementById("result").appendChild(canvas);
             
