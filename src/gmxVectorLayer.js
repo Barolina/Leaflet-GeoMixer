@@ -877,5 +877,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     //get original properties from the server
     getGmxProperties: function() {
         return this._gmx.rawProperties;
+    },
+    
+    //returns L.LatLngBounds
+    getBounds: function() {
+        var gmxBounds = gmxAPIutils.geoItemBounds(this._gmx.geometry).bounds,
+            proj = L.Projection.Mercator;
+        
+        return L.latLngBounds([proj.unproject(gmxBounds.min), proj.unproject(gmxBounds.max)])
     }
 });
