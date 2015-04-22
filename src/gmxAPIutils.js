@@ -1,3 +1,7 @@
+/** 
+* @name L.gmxUtil
+* @namespace
+*/
 var gmxAPIutils = {
     lastMapId: 0,
 
@@ -19,6 +23,7 @@ var gmxAPIutils = {
     },
 
     /** Sends JSONP requests
+     * @memberof L.gmxUtil
      * @param {String} url - request URL
      * @param {Object} params - request params
      * @param {Object} [options] - additional request options
@@ -201,6 +206,12 @@ var gmxAPIutils = {
         ];
     },
 
+    /** Get hash properties from array properties
+     * @memberof L.gmxUtil
+     * @param {Array} properties in Array format
+     * @param {Object} keys indexes
+     * @return {Object} properties in Hash format
+    */
     getPropertiesHash: function(arr, indexes) {
         var properties = {};
         for (var key in indexes) {
@@ -716,14 +727,17 @@ var gmxAPIutils = {
 		return s;
 	},
 
+    /** Get point coordinates from string
+     * @memberof L.gmxUtil
+     * @param {String} text - point coordinates in following formats: 
+         <br/><i>55.74312, 37.61558</i>
+         <br/><i>55°44'35" N, 37°36'56" E</i>
+         <br/><i>4187347, 7472103</i>
+     * @return {Array} [lng, lat] or null
+    */
     parseCoordinates: function(text) {
-        // should understand the following formats:
-        // 55.74312, 37.61558
-        // 55°44'35" N, 37°36'56" E
-        // 4187347, 7472103
-
         if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
-            return false;
+            return null;
         }
         if (text.indexOf(' ') !== -1) {
             text = text.replace(/,/g, '.');
@@ -735,7 +749,7 @@ var gmxAPIutils = {
             results.push(t[1]);
         }
         if (results.length < 2) {
-            return false;
+            return null;
         }
         var ii = Math.floor(results.length / 2),
             x = 0,
@@ -781,6 +795,12 @@ var gmxAPIutils = {
 		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + '\'' + a3 + '"';
 	},
 
+    /** Get point coordinates in string format with degrees
+     * @memberof L.gmxUtil
+     * @param {Number} lng - point longitude 
+     * @param {Number} lat - point latitude 
+     * @return {String} point coordinates in string format with degrees
+    */
 	LatLonFormatCoordinates: function(x, y) {
 		return  gmxAPIutils.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
@@ -790,6 +810,12 @@ var gmxAPIutils = {
 		return  gmxAPIutils.LatLonFormatCoordinates(x, y);
 	},
 
+    /** Get point coordinates in string format
+     * @memberof L.gmxUtil
+     * @param {Number} lng - point longitude 
+     * @param {Number} lat - point latitude 
+     * @return {String} point coordinates in string format
+    */
 	LatLonFormatCoordinates2: function(x, y) {
 		return  gmxAPIutils.trunc(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.trunc(Math.abs(x)) + (x > 0 ? ' E' : ' W');
@@ -1005,6 +1031,12 @@ var gmxAPIutils = {
         return false;
     },
 
+    /** Get length
+     * @memberof L.gmxUtil
+     * @param {Array} latlngs array
+     * @param {Boolean} isMerc - true if coordinates in Mercator
+     * @return {Number} length
+    */
     getLength: function(latlngs, isMerc) {
         var length = 0;
         if (latlngs && latlngs.length) {
@@ -1033,6 +1065,12 @@ var gmxAPIutils = {
         return length;
     },
 
+    /** Get prettify length
+     * @memberof L.gmxUtil
+     * @param {Number} area
+     * @param {String} type: ('km', 'm')
+     * @return {String} prettify length
+    */
     prettifyDistance: function(length, type) {
         var km = ' ' + L.gmxLocale.getText('units.km');
         if (type === 'km') {
@@ -1045,6 +1083,11 @@ var gmxAPIutils = {
         return Math.round(length / 1000) + km;
     },
 
+    /** Get geoJSON length
+     * @memberof L.gmxUtil
+     * @param {Object} geojson - object in <a href="http://geojson.org/geojson-spec.html">GeoJSON format</a>
+     * @return {Number} length
+    */
     geoJSONGetLength: function(geoJSON) {
         var out = 0,
             i, j, len, len1, coords;
@@ -1094,6 +1137,11 @@ var gmxAPIutils = {
         return length;
     },
 
+    /** Get geoJSON area
+     * @memberof L.gmxUtil
+     * @param {Object} geojson - object in <a href="http://geojson.org/geojson-spec.html">GeoJSON format</a>
+     * @return {Number} area
+    */
     geoJSONGetArea: function(geoJSON) {
         var out = 0;
 
@@ -1127,6 +1175,11 @@ var gmxAPIutils = {
         return out;
     },
 
+    /** Get area
+     * @memberof L.gmxUtil
+     * @param {Array} L.latLng array
+     * @return {Number} area
+    */
     getArea: function(arr) {
         var area = 0;
         for (var i = 0, len = arr.length; i < len; i++) {
@@ -1138,6 +1191,12 @@ var gmxAPIutils = {
         return out;
     },
 
+    /** Get prettify area
+     * @memberof L.gmxUtil
+     * @param {Number} area
+     * @param {String} type: ('km2', 'ha', 'm2')
+     * @return {String} prettify area
+    */
     prettifyArea: function(area, type) {
         var km2 = ' ' + L.gmxLocale.getText('units.km2');
 
@@ -1171,6 +1230,12 @@ var gmxAPIutils = {
         return ret;
     },
 
+    /** Parse Geomixer geometry to geoJSON geometry
+     * @memberof L.gmxUtil
+     * @param {Object} geometry - Geomixer geometry
+     * @param {Boolean} mercFlag - true if coordinates in Mercator
+     * @return {Object} geoJSON geometry
+    */
     geometryToGeoJSON: function (geom, mercFlag) {
         var type = geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
                 : geom.type === 'POLYGON' ? 'Polygon'
@@ -1211,6 +1276,12 @@ var gmxAPIutils = {
         return latlngs;
     },
 
+    /** Get area for geometry
+     * @memberof L.gmxUtil
+     * @param {Object} geometry
+     * @param {Boolean} isMerc - true if coordinates in Mercator
+     * @return {Number} area
+    */
     geoArea: function(geom, isMerc) {
         var i, len, ret = 0,
             type = geom.type || '';
@@ -1240,6 +1311,12 @@ var gmxAPIutils = {
         return 0;
     },
 
+    /** Get summary for geoJSON geometry
+     * @memberof L.gmxUtil
+     * @param {Object} geoJSON geometry
+     * @param {Boolean} isMerc - true if coordinates in Mercator
+     * @return {String} Summary string for geometry
+    */
     getGeoJSONSummary: function(geom, isMerc) {
         var type = geom.type,
             out = 0,
@@ -1267,6 +1344,12 @@ var gmxAPIutils = {
         return out;
     },
 
+    /** Get summary for geometries array
+     * @memberof L.gmxUtil
+     * @param {Array} geometries array in Geomixer format
+     * @param {Object} units format for length and area
+     * @return {String} Summary string for geometries array
+    */
     getGeometriesSummary: function(arr, units) {
         var out = '',
             type = '',
@@ -1765,7 +1848,7 @@ L.extend(L.gmxUtil, {
 (function()
 {
 	/** Посылает кроссдоменный POST запрос
-	* @namespace utilities
+	* @namespace L.gmxUtil
     * @ignore
 	* @function
 	*
