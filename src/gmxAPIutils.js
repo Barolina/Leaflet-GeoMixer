@@ -143,7 +143,7 @@ var gmxAPIutils = {
 		};
     },
 
-    geoItemBounds: function(geo) {  // get bounds by geometry
+    geoItemBounds: function(geo) {  // get item bounds array by geometry
         var type = geo.type,
             coords = geo.coordinates,
             b = null,
@@ -151,7 +151,7 @@ var gmxAPIutils = {
             len = 0,
             bounds = null,
             boundsArr = [];
-        if (type === 'MULTIPOLYGON') {
+        if (type === 'MULTIPOLYGON' || type === 'MultiPolygon') {
             bounds = gmxAPIutils.bounds();
             for (i = 0, len = coords.length; i < len; i++) {
                 var arr1 = [];
@@ -162,25 +162,25 @@ var gmxAPIutils = {
                 }
                 boundsArr.push(arr1);
             }
-        } else if (type === 'POLYGON') {
+        } else if (type === 'POLYGON' || type === 'Polygon') {
             bounds = gmxAPIutils.bounds();
             for (i = 0, len = coords.length; i < len; i++) {
                 b = gmxAPIutils.bounds(coords[i]);
                 boundsArr.push(b);
                 if (i === 0) { bounds.extendBounds(b); }
             }
-        } else if (type === 'POINT') {
+        } else if (type === 'POINT' || type === 'Point') {
             bounds = gmxAPIutils.bounds([coords]);
-        } else if (type === 'MULTIPOINT') {
+        } else if (type === 'MULTIPOINT' || type === 'MultiPoint') {
             bounds = gmxAPIutils.bounds();
             for (i = 0, len = coords.length; i < len; i++) {
                 b = gmxAPIutils.bounds([coords[i]]);
                 bounds.extendBounds(b);
             }
-        } else if (type === 'LINESTRING') {
+        } else if (type === 'LINESTRING' || type === 'LineString') {
             bounds = gmxAPIutils.bounds(coords);
             //boundsArr.push(bounds);
-        } else if (type === 'MULTILINESTRING') {
+        } else if (type === 'MULTILINESTRING' || type === 'MultiLineString') {
             bounds = gmxAPIutils.bounds();
             for (i = 0, len = coords.length; i < len; i++) {
                 b = gmxAPIutils.bounds([coords[i]]);
@@ -192,6 +192,16 @@ var gmxAPIutils = {
             bounds: bounds,
             boundsArr: boundsArr
         };
+    },
+
+    /** Get bounds from geometry
+     * @memberof L.gmxUtil
+     * @param {geometry} geometry - Geomixer or geoJSON data format
+     * @return {Object} bounds
+    */
+    getGeometryBounds: function(geo) {
+        var pt = gmxAPIutils.geoItemBounds(geo);
+        return pt.bounds;
     },
 
     getMarkerPolygon: function(bounds, dx, dy) {
@@ -1724,6 +1734,7 @@ L.extend(L.gmxUtil, {
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
     bounds: gmxAPIutils.bounds,
+    getGeometryBounds: gmxAPIutils.getGeometryBounds,
     tileSizes: gmxAPIutils.tileSizes,
     getUTCdate: gmxAPIutils.getUTCdate,
     getUTCtime: gmxAPIutils.getUTCtime,
@@ -1733,6 +1744,7 @@ L.extend(L.gmxUtil, {
     },
     formatDegrees: gmxAPIutils.formatDegrees,
     pad2: gmxAPIutils.pad2,
+    dec2hex: gmxAPIutils.dec2hex,
     trunc: gmxAPIutils.trunc,
     LatLonFormatCoordinates: gmxAPIutils.LatLonFormatCoordinates,
     LatLonFormatCoordinates2: gmxAPIutils.LatLonFormatCoordinates2,
