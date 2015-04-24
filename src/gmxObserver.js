@@ -1,5 +1,5 @@
 //Single observer with vector data
-var gmxObserver = L.Class.extend({
+var Observer = L.Class.extend({
     includes: L.Mixin.Events,
     /* options : {
             type: 'resend | update',     // `resend` - send all data (like screen tile observer)
@@ -161,14 +161,14 @@ var gmxObserver = L.Class.extend({
                 minX1 = -180; maxX1 = maxX - 360; maxX = 180;
             }
         }
-        var m1 = L.Projection.Mercator.project(new L.latLng([minY, minX])),
-            m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX]));
+        var m1 = L.Projection.Mercator.project(L.latLng(minY, minX)),
+            m2 = L.Projection.Mercator.project(L.latLng(maxY, maxX));
 
         this.bbox = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         this.bbox1 = null;
         if (minX1) {
-            m1 = L.Projection.Mercator.project(new L.latLng([minY, minX1]));
-            m2 = L.Projection.Mercator.project(new L.latLng([maxY, maxX1]));
+            m1 = L.Projection.Mercator.project(L.latLng(minY, minX1));
+            m2 = L.Projection.Mercator.project(L.latLng(maxY, maxX1));
             this.bbox1 = gmxAPIutils.bounds([[m1.x, m1.y], [m2.x, m2.y]]);
         }
 

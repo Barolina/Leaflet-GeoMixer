@@ -1,4 +1,4 @@
-var gmxDataManager = L.Class.extend({
+var DataManager = L.Class.extend({
     includes: L.Mixin.Events,
     initialize: function(gmx) {
         var _this = this,
@@ -19,7 +19,7 @@ var gmxDataManager = L.Class.extend({
 
         this._needCheckDateInterval = false;
         this._needCheckActiveTiles = true;
-        this._processingTileKey = gmxVectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1);
+        this._processingTileKey = VectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1);
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -281,7 +281,7 @@ var gmxDataManager = L.Class.extend({
     addObserver: function(options, id) {
         id = id || 's' + (this._freeSubscrID++);
         var _this = this,
-            observer = new gmxObserver(options);
+            observer = new Observer(options);
 
         observer.id = id;
         observer.needRefresh = true;
@@ -502,7 +502,7 @@ var gmxDataManager = L.Class.extend({
             loadingDefs.push(loadDef);
         }
 
-        return gmxDeferred.all.apply(null, loadingDefs);
+        return Deferred.all.apply(null, loadingDefs);
     },
 
     _updateActiveTilesList: function(newTilesList) {
@@ -514,7 +514,7 @@ var gmxDataManager = L.Class.extend({
             key;
 
         var checkSubscription = function(vKey) {
-            var bounds = gmxVectorTile.boundsFromTileKey(vKey),
+            var bounds = VectorTile.boundsFromTileKey(vKey),
                 observers = _this._observers;
 
             for (var sid in observers) {
@@ -650,11 +650,11 @@ var gmxDataManager = L.Class.extend({
             if ('s' in options) { s = options.s; }
             if ('d' in options) { d = options.d; }
         }
-        var tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d),
+        var tileKey = VectorTile.makeTileKey(x, y, z, v, s, d),
             tileLink = this._tiles[tileKey];
         if (!tileLink) {
             tileLink = this._tiles[tileKey] = {
-                tile: new gmxVectorTile({load: function(x, y, z, v, s, d, callback) {
+                tile: new VectorTile({load: function(x, y, z, v, s, d, callback) {
                             callback([]);
                         }}, x, y, z, v, s, d)
             };
@@ -720,15 +720,15 @@ var gmxDataManager = L.Class.extend({
                 s = Number(arr1[1]),
                 d = Number(arr1[0]),
                 v = Number(vers[i]),
-                tileKey = gmxVectorTile.makeTileKey(x, y, z, v, s, d);
+                tileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
 
             newTiles[tileKey] = this._tiles[tileKey] || {
-                tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
+                tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
             };
         }
         this._tiles = newTiles;
 
-        this._tilesTree = new gmxTilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
+        this._tilesTree = new TilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
         if (this.processingTile) {
             this._tiles[this._processingTileKey] = {
@@ -749,10 +749,10 @@ var gmxDataManager = L.Class.extend({
                     y = Number(arr[i + 1]),
                     x = Number(arr[i]),
                     v = Number(vers[cnt]),
-                    tileKey = gmxVectorTile.makeTileKey(x, y, z, v, -1, -1);
+                    tileKey = VectorTile.makeTileKey(x, y, z, v, -1, -1);
 
                 newTiles[tileKey] = this._tiles[tileKey] || {
-                    tile: new gmxVectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
+                    tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
                 };
 
                 newActiveTileKeys[tileKey] = true;

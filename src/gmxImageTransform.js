@@ -35,13 +35,13 @@ var gmxImageTransform = function(img, hash) {
         points.x4 = gmx.quicklookX4 ? properties[indexes[gmx.quicklookX4]] : properties[indexes.x4] || 0;
         points.y4 = gmx.quicklookY4 ? properties[indexes[gmx.quicklookY4]] : properties[indexes.y4] || 0;
         if (quicklookPlatform === 'image') {
-            var merc = L.Projection.Mercator.project(new L.latLng([points.y1, points.x1]));
+            var merc = L.Projection.Mercator.project(L.latLng(points.y1, points.x1));
             points.x1 = merc.x; points.y1 = merc.y;
-            merc = L.Projection.Mercator.project(new L.latLng([points.y2, points.x2]));
+            merc = L.Projection.Mercator.project(L.latLng(points.y2, points.x2));
             points.x2 = merc.x; points.y2 = merc.y;
-            merc = L.Projection.Mercator.project(new L.latLng([points.y3, points.x3]));
+            merc = L.Projection.Mercator.project(L.latLng(points.y3, points.x3));
             points.x3 = merc.x; points.y3 = merc.y;
-            merc = L.Projection.Mercator.project(new L.latLng([points.y4, points.x4]));
+            merc = L.Projection.Mercator.project(L.latLng(points.y4, points.x4));
             points.x4 = merc.x; points.y4 = merc.y;
         }
         ready = true;

@@ -1,4 +1,4 @@
-/** 
+/**
 * @name L.gmxUtil
 * @namespace
 */
@@ -29,11 +29,11 @@ var gmxAPIutils = {
      * @param {Object} [options] - additional request options
      * @param {String} [options.callbackParamName=CallbackName] - Name of param, that will be used for callback id.
        If callbackParamName is set to null, no params will be added (StaticJSONP)
-     * @return {gmxDeferred} Promise with server JSON response or with error status
+     * @return {Deferred} Promise with server JSON response or with error status
     */
 	requestJSONP: function(url, params, options) {
         options = options || {};
-        var def = new gmxDeferred();
+        var def = new L.gmx.Deferred();
 
         var script = document.createElement('script');
         script.setAttribute('charset', 'UTF-8');
@@ -739,7 +739,7 @@ var gmxAPIutils = {
 
     /** Get point coordinates from string
      * @memberof L.gmxUtil
-     * @param {String} text - point coordinates in following formats: 
+     * @param {String} text - point coordinates in following formats:
          <br/><i>55.74312, 37.61558</i>
          <br/><i>55°44'35" N, 37°36'56" E</i>
          <br/><i>4187347, 7472103</i>
@@ -807,8 +807,8 @@ var gmxAPIutils = {
 
     /** Get point coordinates in string format with degrees
      * @memberof L.gmxUtil
-     * @param {Number} lng - point longitude 
-     * @param {Number} lat - point latitude 
+     * @param {Number} lng - point longitude
+     * @param {Number} lat - point latitude
      * @return {String} point coordinates in string format with degrees
     */
 	LatLonFormatCoordinates: function(x, y) {
@@ -822,8 +822,8 @@ var gmxAPIutils = {
 
     /** Get point coordinates in string format
      * @memberof L.gmxUtil
-     * @param {Number} lng - point longitude 
-     * @param {Number} lat - point latitude 
+     * @param {Number} lng - point longitude
+     * @param {Number} lat - point latitude
      * @return {String} point coordinates in string format
     */
 	LatLonFormatCoordinates2: function(x, y) {

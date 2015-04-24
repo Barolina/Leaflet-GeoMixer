@@ -1,6 +1,6 @@
 //Single vector tile, received from GeoMixer server
 //"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
-var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
+var VectorTile = function(dataProvider, x, y, z, v, s, d) {
     var loadDef = null,
         _this = this;
 
@@ -35,7 +35,7 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
 
     this.load = function() {
         if (!loadDef) {
-            loadDef = new gmxDeferred();
+            loadDef = new L.gmx.Deferred();
             this.state = 'loading';
             dataProvider.load(x, y, z, v, s, d, function(data) {
                 _this.addData(data);
@@ -102,16 +102,17 @@ var gmxVectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 };
 
-gmxVectorTile.makeTileKey = function(x, y, z, v, s, d) {
+VectorTile.makeTileKey = function(x, y, z, v, s, d) {
     return z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
 };
 
-gmxVectorTile.parseTileKey = function(gmxTileKey) {
+VectorTile.parseTileKey = function(gmxTileKey) {
     var p = gmxTileKey.split('_');
     return {z: p[0], x: p[1], y: p[2], v: p[3], s: p[4], d: p[5]};
 };
 
-gmxVectorTile.boundsFromTileKey = function(gmxTileKey) {
-    var p = gmxVectorTile.parseTileKey(gmxTileKey);
+VectorTile.boundsFromTileKey = function(gmxTileKey) {
+    var p = VectorTile.parseTileKey(gmxTileKey);
     return gmxAPIutils.getTileBounds(p.x, p.y, p.z);
 };
+

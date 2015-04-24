@@ -4,7 +4,7 @@ var gmxMapManager = {
     getMap: function(serverHost, apiKey, mapName) {
         var maps = this._maps;
         if (!maps[serverHost] || !maps[serverHost][mapName]) {
-            var def = new gmxDeferred();
+            var def = new L.gmx.Deferred();
             maps[serverHost] = maps[serverHost] || {};
             maps[serverHost][mapName] = {promise: def};
 
@@ -109,8 +109,8 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
 
 gmxMap.prototype.addLayer = function(layer) {
     var props = layer.getGmxProperties();
-    
+
     this.layers.push(layer);
     this.layersByTitle[props.title] = layer;
     this.layersByID[props.name] = layer;
-}
+};

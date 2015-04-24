@@ -14,7 +14,7 @@ L.gmx.addLayerClass = function(type, layerClass) {
 
 L.gmx.loadLayer = function(mapID, layerID, options) {
 
-    var promise = new gmxDeferred(),
+    var promise = new L.gmx.Deferred(),
         layerParams = {
             mapID: mapID,
             layerID: layerID
@@ -58,13 +58,13 @@ L.gmx.loadLayers = function(layers, globalOptions) {
         return L.gmx.loadLayer(layerInfo.mapID, layerInfo.layerID, options);
     });
 
-    return gmxDeferred.all.apply(null, defs);
+    return L.gmx.Deferred.all.apply(null, defs);
 };
 
 L.gmx.loadMap = function(mapID, options) {
     options = options || {};
 
-    var def = new gmxDeferred(),
+    var def = new L.gmx.Deferred(),
         hostName = options.hostName || DEFAULT_HOSTNAME;
 
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(function(mapInfo) {

@@ -7,7 +7,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     initialize: function(options) {
         options = L.setOptions(this, options);
 
-        this.initPromise = new gmxDeferred();
+        this.initPromise = new L.gmx.Deferred();
 
         this._drawQueue = [];
         this._drawQueueHash = {};
@@ -187,8 +187,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.rawProperties = ph.properties;
 
         this.initLayerData(ph);
-        gmx.dataManager = new gmxDataManager(gmx, ph);
-        gmx.styleManager = new gmxStyleManager(gmx);
+        gmx.dataManager = new DataManager(gmx, ph);
+        gmx.styleManager = new StyleManager(gmx);
 
         gmx.dataManager.on('observeractivate', function() {
             if (gmx.dataManager.getActiveObserversCount()) {
@@ -196,7 +196,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             } else {
                 L.gmx.layersVersion.remove(this);
             }
-        }, this)
+        }, this);
 
         if (gmx.properties.type === 'Vector' && !('chkUpdate' in this.options)) {
             this.options.chkUpdate = true; //Check updates for vector layers by default
@@ -351,7 +351,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         var gtp = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
         var queueItem = {gtp: gtp, tp: tilePoint, z: zoom, zKey: zKey, data: data};
-        var def = queueItem.def = new gmxDeferred(function() {
+        var def = queueItem.def = new L.gmx.Deferred(function() {
             queueItem.drawDef && queueItem.drawDef.cancel();
 
             delete _this._drawQueueHash[zKey];
@@ -560,7 +560,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _gmxDrawTile: function (tilePoint, zoom, data) {
         var gmx = this._gmx,
-            def = new gmxDeferred();
+            def = new L.gmx.Deferred();
 
         if (!this._map) {
             def.reject();
@@ -878,12 +878,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     getGmxProperties: function() {
         return this._gmx.rawProperties;
     },
-    
+
     //returns L.LatLngBounds
     getBounds: function() {
         var gmxBounds = gmxAPIutils.geoItemBounds(this._gmx.geometry).bounds,
             proj = L.Projection.Mercator;
-        
-        return L.latLngBounds([proj.unproject(gmxBounds.min), proj.unproject(gmxBounds.max)])
+
+        return L.latLngBounds([proj.unproject(gmxBounds.min), proj.unproject(gmxBounds.max)]);
     }
 });

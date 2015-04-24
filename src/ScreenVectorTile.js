@@ -24,7 +24,7 @@ ScreenVectorTile.prototype = {
     _loadTileRecursive: function (gtp, urlFunction) {
         var gmx = this.gmx,
             curRequest = null,
-            def = new gmxDeferred(function() {
+            def = new L.gmx.Deferred(function() {
                 if (curRequest) { curRequest.cancel(); }
             });
 
@@ -81,7 +81,7 @@ ScreenVectorTile.prototype = {
             gmxTilePoint = this.gmxTilePoint,
             item = gmx.dataManager.getItem(idr),
             mainRasterLoader = null,
-            def = new gmxDeferred(function() {
+            def = new L.gmx.Deferred(function() {
                 mainRasterLoader.cancel();
             });
 
@@ -156,7 +156,7 @@ ScreenVectorTile.prototype = {
 
             var chkLoad = function() {
                 var recursiveLoaders = [],
-                    itemRastersPromise = new gmxDeferred(function() {
+                    itemRastersPromise = new L.gmx.Deferred(function() {
                         for (var k = 0; k < recursiveLoaders.length; k++) {
                             recursiveLoaders[k].cancel();
                         }
@@ -337,7 +337,7 @@ ScreenVectorTile.prototype = {
             _this = this,
             tbounds = this.tbounds,
             itemPromises = null,
-            def = new gmxDeferred(function() {
+            def = new L.gmx.Deferred(function() {
                 itemPromises.forEach(function(promise) {
                     if (promise) { promise.cancel(); }
                 });
@@ -391,7 +391,7 @@ ScreenVectorTile.prototype = {
         var tileRastersPromise = null,
             gmx = this.gmx,
             _this = this,
-            def = new gmxDeferred(function() {
+            def = new L.gmx.Deferred(function() {
                 if (tileRastersPromise) { tileRastersPromise.cancel(); }
                 _this.rasters = {};
             });
@@ -443,7 +443,7 @@ ScreenVectorTile.prototype = {
             _this.layer.appendTileToContainer(tile);
 
             //async chain
-            var res = new gmxDeferred(),
+            var res = new L.gmx.Deferred(),
                 hookInfo = {
                     x: _this.tilePoint.x,
                     y: _this.tilePoint.y,

@@ -1,9 +1,9 @@
 //all the methods can be called without instance itself
 //For example:
 //
-// var def = new gmxDeferred();
+// var def = new Deferred();
 // doSomething(def.resolve) (instead of doSomething(def.resolve.bind(def))
-var gmxDeferred = function(cancelFunc) {
+var Deferred = function(cancelFunc) {
     var resolveCallbacks = [],
         rejectCallbacks = [],
         isFulfilled = false,
@@ -33,14 +33,14 @@ var gmxDeferred = function(cancelFunc) {
     };
 
     var then = this.then = function(resolveCallback, rejectCallback) {
-        var def = new gmxDeferred(),
+        var def = new Deferred(),
             fulfillFunc = function(func, resolved) {
                 return function() {
                     if (!func) {
                         def._fulfill.apply([resolved].concat([].slice.call(arguments)));
                     } else {
                         var res = func.apply(null, arguments);
-                        if (res instanceof gmxDeferred) {
+                        if (res instanceof Deferred) {
                             res.then(def.resolve, def.reject);
                         } else {
                             def.resolve(res);
@@ -77,9 +77,9 @@ var gmxDeferred = function(cancelFunc) {
     };
 };
 
-gmxDeferred.all = function() {
+Deferred.all = function() {
     var defArray = [].slice.apply(arguments);
-    var resdef = new gmxDeferred();
+    var resdef = new Deferred();
     var left = defArray.length;
     var results = new Array(defArray.length);
 
@@ -97,4 +97,4 @@ gmxDeferred.all = function() {
 };
 
 L.gmx = L.gmx || {};
-L.gmx.Deferred = gmxDeferred;
+L.gmx.Deferred = Deferred;

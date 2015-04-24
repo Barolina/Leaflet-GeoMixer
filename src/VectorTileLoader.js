@@ -1,18 +1,3 @@
-window.gmxAPI = window.gmxAPI || {};
-window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || function(data) {
-    var key = gmxVectorTileLoader._getKey({
-        layerID: data.LayerName,
-        x: data.x,
-        y: data.y,
-        z: data.z,
-        d: data.level,
-        s: data.span,
-        v: data.v
-    });
-
-    gmxVectorTileLoader._loadedTiles[key] && gmxVectorTileLoader._loadedTiles[key].resolve(data.values);
-};
-
 var gmxVectorTileLoader = {
     _loadedTiles: {},
     _getKey: function(ti) {
@@ -22,7 +7,7 @@ var gmxVectorTileLoader = {
         var key = gmxVectorTileLoader._getKey(tileInfo);
 
         if (!this._loadedTiles[key]) {
-            var def = new gmxDeferred();
+            var def = new L.gmx.Deferred();
             this._loadedTiles[key] = def;
 
             var requestParams = {
@@ -47,4 +32,19 @@ var gmxVectorTileLoader = {
 
         return this._loadedTiles[key];
     }
+};
+
+window.gmxAPI = window.gmxAPI || {};
+window.gmxAPI._vectorTileReceiver = window.gmxAPI._vectorTileReceiver || function(data) {
+    var key = gmxVectorTileLoader._getKey({
+        layerID: data.LayerName,
+        x: data.x,
+        y: data.y,
+        z: data.z,
+        d: data.level,
+        s: data.span,
+        v: data.v
+    });
+
+    gmxVectorTileLoader._loadedTiles[key] && gmxVectorTileLoader._loadedTiles[key].resolve(data.values);
 };

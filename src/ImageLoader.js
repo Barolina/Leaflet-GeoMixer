@@ -1,6 +1,6 @@
-var gmxImageRequest = function(id, url, options) {
+var ImageRequest = function(id, url, options) {
     this._id = id;
-    this.def = new gmxDeferred(gmxImageLoader._cancelRequest.bind(gmxImageLoader, this));
+    this.def = new L.gmx.Deferred(gmxImageLoader._cancelRequest.bind(gmxImageLoader, this));
     this.url = url;
     this.options = options || {};
 };
@@ -125,7 +125,7 @@ var gmxImageLoader = {
 
     _add: function(atBegin, url, options) {
         var id = 'id' + this.uniqueID++;
-        var request = new gmxImageRequest(id, url, options);
+        var request = new ImageRequest(id, url, options);
         if (url in this.inProgress) {
             this.inProgress[url].requests.push(request);
         } else {

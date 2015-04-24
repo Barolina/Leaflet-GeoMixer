@@ -36,7 +36,7 @@ var gmxSessionManager = {
 
         if (!(serverHost in keys)) {
             apiKey = typeof apiKey === 'undefined' ? this._searchScriptAPIKey() : apiKey;
-            keys[serverHost] = new gmxDeferred();
+            keys[serverHost] = new L.gmx.Deferred();
             if (apiKey) {
                 gmxAPIutils.requestJSONP(
                     'http://' + serverHost + '/ApiKey.ashx',

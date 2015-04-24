@@ -1,4 +1,4 @@
-var gmxStyleManager = function(gmx) {
+var StyleManager = function(gmx) {
     var MAX_STYLE_SIZE = 256,
         DEFAULT_STYLE = {outline: {color: 255, thickness: 1, size: 4}},
         DEFAULTKEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'],
@@ -10,7 +10,7 @@ var gmxStyleManager = function(gmx) {
         utils = gmxAPIutils,
         _this = this;
 
-    this.deferred = new gmxDeferred();
+    this.deferred = new L.gmx.Deferred();
 
     var parsePattern = function(pattern) {
         var common = true;
@@ -343,7 +343,7 @@ var gmxStyleManager = function(gmx) {
                 style = prepareItem({});
                 styles[num] = style;
             }
-            this.deferred = new gmxDeferred();
+            this.deferred = new L.gmx.Deferred();
             style.version = ++maxVersion;
             if ('Filter' in st) {
                 style.Filter = st.Filter;

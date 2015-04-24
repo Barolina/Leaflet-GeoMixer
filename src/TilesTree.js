@@ -1,5 +1,5 @@
 //tree for fast tiles selection inside temporal interval
-var gmxTilesTree = function(periods, dateZero) {
+var TilesTree = function(periods, dateZero) {
     var _rootNodes = [];
     this.initFromTiles = function(tiles) {
         var addTile = function (node, tile, key) {
