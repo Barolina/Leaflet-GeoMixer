@@ -737,6 +737,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (prop.Temporal) { type += 'Temporal'; }
         gmx.items = {};
         gmx.tileCount = 0;
+        this.options.attribution = prop.Copyright || '';
 
         var cnt;
         if (type === 'VectorTemporal') {
