@@ -144,6 +144,12 @@ var gmxAPIutils = {
     },
 
     geoItemBounds: function(geo) {  // get item bounds array by geometry
+        if (!geo) {
+            return {
+                bounds: null,
+                boundsArr: []
+            };
+        }
         var type = geo.type,
             coords = geo.coordinates,
             b = null,
