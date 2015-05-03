@@ -189,7 +189,7 @@ var gmxAPIutils = {
         } else if (type === 'MULTILINESTRING' || type === 'MultiLineString') {
             bounds = gmxAPIutils.bounds();
             for (i = 0, len = coords.length; i < len; i++) {
-                b = gmxAPIutils.bounds([coords[i]]);
+                b = gmxAPIutils.bounds(coords[i]);
                 bounds.extendBounds(b);
                 //boundsArr.push(b);
             }

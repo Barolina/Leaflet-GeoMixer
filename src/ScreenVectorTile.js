@@ -286,7 +286,7 @@ ScreenVectorTile.prototype = {
             // for quicklook
             mainRasterLoader = gmxImageLoader.push(url, {
                 layerID: gmx.layerID,
-                crossOrigin: gmx.crossOrigin || 'anonymous'
+                crossOrigin: gmx.crossOrigin || ''
             });
 
             mainRasterLoader.then(
