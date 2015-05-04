@@ -134,7 +134,7 @@ var DataManager = L.Class.extend({
                     var type = geom.type;
 
                     //TODO: remove from data manager
-                    if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+                    if (type !== 'POINT' && type !== 'MULTIPOINT') {
                         tile.calcEdgeLines(j);
                     }
 

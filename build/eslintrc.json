@@ -22,6 +22,7 @@
     "module": false,
     "define": false,
     "ActiveXObject": true,
+    "Path2D": true,
     "Deferred": true,
     "gmxImageLoader": true,
     "gmxParsers": true,

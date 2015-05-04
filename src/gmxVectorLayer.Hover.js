@@ -11,12 +11,10 @@ L.gmx.VectorLayer.include({
                 item = gmx.dataManager.getItem(idr),
                 currentStyle = item.currentStyle || item.parsedStyleKeys,
                 iconScale = currentStyle.iconScale || 1,
-                sx = currentStyle.sx || 0,
-                sy = currentStyle.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
-                lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || 0,
-                dx = (sx + lineWidth) / mInPixel,
-                dy = (sy + lineWidth) / mInPixel;
+                lineWidth = (currentStyle.lineWidth || parsedStyle.lineWidth || 0) / mInPixel,
+                dx = (currentStyle.sx || 0) / mInPixel + lineWidth,
+                dy = (currentStyle.sy || 0) / mInPixel + lineWidth;
 
             if (dx > dy) {
                 dx = dy;
@@ -27,81 +25,22 @@ L.gmx.VectorLayer.include({
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) { continue; }
 
             var geom = geoItem[geoItem.length - 1],
-                fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage,
-                marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
-                type = geom.type,
-                chktype = type,
-                hiddenLines = dataOption.hiddenLines,
-                boundsArr = dataOption.boundsArr,
-                coords = geom.coordinates,
-                ph = {
-                    point: mercPoint,
-                    bounds: bounds,
-                    coords: coords,
-                    boundsArr: boundsArr
-                };
+                type = geom.type;
 
-            if (type === 'MULTIPOLYGON' || type === 'POLYGON') {
-                if (marker) {
-                    chktype = 'POINT';
-                } else if (!fill) {
-                    if (type === 'POLYGON') {
-                        chktype = 'MULTILINESTRING';
-                        hiddenLines = hiddenLines[0];
-                    } else {
-                        chktype = 'LIKEMULTILINESTRING';
-                    }
-                    ph.hidden = hiddenLines;
+            if (type === 'POINT') {
+                if (!dataOption.bounds.intersectsWithDelta(bounds, dx * iconScale, dy * iconScale)) { continue; }
+            } else if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+                var marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
+                    fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage;
+                if (marker) {           // POINT
+                    if (!dataOption.bounds.intersectsWithDelta(bounds, dx * iconScale, dy * iconScale)) { continue; }
+                } else if (!fill) {     // LINESTRING
+                    if (!gmxAPIutils.isPointInStroke(dataOption.path, mercPoint, lineWidth)) { continue; }
+                } else {                // POLYGON MULTIPOLYGON
+                    if (!gmxAPIutils.isPointInPath(dataOption.pathFill, mercPoint)) { continue; }
                 }
-            }
-
-            if (chktype === 'LINESTRING') {
-                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) { continue; }
-            } else if (chktype === 'LIKEMULTILINESTRING') {
-                ph.delta = lineWidth / mInPixel;
-                var flag = false,
-                    j,
-                    len;
-                for (j = 0, len = coords.length; j < len; j++) {
-                    ph.coords = coords[j];
-                    ph.hidden = hiddenLines[j];
-                    ph.boundsArr = boundsArr[j];
-                    if (gmxAPIutils.isPointInLines(ph)) {
-                        flag = true;
-                        break;
-                    }
-                }
-                if (!flag) { continue; }
-            } else if (chktype === 'MULTILINESTRING') {
-                ph.delta = lineWidth / mInPixel;
-                ph.hidden = hiddenLines;
-                if (!gmxAPIutils.isPointInLines(ph)) {
-                    continue;
-                }
-            } else if (chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
-                var chkPoint = mercPoint;
-                flag = false;
-                if (chktype === 'POLYGON') {
-                    coords = [geom.coordinates];
-                    boundsArr = [dataOption.boundsArr];
-                }
-                for (j = 0, len = coords.length; j < len; j++) {
-                    var arr = coords[j],
-                        bbox = boundsArr[j];
-                    for (var j1 = 0, len1 = arr.length; j1 < len1; j1++) {
-                        var b = bbox[j1];
-                        if (b.intersects(bounds)) {
-                            if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, arr)) {
-                                flag = j1 === 0 ? true : false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!flag) { continue; }
-            } else if (chktype === 'POINT') {
-                coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx * iconScale, dy * iconScale);
-                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) { continue; }
+            } else if (type === 'LINESTRING' || type === 'MULTILINESTRING') {
+                if (!gmxAPIutils.isPointInStroke(dataOption.path, mercPoint, lineWidth)) { continue; }
             }
 
             return {

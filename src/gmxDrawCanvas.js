@@ -53,6 +53,7 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
         len = 0,
         gmx = options.gmx,
         ctx = options.ctx,
+        matrix = options.matrix,
         item = gmx.dataManager.getItem(idr),
         geom = propsArr[propsArr.length - 1],
         coords = null,
@@ -79,12 +80,10 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
             ctx: ctx,
             tpx: options.tpx,
             tpy: options.tpy
-        };
-    if (geoType === 'POINT') {
-        dattr.pointAttr = utils.getPixelPoint(dattr, geom.coordinates);
-        if (!dattr.pointAttr) { return false; }   // point not in canvas tile
-    }
-    if (geoType === 'POINT' || geoType === 'MULTIPOINT') {	// Отрисовка геометрии точек
+        },
+        path;
+
+    if (geoType === 'POINT' || geoType === 'MULTIPOINT') { // Отрисовка геометрии точек
         coords = geom.coordinates;
         if ('iconColor' in style && style.image) {
             if (style.lastImage !== style.image) {
@@ -100,6 +99,8 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
                 utils.pointToCanvas(dattr);
             }
         } else {
+            dattr.pointAttr = utils.getPixelPoint(dattr, coords);
+            if (!dattr.pointAttr) { return false; }   // point not in canvas tile
             dattr.coords = coords;
             utils.pointToCanvas(dattr);
         }
@@ -111,73 +112,18 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
                 utils.pointToCanvas(dattr);
             }
         } else {
-            dattr.flagPixels = false;
-            if (!dataOption.pixels) { dataOption.pixels = {}; }
-            coords = geom.coordinates;
-            var hiddenLines = dataOption.hiddenLines || [],
-                pixelsMap = {},
-                flagPixels = false;
-
-            if (geoType === 'POLYGON') { coords = [coords]; }
-            var coordsToCanvas = function(func, flagFill) {
-                var out = null;
-                if (flagPixels) {
-                    coords = pixelsMap.coords;
-                    hiddenLines = pixelsMap.hidden;
-                    dattr.flagPixels = flagPixels;
-                } else {
-                    out = {coords: [], hidden: []};
-                    var pixels = [], hidden = [];
-                }
-                for (j = 0, len = coords.length; j < len; j++) {
-                    var coords1 = coords[j];
-                    var hiddenLines1 = hiddenLines[j] || [];
-                    if (out) {
-                        var pixels1 = [], hidden1 = [];
-                    }
-                    ctx.beginPath();
-                    for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-                        dattr.coords = coords1[j1];
-                        dattr.hiddenLines = hiddenLines1[j1] || [];
-                        var res = func(dattr);
-                        if (out && res) {
-                            pixels1.push(res.coords);
-                            hidden1.push(res.hidden);
-                        }
-                    }
-                    ctx.closePath();
-                    if (flagFill) { ctx.fill(); }
-                    if (out) {
-                        pixels.push(pixels1);
-                        hidden.push(hidden1);
-                    }
-                }
-                if (out) {
-                    out.coords = pixels;
-                    out.hidden = hidden;
-                }
-                return out;
-            };
             var strokeStyle = item.currentStyle.strokeStyle || style.strokeStyle,
                 lineWidth = item.currentStyle.lineWidth || style.lineWidth;
             if (strokeStyle && lineWidth) {
-                var pixels = coordsToCanvas(utils.polygonToCanvas);
-                if (pixels) {
-                    pixelsMap = pixels;
-                    pixelsMap.z = gmx.currentZoom;
-                    dataOption.pixels = pixelsMap;
-                    flagPixels = true;
-                }
+                path = new Path2D();
+                path.addPath(dataOption.path, matrix);
+                ctx.stroke(path);
             }
             if (rasters[idr]) {
                 dattr.bgImage = rasters[idr];
             }
             if (dattr.styleExtend.skipRasters || item.skipRasters) {
                 delete dattr.bgImage;
-            }
-            if (flagPixels) {
-                coords = pixelsMap.coords;
-                hiddenLines = pixelsMap.hidden;
             }
             if (style.imagePattern) {
                 item.currentStyle.fillStyle = ctx.createPattern(style.imagePattern, 'repeat');
@@ -187,25 +133,22 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
                     ctx.fillStyle = ctx.createPattern(dattr.bgImage, 'no-repeat');
                     style.bgImage = true;
                 }
-                coordsToCanvas(utils.polygonToCanvasFill, true);
+                path = new Path2D();
+                path.addPath(dataOption.pathFill, matrix);
+                ctx.fill(path);
                 ctx.globalAlpha = 1;
             }
             if (item.currentStyle.fillStyle || item.currentStyle.canvasPattern) {
                 ctx.fillStyle = item.currentStyle.canvasPattern || item.currentStyle.fillStyle;
-                coordsToCanvas(utils.polygonToCanvasFill, true);
+                path = new Path2D();
+                path.addPath(dataOption.pathFill, matrix);
+                ctx.fill(path);
             }
         }
     } else if (geoType === 'LINESTRING' || geoType === 'MULTILINESTRING') {
-        coords = geom.coordinates;
-        if (geoType === 'MULTILINESTRING') {
-            for (j = 0, len = coords.length; j < len; j++) {
-                dattr.coords = coords[j];
-                utils.lineToCanvas(dattr);
-            }
-        } else {
-            dattr.coords = coords;
-            utils.lineToCanvas(dattr);
-        }
+        path = new Path2D();
+        path.addPath(dataOption.path, matrix);
+        ctx.stroke(path);
     }
     return true;
 };

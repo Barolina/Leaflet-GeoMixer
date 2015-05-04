@@ -6,10 +6,9 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.gmx = layer._gmx;
     this.tKey = tilePoint.x + ':' + tilePoint.y;
     this.zKey = zoom + ':' + this.tKey;
-    var utils = gmxAPIutils;
-    this.worldWidthMerc = utils.worldWidthMerc;
-    var gmxTilePoint = utils.getTileNumFromLeaflet(tilePoint, zoom);
-    this.tbounds = utils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
+    this.worldWidthMerc = gmxAPIutils.worldWidthMerc;
+    var gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom);
+    this.tbounds = gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z);
     this.tpx = 256 * gmxTilePoint.x;
     this.tpy = 256 * (1 + gmxTilePoint.y);
     this.gmxTilePoint = gmxTilePoint;
@@ -421,6 +420,7 @@ ScreenVectorTile.prototype = {
             dattr = {
                 tbounds: this.tbounds,
                 rasters: _this.rasters,
+                matrix: gmxAPIutils.getTileMatrix(this.tpx, this.tpy, gmx.mInPixel),
                 gmx: gmx,
                 tpx: this.tpx,
                 tpy: this.tpy,

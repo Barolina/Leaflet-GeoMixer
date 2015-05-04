@@ -26,7 +26,9 @@
     "ObjectsReorder.js",
     "L.gmxLocale.js",
     "lang_ru.js",
-    "lang_en.js"
+    "lang_en.js",
+    "SVGpath.js",
+    "Path2d.js"
 ];
 
 if (typeof exports !== 'undefined') {

@@ -56,37 +56,54 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.calcEdgeLines = function(num) {
         if (!this.data[num]) { return null; }
         if (!this.dataOptions[num]) { this.dataOptions[num] = {}; }
-        var hiddenLines = this.dataOptions[num].hiddenLines || null;
-        if (!hiddenLines) {
+        if (!this.dataOptions[num].path) {
             var it = this.data[num],
                 geomIndex = it.length - 1, //geometry is always the last attribute
-                geom = it[geomIndex];
+                geom = it[geomIndex],
+                type = geom.type,
+                path = new Path2D(),
+                i, j1, p, len1, len2, coords1, coords2;
 
-            if (geom.type.indexOf('POLYGON') !== -1) {
-                var coords = geom.coordinates;
-                if (geom.type === 'POLYGON') {
+            if (type === 'LINESTRING' || type === 'MULTILINESTRING') {
+                coords1 = geom.coordinates;
+                if (type === 'LINESTRING') {
+                    coords1 = [coords1];
+                }
+                for (j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
+                    coords2 = coords1[j1];
+                    for (i = 0, len2 = coords2.length; i < len2; i++) {
+                        p = coords2[i];
+                        path[i === 0 ? 'moveTo' : 'lineTo'](p[0], -p[1]);
+                    }
+                }
+            } else if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+                var coords = geom.coordinates,
+                    pathFill = new Path2D();
+                if (type === 'POLYGON') {
                     coords = [coords];
                 }
                 var edgeBounds = gmxAPIutils.bounds().extendBounds(this.bounds).addBuffer(-0.05);
-                    //.addBuffer((this.bounds.min.x - this.bounds.max.x) / 10000);
                 for (var j = 0, len = coords.length; j < len; j++) {
-                    var coords1 = coords[j],
-                        hiddenLines1 = [];
-                    for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
-                        hiddenLines1.push(gmxAPIutils.getHidden(coords1[j1], edgeBounds));
-                    }
-                    if (hiddenLines1.length) {
-                        if (!hiddenLines) { hiddenLines = []; }
-                        hiddenLines.push(hiddenLines1);
+                    coords1 = coords[j];
+                    for (j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
+                        coords2 = coords1[j1];
+                        var prev = null;
+                        for (i = 0, len2 = coords2.length; i < len2; i++) {
+                            p = coords2[i];
+                            var lineHide = false;
+                            if (prev && gmxAPIutils.chkOnEdge(p, prev, edgeBounds)) {
+                                lineHide = true;
+                            }
+                            path[(lineHide || i === 0 ? 'moveTo' : 'lineTo')](p[0], -p[1]);
+                            pathFill[(i === 0 ? 'moveTo' : 'lineTo')](p[0], -p[1]);
+                            prev = p;
+                        }
                     }
                 }
-                if (hiddenLines) {
-                    if (!this.dataOptions[num]) { this.dataOptions[num] = {}; }
-                    this.dataOptions[num].hiddenLines = hiddenLines;
-                }
+                this.dataOptions[num].pathFill = pathFill;
             }
+            this.dataOptions[num].path = path;
         }
-        return hiddenLines;
     };
 
     this.bounds = gmxAPIutils.getTileBounds(x, y, z);
