@@ -40,7 +40,7 @@
         });
 
         // Replace methods on CanvasRenderingContext2D with ones that understand Path2D.
-        original_fill = CanvasRenderingContext2D.prototype.fill;
+        var original_fill = CanvasRenderingContext2D.prototype.fill;
         CanvasRenderingContext2D.prototype.fill = function(arg) {
           if (arg instanceof Path_) {
             this.beginPath();
@@ -54,7 +54,7 @@
           }
         }
 
-        original_stroke = CanvasRenderingContext2D.prototype.stroke;
+        var original_stroke = CanvasRenderingContext2D.prototype.stroke;
         CanvasRenderingContext2D.prototype.stroke = function(arg) {
           if (arg instanceof Path_) {
             this.beginPath();
@@ -68,7 +68,7 @@
           }
         }
 
-        original_clip = CanvasRenderingContext2D.prototype.clip;
+        var original_clip = CanvasRenderingContext2D.prototype.clip;
         CanvasRenderingContext2D.prototype.clip = function(arg) {
           if (arg instanceof Path_) {
             // Note that we don't save and restore the context state, since the
@@ -86,7 +86,7 @@
           }
         }
 
-        original_is_point_in_path = CanvasRenderingContext2D.prototype.isPointInPath;
+        var original_is_point_in_path = CanvasRenderingContext2D.prototype.isPointInPath;
         CanvasRenderingContext2D.prototype.isPointInPath = function(arg) {
           if (arg instanceof Path_) {
             this.beginPath();
@@ -100,7 +100,7 @@
           }
         };
 
-        original_is_point_in_stroke = CanvasRenderingContext2D.prototype.isPointInStroke;
+        var original_is_point_in_stroke = CanvasRenderingContext2D.prototype.isPointInStroke;
         CanvasRenderingContext2D.prototype.isPointInStroke = function(arg) {
           if (arg instanceof Path_) {
             this.beginPath();

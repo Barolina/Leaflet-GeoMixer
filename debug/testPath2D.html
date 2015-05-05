@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Animation</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0px;
+        }
+		
+        #controls {
+            position: absolute;
+			left: 54px;
+			top: 11px;
+			z-index: 1;
+			background-color: #ffffff;
+			padding: 13px 15px 13px 13px;
+			border-radius: 5px;
+            box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+        }
+        
+        #title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+		
+		#slider {
+			width: 300px;
+		}
+		#timeInfo {
+			text-align: center;
+			padding-top: 12px;
+		}
+    </style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+	
+</head>
+<body>
+	<div id="controls">
+        <div id="title">testLayer</div>
+		<div id="slider"></div>
+		<div id="timeInfo">Loading data...</div>
+	</div>
+
+	<div id="map" style="width: 100%; height: 100%"></div>
+	
+	<script>
+		var map = L.map('map').setView([44.034639, 139.54833], 3);
+
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+		}).addTo(map);
+        var startLoadDate,
+            timeInfo = document.getElementById('timeInfo'),
+            loadInfo = '';
+
+        var updateInfo = function(zd) {
+            loadInfo = 'Load tile: ' + zd/1000 + ' sek.';
+            timeInfo.innerHTML = loadInfo;
+        }
+
+        L.gmx.loadLayer('3JKAM', 'EE84A6E4F8CE44368C27F2DAB280C7F6', {
+        }).then(function(testLayer) {
+            var startDraw;
+            testLayer
+                .on('startDraw', function(ev) {
+                    startDraw = new Date().getTime();
+                    //console.log('startDraw', startDraw);
+                })
+                .on('doneDraw', function(ev) {
+                    var doneDraw = new Date().getTime() - startDraw;
+                    var div = document.createElement('div');
+                    div.innerHTML = 'Draw time: ' + doneDraw / 1000 + ' sek.';
+                    timeInfo.appendChild(div);
+                    //console.log('doneDraw', doneDraw);
+                });
+            startLoadDate = new Date().getTime();
+            testLayer._gmx.dataManager.preloadTiles().then(function() {
+                updateInfo(new Date().getTime() - startLoadDate);
+                testLayer.addTo(map);
+            })
+        })
+	</script>
+</body>
+</html>
