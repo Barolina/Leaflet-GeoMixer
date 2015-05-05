@@ -77,7 +77,7 @@
                 .on('doneDraw', function(ev) {
                     var doneDraw = new Date().getTime() - startDraw;
                     var div = document.createElement('div');
-                    div.innerHTML = 'Draw time: ' + doneDraw / 1000 + ' sek.';
+                    div.innerHTML = 'Draw time: ' + doneDraw / 1000 + ' sek. zoom: ' + map.getZoom();
                     timeInfo.appendChild(div);
                     //console.log('doneDraw', doneDraw);
                 });
