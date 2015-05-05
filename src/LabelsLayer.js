@@ -266,7 +266,7 @@ L.LabelsLayer = L.Class.extend({
                     isFiltered = false;
 
                 if (label.isPoint) {
-                    var labelAlign = style.labelAlign || 'left',
+                    var labelAlign = style.labelAlign || 'center',
                         delta = label.sx;
                     if (labelAlign === 'left') {
                         pos[0] += width2 + delta;

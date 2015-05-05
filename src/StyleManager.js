@@ -51,8 +51,8 @@ var StyleManager = function(gmx) {
                     pt.imagePattern = it;
                 } else {
                     pt.maxSize = Math.max(it.width, it.height);
-                    pt.sx = it.width / 2;
-                    pt.sy = it.height / 2;
+                    pt.sx = it.width;
+                    pt.sy = it.height;
                     pt.image = it;
                 }
                 needLoadIcons--;

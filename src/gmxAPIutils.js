@@ -513,8 +513,7 @@ var gmxAPIutils = {
         var item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys,
             iconScale = currentStyle.iconScale || 1,
-            px1sx = px1 - sx, py1sy = py1 - sy,
-            sx2 = 2 * sx, sy2 = 2 * sy,
+            px1sx = px1 - sx / 2, py1sy = py1 - sy / 2,
             ctx = attr.ctx;
 
         var image = currentStyle.image || style.image;
@@ -526,16 +525,16 @@ var gmxAPIutils = {
             if ('opacity' in style) { ctx.globalAlpha = currentStyle.opacity || style.opacity; }
             if (gmx.transformFlag) {
                 ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
-                ctx.drawImage(image, px1sx, -py1sy, sx2, sy2);
+                ctx.drawImage(image, px1, -py1, sx, sy);
                 ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
             } else if (style.rotateRes) {
                 ctx.translate(px1, py1);
                 ctx.rotate(gmxAPIutils.degRad(style.rotateRes));
                 ctx.translate(-px1, -py1);
-                ctx.drawImage(image, px1sx, py1sy, sx2, sy2);
+                ctx.drawImage(image, px1sx, py1sy, sx, sy);
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             } else {
-                ctx.drawImage(image, px1sx, py1sy, sx2, sy2);
+                ctx.drawImage(image, px1sx, py1sy, sx, sy);
             }
             if ('opacity' in style) { ctx.globalAlpha = 1; }
         } else if (style.fillColor || currentStyle.fillRadialGradient) {
@@ -554,7 +553,7 @@ var gmxAPIutils = {
                 }
                 ctx.arc(px1, py1, circle, 0, 2 * Math.PI);
             } else {
-                ctx.fillRect(px1sx, py1sy, sx2, sy2);
+                ctx.fillRect(px1sx, py1sy, sx, sy);
             }
             ctx.fill();
         }
@@ -563,7 +562,7 @@ var gmxAPIutils = {
             if (style.type === 'circle') {
                 ctx.arc(px1, py1, style.iconGeomSize, 0, 2 * Math.PI);
             } else {
-                ctx.strokeRect(px1sx, py1sy, sx2, sy2);
+                ctx.strokeRect(px1sx, py1sy, sx, sy);
             }
             ctx.stroke();
         }

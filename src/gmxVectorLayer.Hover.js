@@ -15,8 +15,8 @@ L.gmx.VectorLayer.include({
                 sy = currentStyle.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
                 lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || 0,
-                dx = (sx + lineWidth) / mInPixel,
-                dy = (sy + lineWidth) / mInPixel;
+                dx = iconScale * (sx + lineWidth / 2) / mInPixel,
+                dy = iconScale * (sy + lineWidth / 2) / mInPixel;
 
             if (dx > dy) {
                 dx = dy;
@@ -100,8 +100,7 @@ L.gmx.VectorLayer.include({
                 }
                 if (!flag) { continue; }
             } else if (chktype === 'POINT') {
-                coords = gmxAPIutils.getMarkerPolygon(dataOption.bounds, dx * iconScale, dy * iconScale);
-                if (!gmxAPIutils.isPointInPolygonArr(mercPoint, coords)) { continue; }
+                if (!dataOption.bounds.intersectsWithDelta(bounds, dx / 2, dy / 2)) { continue; }
             }
 
             return {
