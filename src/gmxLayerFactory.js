@@ -36,6 +36,10 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
                 promise.reject('There is no layer ' + layerID + ' in map ' + mapID);
                 return;
             }
+
+            //to know from what host the layer was loaded
+            layerInfo.properties.hostName = hostName;
+
             var layer = L.gmx.createLayer(layerInfo, layerParams);
 
             if (layer) {

@@ -19,6 +19,7 @@ var gmxMapManager = {
                     }
                 ).then(function(json) {
                     if (json && json.Status === 'ok' && json.Result) {
+                        json.Result.properties.hostName = serverHost;
                         def.resolve(json.Result);
                     } else {
                         def.reject(json);
@@ -101,6 +102,7 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
             layer = new L.gmx.RasterLayer(layerOptions);
         }
 
+        layerInfo.properties.hostName = mapInfo.properties.hostName;
         layer.initFromDescription(layerInfo);
 
         _this.addLayer(layer);
