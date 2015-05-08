@@ -890,5 +890,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         } else {
             return new L.LatLngBounds();
         }
+    },
+    
+    getGeometry: function() {
+        if (!this._gmx.latLngGeometry) {
+            this._gmx.latLngGeometry = L.gmxUtil.geometryToGeoJSON(this._gmx.geometry, true);
+        }
+        
+        return this._gmx.latLngGeometry;
     }
 });
