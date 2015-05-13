@@ -146,7 +146,7 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
 
 Свойство|Тип|Описание
 ------|:---------:|-----------
-gmx.target|`<VectorTile item>`| Объект векторного слоя на котором произошло событие.
+gmx.target|`<`[VectorTile item](#vectortile-item)`>`| Объект векторного слоя на котором произошло событие.
 gmx.id|`<UInt>`| Идентификатор объекта.
 gmx.layer|`<gmxVectorLayer>`| Слой которому принадлежит `gmx.target`.
 
