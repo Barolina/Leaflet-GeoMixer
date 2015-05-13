@@ -116,8 +116,8 @@ repaint|`repaint()` ||Перерисовать слой. В отличае от 
 redrawItem|`redrawItem(<UInt>)` ||Перерисовать объект слоя.
 setImageProcessingHook|`setImageProcessingHook( function(image, options): Canvas `&#124;` Deferred)`||Установка функции предобработки растров объектов слоя.  Единственный аргумент - ф-ция, которая принимает растр объекта (image) и описание этого растра (). Возвращает: `Canvas` - объект замещающий исходный растр, `null` - не показывать растр. Может возвращать `Deferred` при асинхронном режиме.
 removeImageProcessingHook|`removeImageProcessingHook()`||Удалить функцию предобработки растров объектов слоя.
-addObserver|`addObserver(<`[Observer options](#observer-options)`>)`|`<observer>`|Добавление функции отбора объектов слоя по заданным условиям.
-removeObserver|`removeObserver(<observer>)`|`<observer>`|Удаление обсервера.
+addObserver|`addObserver(<`[Observer options](#observer-options)`>)`|`<`[Observer](#Класс-observer)`>`|Добавление функции отбора объектов слоя по заданным условиям.
+removeObserver|`removeObserver(<`[Observer](#Класс-observer)`>)`|`<`[Observer](#Класс-observer)`>`|Удаление обсервера.
 getItemProperties|`getItemProperties(attribute[])`|`<Object>`|Преобразование массива атрибутов векторного объекта в Hash.
 setStyleHook|`setStyleHook(<Func>)`|`this`|Установка функции переопределения стиля отрисовки объекта. Единственный аргумент - ф-ция, которая принимает объект из слоя и возвращает (`null` - объект не отрисовывать , `<Style object>` - переопределямые свойства стиля отрисовки объекта)
 removeStyleHook|`removeStyleHook()`||Удаление функции переопределения стиля отрисовки объекта.
