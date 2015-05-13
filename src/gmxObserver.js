@@ -14,9 +14,13 @@ var Observer = L.Class.extend({
         this.type = options.type || 'update';
         this._callback = options.callback;
         this._items = {};
-        this.bbox = options.bbox;
+        this.bbox = options.bbox;      // set bbox by Mercator bounds
         this.filters = options.filters || [];
         this.active = true;
+
+        if (options.bounds) {   // set bbox by LatLngBounds
+            this.setBounds(options.bounds);
+        }
 
         if (!this.bbox) {
             var w = gmxAPIutils.worldWidthMerc;
@@ -139,8 +143,15 @@ var Observer = L.Class.extend({
 
     setBounds: function(bounds) {
         var min = bounds.min,
-            max = bounds.max,
-            minX = min.x, maxX = max.x,
+            max = bounds.max;
+        if (!min || !max) {
+            var latLngBounds = L.latLngBounds(bounds),
+                sw = latLngBounds.getSouthWest(),
+                ne = latLngBounds.getNorthEast();
+            min = {x: sw.lng, y: sw.lat};
+            max = {x: ne.lng, y: ne.lat};
+        }
+        var minX = min.x, maxX = max.x,
             minY = min.y, maxY = max.y,
             w = (maxX - minX) / 2,
             minX1 = null,
