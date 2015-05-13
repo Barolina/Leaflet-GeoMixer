@@ -116,7 +116,7 @@ repaint|`repaint()` ||Перерисовать слой. В отличае от 
 redrawItem|`redrawItem(<UInt>)` ||Перерисовать объект слоя.
 setImageProcessingHook|`setImageProcessingHook( function(image, options): Canvas `&#124;` Deferred)`||Установка функции предобработки растров объектов слоя.  Единственный аргумент - ф-ция, которая принимает растр объекта (image) и описание этого растра (). Возвращает: `Canvas` - объект замещающий исходный растр, `null` - не показывать растр. Может возвращать `Deferred` при асинхронном режиме.
 removeImageProcessingHook|`removeImageProcessingHook()`||Удалить функцию предобработки растров объектов слоя.
-addObserver|`addObserver(Observer options)`|`<observer>`|Добавление функции отбора объектов слоя по заданным условиям.
+addObserver|`addObserver(<`[Observer options](#observer-options)`>)`|`<observer>`|Добавление функции отбора объектов слоя по заданным условиям.
 removeObserver|`removeObserver(<observer>)`|`<observer>`|Удаление обсервера.
 getItemProperties|`getItemProperties(attribute[])`|`<Object>`|Преобразование массива атрибутов векторного объекта в Hash.
 setStyleHook|`setStyleHook(<Func>)`|`this`|Установка функции переопределения стиля отрисовки объекта. Единственный аргумент - ф-ция, которая принимает объект из слоя и возвращает (`null` - объект не отрисовывать , `<Style object>` - переопределямые свойства стиля отрисовки объекта)
@@ -148,7 +148,7 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
 ------|:---------:|-----------
 gmx.target|`<`[VectorTile item](#vectortile-item)`>`| Объект векторного слоя на котором произошло событие.
 gmx.id|`<UInt>`| Идентификатор объекта.
-gmx.layer|`<gmxVectorLayer>`| Слой которому принадлежит `gmx.target`.
+gmx.layer|`<`[L.gmx.VectorLayer](#Класс-lgmxvectorlayer)`>`| Слой которому принадлежит `gmx.target`.
 
 ###VectorTile item
 
@@ -298,7 +298,7 @@ callback|`Func(Observer data)`||Производится отбор объект
 Параметр|Тип|Описание
 ------|:--:|:------:|:-----------
 count|`<UInt>`|`0`|Количество объектов отобранных по условиям отбора объектов указанным в обсервере.
-added|`<VectorTile item[]>`|[]|Массив объектов (при `type="update"` только объекты ранее не удовлетворявшие условиям отбора).
+added|`<`[VectorTile item](#vectortile-item)`[]>`|[]|Массив объектов (при `type="update"` только объекты ранее не удовлетворявшие условиям отбора).
 removed|`<String[]>`|null|Массив идентификаторов удаляемых объектов т.е. переставших удовлетворять условиям отбора(при `type="resend"` атрибут отсутствует).
 
 ### VectorTile item
