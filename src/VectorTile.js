@@ -88,6 +88,13 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d) {
         }
         return hiddenLines;
     };
+    
+    this.getDateInterval = function(zeroDate) {
+        return this.s === -1 ? null : {
+            beginDate: new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000),
+            endDate: new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000)
+        };
+    }
 
     this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = [];
@@ -99,6 +106,7 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
     this.vectorTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
+    
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 };
 

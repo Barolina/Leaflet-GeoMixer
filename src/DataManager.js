@@ -214,7 +214,16 @@ var DataManager = L.Class.extend({
         var activeTileKeys = this._getActiveTileKeys();
         for (var key in activeTileKeys) (function(tile) {
 
+            // check spatial intersection
             if (!observer.intersects(tile.bounds)) {
+                return;
+            }
+            
+            // check intersection in time
+            var tileDI = tile.getDateInterval(_this._gmx.ZeroDate),
+                observerDI = observer.dateInterval;
+            
+            if (tileDI && (!observerDI || observerDI.endDate < tileDI.beginDate || observerDI.beginDate > tileDI.endDate)) {
                 return;
             }
 
