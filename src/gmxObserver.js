@@ -199,6 +199,8 @@ var Observer = L.Class.extend({
                 beginDate: beginDate,
                 endDate: endDate
             };
+        } else {
+            this.dateInterval = null;
         }
     },
 
