@@ -100,13 +100,10 @@ var DataManager = L.Class.extend({
         this._isTemporalLayer && filters.push('TemporalFilter');
 
         var _this = this,
-            isIntersects = function(bounds, dx, dy) {
-                return bboxActive ? bboxActive.intersectsWithDelta(bounds, dx, dy) : observer.intersects(bounds);
-            },
             putData = function(tile) {
                 var data = tile.data;
-                if (!data || (tile.z !== 0 && !isIntersects(tile.bounds))) {
-                    // VectorTile is not loaded or is not on bounds
+                if (!data || (tile.z !== 0 && !observer.intersectsWithTile(tile))) {
+                    // VectorTile is not loaded or is not within observer bounds
                     return;
                 }
 
@@ -200,7 +197,7 @@ var DataManager = L.Class.extend({
         var activeTileKeys = this._getActiveTileKeys();
         for (var key in activeTileKeys) {
             var tile = this._tiles[key].tile;
-            if (tile.state !== 'loaded' && observer.intersects(tile.bounds)) {
+            if (tile.state !== 'loaded' && observer.intersectsWithTile(tile)) {
                 count++;
             }
         }
@@ -215,19 +212,12 @@ var DataManager = L.Class.extend({
         for (var key in activeTileKeys) (function(tile) {
 
             // check spatial intersection
-            if (!observer.intersects(tile.bounds)) {
-                return;
-            }
-            
-            // check intersection in time
-            var tileDI = tile.getDateInterval(_this._gmx.ZeroDate),
-                observerDI = observer.dateInterval;
-            
-            if (tileDI && (!observerDI || observerDI.endDate < tileDI.beginDate || observerDI.beginDate > tileDI.endDate)) {
+            if (!observer.intersectsWithTile(tile)) {
                 return;
             }
 
             if (tile.state === 'notLoaded') {
+                _this.fire('beforetileload');
                 tile.load().then(function() {
                     _this._updateItemsFromTile(tile);
 
@@ -239,7 +229,7 @@ var DataManager = L.Class.extend({
                     var observers = _this._observers;
                     for (var id in observers) {
                         var observer = observers[id];
-                        if (observer.intersects(tile.bounds)) {
+                        if (observer.intersectsWithTile(tile)) {
                             if (_this._getNotLoadedTileCount(observer) === 0) {
                                 observer.updateData(_this.getItems(id));
                             }
@@ -649,18 +639,11 @@ var DataManager = L.Class.extend({
         return chkKeys;
     },
 
-    _getTileLink: function(options) {
+    _getProcessingTile: function() {
         var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
-        if (options) {
-            if ('x' in options) { x = options.x; }
-            if ('y' in options) { y = options.y; }
-            if ('z' in options) { z = options.z; }
-            if ('v' in options) { v = options.v; }
-            if ('s' in options) { s = options.s; }
-            if ('d' in options) { d = options.d; }
-        }
         var tileKey = VectorTile.makeTileKey(x, y, z, v, s, d),
             tileLink = this._tiles[tileKey];
+
         if (!tileLink) {
             tileLink = this._tiles[tileKey] = {
                 tile: new VectorTile({load: function(x, y, z, v, s, d, callback) {
@@ -675,11 +658,11 @@ var DataManager = L.Class.extend({
         return tileLink;
     },
 
-    addData: function(data, options) {
+    addData: function(data) {
         if (!data) {
             data = [];
         }
-        var tileLink = this._getTileLink(options),
+        var tileLink = this._getProcessingTile(),
             chkKeys = this._getDataKeys(data),
             vTile = tileLink.tile;
 
@@ -689,8 +672,8 @@ var DataManager = L.Class.extend({
         return vTile;
     },
 
-    removeData: function(data, options) {
-        var tileLink = this._getTileLink(options),
+    removeData: function(data) {
+        var tileLink = this._getProcessingTile(),
             vTile = null;
         if (tileLink) {
             vTile = tileLink.tile;
@@ -732,7 +715,7 @@ var DataManager = L.Class.extend({
                 tileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
 
             newTiles[tileKey] = this._tiles[tileKey] || {
-                tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, s, d)
+                tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, s, d, this._gmx.ZeroDate)
             };
         }
         this._tiles = newTiles;

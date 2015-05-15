@@ -1,6 +1,6 @@
 //Single vector tile, received from GeoMixer server
 //"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
-var VectorTile = function(dataProvider, x, y, z, v, s, d) {
+var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     var loadDef = null,
         _this = this;
 
@@ -89,12 +89,12 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d) {
         return hiddenLines;
     };
     
-    this.getDateInterval = function(zeroDate) {
-        return this.s === -1 ? null : {
-            beginDate: new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000),
-            endDate: new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000)
-        };
-    }
+    // this.getDateInterval = function(zeroDate) {
+        // return this.s === -1 ? null : {
+            // beginDate: new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000),
+            // endDate: new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000)
+        // };
+    // }
 
     this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = [];
@@ -105,7 +105,12 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d) {
     this.s = s;
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
-    this.vectorTileKey = z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
+    this.vectorTileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
+    
+    if (this.s >= 0 && zeroDate) {
+        this.beginDate = new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
+        this.endDate = new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
+    }
     
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 };
