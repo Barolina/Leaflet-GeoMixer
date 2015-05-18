@@ -127,6 +127,7 @@ L.gmx.VectorLayer.include({
             if (layerDescription.properties) {
                 gmx.properties = layerDescription.properties;
                 gmx.dataManager.updateVersion();
+                this.fire('versionchange');
             }
             //if (layerDescription.geometry) {
                 // todo: update layer geometry

@@ -142,6 +142,7 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
 | mouseout | `<Event>` | mouseout на объекте векторного слоя
 | contextmenu | `<Event>` | contextmenu на объекте векторного слоя
 | stylechange | `<Event>` | произошло изменение в стилях слоя
+| versionchange | `<Event>` | произошло изменение версии слоя
 
 ###Event object
 
