@@ -121,9 +121,11 @@ removeObserver|`removeObserver(<`[Observer](#Класс-observer)`>)`|`<`[Observ
 getItemProperties|`getItemProperties(attribute[])`|`<Object>`|Преобразование массива атрибутов векторного объекта в Hash.
 setStyleHook|`setStyleHook(<Func>)`|`this`|Установка функции переопределения стиля отрисовки объекта. Единственный аргумент - ф-ция, которая принимает объект из слоя и возвращает (`null` - объект не отрисовывать , `<Style object>` - переопределямые свойства стиля отрисовки объекта)
 removeStyleHook|`removeStyleHook()`||Удаление функции переопределения стиля отрисовки объекта.
-setStyles|`setStyles(<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>[])`|`this`| Установка массива стилей слоя (Примеры: [setStyleProp.html](http://scanex.github.io/Leaflet-GeoMixer/debug/setStyleProp.html), getStyles|`getStyles()`|`<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>[]`| Получение массива стилей слоя (выдаются опции стилей отличающиеся от устанавливаемых по умолчанию).
+setStyles|`setStyles(<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>[])`|`this`| Установка массива стилей слоя (Примеры: [setStyleProp.html](http://scanex.github.io/Leaflet-GeoMixer/debug/setStyleProp.html),
+getStyles|`getStyles()`|`<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>[]`| Получение массива стилей слоя (выдаются опции стилей отличающиеся от устанавливаемых по умолчанию).
 getIcons|`getIcons()`|`<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>[]`| Получение массива объектов иконок для каждого из стилей слоя (при наличии `iconURL` для каждого стиля в ключе `image` выдается `<HTMLCanvasElement || HTMLImageElement>`).
 setStyle|`setStyle(<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>, <UInt>num)`|`this`|Изменение существующего стиля - под номером `num` (при отсутствии стиля команда игнорируется).
+getStyle|`getStyle(<Number>)`|`<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>`| Получение стилевого фильтра по его номеру (выдаются опции стилей отличающиеся от устанавливаемых по умолчанию).
 setRasterOpacity|`setRasterOpacity(<Float>)`|`this`|Изменение opacity растровых снимков объектов слоя (в дипазоне от `0` до `1`).
 setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещения контейнера слоя(по умолчанию: `0`)
 
@@ -139,6 +141,7 @@ setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещ
 | mouseover | `<Event>` | mouseover на объекте векторного слоя
 | mouseout | `<Event>` | mouseout на объекте векторного слоя
 | contextmenu | `<Event>` | contextmenu на объекте векторного слоя
+| stylechange | `<Event>` | произошло изменение в стилях слоя
 
 ###Event object
 
