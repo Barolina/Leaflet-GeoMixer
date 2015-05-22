@@ -20,9 +20,9 @@ var setCanvasStyle = function(item, ctx, style) {
             ctx.mozDash = dashes;
             ctx.mozDashOffset = dashOffset;
         }
-        if (ctx.lineCap !== 'round') { ctx.lineCap = 'round'; }
-        if (ctx.lineJoin !== 'round') { ctx.lineJoin = 'round'; }
     }
+    if (ctx.lineCap !== 'round') { ctx.lineCap = 'round'; }
+    if (ctx.lineJoin !== 'round') { ctx.lineJoin = 'round'; }
 
     if (style.canvasPattern) {
         ctx.fillStyle = ctx.createPattern(style.canvasPattern.canvas, 'repeat');
