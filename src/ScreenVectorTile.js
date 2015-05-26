@@ -440,8 +440,9 @@ ScreenVectorTile.prototype = {
             }
             //ctx.restore();
             _this.rasters = {}; // clear rasters
-            _this.layer.appendTileToContainer(tile);
-
+            if (_this.layer._map) {
+                _this.layer.appendTileToContainer(tile);
+            }
             //async chain
             var res = new L.gmx.Deferred(),
                 hookInfo = {
