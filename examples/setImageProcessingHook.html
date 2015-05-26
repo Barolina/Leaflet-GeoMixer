@@ -93,7 +93,7 @@
                            return canvas;
                         };
                         if (processingType === 'Deferred') {
-                            var def = new gmxDeferred();
+                            var def = new L.gmx.Deferred();
                             setTimeout(function() {
                                 def.resolve(setCanvas(img));
                             }, 0);
