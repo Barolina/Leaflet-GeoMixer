@@ -87,7 +87,7 @@ var DataManager = L.Class.extend({
         }
     },
 
-    getItems: function(oId, bboxActive) {
+    getItems: function(oId) {
         var resItems = [],
             observer = this._observers[oId];
 
