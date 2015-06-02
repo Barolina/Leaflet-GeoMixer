@@ -1731,6 +1731,41 @@ gmxAPIutils.bounds = function(arr) {
     return new gmxAPIutils.Bounds(arr);
 };
 
+//скопирована из API для обеспечения независимости от него
+gmxAPIutils.parseUri = function (str) {
+    var	o   = gmxAPIutils.parseUri.options,
+        m   = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str),
+        uri = {},
+        i   = 14;
+
+    while (i--) {
+        uri[o.key[i]] = m[i] || '';
+    }
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+        if ($1) { uri[o.q.name][$1] = $2; }
+    });
+
+    uri.hostOnly = uri.host;
+    uri.host = uri.authority; // HACK
+
+    return uri;
+}
+
+gmxAPIutils.parseUri.options = {
+    strictMode: false,
+    key: ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'],
+    q:   {
+        name:   'queryKey',
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+
 if (!L.gmxUtil) { L.gmxUtil = {}; }
 L.extend(L.gmxUtil, {
     isIE9: gmxAPIutils.isIE(9),
@@ -1766,46 +1801,11 @@ L.extend(L.gmxUtil, {
     parseCoordinates: gmxAPIutils.parseCoordinates,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
-    geoJSONGetLength: gmxAPIutils.geoJSONGetLength
+    geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
+    parseUri: gmxAPIutils.parseUri
 });
 
 (function() {
-
-    //скопирована из API для обеспечения независимости от него
-    function parseUri(str) {
-        var	o   = parseUri.options,
-            m   = o.parser[o.strictMode ? 'strict' : 'loose'].exec(str),
-            uri = {},
-            i   = 14;
-
-        while (i--) {
-            uri[o.key[i]] = m[i] || '';
-        }
-
-        uri[o.q.name] = {};
-        uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-            if ($1) { uri[o.q.name][$1] = $2; }
-        });
-
-        uri.hostOnly = uri.host;
-        uri.host = uri.authority; // HACK
-
-        return uri;
-    }
-
-    parseUri.options = {
-        strictMode: false,
-        key: ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'],
-        q:   {
-            name:   'queryKey',
-            parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-        },
-        parser: {
-            strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-            loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-        }
-    };
-
     var requests = {};
     var lastRequestId = 0;
 
@@ -1847,7 +1847,7 @@ L.extend(L.gmxUtil, {
         iframe.src = 'javascript:true';
         iframe.callbackName = uniqueId;
 
-        var parsedURL = parseUri(url);
+        var parsedURL = gmxAPIutils.parseUri(url);
         var origin = (parsedURL.protocol ? (parsedURL.protocol + ':') : window.location.protocol) + '//' + (parsedURL.host || window.location.host);
 
         requests[origin] = requests[origin] || {};
