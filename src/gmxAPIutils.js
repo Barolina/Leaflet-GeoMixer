@@ -1088,7 +1088,9 @@ var gmxAPIutils = {
     */
     prettifyDistance: function(length, type) {
         var km = ' ' + L.gmxLocale.getText('units.km');
-        if (type === 'km') {
+        if (type === 'nm') {
+            return (Math.round(0.539956803 * length) / 1000) + ' ' + L.gmxLocale.getText('units.nm');
+        } else if (type === 'km') {
             return (Math.round(length) / 1000) + km;
         } else if (length < 2000 || type === 'm') {
             return Math.round(length) + ' ' + L.gmxLocale.getText('units.m');
