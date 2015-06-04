@@ -6,7 +6,7 @@ var StyleManager = function(gmx) {
         needLoadIcons = 0,
         deferredIcons = [],
         styles = [],
-        parsers = gmxParsers,
+        parsers = L.gmx.Parsers,
         utils = gmxAPIutils,
         _this = this;
 
@@ -158,7 +158,7 @@ var StyleManager = function(gmx) {
                         if (renderStyle && renderStyle[key] === val) {
                             st[fkey] = renderStyle[fkey];
                         } else {
-                            st[fkey] = gmxParsers.parseExpression(val);
+                            st[fkey] = parsers.parseExpression(val);
                         }
                     } else if (typeof (val) === 'function') {
                         st[fkey] = val;

@@ -557,5 +557,6 @@
 	};
 
 	//расширяем namespace
-	window.gmxParsers = Parsers;
+    L.gmx = L.gmx || {};
+	L.gmx.Parsers = Parsers;
 })();
