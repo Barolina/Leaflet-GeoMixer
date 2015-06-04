@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer Vector Layer Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+    </style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+
+	<script src="../build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+</head>
+<body>
+
+	<div id="map"></div>
+	<script>
+		var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18
+        });
+		var map = new L.Map('map', {layers: [osm], center: new L.LatLng(40, 60), zoom: 3});
+
+        var item = [4186499,"MOD14.A2013078.0000.005.NRT.hdf",14,1363651200,null,null,0,0];
+        var layerInfo = {
+            "properties":{
+                "type":"Vector",
+                "attributes":["FileName","Confidence","Timestamp","ClusterID","IndustrialClusterID","IndustrialFireStatus","FireType"]
+            }
+        };
+        layerInfo.properties.GeometryType = 'point';
+        var Point = L.gmx.createLayer(layerInfo)
+            .addTo(map)
+            .addData([
+                item.concat([{"type":"POINT","coordinates":[0,3339900.62]}])
+            ]);
+
+        layerInfo.properties.GeometryType = 'linestring';
+        var Linestring = L.gmx.createLayer(layerInfo)
+            .addTo(map)
+            .addData([
+                item.concat([{"type":"LINESTRING","coordinates":[[4285365.55,7602121.09],[5449654.37,7103140.16],[5586629.52,6432940.3]]}])
+            ]);
+
+        layerInfo.properties.GeometryType = 'polygon';
+        var Polygon = L.gmx.createLayer(layerInfo)
+            .addTo(map)
+            .addData([
+                item.concat([{"type":"POLYGON","coordinates":[[[11818999.06,7044436.53],[11818999.06,10331840.24],[8257645.04,10331840.24],[8257645.04,7044436.53],[11818999.06,7044436.53]]]}])
+            ]);
+
+        var layerInfo1 = {
+            "properties":{
+                "type":"Vector",
+                "attributes":["FileName","Confidence","Timestamp","ClusterID","IndustrialClusterID","IndustrialFireStatus","FireType"]
+            }
+        };
+        layerInfo1.properties.GeometryType = 'point';
+        var style = L.gmxUtil.getDefaultStyle('point');
+        style.RenderStyle = L.gmxUtil.toServerStyle(style.RenderStyle);
+        layerInfo1.properties.styles = [style];
+        console.log('point: ', style);
+        var Point1 = L.gmx.createLayer(layerInfo1)
+            .addTo(map)
+            .addData([
+                item.concat([{"type":"POINT","coordinates":[2000000,3339900.62]}])
+            ]);
+
+        layerInfo1.properties.GeometryType = 'linestring';
+        style = L.gmxUtil.getDefaultStyle('linestring');
+        style.RenderStyle = L.gmxUtil.toServerStyle(style.RenderStyle);
+        layerInfo1.properties.styles = [style];
+        console.log('linestring: ', style);
+        var Linestring1 = L.gmx.createLayer(layerInfo1)
+            .addTo(map)
+            .addData([
+                item.concat([{"type":"LINESTRING","coordinates":[[2285365.55,7602121.09],[3449654.37,7103140.16],[3586629.52,6432940.3]]}])
+            ]);
+
+        layerInfo1.properties.GeometryType = 'polygon';
+        style = L.gmxUtil.getDefaultStyle('polygon');
+        style.RenderStyle = L.gmxUtil.toServerStyle(style.RenderStyle);
+        layerInfo1.properties.styles = [style];
+        console.log('polygon: ', style);
+        var Polygon1 = L.gmx.createLayer(layerInfo1)
+            .addTo(map)
+            .addData([
+                item.concat([{"type":"POLYGON","coordinates":[[[11818999.06,3044436.53],[11818999.06,6331840.24],[8257645.04,6331840.24],[8257645.04,3044436.53],[11818999.06,3044436.53]]]}])
+            ]);
+
+        L.control.layers({
+            OSM: osm
+        }, {
+            Point: Point,
+            Polygon: Polygon,
+            Linestring: Linestring,
+            Point1: Point1,
+            Polygon1: Polygon1,
+            Linestring1: Linestring1
+        }, {collapsed: false}).addTo(map);
+
+	</script>
+</body>
+</html>

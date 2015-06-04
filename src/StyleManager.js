@@ -1,6 +1,6 @@
 var StyleManager = function(gmx) {
     var MAX_STYLE_SIZE = 256,
-        DEFAULT_STYLE = {outline: {color: 255, thickness: 1, size: 4}},
+        DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8}},
         DEFAULTKEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'],
         maxVersion = 0,
         needLoadIcons = 0,

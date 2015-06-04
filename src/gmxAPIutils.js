@@ -1505,14 +1505,44 @@ var gmxAPIutils = {
         }
     },
     styleFuncKeys: {
-        'iconGeomSize': 'iconGeomSizeFunction',
-        'iconAngle': 'rotateFunction',
-        'iconScale': 'scaleFunction',
-        'iconColor': 'iconColorFunction',
-        'opacity': 'opacityFunction',
-        'fillOpacity': 'fillOpacityFunction',
-        'color': 'colorFunction',
-        'fillColor': 'fillColorFunction'
+        iconGeomSize: 'iconGeomSizeFunction',
+        iconAngle: 'rotateFunction',
+        iconScale: 'scaleFunction',
+        iconColor: 'iconColorFunction',
+        opacity: 'opacityFunction',
+        fillOpacity: 'fillOpacityFunction',
+        color: 'colorFunction',
+        fillColor: 'fillColorFunction'
+    },
+    defaultStyles: {
+       MinZoom: 1,
+       MaxZoom: 21,
+       Filter: '',
+       Balloon: '',
+       DisableBalloonOnMouseMove: true,
+       DisableBalloonOnClick: false,
+       RenderStyle: {
+            point: {    // old = {outline: {color: 255, thickness: 1}, marker:{size: 8}},
+                color: 0xFF,
+                weight: 1,
+                iconGeomSize: 8
+            },
+            linestring: {    // old = {outline: {color: 255, thickness: 1}},
+                color: 0xFF,
+                weight: 1
+            },
+            polygon: {    // old = {outline: {color: 255, thickness: 1}},
+                color: 0xFF,
+                weight: 1
+            }
+        }
+    },
+
+    getDefaultStyle: function(type) {
+        var from = gmxAPIutils.defaultStyles,
+            out = L.extend({}, from);
+        out.RenderStyle = from.RenderStyle[type];
+        return out;
     },
 
     toServerStyle: function(style) {   // Style leaflet->Scanex
@@ -1524,7 +1554,11 @@ var gmxAPIutils = {
                 var key1 = keys.client[i];
                 if (key1 in style) {
                     if (!out[key]) { out[key] = {}; }
-                    out[key][keys.server[i]] = style[key1];
+                    var zn = style[key1];
+                    if (key1 === 'opacity' || key1 === 'fillOpacity') {
+                        zn *= 100;
+                    }
+                    out[key][keys.server[i]] = zn;
                 }
             }
         }
@@ -1773,6 +1807,7 @@ L.extend(L.gmxUtil, {
     requestJSONP: gmxAPIutils.requestJSONP,
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
+    getDefaultStyle: gmxAPIutils.getDefaultStyle,
     bounds: gmxAPIutils.bounds,
     getGeometryBounds: gmxAPIutils.getGeometryBounds,
     tileSizes: gmxAPIutils.tileSizes,
