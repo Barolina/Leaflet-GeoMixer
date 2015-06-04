@@ -540,7 +540,7 @@ var gmxAPIutils = {
         } else if (style.fillColor || currentStyle.fillRadialGradient) {
             ctx.beginPath();
             if (style.type === 'circle' || currentStyle.fillRadialGradient) {
-                var circle = style.iconGeomSize;
+                var circle = style.iconSize;
                 if (currentStyle.fillRadialGradient) {
                     var rgr = currentStyle.fillRadialGradient;
                     circle = rgr.r2 * iconScale;
@@ -560,7 +560,7 @@ var gmxAPIutils = {
         if (currentStyle.strokeStyle) {
             ctx.beginPath();
             if (style.type === 'circle') {
-                ctx.arc(px1, py1, style.iconGeomSize, 0, 2 * Math.PI);
+                ctx.arc(px1, py1, style.iconSize, 0, 2 * Math.PI);
             } else {
                 ctx.strokeRect(px1sx, py1sy, sx, sy);
             }
@@ -1489,7 +1489,7 @@ var gmxAPIutils = {
     styleKeys: {
         marker: {
             server: ['image',   'angle',     'scale',     'minScale',     'maxScale',     'size',         'circle',     'center',     'color'],
-            client: ['iconUrl', 'iconAngle', 'iconScale', 'iconMinScale', 'iconMaxScale', 'iconGeomSize', 'iconCircle', 'iconCenter', 'iconColor']
+            client: ['iconUrl', 'iconAngle', 'iconScale', 'iconMinScale', 'iconMaxScale', 'iconSize', 'iconCircle', 'iconCenter', 'iconColor']
         },
         outline: {
             server: ['color',  'opacity',   'thickness', 'dashes'],
@@ -1505,7 +1505,7 @@ var gmxAPIutils = {
         }
     },
     styleFuncKeys: {
-        iconGeomSize: 'iconGeomSizeFunction',
+        iconSize: 'iconSizeFunction',
         iconAngle: 'rotateFunction',
         iconScale: 'scaleFunction',
         iconColor: 'iconColorFunction',
@@ -1525,7 +1525,7 @@ var gmxAPIutils = {
             point: {    // old = {outline: {color: 255, thickness: 1}, marker:{size: 8}},
                 color: 0xFF,
                 weight: 1,
-                iconGeomSize: 8
+                iconSize: 8
             },
             linestring: {    // old = {outline: {color: 255, thickness: 1}},
                 color: 0xFF,

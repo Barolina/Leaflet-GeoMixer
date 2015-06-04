@@ -181,24 +181,24 @@ var StyleManager = function(gmx) {
                 st.canvasPattern = utils.getPatternIcon(null, st);
             } else if (st.iconCircle) {
                 type = 'circle';
-                if (!('iconGeomSize' in st)) { st.iconGeomSize = 4; }
+                if (!('iconSize' in st)) { st.iconSize = 4; }
             } else if (st.fillRadialGradient) {
                 type = 'circle';
                 var size = parseRadialGradient(st.fillRadialGradient);
                 if (size === null) {
                     st.common = false;
                 } else {
-                    st.iconGeomSize = size;
+                    st.iconSize = size;
                 }
             } else if (st.fillLinearGradient) {
                 type = 'square';
                 st.common = parseLinearGradient(st.fillLinearGradient);
-            } else if (st.iconGeomSize) {
+            } else if (st.iconSize) {
                 type = 'square';
             }
             st.type = type;
             if (st.common && !st.maxSize) {
-                st.maxSize = st.iconGeomSize || 0;
+                st.maxSize = st.iconSize || 0;
                 st.maxSize += st.weight ? st.weight : 0;
                 if ('iconScale' in st) { st.maxSize *= st.iconScale; }
             }
@@ -424,7 +424,7 @@ var StyleManager = function(gmx) {
                  }
                 colorStop.push([p0, p3]);
             }
-            out.maxSize = out.sx = out.sy = out.iconGeomSize = r2;
+            out.maxSize = out.sx = out.sy = out.iconSize = r2;
             out.fillRadialGradient = {
                 x1:x1, y1:y1, r1:r1, x2:x2, y2:y2, r2:r2,
                 addColorStop: colorStop
@@ -442,15 +442,15 @@ var StyleManager = function(gmx) {
             if (itemType === 'POLYGON' || itemType === 'MULTIPOLYGON') {
                 type = 'polygon';
             }
-            if (pt.iconGeomSize) {
-                var iconGeomSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconGeomSize);
-                out.sx = out.sy = iconGeomSize;
-                iconGeomSize += pt.weight ? pt.weight : 0;
-                out.iconGeomSize = iconGeomSize;
+            if (pt.iconSize) {
+                var iconSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconSize);
+                out.sx = out.sy = iconSize;
+                iconSize += pt.weight ? pt.weight : 0;
+                out.iconSize = iconSize;
                 if ('iconScale' in pt) {
-                    out.iconGeomSize *= pt.iconScale;
+                    out.iconSize *= pt.iconScale;
                 }
-                out.maxSize = iconGeomSize;
+                out.maxSize = iconSize;
             }
             out.stroke = true;
             if ('colorFunction' in pt || 'opacityFunction' in pt) {

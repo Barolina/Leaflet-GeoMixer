@@ -198,7 +198,7 @@ item|`<Object>`| Дополнительная информация объект�
     {
         iconUrl: <String>,              // marker.image - URL иконки маркера
         iconAngle : <Float>,            // marker.angle - угол поворота маркера (по умолчанию: 0)
-        iconSize: [<UInt>, <UInt>],     // размер иконки - зависит от marker.size
+        iconSize: <UInt|Expression>,    // размер иконки - зависит от marker.size
         iconScale: <Float>,             // масштабирование маркера (по умолчанию: 1) - marker.scale
         iconMinScale: <Float>,          // минимальный scale (по умолчанию: 0.01) - marker.minScale
         iconMaxScale: <Float>,          // максимальный scale (по умолчанию: 1000) - marker.maxScale
