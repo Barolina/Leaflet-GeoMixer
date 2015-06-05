@@ -556,7 +556,7 @@
         }
 	};
 
-	//расширяем namespace
+	//extend L.gmx namespace
     L.gmx = L.gmx || {};
 	L.gmx.Parsers = Parsers;
 })();

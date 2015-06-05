@@ -1598,7 +1598,7 @@ var gmxAPIutils = {
                                 if (zn.match(/[^\d\.]/) === null) {
                                     zn = Number(zn);
                                 } else {
-                                    out[gmxAPIutils.styleFuncKeys[newKey]] = gmxParsers.parseExpression(zn);
+                                    out[gmxAPIutils.styleFuncKeys[newKey]] = L.gmx.Parsers.parseExpression(zn);
                                 }
                             }
                         } else if (key1 === 'opacity') {
