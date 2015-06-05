@@ -168,10 +168,12 @@ var StyleManager = function(gmx) {
 
             st.common = true;
             var type = '';
-            if (st.iconUrl) {
+            if ('iconUrl' in st) {
                 type = 'image';
-                st.maxSize = 256;
-                deferredIcons.push(st);
+                if (st.iconUrl) {
+                    st.maxSize = 256;
+                    deferredIcons.push(st);
+                }
             } else if (st.fillIconUrl) {
                 type = 'square';
                 deferredIcons.push(st);
@@ -204,6 +206,147 @@ var StyleManager = function(gmx) {
             }
         }
         return st;
+    };
+
+    var itemStyleParser = function(item, pt) {
+        pt = pt || {};
+        var out = {}, arr, i, len,
+            indexes = gmx.tileAttributeIndexes,
+            prop = item.properties || {},
+            itemType = item.type,
+            type = pt.type,
+            color = pt.color || 255,
+            opacity = 'opacity' in pt ? pt.opacity : 1;
+
+        out.sx = pt.sx;
+        out.sy = pt.sy;
+        if (pt.maxSize) {
+            out.maxSize = pt.maxSize;
+        }
+        if (type === 'image') {
+            out.type = type;
+            if (pt.iconUrl) { out.iconUrl = pt.iconUrl; }
+            if (pt.image) { out.image = pt.image; }
+            if (pt.iconAngle) {
+                var rotateRes = pt.iconAngle || 0;
+                if (rotateRes && typeof (rotateRes) === 'string') {
+                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
+                }
+                out.rotate = rotateRes || 0;
+            }
+            if ('iconColor' in pt) {
+                out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
+            }
+            if ('iconScale' in pt) {
+                out.iconScale = 'scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale;
+            }
+        } else if (pt.fillRadialGradient) {
+            var rgr = pt.fillRadialGradient,
+                r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
+                r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
+                x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
+                y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
+                x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
+                y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
+            if (rgr.r2max) {
+                r2 = Math.min(r2, rgr.r2max);
+            }
+            var colorStop = [];
+            len = rgr.addColorStop.length;
+            if (!rgr.addColorStopFunctions) {
+                rgr.addColorStopFunctions = new Array(len);
+            }
+            for (i = 0; i < len; i++) {
+                arr = rgr.addColorStop[i];
+                var arrFunc = rgr.addColorStopFunctions[i] || [],
+                    p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
+                    p3 = arr[3];
+                if (arr.length < 4) {
+                    var op = arr.length < 3 ? 1 : arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2];
+                    p3 = utils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], op);
+                 }
+                colorStop.push([p0, p3]);
+            }
+            out.maxSize = out.sx = out.sy = out.iconSize = r2;
+            out.fillRadialGradient = {
+                x1:x1, y1:y1, r1:r1, x2:x2, y2:y2, r2:r2,
+                addColorStop: colorStop
+            };
+            out._radialGradientParsed = {
+                create: [x1, y1, r1, x2, y2, r2],
+                colorStop: colorStop
+            };
+        } else if (pt.fillLinearGradient) {
+            out.fillLinearGradient = pt.fillLinearGradient;
+        } else {
+            if (pt.fillPattern) {
+                out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : utils.getPatternIcon(item, pt, indexes));
+            }
+            if (itemType === 'POLYGON' || itemType === 'MULTIPOLYGON' || gmx.GeometryType === 'polygon') {
+                type = 'polygon';
+            }
+            if (pt.iconSize) {
+                var iconSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconSize);
+                out.sx = out.sy = iconSize;
+                iconSize += pt.weight ? pt.weight : 0;
+                out.iconSize = iconSize;
+                if ('iconScale' in pt) {
+                    out.iconSize *= pt.iconScale;
+                }
+                out.maxSize = iconSize;
+            }
+            out.stroke = true;
+            if ('colorFunction' in pt || 'opacityFunction' in pt) {
+                color = 'colorFunction' in pt ? pt.colorFunction(prop, indexes) : color;
+                opacity = 'opacityFunction' in pt ? pt.opacityFunction(prop, indexes) : opacity;
+            }
+            out.strokeStyle = utils.dec2color(color, opacity);
+            out.lineWidth = 'weight' in pt ? pt.weight : 1;
+        }
+
+        if ('iconScale' in pt) {
+            out.iconScale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
+        }
+
+        if (type === 'square' || type === 'polygon' || type === 'circle') {
+            out.type = type;
+            var fop = pt.fillOpacity,
+                fc = pt.fillColor,
+                fcDec = typeof (fc) === 'string' ? parseInt(fc.replace(/#/, ''), 16) : fc;
+
+            if ('fillColor' in pt) {
+                out.fillStyle = utils.dec2color(fcDec, 1);
+            }
+            if ('fillColorFunction' in pt || 'fillOpacityFunction' in pt) {
+                color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : fc || 255);
+                opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes) : fop || 1);
+                out.fillStyle = utils.dec2color(color, opacity);
+            } else if ('fillOpacity' in pt && 'fillColor' in pt) {
+                out.fillStyle = utils.dec2color(fcDec, fop);
+            }
+        }
+
+        if ('dashArray' in pt) { out.dashArray = pt.dashArray; }
+        if ('dashOffset' in pt) { out.dashOffset = pt.dashOffset; }
+
+        if (gmx.labelsLayer) {
+            arr = utils.styleKeys.label.client;
+            for (i = 0, len = arr.length; i < len; i++) {
+                var it = arr[i];
+                if (it in pt) {
+                    if (it === 'labelField') {
+                        if (!indexes[pt[it]]) {
+                            continue;
+                        }
+                    } else if (it === 'labelTemplate') {
+                        var properties = gmxAPIutils.getPropertiesHash(prop, indexes);
+                        out.labelText = utils.parseTemplate(pt[it], properties);
+                    }
+                    out[it] = pt[it];
+                }
+            }
+        }
+        return out;
     };
 
     var prepareItem = function(style) {			// Style Scanex->leaflet
@@ -256,15 +399,22 @@ var StyleManager = function(gmx) {
                 st.BalloonEnable = true;
             }
             st.hoverDiff = null;
+            st.common = {};
             if (st.RenderStyle) {
                 if (!labelsLayer) {
                     if (isLabel(st.RenderStyle)) {
                         labelsLayer = true;
                     }
                 }
+                if (st.RenderStyle.common) {
+                    st.common.RenderStyle = itemStyleParser({}, st.RenderStyle);
+                }
                 if (st.HoverStyle) {
                     st.hoverDiff = checkDiff(st.RenderStyle, st.HoverStyle);
                 }
+            }
+            if (st.HoverStyle && st.HoverStyle.common) {
+                st.common.HoverStyle = itemStyleParser({}, st.HoverStyle);
             }
         }
         gmx.balloonEnable = balloonEnable;
@@ -365,147 +515,6 @@ var StyleManager = function(gmx) {
         }
     };
 
-    var itemStyleParser = function(item, pt) {
-        pt = pt || {};
-        var out = {}, arr, i, len,
-            indexes = gmx.tileAttributeIndexes,
-            prop = item.properties,
-            itemType = item.type,
-            type = pt.type,
-            color = pt.color || 255,
-            opacity = 'opacity' in pt ? pt.opacity : 1;
-
-        out.sx = pt.sx;
-        out.sy = pt.sy;
-        if (pt.maxSize) {
-            out.maxSize = pt.maxSize;
-        }
-        if (type === 'image') {
-            out.type = type;
-            if (pt.iconUrl) { out.iconUrl = pt.iconUrl; }
-            if (pt.image) { out.image = pt.image; }
-            if (pt.iconAngle) {
-                var rotateRes = pt.iconAngle || 0;
-                if (rotateRes && typeof (rotateRes) === 'string') {
-                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
-                }
-                out.rotate = rotateRes || 0;
-            }
-            if ('iconColor' in pt) {
-                out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
-            }
-            if ('iconScale' in pt) {
-                out.iconScale = 'scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale;
-            }
-        } else if (pt.fillRadialGradient) {
-            var rgr = pt.fillRadialGradient,
-                r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
-                r2 = (rgr.r2Function ? rgr.r2Function(prop, indexes) : rgr.r2),
-                x1 = (rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1),
-                y1 = (rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1),
-                x2 = (rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2),
-                y2 = (rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2);
-            if (rgr.r2max) {
-                r2 = Math.min(r2, rgr.r2max);
-            }
-            var colorStop = [];
-            len = rgr.addColorStop.length;
-            if (!rgr.addColorStopFunctions) {
-                rgr.addColorStopFunctions = new Array(len);
-            }
-            for (i = 0; i < len; i++) {
-                arr = rgr.addColorStop[i];
-                var arrFunc = rgr.addColorStopFunctions[i] || [],
-                    p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr[0]),
-                    p3 = arr[3];
-                if (arr.length < 4) {
-                    var op = arr.length < 3 ? 1 : arrFunc[2] ? arrFunc[2](prop, indexes) : arr[2];
-                    p3 = utils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr[1], op);
-                 }
-                colorStop.push([p0, p3]);
-            }
-            out.maxSize = out.sx = out.sy = out.iconSize = r2;
-            out.fillRadialGradient = {
-                x1:x1, y1:y1, r1:r1, x2:x2, y2:y2, r2:r2,
-                addColorStop: colorStop
-            };
-            out._radialGradientParsed = {
-                create: [x1, y1, r1, x2, y2, r2],
-                colorStop: colorStop
-            };
-        } else if (pt.fillLinearGradient) {
-            out.fillLinearGradient = pt.fillLinearGradient;
-        } else {
-            if (pt.fillPattern) {
-                out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : utils.getPatternIcon(item, pt, indexes));
-            }
-            if (itemType === 'POLYGON' || itemType === 'MULTIPOLYGON') {
-                type = 'polygon';
-            }
-            if (pt.iconSize) {
-                var iconSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconSize);
-                out.sx = out.sy = iconSize;
-                iconSize += pt.weight ? pt.weight : 0;
-                out.iconSize = iconSize;
-                if ('iconScale' in pt) {
-                    out.iconSize *= pt.iconScale;
-                }
-                out.maxSize = iconSize;
-            }
-            out.stroke = true;
-            if ('colorFunction' in pt || 'opacityFunction' in pt) {
-                color = 'colorFunction' in pt ? pt.colorFunction(prop, indexes) : color;
-                opacity = 'opacityFunction' in pt ? pt.opacityFunction(prop, indexes) : opacity;
-            }
-            out.strokeStyle = utils.dec2color(color, opacity);
-            out.lineWidth = 'weight' in pt ? pt.weight : 1;
-        }
-
-        if ('iconScale' in pt) {
-            out.iconScale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
-        }
-
-        if (type === 'square' || type === 'polygon' || type === 'circle') {
-            out.type = type;
-            var fop = pt.fillOpacity,
-                fc = pt.fillColor,
-                fcDec = typeof (fc) === 'string' ? parseInt(fc.replace(/#/, ''), 16) : fc;
-
-            if ('fillColor' in pt) {
-                out.fillStyle = utils.dec2color(fcDec, 1);
-            }
-            if ('fillColorFunction' in pt || 'fillOpacityFunction' in pt) {
-                color = ('fillColorFunction' in pt ? pt.fillColorFunction(prop, indexes) : fc || 255);
-                opacity = ('fillOpacityFunction' in pt ? pt.fillOpacityFunction(prop, indexes) : fop || 1);
-                out.fillStyle = utils.dec2color(color, opacity);
-            } else if ('fillOpacity' in pt && 'fillColor' in pt) {
-                out.fillStyle = utils.dec2color(fcDec, fop);
-            }
-        }
-
-        if ('dashArray' in pt) { out.dashArray = pt.dashArray; }
-        if ('dashOffset' in pt) { out.dashOffset = pt.dashOffset; }
-
-        if (gmx.labelsLayer) {
-            arr = utils.styleKeys.label.client;
-            for (i = 0, len = arr.length; i < len; i++) {
-                var it = arr[i];
-                if (it in pt) {
-                    if (it === 'labelField') {
-                        if (!indexes[pt[it]]) {
-                            continue;
-                        }
-                    } else if (it === 'labelTemplate') {
-                        var properties = gmxAPIutils.getPropertiesHash(prop, indexes);
-                        out.labelText = utils.parseTemplate(pt[it], properties);
-                    }
-                    out[it] = pt[it];
-                }
-            }
-        }
-        return out;
-    };
-
     var chkStyleFilter = function(item) {
         var zoom = gmx.currentZoom,
             fnum = gmx.multiFilters ? -1 : item.currentFilter,
@@ -526,12 +535,12 @@ var StyleManager = function(gmx) {
                 item.hoverDiff = st.hoverDiff;
                 item.currentFilter = i;
                 if (needParse || fnum !== i) {
-                    var parsed = itemStyleParser(item, st.RenderStyle),
+                    var parsed = st.common && st.common.RenderStyle || itemStyleParser(item, st.RenderStyle),
                         parsedHover = null;
 
                     item.parsedStyleKeys = parsed;
                     if (st.HoverStyle) {
-                        parsedHover = itemStyleParser(item, st.HoverStyle);
+                        parsedHover = st.common && st.common.HoverStyle || itemStyleParser(item, st.HoverStyle);
                         item.parsedStyleHover = parsedHover;
                     }
                     if (gmx.multiFilters) {
@@ -597,7 +606,7 @@ var StyleManager = function(gmx) {
             }
             return null;
         }
-        version = style.RenderStyle.version || -1;
+        version = style.version || -1;
         if (version !== item.styleVersion) {
             item.parsedStyleKeys = itemStyleParser(item, style.RenderStyle);
         }
