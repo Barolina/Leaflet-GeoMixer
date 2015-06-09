@@ -150,23 +150,25 @@ var StyleManager = function(gmx) {
 
     var parseStyle = function(st, renderStyle) {
         if (st) {
+            st.common = true;
             for (var key in st) {
                 if (gmxAPIutils.styleFuncKeys[key]) {
                     var fkey = gmxAPIutils.styleFuncKeys[key],
                         val = st[key];
                     if (typeof (val) === 'string') {
+                        st.common = false;
                         if (renderStyle && renderStyle[key] === val) {
                             st[fkey] = renderStyle[fkey];
                         } else {
                             st[fkey] = parsers.parseExpression(val);
                         }
                     } else if (typeof (val) === 'function') {
+                        st.common = false;
                         st[fkey] = val;
                     }
                 }
             }
 
-            st.common = true;
             var type = '';
             if ('iconUrl' in st) {
                 type = 'image';
@@ -238,7 +240,7 @@ var StyleManager = function(gmx) {
                 out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
             }
             if ('iconScale' in pt) {
-                out.iconScale = 'scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale;
+                out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
             }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
@@ -305,7 +307,7 @@ var StyleManager = function(gmx) {
         }
 
         if ('iconScale' in pt) {
-            out.iconScale = ('scaleFunction' in pt ? pt.scaleFunction(prop, indexes) : pt.iconScale);
+            out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
         }
 
         if (type === 'square' || type === 'polygon' || type === 'circle') {

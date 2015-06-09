@@ -1516,6 +1516,16 @@ var gmxAPIutils = {
         color: 'colorFunction',
         fillColor: 'fillColorFunction'
     },
+    styleFuncError: {
+        iconSize: function() { return 8; },
+        iconAngle: function() { return 0; },
+        iconScale: function() { return 1; },
+        iconColor: function() { return 0xFF; },
+        opacity: function() { return 1; },
+        fillOpacity: function() { return 0.5; },
+        color: function() { return 0xFF; },
+        fillColor: function() { return 0xFF; }
+    },
     defaultStyles: {
        MinZoom: 1,
        MaxZoom: 21,
@@ -1598,7 +1608,12 @@ var gmxAPIutils = {
                                 if (zn.match(/[^\d\.]/) === null) {
                                     zn = Number(zn);
                                 } else {
-                                    out[gmxAPIutils.styleFuncKeys[newKey]] = L.gmx.Parsers.parseExpression(zn);
+                                    var func = L.gmx.Parsers.parseExpression(zn);
+                                    if (func === null) {
+                                        zn = gmxAPIutils.styleFuncError[newKey]();
+                                    } else {
+                                        out[gmxAPIutils.styleFuncKeys[newKey]] = func;
+                                    }
                                 }
                             }
                         } else if (key1 === 'opacity') {
