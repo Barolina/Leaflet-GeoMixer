@@ -11,9 +11,9 @@ L.gmx.VectorLayer.include({
                 item = gmx.dataManager.getItem(idr),
                 currentStyle = item.currentStyle || item.parsedStyleKeys,
                 iconScale = currentStyle.iconScale || 1,
-                sx = currentStyle.sx || 0,
-                sy = currentStyle.sy || 0,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
+                sx = parsedStyle.sx || currentStyle.sx || 0,
+                sy = parsedStyle.sy || currentStyle.sy || 0,
                 lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || 0,
                 dx = iconScale * (sx + lineWidth / 2) / mInPixel,
                 dy = iconScale * (sy + lineWidth / 2) / mInPixel;

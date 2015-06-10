@@ -87,7 +87,7 @@ var DataManager = L.Class.extend({
         }
     },
 
-    getItems: function(oId) {
+    getItems: function(oId, bboxActive) {
         var resItems = [],
             observer = this._observers[oId];
 
@@ -102,7 +102,9 @@ var DataManager = L.Class.extend({
         var _this = this,
             putData = function(tile) {
                 var data = tile.data;
-                if (!data || (tile.z !== 0 && !observer.intersectsWithTile(tile))) {
+                if (!data || (tile.z !== 0
+                    && (bboxActive ? !observer.intersects(bboxActive) : !observer.intersectsWithTile(tile))
+                    )) {
                     // VectorTile is not loaded or is not within observer bounds
                     return;
                 }
