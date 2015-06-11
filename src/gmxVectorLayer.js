@@ -133,12 +133,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (this.options.clickable === false) {
             this._container.style.pointerEvents = 'none';
         }
-        if (gmx.balloonEnable && !this._popup) { this.bindPopup(); }
+        var popupOptions = {maxWidth: 10000, className: 'gmxPopup'};
+        if (gmx.balloonEnable && !this._popup) { this.bindPopup('', popupOptions); }
         this.on('stylechange', function() {
             if (!gmx.balloonEnable && _this._popup) {
                 _this.unbindPopup();
             } else if (gmx.balloonEnable && !_this._popup) {
-                _this.bindPopup();
+                _this.bindPopup('', popupOptions);
             }
             if (_this._map) {
                 if (gmx.labelsLayer) {
