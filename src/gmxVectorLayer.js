@@ -535,12 +535,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
             var observer = gmx.dataManager.addObserver(attr, zKey);
 
-            // myLayer.on('stylechange', function() {
-                // var bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
-                // if (!observer.bbox.isEqual(bbox)) {
-                    // observer.setBounds(bbox);
-                // }
-            // }, this);
+            myLayer.on('stylechange', function() {
+                var bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
+                if (!observer.bbox.isEqual(bbox)) {
+                    observer.setBounds(bbox);
+                }
+            }, this);
             observer.on('activate', function() {
                 //if observer is deactivated before drawing,
                 //we can consider corresponding tile as already drawn
