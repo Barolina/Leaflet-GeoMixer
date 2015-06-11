@@ -538,7 +538,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             myLayer.on('stylechange', function() {
                 var bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
                 if (!observer.bbox.isEqual(bbox)) {
-                    observer.setBounds(bbox);
+                    observer.bbox = bbox;
+                    observer.fire('update');
                 }
             }, this);
             observer.on('activate', function() {
