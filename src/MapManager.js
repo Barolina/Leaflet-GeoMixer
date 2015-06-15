@@ -1,6 +1,7 @@
 /** Asynchronously request information about map given server host and map name
 */
 var gmxMapManager = {
+    //serverHost should be host only string like 'maps.kosmosnimki.ru' without any slashes or 'http://' prefixes
     getMap: function(serverHost, apiKey, mapName) {
         var maps = this._maps;
         if (!maps[serverHost] || !maps[serverHost][mapName]) {

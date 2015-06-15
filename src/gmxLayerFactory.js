@@ -25,8 +25,8 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
     for (var p in options) {
         layerParams[p] = options[p];
     }
-
-    var hostName = options.hostName || DEFAULT_HOSTNAME;
+    
+    var hostName = L.gmxUtil.parseUri(options.hostName || DEFAULT_HOSTNAME).hostOnly;
 
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
         function() {
@@ -69,7 +69,7 @@ L.gmx.loadMap = function(mapID, options) {
     options = options || {};
 
     var def = new L.gmx.Deferred(),
-        hostName = options.hostName || DEFAULT_HOSTNAME;
+        hostName = L.gmxUtil.parseUri(options.hostName || DEFAULT_HOSTNAME).hostOnly;
 
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
