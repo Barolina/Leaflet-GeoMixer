@@ -1247,7 +1247,7 @@ var gmxAPIutils = {
         return ret;
     },
 
-    /** Parse Geomixer geometry to geoJSON geometry
+    /** Converts Geomixer geometry to geoJSON geometry
      * @memberof L.gmxUtil
      * @param {Object} geometry - Geomixer geometry
      * @param {Boolean} mercFlag - true if coordinates in Mercator
@@ -1270,27 +1270,72 @@ var gmxAPIutils = {
             coordinates: coords
         };
     },
+    
+    /** Converts GeoJSON object into GeoMixer format
+     * @memberof L.gmxUtil
+     * @param {Object} geometry - GeoJSON object
+     * @param {Boolean} mercFlag - true if resulting Geomixer object should has coordinates in Mercator projection
+     * @return {Object} Geometry in GeoMixer format
+    */
+    geoJSONtoGeometry: function (geoJSON, mercFlag) {
+        if (geoJSON.type === 'FeatureCollection') {
+            return gmxAPIutils.geoJSONtoGeometry(geoJSON.features[0], mercFlag);
+        } else if (geoJSON.type === 'Feature') {
+            return gmxAPIutils.geoJSONtoGeometry(geoJSON.geometry, mercFlag);
+        } else if (geoJSON.type === 'FeatureCollection') {
+            return gmxAPIutils.geoJSONtoGeometry(geoJSON.features[0], mercFlag);
+        }
+        
+        var type = geoJSON.type === 'MultiPolygon' ? 'MULTIPOLYGON'
+                : geoJSON.type === 'Polygon' ? 'POLYGON'
+                : geoJSON.type === 'MultiLineString' ? 'MULTILINESTRING'
+                : geoJSON.type === 'LineString' ? 'LINESTRING'
+                : geoJSON.type === 'MultiPoint' ? 'MULTIPOINT'
+                : geoJSON.type === 'Point' ? 'POINT'
+                : geoJSON.type,
+            coords = geoJSON.coordinates;
+        if (mercFlag) {
+            coords = gmxAPIutils.coordsToMercator(geoJSON.type, coords);
+        }
+        return {
+            type: type,
+            coordinates: coords
+        };
+    },    
 
-    coordsFromMercator: function(type, coords) {
-        var i, len, latlng,
-            latlngs = [];
+    _coordsConvert: function(type, coords, toMerc) {
+        var i, len, p,
+            resCoords = [];
         if (type === 'Point') {
-            latlng = L.Projection.Mercator.unproject({y: coords[1], x: coords[0]});
-            latlngs = [latlng.lng, latlng.lat];
+            if (toMerc) {
+                p = L.Projection.Mercator.project({lat: coords[1], lng: coords[0]});
+                resCoords = [p.x, p.y];
+            } else {
+                p = L.Projection.Mercator.unproject({y: coords[1], x: coords[0]});
+                resCoords = [p.lng, p.lat];
+            }
         } else if (type === 'LineString' || type === 'MultiPoint') {
             for (i = 0, len = coords.length; i < len; i++) {
-                latlngs.push(gmxAPIutils.coordsFromMercator('Point', coords[i]));
+                resCoords.push(gmxAPIutils._coordsConvert('Point', coords[i], toMerc));
             }
         } else if (type === 'Polygon' || type === 'MultiLineString') {
             for (i = 0, len = coords.length; i < len; i++) {
-                latlngs.push(gmxAPIutils.coordsFromMercator('MultiPoint', coords[i]));
+                resCoords.push(gmxAPIutils._coordsConvert('MultiPoint', coords[i], toMerc));
             }
         } else if (type === 'MultiPolygon') {
             for (i = 0, len = coords.length; i < len; i++) {
-                latlngs.push(gmxAPIutils.coordsFromMercator('Polygon', coords[i]));
+                resCoords.push(gmxAPIutils._coordsConvert('Polygon', coords[i], toMerc));
             }
         }
-        return latlngs;
+        return resCoords;
+    },
+    
+    coordsFromMercator(type, coords) {
+        return gmxAPIutils._coordsConvert(type, coords, false);
+    },
+    
+    coordsToMercator(type, coords) {
+        return gmxAPIutils._coordsConvert(type, coords, true);
     },
 
     /** Get area for geometry
@@ -1852,6 +1897,7 @@ L.extend(L.gmxUtil, {
     distVincenty: gmxAPIutils.distVincenty,
     parseCoordinates: gmxAPIutils.parseCoordinates,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
+    geoJSONtoGeometry: gmxAPIutils.geoJSONtoGeometry,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
     parseUri: gmxAPIutils.parseUri
