@@ -1330,11 +1330,11 @@ var gmxAPIutils = {
         return resCoords;
     },
     
-    coordsFromMercator(type, coords) {
+    coordsFromMercator: function(type, coords) {
         return gmxAPIutils._coordsConvert(type, coords, false);
     },
     
-    coordsToMercator(type, coords) {
+    coordsToMercator: function(type, coords) {
         return gmxAPIutils._coordsConvert(type, coords, true);
     },
 
