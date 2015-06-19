@@ -280,7 +280,7 @@ var DataManager = L.Class.extend({
     },
 
     addObserver: function(options, id) {
-        id = id || 's' + (this._freeSubscrID++);
+        id = id || 's' + (++this._freeSubscrID);
         var _this = this,
             observer = new Observer(options);
 

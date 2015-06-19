@@ -816,13 +816,13 @@ var gmxAPIutils = {
      * @param {Number} lat - point latitude
      * @return {String} point coordinates in string format with degrees
     */
-	LatLonFormatCoordinates: function(x, y) {
+	latLonFormatCoordinates: function(x, y) {
 		return  gmxAPIutils.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
 	},
 
 	formatCoordinates: function(x, y) {
-		return  gmxAPIutils.LatLonFormatCoordinates(x, y);
+		return  gmxAPIutils.latLonFormatCoordinates(x, y);
 	},
 
     /** Get point coordinates in string format
@@ -831,12 +831,12 @@ var gmxAPIutils = {
      * @param {Number} lat - point latitude
      * @return {String} point coordinates in string format
     */
-	LatLonFormatCoordinates2: function(x, y) {
+	latLonFormatCoordinates2: function(x, y) {
 		return  gmxAPIutils.trunc(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.trunc(Math.abs(x)) + (x > 0 ? ' E' : ' W');
 	},
 	formatCoordinates2: function(x, y) {
-		return  gmxAPIutils.LatLonFormatCoordinates2(x, y);
+		return  gmxAPIutils.latLonFormatCoordinates2(x, y);
 	},
 
     getPixelScale: function(zoom) {
@@ -1270,7 +1270,7 @@ var gmxAPIutils = {
             coordinates: coords
         };
     },
-    
+
     /** Converts GeoJSON object into GeoMixer format
      * @memberof L.gmxUtil
      * @param {Object} geometry - GeoJSON object
@@ -1285,7 +1285,7 @@ var gmxAPIutils = {
         } else if (geoJSON.type === 'FeatureCollection') {
             return gmxAPIutils.geoJSONtoGeometry(geoJSON.features[0], mercFlag);
         }
-        
+
         var type = geoJSON.type === 'MultiPolygon' ? 'MULTIPOLYGON'
                 : geoJSON.type === 'Polygon' ? 'POLYGON'
                 : geoJSON.type === 'MultiLineString' ? 'MULTILINESTRING'
@@ -1301,7 +1301,7 @@ var gmxAPIutils = {
             type: type,
             coordinates: coords
         };
-    },    
+    },
 
     _coordsConvert: function(type, coords, toMerc) {
         var i, len, p,
@@ -1329,11 +1329,11 @@ var gmxAPIutils = {
         }
         return resCoords;
     },
-    
+
     coordsFromMercator: function(type, coords) {
         return gmxAPIutils._coordsConvert(type, coords, false);
     },
-    
+
     coordsToMercator: function(type, coords) {
         return gmxAPIutils._coordsConvert(type, coords, true);
     },
@@ -1847,7 +1847,7 @@ gmxAPIutils.parseUri = function (str) {
     uri.host = uri.authority; // HACK
 
     return uri;
-}
+};
 
 gmxAPIutils.parseUri.options = {
     strictMode: false,
@@ -1883,8 +1883,8 @@ L.extend(L.gmxUtil, {
     pad2: gmxAPIutils.pad2,
     dec2hex: gmxAPIutils.dec2hex,
     trunc: gmxAPIutils.trunc,
-    LatLonFormatCoordinates: gmxAPIutils.LatLonFormatCoordinates,
-    LatLonFormatCoordinates2: gmxAPIutils.LatLonFormatCoordinates2,
+    LatLonFormatCoordinates: gmxAPIutils.latLonFormatCoordinates,
+    LatLonFormatCoordinates2: gmxAPIutils.latLonFormatCoordinates2,
     getLength: gmxAPIutils.getLength,
     prettifyDistance: gmxAPIutils.prettifyDistance,
     getArea: gmxAPIutils.getArea,
@@ -1917,7 +1917,7 @@ L.extend(L.gmxUtil, {
         try {
             var dataObj = JSON.parse(dataStr);
         } catch (ev) {
-            request.callback && request.callback({Status:'error', ErrorInfo: {ErrorMessage: 'JSON.parse exeption', ExceptionType: 'JSON.parse', StackTrace: dataStr}});
+            console.log({Status:'error', ErrorInfo: {ErrorMessage: 'JSON.parse exeption', ExceptionType: 'JSON.parse', StackTrace: dataStr}});
         }
         var request = requests[e.origin][dataObj.CallbackName];
         if (!request) {
@@ -1930,7 +1930,7 @@ L.extend(L.gmxUtil, {
         if (request.iframe.parentNode) {
             request.iframe.parentNode.removeChild(request.iframe);
         }
-        request.callback && request.callback(dataObj);
+        if ('callback' in request) { request.callback(dataObj); }
     };
 
     L.DomEvent.on(window, 'message', processMessage);

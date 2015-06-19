@@ -303,7 +303,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.repaint();
         return this;
     },
-    
+
     getDateInterval: function() {
         return [this._gmx.dateBegin, this._gmx.dateEnd];
     },
@@ -895,12 +895,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             return new L.LatLngBounds();
         }
     },
-    
+
     getGeometry: function() {
         if (!this._gmx.latLngGeometry) {
             this._gmx.latLngGeometry = L.gmxUtil.geometryToGeoJSON(this._gmx.geometry, true);
         }
-        
+
         return this._gmx.latLngGeometry;
     }
 });

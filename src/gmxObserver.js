@@ -190,7 +190,7 @@ var Observer = L.Class.extend({
     intersects: function(bounds) {
         return this.world || this.bbox.intersects(bounds) || !!(this.bbox1 && this.bbox1.intersects(bounds));
     },
-    
+
     intersectsWithTile: function(tile) {
         var di = this.dateInterval;
         return this.intersects(tile.bounds) && (!tile.beginDate || (di && di.endDate >= tile.beginDate && di.beginDate <= tile.endDate));

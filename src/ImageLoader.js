@@ -20,7 +20,7 @@ var gmxImageLoader = {
                 var def = requests[k].def;
                 image ? def.resolve(image) : def.reject();
             }
-            this.curCount--;
+            --this.curCount;
             delete this.inProgress[url];
         }
         this._nextLoad();
@@ -39,7 +39,7 @@ var gmxImageLoader = {
         } else {
             var requests = [request];
             this.inProgress[url] = {requests: requests};
-            this.curCount++;
+            ++this.curCount;
 
             for (var k = this.requests.length - 1; k >= 0; k--) {
                 if (this.requests[k].url === url) {
@@ -80,7 +80,7 @@ var gmxImageLoader = {
         if (request.url in this.inProgress) {
             var loadingImg = this.inProgress[request.url];
             if (loadingImg.requests.length === 1 && loadingImg.requests[0]._id === id) {
-                this.curCount--;
+                --this.curCount;
                 delete this.inProgress[request.url];
                 loadingImg.image = this.emptyImageUrl;
                 this._nextLoad();
@@ -124,7 +124,7 @@ var gmxImageLoader = {
     },
 
     _add: function(atBegin, url, options) {
-        var id = 'id' + this.uniqueID++;
+        var id = 'id' + (++this.uniqueID);
         var request = new ImageRequest(id, url, options);
         if (url in this.inProgress) {
             this.inProgress[url].requests.push(request);

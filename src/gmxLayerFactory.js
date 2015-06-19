@@ -25,7 +25,7 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
     for (var p in options) {
         layerParams[p] = options[p];
     }
-    
+
     var hostName = L.gmxUtil.parseUri(options.hostName || DEFAULT_HOSTNAME).hostOnly;
 
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(

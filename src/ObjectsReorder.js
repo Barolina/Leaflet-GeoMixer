@@ -26,7 +26,7 @@ ObjectsReorder.prototype = {
     },
 
     addToReorder: function (id, bottomFlag) {
-        this.count++;
+        ++this.count;
         this.all[id] = bottomFlag ? -this.count : this.count;
     },
 

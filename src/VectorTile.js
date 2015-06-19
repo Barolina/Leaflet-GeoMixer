@@ -88,7 +88,7 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         }
         return hiddenLines;
     };
-    
+
     // this.getDateInterval = function(zeroDate) {
         // return this.s === -1 ? null : {
             // beginDate: new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000),
@@ -106,12 +106,12 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
     this.vectorTileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
-    
+
     if (this.s >= 0 && zeroDate) {
         this.beginDate = new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
         this.endDate = new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
     }
-    
+
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 };
 
