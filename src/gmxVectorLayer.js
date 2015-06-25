@@ -300,7 +300,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (observer) {
             observer.setDateInterval(beginDate, endDate);
         }
-        this.repaint();
+
         return this;
     },
 

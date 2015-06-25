@@ -1,8 +1,9 @@
 //Single vector tile, received from GeoMixer server
 //"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
 var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
-    var loadDef = null,
-        _this = this;
+    var _this = this;
+        
+    this.loadDef = new L.gmx.Deferred();
 
     this.addData = function(data, keys) {
 
@@ -19,9 +20,8 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         this.dataOptions = this.dataOptions.concat(dataOptions);
 
         this.state = 'loaded';
-        if (loadDef) {
-            loadDef.resolve(this.data);
-        }
+        
+        this.loadDef.resolve(this.data);
     };
 
     this.removeData = function(keys) {
@@ -34,15 +34,14 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     };
 
     this.load = function() {
-        if (!loadDef) {
-            loadDef = new L.gmx.Deferred();
+        if (this.state === 'notLoaded') {
             this.state = 'loading';
             dataProvider.load(x, y, z, v, s, d, function(data) {
                 _this.addData(data);
             });
         }
 
-        return loadDef;
+        return this.loadDef;
     };
 
     this.clear = function() {
@@ -50,7 +49,7 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         this.data = [];
         this.dataOptions = [];
 
-        loadDef = null;
+        this.loadDef = new L.gmx.Deferred();
     };
 
     this.calcEdgeLines = function(num) {
@@ -89,13 +88,6 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         return hiddenLines;
     };
 
-    // this.getDateInterval = function(zeroDate) {
-        // return this.s === -1 ? null : {
-            // beginDate: new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000),
-            // endDate: new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000)
-        // };
-    // }
-
     this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = [];
     this.dataOptions = [];
@@ -106,14 +98,16 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
     this.vectorTileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
-
+    
     if (this.s >= 0 && zeroDate) {
         this.beginDate = new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
         this.endDate = new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
     }
-
+    
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 };
+
+//class methods
 
 VectorTile.makeTileKey = function(x, y, z, v, s, d) {
     return z + '_' + x + '_' + y + '_' + v + '_' + s + '_' + d;
