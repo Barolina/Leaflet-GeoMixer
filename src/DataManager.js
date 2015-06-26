@@ -608,6 +608,10 @@ var DataManager = L.Class.extend({
         var observersToUpdate = {},
             _this = this,
             key;
+            
+        if (this.clientSideTile) {
+            newTilesList[this.clientSideTile] = true;
+        }
 
         var checkSubscription = function(vKey) {
             var tile = _this._tiles[vKey].tile,
@@ -635,10 +639,6 @@ var DataManager = L.Class.extend({
         }
 
         this._activeTileKeys = newTilesList;
-
-        if (this.clientSideTile) {
-            this._activeTileKeys[this.clientSideTile] = true;
-        }
 
         this._triggerObservers(observersToUpdate);
     },
