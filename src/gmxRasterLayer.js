@@ -91,5 +91,13 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 		gmx.dataManager.addTile(new VectorTile(vectorDataProvider, -0.5,   -0.5, 0, 0, -1, -1));
 
         return this;
+    },
+
+    setZoomBounds: function(minZoom, maxZoom) {
+        var styles = this.getStyles().slice(0);
+        styles[0] = L.extend({}, styles[0]);
+        styles[0].MinZoom = minZoom;
+        styles[0].MaxZoom = maxZoom;
+        this.setStyles(styles);
     }
 });
