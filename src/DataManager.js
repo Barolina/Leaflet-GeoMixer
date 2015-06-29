@@ -8,12 +8,11 @@ var ObserverTileLoader = L.Class.extend({
     
     _updateObserver: function(observer) {
         var obsData = this._observerData[observer.id],
-            activeTileKeys = this._dataManager._activeTileKeys,
             newObserverTiles = {},
             leftToLoad = 0;
         
         for (var key in this._tileData) {
-            var tile = this._dataManager._tiles[key].tile;
+            var tile = this._tileData[key].tile;
             if (observer.intersectsWithTile(tile)) {
                 newObserverTiles[key] = true;
                 if (tile.state !== 'loaded') {
@@ -75,17 +74,19 @@ var ObserverTileLoader = L.Class.extend({
             }
         }
         
-        this._tileData[tile.vectorTileKey] = {observers: tileObservers};
+        this._tileData[tile.vectorTileKey] = {
+            observers: tileObservers,
+            tile: tile
+        };
         
         return this;
     },
     
-    removeTile: function(tile) {
-        var leftToLoadDelta = tile.state === 'loaded' ? 0 : 1,
-            tileId = tile.vectorTileKey;
+    removeTile: function(tileId) {
+        var tileData = this._tileData[tileId],
+            leftToLoadDelta = tileData.tile.state === 'loaded' ? 0 : 1;
 
-        var tileObservers = this._tileData[tileId].observers;
-        for (var id in tileObservers) {
+        for (var id in tileData.observers) {
             var observerData = this._observerData[id];
             observerData.leftToLoad -= leftToLoadDelta;
             delete observerData.tiles[tileId];
@@ -124,19 +125,16 @@ var ObserverTileLoader = L.Class.extend({
             this.fire('observertileload', {observer: observer});
             return this;
         }
-        
-        var tiles = this._dataManager._tiles,
-            obsTiles = obsData.tiles;
 
-        for (var tileId in obsTiles) {
-            tiles[tileId].tile.load();
+        for (var tileId in obsData.tiles) {
+            this._tileData[tileId].tile.load();
         }
         
         return this;
     },
-
-    leftToLoad: function(observer) {
-        return this._observerData[observer.id].leftToLoad;
+    
+    getTileObservers: function(tileId) {
+        return this._tileData[tileId].observers;
     }
 });
 
@@ -614,13 +612,9 @@ var DataManager = L.Class.extend({
         }
 
         var checkSubscription = function(vKey) {
-            var tile = _this._tiles[vKey].tile,
-                observers = _this._observers;
-
-            for (var sid in observers) {
-                if (observers[sid].intersectsWithTile(tile)) {
-                    observersToUpdate[sid] = true;
-                }
+            var observerIds = _this._observerTileLoader.getTileObservers(vKey);
+            for (var sid in observerIds) {
+                observersToUpdate[sid] = true;
             }
         };
 
@@ -633,8 +627,8 @@ var DataManager = L.Class.extend({
 
         for (key in oldTilesList) {
             if (!newTilesList[key]) {
-                this._observerTileLoader.removeTile(this._tiles[key].tile);
                 checkSubscription(key);
+                this._observerTileLoader.removeTile(key);
             }
         }
 
