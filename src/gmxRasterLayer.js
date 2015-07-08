@@ -2,7 +2,7 @@
 L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 {
     options: {
-        clickable: false
+        //clickable: false
     },
     initFromDescription: function(ph) {
         var props = ph.properties,
@@ -16,6 +16,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                 RCMinZoomForRasters: props.styles[0].MinZoom,
                 visible: props.visible,
                 styles: [{
+                    DisableBalloonOnClick: true,
                     MinZoom: props.styles[0].MinZoom,
                     MaxZoom: props.styles[0].MaxZoom,
                     RenderStyle: {outline: {thickness: 0}, fill: {opacity: 100}},
