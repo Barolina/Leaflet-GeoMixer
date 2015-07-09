@@ -149,8 +149,9 @@ L.gmx.VectorLayer.include({
                     } else if (type === 'datetime') {
                         res = L.gmxUtil.getUTCdateTime(res);
                     } else if (key1 === 'SUMMARY' && !res) {
-                        var geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
-                        res = outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, this._gmx.units);
+                        var geometries = this._gmx.dataManager.getItemGeometries(gmx.id),
+                            unitOptions = this._map ? this._map.options : {};
+                        res = outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
                     }
                     // var hookID = gmxAPIutils.newId(),
                         // st = "<span id='" + hookID + "'>" + res + "</span>";

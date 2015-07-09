@@ -21,7 +21,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             endDate: options.endDate,
             sortItems: options.sortItems || null,
             styles: options.styles || [],
-            units: options.units || {square: 'km2', distance: 'km', coordinates: 0},
             screenTiles: {},
             tileSubscriptions: {},
             _tilesToLoad: 0,
