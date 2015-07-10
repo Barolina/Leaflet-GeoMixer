@@ -1102,7 +1102,7 @@ var gmxAPIutils = {
 
     /** Get geoJSON length
      * @memberof L.gmxUtil
-     * @param {Object} geojson - object in <a href="http://geojson.org/geojson-spec.html">GeoJSON format</a>
+     * @param {Object} geoJSON - object in <a href="http://geojson.org/geojson-spec.html">GeoJSON format</a>
      * @return {Number} length
     */
     geoJSONGetLength: function(geoJSON) {
@@ -1341,7 +1341,7 @@ var gmxAPIutils = {
     /** Get area for geometry
      * @memberof L.gmxUtil
      * @param {Object} geometry
-     * @param {Boolean} isMerc - true if coordinates in Mercator
+     * @param {Boolean} [isMerc=true] - true if coordinates in Mercator
      * @return {Number} area
     */
     geoArea: function(geom, isMerc) {
@@ -1376,14 +1376,13 @@ var gmxAPIutils = {
     /** Get summary for geoJSON geometry
      * @memberof L.gmxUtil
      * @param {Object} geoJSON geometry
-     * @param {Boolean} isMerc - true if coordinates in Mercator
      * @param {Object} unitOptions {
      *                  distanceUnit: '',   // m - meters, km - kilometers, nm - nautilus miles, auto - default
      *                  squareUnit: ''      // m2 - square meters, km2 - square kilometers, ha - hectares, auto - default
      *               }
      * @return {String} Summary string for geometry
     */
-    getGeoJSONSummary: function(geom, isMerc, unitOptions) {
+    getGeoJSONSummary: function(geom, unitOptions) {
         var type = geom.type,
             units = unitOptions || {},
             out = 0,
@@ -1392,19 +1391,19 @@ var gmxAPIutils = {
             coords = geom.coordinates;
             out = gmxAPIutils.formatCoordinates(coords[0], coords[1]);
         } else if (type === 'Polygon') {
-            out = gmxAPIutils.prettifyArea(gmxAPIutils.geoArea(geom, isMerc), units.squareUnit);
+            out = gmxAPIutils.prettifyArea(gmxAPIutils.geoArea(geom, false), units.squareUnit);
         } else if (type === 'MultiPolygon') {
             coords = geom.coordinates;
             for (i = 0, len = coords.length; i < len; i++) {
-                out += gmxAPIutils.geoArea({type: 'Polygon', coordinates: coords[i]}, isMerc);
+                out += gmxAPIutils.geoArea({type: 'Polygon', coordinates: coords[i]}, false);
             }
             out = gmxAPIutils.prettifyArea(out, units.squareUnit);
         } else if (type === 'LineString') {
-            out = gmxAPIutils.prettifyDistance(gmxAPIutils.geoJSONGetLength(geom, isMerc), units.distanceUnit);
+            out = gmxAPIutils.prettifyDistance(gmxAPIutils.geoJSONGetLength(geom), units.distanceUnit);
         } else if (type === 'MultiLineString') {
             coords = geom.coordinates;
             for (i = 0, len = coords.length; i < len; i++) {
-                out += gmxAPIutils.geoJSONGetLength({type: 'LineString', coordinates: coords[i]}, isMerc);
+                out += gmxAPIutils.geoJSONGetLength({type: 'LineString', coordinates: coords[i]});
             }
             out = gmxAPIutils.prettifyDistance(out, units.distanceUnit);
         }
