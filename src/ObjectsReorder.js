@@ -17,7 +17,7 @@ var ObjectsReorder = function (layer) {
 
 ObjectsReorder.prototype = {
     clickFunc: function (ev) {
-        if (this.disabled) {
+        if (this.disabled || this.gmx.properties.fromType === 'Raster') {
             return;
         }
         var id = ev.gmx.id;

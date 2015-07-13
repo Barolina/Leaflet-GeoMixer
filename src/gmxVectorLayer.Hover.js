@@ -131,10 +131,11 @@ L.gmx.VectorLayer.include({
                 }
             };
         if (!skipOver && ev.originalEvent &&
-            (type === 'mousemove'
-            || this.hasEventListeners('mouseover')
-            || this.hasEventListeners('mouseout')
-            || this.hasEventListeners(type)
+            (
+            this.hasEventListeners('mouseover') ||
+            this.hasEventListeners('mouseout') ||
+            this.hasEventListeners(type) ||
+            (type === 'mousemove' && gmx.properties.fromType !== 'Raster')
             )) {
             var zKey = ev.originalEvent.target.zKey;
             if (!zKey) {
