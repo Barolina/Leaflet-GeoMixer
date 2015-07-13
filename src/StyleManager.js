@@ -502,6 +502,10 @@ var StyleManager = function(gmx) {
                 var type = typeof (st.Filter);
                 style.filterFunction = type === 'string' ? parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'))
                     : type === 'function' ? style.Filter : null;
+
+                styles.map(function(it) {
+                    it.version = ++maxVersion;
+                });
             }
             for (var i = 0, len = DEFAULTKEYS.length; i < len; i++) {
                 var key = DEFAULTKEYS[i];
