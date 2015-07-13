@@ -4,7 +4,7 @@ var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
 var normalizeHostname = function(hostName) {
     var parsedHost = L.gmxUtil.parseUri(hostName || DEFAULT_HOSTNAME);
     
-    hostName = parsedHost.hostOnly + parsedHost.directory;
+    hostName = parsedHost.host + parsedHost.directory;
     
     if (hostName[hostName.length-1] === '/') {
         hostName = hostName.substring(0, hostName.length - 1);
