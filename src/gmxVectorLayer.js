@@ -141,6 +141,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 _this.bindPopup('', popupOptions);
             }
             if (_this._map) {
+                for (var key in gmx.tileSubscriptions) {    // recheck bbox on screen observers
+                    var observer = gmx.dataManager.getObserver(key),
+                        parsedKey = gmx.tileSubscriptions[key],
+                        gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(parsedKey, parsedKey.z),
+                        bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
+                    if (!observer.bbox.isEqual(bbox)) {
+                        observer.bbox = bbox;
+                    }
+                }
                 if (gmx.labelsLayer) {
                     _this._map._labelsLayer.add(_this);
                 } else if (!gmx.labelsLayer) {
