@@ -235,15 +235,26 @@ var DataManager = L.Class.extend({
         return this._activeTileKeys;
     },
 
+    _getObserversByFilterName: function(filterName) {
+        var oKeys = {};
+        for (var id in this._observers) {
+            if (this._observers[id].hasFilter(filterName)) {
+                oKeys[id] = true;
+            }
+        }
+        return oKeys;
+    },
+
     addFilter: function(filterName, filterFunc) {
         this._filters[filterName] = filterFunc;
-        this._triggerObservers(); //TODO: trigger only observers that use this filter
+        this._triggerObservers(this._getObserversByFilterName(filterName));
     },
 
     removeFilter: function(filterName) {
         if (this._filters[filterName]) {
+            var oKeys = this._getObserversByFilterName(filterName);
             delete this._filters[filterName];
-            this._triggerObservers(); //TODO: trigger only observers that use this filter
+            this._triggerObservers(oKeys);
         }
     },
 

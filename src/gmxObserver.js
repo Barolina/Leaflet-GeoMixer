@@ -33,6 +33,15 @@ var Observer = L.Class.extend({
         }
     },
 
+    hasFilter: function(filterName) {
+        for (var i = 0, len = this.filters.length; i < len; i++) {
+            if (this.filters[i] === filterName) {
+                return true;
+            }
+        }
+        return false;
+    },
+
     activate: function() {
         if (!this.active) {
             this.active = true;

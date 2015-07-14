@@ -487,40 +487,6 @@ var StyleManager = function(gmx) {
         gmx.labelsLayer = false;
     };
 
-    this.setStyle = function(st, num, createFlag) {
-        num = num || 0;
-        if (num < styles.length || createFlag) {
-            var style = styles[num];
-            if (!style) {
-                style = prepareItem({});
-                styles[num] = style;
-            }
-            this.deferred = new L.gmx.Deferred();
-            style.version = ++maxVersion;
-            if ('Filter' in st) {
-                style.Filter = st.Filter;
-                var type = typeof (st.Filter);
-                style.filterFunction = type === 'string' ? parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'))
-                    : type === 'function' ? style.Filter : null;
-
-                styles.map(function(it) {
-                    it.version = ++maxVersion;
-                });
-            }
-            for (var i = 0, len = DEFAULTKEYS.length; i < len; i++) {
-                var key = DEFAULTKEYS[i];
-                if (key in st) { style[key] = st[key]; }
-            }
-            // DEFAULTKEYS.forEach(function(key) {
-                // if (key in st) { style[key] = st[key]; }
-            // });
-            if (st.RenderStyle) { style.RenderStyle = parseStyle(st.RenderStyle); }
-            if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle, style.RenderStyle); }
-            checkStyles();
-            this.initStyles();
-        }
-    };
-
     var chkStyleFilter = function(item) {
         var zoom = gmx.currentZoom,
             fnum = gmx.multiFilters ? -1 : item.currentFilter,
@@ -574,6 +540,41 @@ var StyleManager = function(gmx) {
     };
 
     gmx.dataManager.addFilter('styleFilter', chkStyleFilter);
+
+    this.setStyle = function(st, num, createFlag) {
+        num = num || 0;
+        if (num < styles.length || createFlag) {
+            var style = styles[num];
+            if (!style) {
+                style = prepareItem({});
+                styles[num] = style;
+            }
+            this.deferred = new L.gmx.Deferred();
+            style.version = ++maxVersion;
+            if ('Filter' in st) {
+                style.Filter = st.Filter;
+                var type = typeof (st.Filter);
+                style.filterFunction = type === 'string' ? parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'))
+                    : type === 'function' ? style.Filter : null;
+
+                styles.map(function(it) {
+                    it.version = ++maxVersion;
+                });
+            }
+            for (var i = 0, len = DEFAULTKEYS.length; i < len; i++) {
+                var key = DEFAULTKEYS[i];
+                if (key in st) { style[key] = st[key]; }
+            }
+            // DEFAULTKEYS.forEach(function(key) {
+                // if (key in st) { style[key] = st[key]; }
+            // });
+            if (st.RenderStyle) { style.RenderStyle = parseStyle(st.RenderStyle); }
+            if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle, style.RenderStyle); }
+            checkStyles();
+            this.initStyles();
+            gmx.dataManager.addFilter('styleFilter', chkStyleFilter); // reset 'styleFilter'
+        }
+    };
 
     this.getItemBalloon = function(id) {
         var item = gmx.dataManager.getItem(id),
