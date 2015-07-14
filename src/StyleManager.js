@@ -560,6 +560,7 @@ var StyleManager = function(gmx) {
                 styles.map(function(it) {
                     it.version = ++maxVersion;
                 });
+                gmx.dataManager.addFilter('styleFilter', chkStyleFilter); // reset 'styleFilter'
             }
             for (var i = 0, len = DEFAULTKEYS.length; i < len; i++) {
                 var key = DEFAULTKEYS[i];
@@ -572,7 +573,6 @@ var StyleManager = function(gmx) {
             if (st.HoverStyle) { style.HoverStyle = parseStyle(st.HoverStyle, style.RenderStyle); }
             checkStyles();
             this.initStyles();
-            gmx.dataManager.addFilter('styleFilter', chkStyleFilter); // reset 'styleFilter'
         }
     };
 

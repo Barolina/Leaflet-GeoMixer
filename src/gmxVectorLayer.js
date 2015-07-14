@@ -247,7 +247,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.styleManager.setStyle(style, num, createFlag);
             _this.fire('stylechange', {num: num || 0});
             gmx.styleManager.deferred.then(function () {
-                _this.repaint();
+                _this.repaint(_this._gmx.tileSubscriptions);
             });
         });
         return this;
@@ -702,9 +702,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return gmxTiles;
     },
 
-    repaint: function () {
+    repaint: function (oKeys) {
         if (this._map) {
-            this._gmx.dataManager._triggerObservers();
+            this._gmx.dataManager._triggerObservers(oKeys);
         }
     },
 
