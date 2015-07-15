@@ -487,6 +487,12 @@ var StyleManager = function(gmx) {
         gmx.labelsLayer = false;
     };
 
+    this.changeStylesVersion = function () {
+        styles.map(function(it) {
+            it.version = ++maxVersion;
+        });
+    };
+
     var chkStyleFilter = function(item) {
         var zoom = gmx.currentZoom,
             fnum = gmx.multiFilters ? -1 : item.currentFilter,
@@ -557,9 +563,7 @@ var StyleManager = function(gmx) {
                 style.filterFunction = type === 'string' ? parsers.parseSQL(style.Filter.replace(/[\[\]]/g, '"'))
                     : type === 'function' ? style.Filter : null;
 
-                styles.map(function(it) {
-                    it.version = ++maxVersion;
-                });
+                this.changeStylesVersion();
                 gmx.dataManager.addFilter('styleFilter', chkStyleFilter); // reset 'styleFilter'
             }
             for (var i = 0, len = DEFAULTKEYS.length; i < len; i++) {
