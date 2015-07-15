@@ -345,6 +345,7 @@ var DataManager = L.Class.extend({
                     item.type = 'MULTI' + item.type;
                 }
                 delete item.bounds;
+                item.currentFilter = null;
             } else {
                 item = {
                     id: id,
@@ -676,6 +677,7 @@ var DataManager = L.Class.extend({
                 if (_items[id]) {
                     var item = _items[id];
                     item.processing = false;
+                    item.currentFilter = null;
                     delete item.options.fromTiles[zKey];
                 }
             }
@@ -688,6 +690,7 @@ var DataManager = L.Class.extend({
                 skip[id] = true;
                 if (_items[id]) {
                     _items[id].processing = true;
+                    _items[id].currentFilter = null;
                 }
             }
         }
@@ -711,6 +714,7 @@ var DataManager = L.Class.extend({
         for (id in out) {
             if (this._items[id]) {
                 this._items[id].processing = true;
+                this._items[id].currentFilter = null;
             }
 
             data.push(this._propertiesToArray(out[id]));

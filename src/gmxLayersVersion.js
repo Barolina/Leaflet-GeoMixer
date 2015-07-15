@@ -126,7 +126,6 @@ L.gmx.VectorLayer.include({
             var gmx = this._gmx;
             if (layerDescription.properties) {
                 gmx.properties = layerDescription.properties;
-                gmx.styleManager.changeStylesVersion();
                 gmx.dataManager.updateVersion();
                 this.fire('versionchange');
             }
