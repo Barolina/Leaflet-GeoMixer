@@ -147,7 +147,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(parsedKey, parsedKey.z),
                         bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
                     if (!observer.bbox.isEqual(bbox)) {
-                        observer.bbox = bbox;
+                        var proj = L.Projection.Mercator;
+                        observer.setBounds(L.latLngBounds([proj.unproject(bbox.min), proj.unproject(bbox.max)]));
                     }
                 }
                 if (gmx.labelsLayer) {
@@ -764,7 +765,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.identityField = prop.identityField; // ogc_fid
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
-        if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
+        if (!gmx.sortItems && gmx.GeometryType === 'polygon' && gmx.objectsReorder) {
             gmx.objectsReorder.setSortFunc(function(a, b) {
                 return a.id - b.id;
             });

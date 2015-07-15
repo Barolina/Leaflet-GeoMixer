@@ -6,7 +6,7 @@ var Observer = L.Class.extend({
                                          // `update` - send only changed data
             callback: Func,              // will be called when layer's data for this observer is changed
             dateInterval: [dateBegin,dateEnd], // temporal interval
-            bbox: bbox,                  // bbox to observe
+            bbox: bbox,                  // bbox to observe on Mercator
             filters: [String]            // filter keys array
         }
     */
