@@ -151,6 +151,17 @@ var Observer = L.Class.extend({
     },*/
 
     setBounds: function(bounds) {
+        if (!bounds) {
+            if (!this.world) {
+                var w = gmxAPIutils.worldWidthMerc;
+                this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
+                this.bbox1 = null;
+                this.world = true;
+                this.fire('update');
+            }
+            return this;
+        }
+
         var min = bounds.min,
             max = bounds.max;
         if (!min || !max) {
