@@ -1270,6 +1270,26 @@ var gmxAPIutils = {
             coordinates: coords
         };
     },
+    
+    convertGeometry: function (geom, fromMerc) {
+        var type = geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
+                : geom.type === 'POLYGON' ? 'Polygon'
+                : geom.type === 'MULTILINESTRING' ? 'MultiLineString'
+                : geom.type === 'LINESTRING' ? 'LineString'
+                : geom.type === 'MULTIPOINT' ? 'MultiPoint'
+                : geom.type === 'POINT' ? 'Point'
+                : geom.type,
+            coords = geom.coordinates;
+        if (fromMerc) {
+            coords = gmxAPIutils.coordsFromMercator(type, coords);
+        } else {
+            coords = gmxAPIutils.coordsToMercator(type, coords);
+        }
+        return {
+            type: geom.type,
+            coordinates: coords
+        };
+    },
 
     /** Converts GeoJSON object into GeoMixer format
      * @memberof L.gmxUtil
@@ -1901,6 +1921,7 @@ L.extend(L.gmxUtil, {
     distVincenty: gmxAPIutils.distVincenty,
     parseCoordinates: gmxAPIutils.parseCoordinates,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
+    convertGeometry: gmxAPIutils.convertGeometry,
     geoJSONtoGeometry: gmxAPIutils.geoJSONtoGeometry,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
