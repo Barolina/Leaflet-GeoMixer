@@ -56,13 +56,18 @@ var gmxAPIutils = {
             paramsStringItems.push(p + '=' + encodeURIComponent(urlParams[p]));
         }
 
-        var sepSym = url.indexOf('?') === -1 ? '?' : '&';
+        var src = url + (url.indexOf('?') === -1 ? '?' : '&') + paramsStringItems.join('&');
 
         script.onerror = function(e) {
             def.reject(e);
+            L.gmxUtil.loaderStatus(src, true);
         };
-
-        script.setAttribute('src', url + sepSym + paramsStringItems.join('&'));
+        script.onload = function(e) {
+            L.gmxUtil.loaderStatus(src, true);
+        };
+        L.gmxUtil.loaderStatus(src, null, 'vector');
+        script.setAttribute('src', src);
+        
         document.getElementsByTagName('head').item(0).appendChild(script);
         return def;
     },
@@ -92,10 +97,12 @@ var gmxAPIutils = {
                     xhr.setRequestHeader(key, ph.headers[key]);
                 }
             }
+            var reqId = L.gmxUtil.loaderStatus();
             if (ph.async) {
                 //xhr.withCredentials = true;
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
+                        L.gmxUtil.loaderStatus(reqId, true);
                         if (xhr.status === 200) {
                             ph.callback(xhr.responseText);
                             xhr = null;
@@ -108,6 +115,7 @@ var gmxAPIutils = {
             xhr.send((ph.params ? ph.params : null));
             if (!ph.async && xhr.status === 200) {
                 ph.callback(xhr.responseText);
+                L.gmxUtil.loaderStatus(reqId, true);
                 return xhr.status;
             }
             return true;
@@ -1888,6 +1896,8 @@ gmxAPIutils.parseUri.options = {
 
 if (!L.gmxUtil) { L.gmxUtil = {}; }
 L.extend(L.gmxUtil, {
+    newId: gmxAPIutils.newId,
+    loaderStatus: function () {},
     isIE9: gmxAPIutils.isIE(9),
     isIE10: gmxAPIutils.isIE(10),
     requestJSONP: gmxAPIutils.requestJSONP,

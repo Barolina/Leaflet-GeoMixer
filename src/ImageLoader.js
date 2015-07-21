@@ -23,6 +23,7 @@ var gmxImageLoader = {
             --this.curCount;
             delete this.inProgress[url];
         }
+        L.gmxUtil.loaderStatus(url, true);
         this._nextLoad();
     },
 
@@ -70,6 +71,7 @@ var gmxImageLoader = {
         imageObj.onerror = function() {
             _this._imageLoaded(url);
         };
+        L.gmxUtil.loaderStatus(url);
         imageObj.src = url;
         return imageObj;
     },
