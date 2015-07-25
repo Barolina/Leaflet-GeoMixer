@@ -151,9 +151,10 @@ var Observer = L.Class.extend({
     },*/
 
     setBounds: function(bounds) {
+        var w;
         if (!bounds) {
             if (!this.world) {
-                var w = gmxAPIutils.worldWidthMerc;
+                w = gmxAPIutils.worldWidthMerc;
                 this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
                 this.bbox1 = null;
                 this.world = true;
@@ -173,11 +174,11 @@ var Observer = L.Class.extend({
         }
         var minX = min.x, maxX = max.x,
             minY = min.y, maxY = max.y,
-            w = (maxX - minX) / 2,
             minX1 = null,
             maxX1 = null;
 
         this.world = false;
+        w = (maxX - minX) / 2;
         if (w >= 180) {
             minX = -180; maxX = 180;
             this.world = true;

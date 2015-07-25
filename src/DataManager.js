@@ -5,13 +5,14 @@ var ObserverTileLoader = L.Class.extend({
         this._observerData = {};
         this._tileData = {};
     },
-    
+
     _updateObserver: function(observer) {
         var obsData = this._observerData[observer.id],
             newObserverTiles = {},
-            leftToLoad = 0;
-        
-        for (var key in this._tileData) {
+            leftToLoad = 0,
+            key;
+
+        for (key in this._tileData) {
             var tile = this._tileData[key].tile;
             if (observer.intersectsWithTile(tile)) {
                 newObserverTiles[key] = true;
@@ -21,67 +22,67 @@ var ObserverTileLoader = L.Class.extend({
                 this._tileData[key].observers[observer.id] = true;
             }
         }
-        
-        for (var key in obsData.tiles) {
+
+        for (key in obsData.tiles) {
             if (!(key in newObserverTiles)) {
                 delete this._tileData[key].observers[observer.id];
             }
         }
-        
+
         obsData.tiles = newObserverTiles;
-        obsData.leftToLoad = leftToLoad
+        obsData.leftToLoad = leftToLoad;
     },
-    
+
     addObserver: function(observer) {
         this._observerData[observer.id] = {
             observer: observer,
             tiles: {},
             leftToLoad: 0
-        }
-        
+        };
+
         observer.on('update', this._updateObserver.bind(this, observer));
-        
+
         this._updateObserver(observer);
-        
+
         return this;
     },
-    
+
     removeObserver: function(id) {
         var obsTiles = this._observerData[id].tiles;
-        
+
         for (var tileId in obsTiles) {
             delete this._tileData[tileId].observers[id];
         }
-        
+
         delete this._observerData[id];
-        
+
         return this;
     },
 
     addTile: function(tile) {
         var leftToLoadDelta = tile.state === 'loaded' ? 0 : 1;
         tile.loadDef.then(this._tileLoadedCallback.bind(this, tile));
-        
+
         var tileObservers = {};
-        
+
         for (var key in this._observerData) {
             var obsInfo = this._observerData[key];
-            
+
             if (obsInfo.observer.intersectsWithTile(tile)) {
                 obsInfo.tiles[tile.vectorTileKey] = true;
                 obsInfo.leftToLoad += leftToLoadDelta;
                 tileObservers[key] = true;
             }
         }
-        
+
         this._tileData[tile.vectorTileKey] = {
             observers: tileObservers,
             tile: tile
         };
-        
+
         return this;
     },
-    
+
     removeTile: function(tileId) {
         var tileData = this._tileData[tileId],
             leftToLoadDelta = tileData.tile.state === 'loaded' ? 0 : 1;
@@ -99,16 +100,16 @@ var ObserverTileLoader = L.Class.extend({
 
     _tileLoadedCallback: function(tile) {
         this.fire('tileload', {tile: tile});
-        
+
         if (!(tile.vectorTileKey in this._tileData)) {
             return;
         }
-        
+
         var tileObservers = this._tileData[tile.vectorTileKey].observers;
         for (var id in tileObservers) {
             var observerData = this._observerData[id];
             observerData.leftToLoad--;
-            
+
             if (observerData.leftToLoad === 0) {
                 this.fire('observertileload', {observer: observerData.observer});
             }
@@ -116,10 +117,10 @@ var ObserverTileLoader = L.Class.extend({
     },
 
     startLoadTiles: function(observer) {
-        
+
         //force active tile list update
         this._dataManager._getActiveTileKeys();
-        
+
         var obsData = this._observerData[observer.id];
         if (obsData.leftToLoad === 0) {
             this.fire('observertileload', {observer: observer});
@@ -129,10 +130,10 @@ var ObserverTileLoader = L.Class.extend({
         for (var tileId in obsData.tiles) {
             this._tileData[tileId].tile.load();
         }
-        
+
         return this;
     },
-    
+
     getTileObservers: function(tileId) {
         return this._tileData[tileId].observers;
     }
@@ -180,7 +181,7 @@ var DataManager = L.Class.extend({
                 return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
             });
         }
-        
+
         this._observerTileLoader = new ObserverTileLoader(this);
         this._observerTileLoader.on('tileload', function(event) {
             var tile = event.tile;
@@ -190,16 +191,16 @@ var DataManager = L.Class.extend({
                 var treeNode = _this._tilesTree.getNode(tile.d, tile.s);
                 treeNode && treeNode.count--; //decrease number of tiles to load inside this node
             }
-        })
-        
+        });
+
         this._observerTileLoader.on('observertileload', function(event) {
             var observer = event.observer,
                 data = _this.getItems(observer.id);
-                
+
             observer.needRefresh = false;
-                
+
             observer.updateData(data);
-        })
+        });
     },
 
     _getActiveTileKeys: function() {
@@ -426,7 +427,7 @@ var DataManager = L.Class.extend({
         if (observer.isActive()) {
             this.fire('observeractivate');
         }
-        
+
         return observer;
     },
 
@@ -591,8 +592,7 @@ var DataManager = L.Class.extend({
             tileKeys = this._getActiveTileKeys();
         }
 
-        var _this = this,
-            loadingDefs = [];
+        var loadingDefs = [];
         for (var key in tileKeys) {
             var tile = this._tiles[key].tile;
 
@@ -618,7 +618,7 @@ var DataManager = L.Class.extend({
         var observersToUpdate = {},
             _this = this,
             key;
-            
+
         if (this.clientSideTile) {
             newTilesList[this.clientSideTile] = true;
         }

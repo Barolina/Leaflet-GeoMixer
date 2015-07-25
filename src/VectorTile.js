@@ -2,7 +2,7 @@
 //"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
 var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     var _this = this;
-        
+
     this.loadDef = new L.gmx.Deferred();
 
     this.addData = function(data, keys) {
@@ -20,7 +20,7 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         this.dataOptions = this.dataOptions.concat(dataOptions);
 
         this.state = 'loaded';
-        
+
         this.loadDef.resolve(this.data);
     };
 
@@ -98,12 +98,12 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     this.d = d;
     this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
     this.vectorTileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
-    
+
     if (this.s >= 0 && zeroDate) {
         this.beginDate = new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
         this.endDate = new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
     }
-    
+
     this.state = 'notLoaded'; //notLoaded, loading, loaded
 };
 

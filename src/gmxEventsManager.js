@@ -24,11 +24,13 @@ var GmxEventsManager = L.Handler.extend({
         }
 
         var getDomIndex = function (layer) {
-            var container = layer._container,
-                arr = container.parentNode.childNodes;
-            for (var i = 0, len = arr.length; i < len; i++) {
-                if (container === arr[i]) {
-                    return i;
+            var container = layer._container;
+            if (container) {
+                var arr = container.parentNode.childNodes;
+                for (var i = 0, len = arr.length; i < len; i++) {
+                    if (container === arr[i]) {
+                        return i;
+                    }
                 }
             }
             return 0;

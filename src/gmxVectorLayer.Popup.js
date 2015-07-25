@@ -130,36 +130,16 @@ L.gmx.VectorLayer.include({
             });
         } else if (!(templateBalloon instanceof L.Popup)) {
             if (!(templateBalloon instanceof HTMLElement)) {
-                if (!templateBalloon) {
-                    templateBalloon = '';
-                    for (var key in properties) {
-                        templateBalloon += '<b>' + key + ':</b> [' +  key + ']<br />';
-                    }
-                }
-                var reg = /\[([^\]]+)\]/i;
-                var matches = reg.exec(templateBalloon);
-                while (matches && matches.length > 1) {
-                    var key1 = matches[1],
-                        type = this._gmx.tileAttributeTypes[key1],
-                        res = key1 in properties ? properties[key1] : '';
-                    if (type === 'date') {
-                        res = L.gmxUtil.getUTCdate(res);
-                    } else if (type === 'time') {
-                        res = L.gmxUtil.getUTCtime(res);
-                    } else if (type === 'datetime') {
-                        res = L.gmxUtil.getUTCdateTime(res);
-                    } else if (key1 === 'SUMMARY' && !res) {
-                        var geometries = this._gmx.dataManager.getItemGeometries(gmx.id),
-                            unitOptions = this._map ? this._map.options : {};
-                        res = outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
-                    }
-                    // var hookID = gmxAPIutils.newId(),
-                        // st = "<span id='" + hookID + "'>" + res + "</span>";
-                    // spanIDs[hookID] = key1;
-                    //templateBalloon = templateBalloon.replace(matches[0], st);
-                    templateBalloon = templateBalloon.replace(matches[0], res);
-                    matches = reg.exec(templateBalloon);
-                }
+                var geometries = this._gmx.dataManager.getItemGeometries(gmx.id),
+                    unitOptions = this._map ? this._map.options : {};
+
+                outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                templateBalloon = L.gmxUtil.parseBalloonTemplate(templateBalloon, {
+                    properties: properties,
+                    tileAttributeTypes: this._gmx.tileAttributeTypes,
+                    unitOptions: unitOptions,
+                    geometries: geometries
+                });
             }
 
             this._popup.setContent(templateBalloon);

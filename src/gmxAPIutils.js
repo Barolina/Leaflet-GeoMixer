@@ -62,12 +62,12 @@ var gmxAPIutils = {
             def.reject(e);
             L.gmxUtil.loaderStatus(src, true);
         };
-        script.onload = function(e) {
+        script.onload = function() {
             L.gmxUtil.loaderStatus(src, true);
         };
         L.gmxUtil.loaderStatus(src, null, 'vector');
         script.setAttribute('src', src);
-        
+
         document.getElementsByTagName('head').item(0).appendChild(script);
         return def;
     },
@@ -411,6 +411,68 @@ var gmxAPIutils = {
         ptx1.drawImage(canvas, 0, 0, ww, hh);
         return {'notFunc': notFunc, 'canvas': canvas1};
     },
+
+    getSVGIcon: function (options) {
+        var svg = '<svg xmlns="' + L.Path.SVG_NS + '" xmlns:xlink="http://www.w3.org/1999/xlink"',
+            type = options.type,
+            fill = options.fillStyle || 'rgba(255, 255, 255, 0.5)',
+            stroke = options.strokeStyle || '#0000ff',
+            strokeWidth = options.lineWidth || 2,
+            iconOptions = {
+                className: 'gmx-svg-icon'
+            };
+
+        if (options.className) {
+            iconOptions.className = options.className;
+        }
+        var size = options.iconSize;
+        iconOptions.iconSize = [size, size];
+        svg += ' height = "' + size + 'px"  width = "' + size + 'px">';
+
+        if (type === 'circle') {
+            if (options.fillRadialGradient) {
+                svg += '<defs><radialGradient id="myRadialGradient4" spreadMethod="pad">';
+                var stopColor = options.fillRadialGradient.addColorStop
+                    || [     // [%, color, opacity]
+                        [0, '#ffff00', 0.8],
+                        [1, '#ff0000', 0.8]
+                    ];
+
+                for (var i = 0, len = stopColor.length; i < len; i++) {
+                    var it = stopColor[i];
+                    svg += '<stop offset="' + (100 * it[0]) + '%"   stop-color="' + it[1] + '" stop-opacity="' + it[2] + '"/>';
+                }
+                svg += '</radialGradient></defs>';
+                fill = 'url(#myRadialGradient4)';
+                stroke = strokeWidth = null;
+            }
+            size /= 2;
+            svg += '<g><circle cx="' + size + '" cy="' + size + '" r="' + size + '" style="';
+            if (fill) { svg += ' fill:' + fill + ';'; }
+            if (stroke) { svg += ' stroke:"' + stroke + ';'; }
+            if (strokeWidth) { svg += ' stroke-width:"' + strokeWidth + ';'; }
+            svg += ';" />';
+        } else if (type === 'square') {
+            svg += '<g><rect width="' + size + '" height="' + size + '" style="';
+            if (fill) { svg += ' fill:' + fill + ';'; }
+            if (stroke) { svg += ' stroke:' + stroke + ';'; }
+            if (strokeWidth) { svg += ' stroke-width:' + 2 * strokeWidth + ';'; }
+            svg += '" />';
+        }
+        if (options.text) {
+            var text = options.text;
+            svg += '<text x="50%" y="50%" dy="0.4em"';
+            if (text.stroke) { svg += ' stroke="' + text.stroke + '"'; }
+            if (text.strokeWidth) { svg += ' stroke-width="' + text.strokeWidth + '"'; }
+            if (text.fill) { svg += ' fill="' + text.fill + '"'; }
+            svg += '>' + text.count + '</text>';
+        }
+        svg += '</g></svg>';
+        iconOptions.html = svg;
+
+        return new L.DivIcon(iconOptions);
+    },
+
     toPixels: function(p, tpx, tpy, mInPixel) { // get pixel point
         var px1 = p[0] * mInPixel; 	px1 = (0.5 + px1) << 0;
         var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
@@ -1278,7 +1340,7 @@ var gmxAPIutils = {
             coordinates: coords
         };
     },
-    
+
     convertGeometry: function (geom, fromMerc) {
         var type = geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
                 : geom.type === 'POLYGON' ? 'Polygon'
@@ -1559,6 +1621,39 @@ var gmxAPIutils = {
             var key1 = matches[1],
                 res = key1 in properties ? properties[key1] : '';
 
+            str = str.replace(matches[0], res);
+            matches = reg.exec(str);
+        }
+        return str;
+    },
+
+    parseBalloonTemplate: function(str, options) {
+        var properties = options.properties,
+            tileAttributeTypes = options.tileAttributeTypes,
+            unitOptions = options.unitOptions,
+            geometries = options.geometries;
+
+        if (!str) {
+            str = '';
+            for (var key in properties) {
+                str += '<b>' + key + ':</b> [' +  key + ']<br />';
+            }
+        }
+        var reg = /\[([^\]]+)\]/i;
+        var matches = reg.exec(str);
+        while (matches && matches.length > 1) {
+            var key1 = matches[1],
+                type = tileAttributeTypes[key1],
+                res = key1 in properties ? properties[key1] : '';
+            if (type === 'date') {
+                res = L.gmxUtil.getUTCdate(res);
+            } else if (type === 'time') {
+                res = L.gmxUtil.getUTCtime(res);
+            } else if (type === 'datetime') {
+                res = L.gmxUtil.getUTCdateTime(res);
+            } else if (key1 === 'SUMMARY' && !res) {
+                res = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+            }
             str = str.replace(matches[0], res);
             matches = reg.exec(str);
         }
@@ -1924,6 +2019,8 @@ L.extend(L.gmxUtil, {
     getArea: gmxAPIutils.getArea,
     prettifyArea: gmxAPIutils.prettifyArea,
     geoArea: gmxAPIutils.geoArea,
+    parseBalloonTemplate: gmxAPIutils.parseBalloonTemplate,
+    getSVGIcon: gmxAPIutils.getSVGIcon,
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
     getGeometrySummary: gmxAPIutils.getGeometrySummary,
     getGeoJSONSummary: gmxAPIutils.getGeoJSONSummary,

@@ -1,6 +1,8 @@
 var fs = require('fs'),
     UglifyJS = require('uglify-js'),
-    deps = require('./deps.js').deps;
+    deps = require('./deps.js'),
+    depsJS = deps.depsJS,
+    depsCSS = deps.depsCSS;
 
 function combineFiles(files) {
 	var content = '';
@@ -17,13 +19,13 @@ function chkDistPath() {
 
 exports.build = function () {
 
-	console.log('Concatenating ' + deps.length + ' files...');
+	console.log('Concatenating ' + depsJS.length + ' files...');
 	chkDistPath();
 
 	var copy = fs.readFileSync('src/copyright.js', 'utf8'),
 	    intro = '(function () {\n"use strict";\n',
 	    outro = '}());',
-	    newSrc = copy + intro + combineFiles(deps) + outro,
+	    newSrc = copy + intro + combineFiles(depsJS) + outro,
 	    pathPart = 'dist/leaflet-geomixer',
 	    srcPath = pathPart + '-src.js';
 
@@ -43,4 +45,15 @@ exports.build = function () {
 	console.log('\tCompressed size: ' + newCompressed.length + ' bytes');
 	fs.writeFileSync(path, newCompressed);
 	console.log('\tSaved to ' + path);
+
+	console.log('Concatenating ' + depsCSS.length + ' CSS files...');
+
+	var newSrc = combineFiles(depsCSS),
+	    pathPart = 'dist/leaflet-geomixer',
+	    srcPath = pathPart + '.css';
+
+	console.log('\tCSS size: ' + newSrc.length + ' bytes');
+
+	fs.writeFileSync(srcPath, newSrc);
+	console.log('\tSaved to ' + srcPath);
 };

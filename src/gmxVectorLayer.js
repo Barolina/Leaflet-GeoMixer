@@ -128,7 +128,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (gmx.properties.type === 'Vector') {
             map.on('moveend', this._moveEnd, this);
         }
-        this.fire('add');
         if (this.options.clickable === false) {
             this._container.style.pointerEvents = 'none';
         }
@@ -158,10 +157,32 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 }
             }
         });
+        this.fire('add');
     },
 
     onRemove: function(map) {
-        L.TileLayer.Canvas.prototype.onRemove.call(this, map);
+        if (this._container) {
+            this._container.parentNode.removeChild(this._container);
+        }
+
+        map.off({
+            'viewreset': this._reset,
+            'moveend': this._update
+        }, this);
+
+        if (this._animated) {
+            map.off({
+                'zoomanim': this._animateZoom,
+                'zoomend': this._endZoomAnim
+            }, this);
+        }
+
+        if (!this.options.updateWhenIdle) {
+            map.off('move', this._limitedUpdate, this);
+        }
+        this._container = null;
+        this._map = null;
+
         this._clearAllSubscriptions();
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
@@ -210,6 +231,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         if (gmx.properties.type === 'Vector' && !('chkUpdate' in this.options)) {
             this.options.chkUpdate = true; //Check updates for vector layers by default
+        }
+
+        if (gmx.clusters) {
+            this.bindClusters(JSON.parse(gmx.clusters));
         }
 
         this.initPromise.resolve();
@@ -309,6 +334,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (observer) {
             observer.setDateInterval(beginDate, endDate);
         }
+        this.fire('dateIntervalChanged');
 
         return this;
     },
@@ -771,6 +797,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             });
         }
 
+        if ('clusters' in prop) {
+            gmx.clusters = prop.clusters;
+        }
         if ('MetaProperties' in prop) {
             var meta = prop.MetaProperties;
             if ('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя
@@ -795,6 +824,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
+            }
+            if ('clusters' in meta) {    // проверка всех фильтров для обьектов слоя
+                gmx.clusters = meta.clusters.Value;
             }
         }
 

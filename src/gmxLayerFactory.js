@@ -3,15 +3,15 @@ L.gmx = L.gmx || {};
 var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
 var normalizeHostname = function(hostName) {
     var parsedHost = L.gmxUtil.parseUri(hostName || DEFAULT_HOSTNAME);
-    
+
     hostName = parsedHost.host + parsedHost.directory;
-    
-    if (hostName[hostName.length-1] === '/') {
+
+    if (hostName[hostName.length - 1] === '/') {
         hostName = hostName.substring(0, hostName.length - 1);
     }
-    
+
     return hostName;
-}
+};
 
 //Build in layer classes
 L.gmx._layerClasses = {

@@ -205,7 +205,9 @@ L.gmx.VectorLayer.include({
             gmx.lastHover = null;
             chkHover('mouseout');
         }
-        this._map.doubleClickZoom.enable();
+        if (this._map) {
+            this._map.doubleClickZoom.enable();
+        }
         return 0;
     }
 });

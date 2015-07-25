@@ -1,4 +1,4 @@
-﻿var deps = [
+﻿var depsJS = [
     "Parsers.js",
     "Deferred.js",
     "ImageLoader.js",
@@ -26,15 +26,25 @@
     "ObjectsReorder.js",
     "L.gmxLocale.js",
     "lang_ru.js",
-    "lang_en.js"
+    "lang_en.js",
+    "gmxMarkerCluster/gmxMarkerCluster.js",
+    "gmxMarkerCluster/MarkerClusterGroup.js",
+    "gmxMarkerCluster/MarkerCluster.js",
+    "gmxMarkerCluster/MarkerOpacity.js",
+    "gmxMarkerCluster/DistanceGrid.js"
+];
+
+var depsCSS = [
+    "gmxMarkerCluster/gmxMarkerCluster.css",
 ];
 
 if (typeof exports !== 'undefined') {
-	exports.deps = deps;
+	exports.depsJS = depsJS;
+	exports.depsCSS = depsCSS;
 }
 
 if (typeof gmxDevOnLoad === 'function') {
-	gmxDevOnLoad(deps);
+	gmxDevOnLoad(depsJS, depsCSS);
 } else if (typeof gmxAPI !== 'undefined' && typeof gmxAPI.gmxLayerDevLoader === 'function') {
-	gmxAPI.gmxLayerDevLoader(deps);
+	gmxAPI.gmxLayerDevLoader(depsJS, depsCSS);
 }
