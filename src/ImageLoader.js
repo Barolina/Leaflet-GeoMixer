@@ -50,6 +50,9 @@ var gmxImageLoader = {
             }
 
             var image = this._loadImage(request);
+            if (!image.width) {
+                L.gmxUtil.loaderStatus(url);
+            }
 
             //theoretically image loading can be synchronous operation
             if (this.inProgress[url]) {
@@ -71,7 +74,6 @@ var gmxImageLoader = {
         imageObj.onerror = function() {
             _this._imageLoaded(url);
         };
-        L.gmxUtil.loaderStatus(url);
         imageObj.src = url;
         return imageObj;
     },
