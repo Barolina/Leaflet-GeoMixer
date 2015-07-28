@@ -10,6 +10,7 @@ L.MarkerCluster.include({
 	_spiralFootSeparation:  28, //related to size of spiral (experiment!)
 	_spiralLengthStart: 11,
 	_spiralLengthFactor: 5,
+	_maxViewItems: 100,
 
 	_circleSpiralSwitchover: 9, //show spiral instead of circle from this marker count upwards.
 								// 0 -> always spiral; Infinity -> always circle
@@ -156,6 +157,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 
 	_animationSpiderfy: function (childMarkers, positions) {
 		var me = this,
+			maxViewItems = Math.min(childMarkers.length - 1, this._maxViewItems),
 			group = this._group,
 			map = group._map,
 			fg = group._featureGroup,
@@ -163,7 +165,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 			i, m, leg, newPos;
 
 		//Add markers to map hidden at our center point
-		for (i = childMarkers.length - 1; i >= 0; i--) {
+		for (i = maxViewItems; i >= 0; i--) {
 			m = childMarkers[i];
 
 			//If it is a marker, add it now and we'll animate it out
@@ -187,7 +189,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 			xmlns = L.Path.SVG_NS;
 
 
-		for (i = childMarkers.length - 1; i >= 0; i--) {
+		for (i = maxViewItems; i >= 0; i--) {
 			newPos = map.layerPointToLatLng(positions[i]);
 			m = childMarkers[i];
 
@@ -250,7 +252,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 		if (L.Path.SVG) {
 			this._group._forceLayout();
 
-			for (i = childMarkers.length - 1; i >= 0; i--) {
+			for (i = maxViewItems; i >= 0; i--) {
 				m = childMarkers[i]._spiderLeg;
 
 				m.options.opacity = 0.5;
@@ -270,6 +272,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 			fg = group._featureGroup,
 			thisLayerPos = zoomDetails ? map._latLngToNewLayerPoint(this._latlng, zoomDetails.zoom, zoomDetails.center) : map.latLngToLayerPoint(this._latlng),
 			childMarkers = this.getAllChildMarkers(),
+			maxViewItems = Math.min(childMarkers.length - 1, this._maxViewItems),
 			svg = L.Path.SVG && this.SVG_ANIMATION,
 			m, i, a;
 
@@ -277,7 +280,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 
 		//Make us visible and bring the child markers back in
 		this.setOpacity(1);
-		for (i = childMarkers.length - 1; i >= 0; i--) {
+		for (i = maxViewItems; i >= 0; i--) {
 			m = childMarkers[i];
 
 			//Marker was added to us after we were spidified
@@ -316,7 +319,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 		setTimeout(function () {
 			//If we have only <= one child left then that marker will be shown on the map so don't remove it!
 			var stillThereChildCount = 0;
-			for (i = childMarkers.length - 1; i >= 0; i--) {
+			for (i = maxViewItems; i >= 0; i--) {
 				m = childMarkers[i];
 				if (m._spiderLeg) {
 					stillThereChildCount++;
@@ -324,7 +327,7 @@ L.MarkerCluster.include(!L.DomUtil.TRANSITION ? {
 			}
 
 
-			for (i = childMarkers.length - 1; i >= 0; i--) {
+			for (i = maxViewItems; i >= 0; i--) {
 				m = childMarkers[i];
 
 				if (!m._spiderLeg) { //Has already been unspiderfied
