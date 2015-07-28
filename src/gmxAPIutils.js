@@ -432,7 +432,7 @@ var gmxAPIutils = {
         if (type === 'circle') {
             if (options.fillRadialGradient) {
                 svg += '<defs><radialGradient id="myRadialGradient4" spreadMethod="pad">';
-                var stopColor = options.fillRadialGradient.addColorStop
+                var stopColor = options.fillRadialGradient.colorStop || options.fillRadialGradient.addColorStop
                     || [     // [%, color, opacity]
                         [0, '#ffff00', 0.8],
                         [1, '#ff0000', 0.8]

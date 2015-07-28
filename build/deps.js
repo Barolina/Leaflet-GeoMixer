@@ -31,6 +31,8 @@
     "gmxMarkerCluster/MarkerClusterGroup.js",
     "gmxMarkerCluster/MarkerCluster.js",
     "gmxMarkerCluster/MarkerOpacity.js",
+    "gmxMarkerCluster/MarkerCluster.Spiderfier.js",
+    "gmxMarkerCluster/MarkerCluster.QuickHull.js",
     "gmxMarkerCluster/DistanceGrid.js"
 ];
 

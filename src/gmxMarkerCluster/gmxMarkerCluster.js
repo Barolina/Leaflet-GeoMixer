@@ -9,10 +9,6 @@
             }
             return r;
         },
-        stopColor: [     // [%, color, opacity]
-            [0, '#ffff00', 0.8],
-            [1, '#ff0000', 0.8]
-        ],
         text: {
             stroke: 'black',
             strokeWidth: 1,
@@ -27,14 +23,12 @@
             maxZoom: 6
         };
         this.options = L.setOptions(this, options);
-        var mOptions = {
-            spiderfyOnMaxZoom: false,
+        var mOptions = L.extend({
             showCoverageOnHover: false,
             disableClusteringAtZoom: 1 + Number(this.options.maxZoom)
-        };
-        if ('iconCreateFunction' in this.options) {
-            mOptions.iconCreateFunction = this.options.iconCreateFunction;
-        } else if ('clusterIconOptions' in this.options) {
+        }, this.options);
+
+        if ('clusterIconOptions' in this.options) {
             var opt = this.options.clusterIconOptions;
             if ('radialGradient' in opt) {
                 var radialGradient = opt.radialGradient,
@@ -53,7 +47,10 @@
             }
         }
 
-        if (this.options.chunkProgress) { mOptions.chunkProgress = this.options.chunkProgress; }
+        if (this.options.clusterclick) {
+            mOptions.clusterclick = this.options.clusterclick;
+            if (mOptions.clusterclick === true) { mOptions.zoomToBoundsOnClick = false; }
+        }
 
         this._popup = new L.Popup({maxWidth: 10000, className: 'gmxPopup'});
         this.markers = new L.MarkerClusterGroup(mOptions);
@@ -73,6 +70,12 @@
                     .openOn(this.lmap);
             }
         }, this);
+
+        if (mOptions.clusterclick) {
+            this.markers.on('clusterclick', mOptions.clusterclick instanceof Function ? mOptions.clusterclick : function (a) {
+                a.layer.spiderfy();
+            });
+        }
 
         this._addObserver();
 
@@ -244,6 +247,7 @@
             }
             this._clusters = new GmxMarkerCluster(options, this);
             this.on('add', this._clusters.onAdd, this._clusters);
+            return this;
         },
 
         unbindClusters: function () {
@@ -252,6 +256,7 @@
                 this._clusters.onRemove();
                 this._clusters = null;
             }
+            return this;
         }
     });
 })();
