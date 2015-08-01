@@ -1,12 +1,13 @@
 L.gmx.VectorLayer.include({
     bindPopup: function (content, options) {
+        var popupOptions = L.extend({maxWidth: 10000, className: 'gmxPopup'}, options);
 
         if (this._popup) { this.unbindPopup(); }
         if (content instanceof L.Popup) {
             this._popup = content;
         } else {
             if (!this._popup || options) {
-                this._popup = new L.Popup(options);
+                this._popup = new L.Popup(popupOptions);
             }
             this._popup.setContent(content);
         }
@@ -23,8 +24,8 @@ L.gmx.VectorLayer.include({
 
             this._popupHandlersAdded = true;
         }
-        if (options && options.popupopen) {
-            this._popupopen = options.popupopen;
+        if (popupOptions && popupOptions.popupopen) {
+            this._popupopen = popupOptions.popupopen;
         }
 
         this._popup.updateLayout = this._popup._updateLayout;
@@ -48,6 +49,14 @@ L.gmx.VectorLayer.include({
         this._gmx.balloonEnable = false;
 		return this;
 	},
+
+    disablePopup: function () {
+        this._popupDisabled = true;
+    },
+
+    enablePopup: function () {
+        this._popupDisabled = false;
+    },
 
 	openPopup: function (latlng, options) {
 
@@ -151,7 +160,8 @@ L.gmx.VectorLayer.include({
 
     _openPopup: function (options) {
         var originalEvent = options.originalEvent || {},
-            skip = originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
+            skip = this._popupDisabled ||
+                    originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
             var type = options.type,

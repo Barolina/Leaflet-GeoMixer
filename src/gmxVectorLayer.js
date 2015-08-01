@@ -131,13 +131,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (this.options.clickable === false) {
             this._container.style.pointerEvents = 'none';
         }
-        var popupOptions = {maxWidth: 10000, className: 'gmxPopup'};
-        if (gmx.balloonEnable && !this._popup) { this.bindPopup('', popupOptions); }
+        if (gmx.balloonEnable && !this._popup) { this.bindPopup(''); }
         this.on('stylechange', function() {
             if (!gmx.balloonEnable && _this._popup) {
                 _this.unbindPopup();
             } else if (gmx.balloonEnable && !_this._popup) {
-                _this.bindPopup('', popupOptions);
+                _this.bindPopup('');
             }
             if (_this._map) {
                 for (var key in gmx.tileSubscriptions) {    // recheck bbox on screen observers
