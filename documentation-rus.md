@@ -111,8 +111,12 @@ setZIndex| Задать z-индексы создаваемых слоёв в с
 setFilter|`setFilter(function(item): Boolean)`|`this`| Установить ф-цию для фильтрации объектов перед рендерингом. Единственный аргумент - ф-ция, которая получает объект из слоя и возвращает булево значение (`false` - отфильтровать)
 removeFilter|`removeFilter()`||Удалить ф-цию фильтрации объектов перед рендерингом.
 setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Задаёт временной интервал для мультиврменных слоёв. Только объекты из этого интервала будут загружены и показаны на карте. `beginDate` и `endDate` имеют тип `Date`.
-bindPopup|`bindPopup(html <String> `&#124;` el <HTMLElement> `&#124;` popup <Popup>, options <Popup options>? )`|`this`| Подключить показ баллунов по клику на объекте слоя.
-unbindPopup|`unbindPopup()`|`this`| Отключить показ баллунов по клику.
+bindPopup|`bindPopup(html <String> `&#124;` el <HTMLElement> `&#124;` popup <Popup>, options <Popup options>? )`|`this`| Подключить обработчик баллунов по клику на объекте слоя.
+unbindPopup|`unbindPopup()`|`this`| Отключить обработчик баллунов по клику.
+disablePopup|`disablePopup()`|`this`| Установить флаг отмены показа баллунов.
+enablePopup|`enablePopup()`|`this`| Удалить флаг отмены показа баллунов.
+disableFlip|`disableFlip()`|`this`| Установить флаг отмены ротации объектов слоя.
+enableFlip|`enableFlip()`|`this`| Удалить флаг отмены ротации объектов слоя.
 repaint|`repaint()` ||Перерисовать слой. В отличае от `L.TileLayer.redraw()`, не пересоздаёт тайлы слоя, а лишь перерисовывает их. Работает быстрее и без моргания слоя на экране.
 redrawItem|`redrawItem(<UInt>)` ||Перерисовать объект слоя.
 setImageProcessingHook|`setImageProcessingHook( function(image, options): Canvas `&#124;` Deferred)`||Установка функции предобработки растров объектов слоя.  Единственный аргумент - ф-ция, которая принимает растр объекта (image) и описание этого растра (). Возвращает: `Canvas` - объект замещающий исходный растр, `null` - не показывать растр. Может возвращать `Deferred` при асинхронном режиме.

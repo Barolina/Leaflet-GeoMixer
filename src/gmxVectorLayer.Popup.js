@@ -52,10 +52,12 @@ L.gmx.VectorLayer.include({
 
     disablePopup: function () {
         this._popupDisabled = true;
+		return this;
     },
 
     enablePopup: function () {
         this._popupDisabled = false;
+		return this;
     },
 
 	openPopup: function (latlng, options) {

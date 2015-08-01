@@ -208,6 +208,20 @@ var gmxAPIutils = {
         };
     },
 
+    /** Check rectangle type by coordinates
+     * @memberof L.gmxUtil
+     * @param {coordinates} coordinates - geoJSON coordinates data format
+     * @return {Boolean}
+    */
+    isRectangle: function(coords) {
+        return (coords && coords[0] && (coords[0].length == 5 || coords[0].length == 4)
+            && ((coords[0][0][0] == coords[0][1][0]) || (coords[0][0][1] == coords[0][1][1]))
+            && ((coords[0][1][0] == coords[0][2][0]) || (coords[0][1][1] == coords[0][2][1]))
+            && ((coords[0][2][0] == coords[0][3][0]) || (coords[0][2][1] == coords[0][3][1]))
+            && ((coords[0][3][0] == coords[0][0][0]) || (coords[0][3][1] == coords[0][0][1]))
+        );
+    },
+
     /** Get bounds from geometry
      * @memberof L.gmxUtil
      * @param {geometry} geometry - Geomixer or geoJSON data format
@@ -2032,7 +2046,8 @@ L.extend(L.gmxUtil, {
     geoJSONtoGeometry: gmxAPIutils.geoJSONtoGeometry,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
-    parseUri: gmxAPIutils.parseUri
+    parseUri: gmxAPIutils.parseUri,
+    isRectangle: gmxAPIutils.isRectangle
 });
 
 (function() {
