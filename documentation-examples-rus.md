@@ -11,6 +11,7 @@
 [Plugins.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Интеграция с другими Leaflet плагинами
 [MultipleMaps.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
 [bindPopup.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Добавление пользовательского контента в тело балуна.
+[bindClusters.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.|
 
 ##Плагин [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
 

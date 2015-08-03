@@ -174,7 +174,7 @@ L.MarkerClusterGroup = L.FeatureGroup.extend({
 			var process = L.bind(function () {
 				var start = (new Date()).getTime();
 				for (; offset < layersArray.length; offset++) {
-					if (chunked && offset % 200 === 0) {
+                    if (chunked && offset % 200 === 0) {
 						// every couple hundred markers, instrument the time elapsed since processing started:
 						var elapsed = (new Date()).getTime() - start;
 						if (elapsed > chunkInterval) {

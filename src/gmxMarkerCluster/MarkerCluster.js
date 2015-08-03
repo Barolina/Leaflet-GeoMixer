@@ -12,8 +12,6 @@ L.MarkerCluster = L.Marker.extend({
 		this._childCount = 0;
 		this._iconNeedsUpdate = true;
 
-		// this._bounds = new L.LatLngBounds();
-
 		if (a) {
 			this._addChild(a);
 		}
@@ -80,7 +78,7 @@ L.MarkerCluster = L.Marker.extend({
 	},
 
 	getBounds: function (clear) {
-		if (this._bounds1 && !clear) { return this._bounds1; }
+		if (this._boundsGmx && !clear) { return this._boundsGmx; }
 		var markers = this._markers,
 			childClusters = this._childClusters,
 			i,
@@ -95,7 +93,7 @@ L.MarkerCluster = L.Marker.extend({
 		for (i = childClusters.length - 1; i >= 0; i--) {
             bounds.extendBounds(childClusters[i].getBounds());
 		}
-		this._bounds1 = bounds;
+		this._boundsGmx = bounds;
 		return bounds;
 	},
 
@@ -122,7 +120,7 @@ L.MarkerCluster = L.Marker.extend({
 	_addChild: function (new1, isNotificationFromChild) {
 
 		this._iconNeedsUpdate = true;
-		this._expandBounds(new1);
+		this._setWeightedLatlng(new1);
 
 		if (new1 instanceof L.MarkerCluster) {
 			if (!isNotificationFromChild) {
@@ -142,8 +140,8 @@ L.MarkerCluster = L.Marker.extend({
 		}
 	},
 
-	//Expand our bounds and tell our parent to
-	_expandBounds: function (marker) {
+    //Calculate weighted latlng for display and cluster center
+	_setWeightedLatlng: function (marker) {
 		var addedLatLng = marker._wLatLng || marker._latlng;
 
 		if (!this._cLatLng) {
@@ -334,10 +332,8 @@ L.MarkerCluster = L.Marker.extend({
 		if (zoomLevelToStart > zoom) { //Still going down to required depth, just recurse to child clusters
 			for (i = childClusters.length - 1; i >= 0; i--) {
 				c = childClusters[i];
-//console.log('____ boundsToApplyTo', boundsToApplyTo);
 
 				if (boundsToApplyTo.intersects(c.getBoundsLatLngBounds())) {
-				//if (boundsToApplyTo.intersects(c._bounds)) {
 					c._recursively(boundsToApplyTo, zoomLevelToStart, zoomLevelToStop, runAtEveryLevel, runAtBottomLevel);
 				}
 			}
@@ -368,15 +364,14 @@ L.MarkerCluster = L.Marker.extend({
 			i;
 
 		this._bounds = null;
-		this._bounds1 = null;
-		// this._bounds = new L.LatLngBounds();
+		this._boundsGmx = null;
 		this._wLatLng = null;
 
 		for (i = markers.length - 1; i >= 0; i--) {
-			this._expandBounds(markers[i]);
+			this._setWeightedLatlng(markers[i]);
 		}
 		for (i = childClusters.length - 1; i >= 0; i--) {
-			this._expandBounds(childClusters[i]);
+			this._setWeightedLatlng(childClusters[i]);
 		}
 	},
 

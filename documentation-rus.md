@@ -133,7 +133,7 @@ setStyle|`setStyle(<`[StyleFilter](#user-content-stylefilter---объект-ст
 getStyle|`getStyle(<Number>)`|`<`[StyleFilter](#user-content-stylefilter---объект-стиля-слоя)`>`| Получение стилевого фильтра по его номеру (выдаются опции стилей отличающиеся от устанавливаемых по умолчанию).
 setRasterOpacity|`setRasterOpacity(<Float>)`|`this`|Изменение opacity растровых снимков объектов слоя (в дипазоне от `0` до `1`).
 setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещения контейнера слоя(по умолчанию: `0`)
-bindClusters|`bindClusters(options <`[Clusters options](#clusters-options---опции-кластеризации)`>? )`|`this`| Подключить кластеризацию слоя.
+bindClusters|`bindClusters(options <`[Clusters options](#clusters-options---опции-кластеризации)`>? )`|`this`| Подключить кластеризацию слоя. Пример [bindClusters.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html).
 unbindClusters|`unbindClusters()`|`this`| Отключить кластеризацию слоя.
 
 #### Events
