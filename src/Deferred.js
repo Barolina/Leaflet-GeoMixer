@@ -90,6 +90,8 @@ Deferred.all = function() {
             if (left === 0) {
                 resdef.resolve.apply(resdef, results);
             }
+        }, function() {
+            resdef.reject();
         });
     });
 
