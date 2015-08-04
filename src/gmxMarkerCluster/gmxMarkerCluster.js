@@ -16,105 +16,123 @@
         }
     };
 
-    var GmxMarkerCluster = function(options, layer) {
-        this._layer = layer;
-        this.options = {
+    var GmxMarkerCluster = L.Class.extend({
+        options: {
             minZoom: 1,
             maxZoom: 6
-        };
-        this.options = L.setOptions(this, options);
-        var mOptions = L.extend({
-            showCoverageOnHover: false,
-            disableClusteringAtZoom: 1 + Number(this.options.maxZoom)
-        }, this.options);
+        },
 
-        if ('clusterIconOptions' in this.options) {
-            var opt = this.options.clusterIconOptions;
-            if ('radialGradient' in opt) {
-                var radialGradient = opt.radialGradient,
-                    text = opt.text || _DEFAULTS.text;
-                mOptions.iconCreateFunction = function (cluster) {
-                    var childCount = cluster.getChildCount();
+        initialize: function (options, layer) {
+            this._layer = layer;
+            L.setOptions(this, options);
+            var mOptions = L.extend({
+                showCoverageOnHover: false,
+                disableClusteringAtZoom: 1 + Number(this.options.maxZoom)
+            }, this.options);
 
-                    text.count = childCount;
-                    return  L.gmxUtil.getSVGIcon({
-                        type: 'circle',
-                        iconSize: 2 * (radialGradient.radiusFunc || _DEFAULTS.radiusFunc)(childCount),
-                        text: text,
-                        fillRadialGradient: radialGradient
-                    });
-                };
+            if ('clusterIconOptions' in this.options) {
+                var opt = this.options.clusterIconOptions;
+                if ('radialGradient' in opt) {
+                    var radialGradient = opt.radialGradient,
+                        text = opt.text || _DEFAULTS.text;
+                    mOptions.iconCreateFunction = function (cluster) {
+                        var childCount = cluster.getChildCount();
+
+                        text.count = childCount;
+                        return  L.gmxUtil.getSVGIcon({
+                            type: 'circle',
+                            iconSize: 2 * (radialGradient.radiusFunc || _DEFAULTS.radiusFunc)(childCount),
+                            text: text,
+                            fillRadialGradient: radialGradient
+                        });
+                    };
+                }
             }
-        }
 
-        if (this.options.clusterclick) {
-            mOptions.clusterclick = this.options.clusterclick;
-            if (mOptions.clusterclick === true) { mOptions.zoomToBoundsOnClick = false; }
-        }
-
-        this._popup = new L.Popup({maxWidth: 10000, className: 'gmxPopup'});
-        this.markers = new L.MarkerClusterGroup(mOptions);
-        this.markers.on('click', function (ev) {
-            var propsArr = ev.layer.options.properties,
-                gmx = this._layer._gmx,
-                balloonData = gmx.styleManager.getItemBalloon(propsArr[0]);
-            if (!balloonData.DisableBalloonOnClick) {
-                this._popup
-                    .setLatLng(ev.latlng)
-                    .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
-                        properties: this._layer.getItemProperties(propsArr),
-                        tileAttributeTypes: gmx.tileAttributeTypes,
-                        unitOptions: this.lmap.options || {},
-                        geometries: [propsArr[propsArr.length - 1]]
-                    }))
-                    .openOn(this.lmap);
+            if (this.options.clusterclick) {
+                mOptions.clusterclick = this.options.clusterclick;
+                if (mOptions.clusterclick === true) { mOptions.zoomToBoundsOnClick = false; }
             }
-        }, this);
 
-        if (mOptions.clusterclick) {
-            this.markers.on('clusterclick', mOptions.clusterclick instanceof Function ? mOptions.clusterclick : function (a) {
-                a.layer.spiderfy();
-            });
-        }
+            this._popup = new L.Popup({maxWidth: 10000, className: 'gmxPopup'});
+            this.markers = new L.MarkerClusterGroup(mOptions);
+            this.markers.on('click', function (ev) {
+                var propsArr = ev.layer.options.properties,
+                    gmx = this._layer._gmx,
+                    balloonData = gmx.styleManager.getItemBalloon(propsArr[0]);
+                if (!balloonData.DisableBalloonOnClick) {
+                    this._popup
+                        .setLatLng(ev.latlng)
+                        .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
+                            properties: this._layer.getItemProperties(propsArr),
+                            tileAttributeTypes: gmx.tileAttributeTypes,
+                            unitOptions: this._map.options || {},
+                            geometries: [propsArr[propsArr.length - 1]]
+                        }))
+                        .openOn(this._map);
+                }
+            }, this);
 
-        this._addObserver();
+            if (mOptions.clusterclick) {
+                this.markers.on('clusterclick', mOptions.clusterclick instanceof Function ? mOptions.clusterclick : function (a) {
+                    a.layer.spiderfy();
+                });
+            }
 
-        layer.on('dateIntervalChanged', this.setDateInterval, this);
+            this._addObserver();
+            this.addEvent = function (ev) {
+                GmxMarkerCluster.prototype.onAdd.call(this, ev.target._map);
+            };
 
-        this.onAdd();
-    };
+            layer.on('add', this.addEvent, this);
 
-    GmxMarkerCluster.prototype = {
-        onAdd: function () {
             if (this._layer._map) {
-                this.lmap = this._layer._map;
-                this._chkZoom();
-            }
-            if (this.lmap) {
-                this.lmap.on({
-                    moveend: this._updateBbox,
-                    zoomend: this._zoomend,
-                    layeradd: this._layeradd,
-                    layerremove: this._layerremove
-                }, this);
+                this.addEvent({target:{_map: this._layer._map}});
             }
         },
 
-        onRemove: function () {
-            if (this._observer) { this._observer.deactivate(); }
-            this._layer.off('dateIntervalChanged', this.setDateInterval, this);
-            if (this.lmap) {
-                this.lmap.off({
+        // parent layer added to map
+        onAdd: function (map) {
+            if (!this._map) {
+                this._map = map;
+                this._map.on({
                     moveend: this._updateBbox,
                     zoomend: this._zoomend,
                     layeradd: this._layeradd,
                     layerremove: this._layerremove
                 }, this);
-                if (this.markers._map) {
-                    this.lmap.removeLayer(this.markers);
-                    this._layer.onAdd(this.lmap);
-                }
+                this._layer
+                    .on('dateIntervalChanged', this.setDateInterval, this);
             }
+            this._chkZoom();
+        },
+
+        // remove clusters from parent layer
+        onRemove: function (fromMapFlag) {
+            var map = this._map;
+            if (this._observer) {
+                this._observer.deactivate();
+                this._observer = null;
+            }
+            if (this.markers._map) {
+                this._zoomend();
+                this.markers._map.removeLayer(this.markers);
+            }
+            map.off({
+                moveend: this._updateBbox,
+                zoomend: this._zoomend,
+                layeradd: this._layeradd,
+                layerremove: this._layerremove
+            }, this);
+            this._layer
+                .off('add', this.addEvent, this)
+                .off('dateIntervalChanged', this.setDateInterval, this);
+
+            this._layer._clusters = null;
+            if (!fromMapFlag) {
+                this._layer.onAdd(map);
+            }
+            this._map = null;
         },
 
         setDateInterval: function () {
@@ -181,17 +199,13 @@
 
         _layeradd: function (ev) {
             if (ev.layer.options && ev.layer.options.layerID === this._layer.options.layerID) {
-                this.lmap.on('zoomend', this._chkZoom, this);
-                this._chkZoom();
+                this.addEvent({target:{_map: this._layer._map}});
             }
         },
 
         _layerremove: function (ev) {
             if (ev.layer.options && ev.layer.options.layerID === this._layer.options.layerID) {
-                this.lmap.off('zoomend', this._chkZoom, this);
-                if (this.markers._map) {
-                    this.markers._map.removeLayer(this.markers);
-                }
+                this.onRemove(true);
             }
         },
 
@@ -202,11 +216,11 @@
         },
 
         _chkZoom: function () {
-            if (!this.lmap) { return; }
+            if (!this._map) { return; }
 
             var layer = this._layer,
                 observer = this._observer,
-                lmap = this.lmap;
+                lmap = this._map;
 
             var z = lmap.getZoom();
             if (z < this.options.minZoom || z > this.options.maxZoom) {
@@ -230,15 +244,16 @@
         },
 
         _updateBbox: function () {
-            if (!this.lmap || !this._observer) { return; }
+            if (!this._map || !this._observer) { return; }
 
-            var screenBounds = this.lmap.getBounds(),
+            var screenBounds = this._map.getBounds(),
                 p1 = screenBounds.getNorthWest(),
                 p2 = screenBounds.getSouthEast(),
                 bbox = L.gmxUtil.bounds([[p1.lng, p1.lat], [p2.lng, p2.lat]]);
             this._observer.setBounds(bbox);
         }
-    };
+    });
+
 
     L.gmx.VectorLayer.include({
         bindClusters: function (options) {
@@ -246,15 +261,12 @@
                 this.unbindClusters();
             }
             this._clusters = new GmxMarkerCluster(options, this);
-            this.on('add', this._clusters.onAdd, this._clusters);
             return this;
         },
 
         unbindClusters: function () {
             if (this._clusters) {
-                this.off('add', this._clusters.onAdd, this._clusters);
                 this._clusters.onRemove();
-                this._clusters = null;
             }
             return this;
         }
