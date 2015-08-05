@@ -96,7 +96,7 @@ L.gmx.loadMap = function(mapID, options) {
                 layer = loadedMap.layers[l];
                 if (options.setZIndex) {
                     var zIndex = curZIndex++;
-                    if (layer._gmx.properties.type === 'Vector') {
+                    if (layer.getGmxProperties().type === 'Vector') {
                         zIndex += vectorLayersOffset;
                     }
                     layer.options.zIndex = zIndex;
