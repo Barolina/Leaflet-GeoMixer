@@ -27,26 +27,15 @@
     "L.gmxLocale.js",
     "lang_ru.js",
     "lang_en.js",
-    "gmxMarkerCluster/gmxMarkerCluster.js",
-    "gmxMarkerCluster/MarkerClusterGroup.js",
-    "gmxMarkerCluster/MarkerCluster.js",
-    "gmxMarkerCluster/MarkerOpacity.js",
-    "gmxMarkerCluster/MarkerCluster.Spiderfier.js",
-    "gmxMarkerCluster/MarkerCluster.QuickHull.js",
-    "gmxMarkerCluster/DistanceGrid.js"
-];
-
-var depsCSS = [
-    "gmxMarkerCluster/gmxMarkerCluster.css",
+    "gmxMarkerCluster.js"
 ];
 
 if (typeof exports !== 'undefined') {
 	exports.depsJS = depsJS;
-	exports.depsCSS = depsCSS;
 }
 
 if (typeof gmxDevOnLoad === 'function') {
-	gmxDevOnLoad(depsJS, depsCSS);
+	gmxDevOnLoad(depsJS);
 } else if (typeof gmxAPI !== 'undefined' && typeof gmxAPI.gmxLayerDevLoader === 'function') {
-	gmxAPI.gmxLayerDevLoader(depsJS, depsCSS);
+	gmxAPI.gmxLayerDevLoader(depsJS);
 }

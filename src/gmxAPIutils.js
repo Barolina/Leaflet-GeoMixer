@@ -476,9 +476,9 @@ var gmxAPIutils = {
         if (options.text) {
             var text = options.text;
             svg += '<text x="50%" y="50%" dy="0.4em"';
-            if (text.stroke) { svg += ' stroke="' + text.stroke + '"'; }
-            if (text.strokeWidth) { svg += ' stroke-width="' + text.strokeWidth + '"'; }
-            if (text.fill) { svg += ' fill="' + text.fill + '"'; }
+            for (var key in text) {
+                if (key !== 'count') { svg += ' ' + key + '="' + text[key] + '"'; }
+            }
             svg += '>' + text.count + '</text>';
         }
         svg += '</g></svg>';

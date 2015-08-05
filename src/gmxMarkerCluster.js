@@ -11,7 +11,8 @@
         },
         text: {
             stroke: 'black',
-            strokeWidth: 1,
+            'stroke-width': 1,
+            'text-anchor': 'middle',
             fill: 'white'
         }
     };
@@ -257,16 +258,20 @@
 
     L.gmx.VectorLayer.include({
         bindClusters: function (options) {
-            if (this._clusters) {
-                this.unbindClusters();
+            if (L.MarkerClusterGroup) {
+                if (this._clusters) {
+                    this.unbindClusters();
+                }
+                this._clusters = new GmxMarkerCluster(options, this);
             }
-            this._clusters = new GmxMarkerCluster(options, this);
             return this;
         },
 
         unbindClusters: function () {
-            if (this._clusters) {
-                this._clusters.onRemove();
+            if (L.MarkerClusterGroup) {
+                if (this._clusters) {
+                    this._clusters.onRemove();
+                }
             }
             return this;
         }

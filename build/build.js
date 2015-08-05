@@ -1,8 +1,7 @@
 var fs = require('fs'),
     UglifyJS = require('uglify-js'),
     deps = require('./deps.js'),
-    depsJS = deps.depsJS,
-    depsCSS = deps.depsCSS;
+    depsJS = deps.depsJS;
 
 function combineFiles(files) {
 	var content = '';
@@ -45,15 +44,4 @@ exports.build = function () {
 	console.log('\tCompressed size: ' + newCompressed.length + ' bytes');
 	fs.writeFileSync(path, newCompressed);
 	console.log('\tSaved to ' + path);
-
-	console.log('Concatenating ' + depsCSS.length + ' CSS files...');
-
-	var newSrc = combineFiles(depsCSS),
-	    pathPart = 'dist/leaflet-geomixer',
-	    srcPath = pathPart + '.css';
-
-	console.log('\tCSS size: ' + newSrc.length + ' bytes');
-
-	fs.writeFileSync(srcPath, newSrc);
-	console.log('\tSaved to ' + srcPath);
 };
