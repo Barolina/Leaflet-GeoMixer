@@ -79,12 +79,12 @@ L.gmx.loadLayers = function(layers, globalOptions) {
 };
 
 L.gmx.loadMap = function(mapID, options) {
-    options = options || {};
+    options = L.extend({}, options);
+    options.hostName = normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
 
-    var def = new L.gmx.Deferred(),
-        hostName = normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
+    var def = new L.gmx.Deferred();
 
-    gmxMapManager.getMap(hostName, options.apiKey, mapID).then(function(mapInfo) {
+    gmxMapManager.getMap(options.hostName, options.apiKey, mapID).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
 
         var curZIndex = 0,
@@ -111,7 +111,7 @@ L.gmx.loadMap = function(mapID, options) {
         def.resolve(loadedMap);
     },
     function(response) {
-        def.reject('Can\'t load map ' + mapID + ' from ' + hostName + ': ' + response.ErrorInfo.ErrorMessage);
+        def.reject('Can\'t load map ' + mapID + ' from ' + options.hostName + ': ' + response.ErrorInfo.ErrorMessage);
     });
     return def;
 };
