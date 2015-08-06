@@ -59,24 +59,23 @@ var gmxMapManager = {
 
         return mapInfo.layers[layerID];
     },
-    _maps: {} //Promise for each map. Structure: maps[serverHost][mapID]: {promise:, layers:}
-};
+    iterateLayers: function(treeInfo, callback) {
+        var iterate = function(arr) {
+            for (var i = 0, len = arr.length; i < len; i++) {
+                var layer = arr[i];
 
-gmxMapManager.iterateLayers = function(treeInfo, callback) {
-    var iterate = function(arr) {
-        for (var i = 0, len = arr.length; i < len; i++) {
-            var layer = arr[i];
-
-            if (layer.type === 'group') {
-                iterate(layer.content.children);
-            } else if (layer.type === 'layer') {
-                callback(layer.content);
+                if (layer.type === 'group') {
+                    iterate(layer.content.children);
+                } else if (layer.type === 'layer') {
+                    callback(layer.content);
+                }
             }
-        }
-    };
+        };
 
-    treeInfo && iterate(treeInfo.children);
-};
+        treeInfo && iterate(treeInfo.children);
+    },
+    _maps: {} //Promise for each map. Structure: maps[serverHost][mapID]: {promise:, layers:}
+}
 
 var gmxMap = function(mapInfo, commonLayerOptions) {
     this.layers = [];
@@ -116,4 +115,17 @@ gmxMap.prototype.addLayer = function(layer) {
     this.layers.push(layer);
     this.layersByTitle[props.title] = layer;
     this.layersByID[props.name] = layer;
+    
+    return this;
 };
+
+gmxMap.prototype.addLayersToMap = function(leafletMap) {
+    for (var l = this.layers.length - 1; l >= 0; l--) {
+        var layer = this.layers[l];
+        if (layer._gmx.properties.visible) {
+            layer.addTo(leafletMap);
+        }
+    }
+    
+    return this;
+}
