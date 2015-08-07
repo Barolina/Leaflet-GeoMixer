@@ -61,7 +61,7 @@ L.LabelsLayer = L.Class.extend({
                         var size = fontSize || 12,
                             labelStyle = {
                                 font: size + 'px "Arial"',
-                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || -1,
+                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || 0,
                                 labelColor: currentStyle.labelColor || style.labelColor,
                                 labelAlign: currentStyle.labelAlign || style.labelAlign,
                                 labelFontSize: fontSize

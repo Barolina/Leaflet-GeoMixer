@@ -761,7 +761,7 @@ var gmxAPIutils = {
         var x = coord[0],
             y = coord[1];
 
-        if (ctx.shadowColor !== style.shadowColor) { ctx.shadowColor = style.shadowColor; }
+        if (ctx.shadowColor !== style.strokeStyle) { ctx.shadowColor = style.strokeStyle; }
         if (ctx.shadowBlur !== style.shadowBlur) { ctx.shadowBlur = style.shadowBlur; }
         if (ctx.font !== style.font) { ctx.font = style.font; }
         if (ctx.strokeStyle !== style.strokeStyle) { ctx.strokeStyle = style.strokeStyle; }
