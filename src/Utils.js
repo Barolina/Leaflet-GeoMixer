@@ -346,6 +346,7 @@ var gmxAPIutils = {
             count = arr.length,
             resColors = [],
             i = 0;
+        if (count === 0) { return null; }   // pattern without colors don't exists
         for (i = 0; i < count; i++) {
             var col = arr[i];
             if (pattern.patternColorsFunction && pattern.patternColorsFunction[i] !== null) {
