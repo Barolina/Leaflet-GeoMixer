@@ -305,7 +305,7 @@ var gmxAPIutils = {
 
         var notFunc = true,
             pattern = style.fillPattern,
-            prop = item ? item.properties : {},
+            prop = item ? item.properties : null,
             step = pattern.step > 0 ? pattern.step : 0,
             patternDefaults = {
                 minWidth: 1,
@@ -2004,6 +2004,8 @@ gmxAPIutils.parseUri.options = {
 };
 
 if (!L.gmxUtil) { L.gmxUtil = {}; }
+
+//public interface
 L.extend(L.gmxUtil, {
     newId: gmxAPIutils.newId,
     loaderStatus: function () {},
@@ -2047,7 +2049,8 @@ L.extend(L.gmxUtil, {
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
     parseUri: gmxAPIutils.parseUri,
-    isRectangle: gmxAPIutils.isRectangle
+    isRectangle: gmxAPIutils.isRectangle,
+    getPatternIcon: gmxAPIutils.getPatternIcon
 });
 
 (function() {
