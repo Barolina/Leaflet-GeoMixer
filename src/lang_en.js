@@ -6,7 +6,7 @@ L.extend(L.gmxLocale, {
         Perimeter : 'Perimeter',
         units: {
             m: 'm',
-            nm: 'nm',
+            nm: 'nmi',
             km: 'km',
             m2: 'sq. m',
             km2: 'sq. km',
