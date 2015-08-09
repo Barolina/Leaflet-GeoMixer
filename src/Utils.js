@@ -214,11 +214,11 @@ var gmxAPIutils = {
      * @return {Boolean}
     */
     isRectangle: function(coords) {
-        return (coords && coords[0] && (coords[0].length == 5 || coords[0].length == 4)
-            && ((coords[0][0][0] == coords[0][1][0]) || (coords[0][0][1] == coords[0][1][1]))
-            && ((coords[0][1][0] == coords[0][2][0]) || (coords[0][1][1] == coords[0][2][1]))
-            && ((coords[0][2][0] == coords[0][3][0]) || (coords[0][2][1] == coords[0][3][1]))
-            && ((coords[0][3][0] == coords[0][0][0]) || (coords[0][3][1] == coords[0][0][1]))
+        return (coords && coords[0] && (coords[0].length === 5 || coords[0].length === 4)
+            && ((coords[0][0][0] === coords[0][1][0]) || (coords[0][0][1] === coords[0][1][1]))
+            && ((coords[0][1][0] === coords[0][2][0]) || (coords[0][1][1] === coords[0][2][1]))
+            && ((coords[0][2][0] === coords[0][3][0]) || (coords[0][2][1] === coords[0][3][1]))
+            && ((coords[0][3][0] === coords[0][0][0]) || (coords[0][3][1] === coords[0][0][1]))
         );
     },
 
@@ -1944,13 +1944,14 @@ gmxAPIutils.Bounds.prototype = {
             };
 
         var outputList = coords;
-        cp1 = clip[clip.length - 1];
-        for (var j in clip) {
+        cp1 = clip[3];
+        for (var j = 0; j < 4; j++) {
             cp2 = clip[j];
-            var inputList = outputList;
+            var inputList = outputList,
+                len = inputList.length;
             outputList = [];
-            s = inputList[inputList.length - 1]; //last on the input list
-            for (var i in inputList) {
+            s = inputList[len - 1]; //last on the input list
+            for (var i = 0; i < len; i++) {
                 e = inputList[i];
                 if (inside(e)) {
                     if (!inside(s)) { outputList.push(intersection()); }

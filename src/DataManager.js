@@ -270,7 +270,7 @@ var DataManager = L.Class.extend({
         //add internal filters
         var filters = observer.filters.concat('processingFilter');
         this._isTemporalLayer && filters.push('TemporalFilter');
-        
+
         filters = filters.filter(function(filter) {
             return filter in this._filters;
         }.bind(this));
@@ -298,7 +298,7 @@ var DataManager = L.Class.extend({
 
                     for (var f = 0; f < filters.length; f++) {
                         var filterFunc = _this._filters[filters[f]];
-                        if (!filterFunc(item, tile, observer, geom)) {
+                        if (!filterFunc(item, tile, observer, geom, dataOption)) {
                             isFiltered = true;
                             break;
                         }
@@ -616,11 +616,11 @@ var DataManager = L.Class.extend({
     },
 
     _updateActiveTilesList: function(newTilesList) {
-        
+
         if (this._tileFilteringHook) {
             var filteredTilesList = {};
             for (var tk in newTilesList) {
-                if (this._tileFilteringHook(tk)) {
+                if (this._tileFilteringHook(this._tiles[tk].tile.bounds)) {
                     filteredTilesList[tk] = true;
                 }
             }
@@ -880,7 +880,7 @@ var DataManager = L.Class.extend({
         }
         this._updateActiveTilesList(newActiveTileKeys);
     },
-    
+
     //Tile filtering hook filters out active vector tiles.
     //Can be used to prevent loading data from some spatial-temporal region
     setTileFilteringHook: function(filteringHook) {
@@ -888,11 +888,11 @@ var DataManager = L.Class.extend({
         this._needCheckActiveTiles = true;
         this._getActiveTileKeys(); //force list update
     },
-    
+
     removeTileFilteringHook: function() {
         this._tileFilteringHook = null;
         this._needCheckActiveTiles = true;
         this._getActiveTileKeys(); //force list update
     }
-    
+
 });

@@ -547,7 +547,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 attr = {
                     type: 'resend',
                     bbox: gmx.styleManager.getStyleBounds(gmxTilePoint),
-                    filters: ['styleFilter', 'userFilter'],
+                    filters: ['clipFilter', 'styleFilter', 'userFilter'],
                     callback: function(data) {
                         myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
                             if (!isDrawnFirstTime) {

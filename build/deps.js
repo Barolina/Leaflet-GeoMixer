@@ -27,7 +27,8 @@
     "Locale.js",
     "lang_ru.js",
     "lang_en.js",
-    "MarkerCluster.js"
+    "MarkerCluster.js",
+    "ClipPolygon.js"
 ];
 
 if (typeof exports !== 'undefined') {

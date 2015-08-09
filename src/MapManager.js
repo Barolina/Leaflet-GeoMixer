@@ -75,7 +75,7 @@ var gmxMapManager = {
         treeInfo && iterate(treeInfo.children);
     },
     _maps: {} //Promise for each map. Structure: maps[serverHost][mapID]: {promise:, layers:}
-}
+};
 
 var gmxMap = function(mapInfo, commonLayerOptions) {
     this.layers = [];
@@ -115,7 +115,7 @@ gmxMap.prototype.addLayer = function(layer) {
     this.layers.push(layer);
     this.layersByTitle[props.title] = layer;
     this.layersByID[props.name] = layer;
-    
+
     return this;
 };
 
@@ -126,6 +126,6 @@ gmxMap.prototype.addLayersToMap = function(leafletMap) {
             layer.addTo(leafletMap);
         }
     }
-    
+
     return this;
-}
+};
