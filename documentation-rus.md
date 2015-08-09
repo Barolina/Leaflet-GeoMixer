@@ -135,8 +135,8 @@ setRasterOpacity|`setRasterOpacity(<Float>)`|`this`|Изменение opacity �
 setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещения контейнера слоя(по умолчанию: `0`)
 bindClusters|`bindClusters(options <`[Clusters options](#clusters-options---опции-кластеризации)`>? )`|`this`| Подключить кластеризацию слоя. Пример [bindClusters.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html).
 unbindClusters|`unbindClusters()`|`this`| Отключить кластеризацию слоя.
-addClipPolygon|`addClipPolygon(<`[L.Polygon](#http://leafletjs.com/reference.html#polygon) || [L.GeoJSON](#http://leafletjs.com/reference.html#geojson)`>)`|`this`| Добавить полигон обрезки данных слоя.
-removeClipPolygon|`removeClipPolygon(<`[L.Polygon](#http://leafletjs.com/reference.html#polygon) || [L.GeoJSON](#http://leafletjs.com/reference.html#geojson)`>)`|`this`| Удалить полигон обрезки данных слоя.
+addClipPolygon|`addClipPolygon(<`[L.Polygon](#http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](#http://leafletjs.com/reference.html#geojson)`>)`|`this`| Добавить полигон обрезки данных слоя.
+removeClipPolygon|`removeClipPolygon(<`[L.Polygon](#http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](#http://leafletjs.com/reference.html#geojson)`>)`|`this`| Удалить полигон обрезки данных слоя.
 
 #### Events
 
