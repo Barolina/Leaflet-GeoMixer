@@ -214,13 +214,22 @@ ScreenVectorTile.prototype = {
                             var resProcessing = gmx.imageProcessingHook(img, {
                                 layerID: gmx.layerID,
                                 id: item.id,
+                                gmx: gmx,
+                                geoItem: geo,
+                                item: item,
+                                tpx: gmxTilePoint.x,
+                                tpy: gmxTilePoint.y,
                                 gmxTilePoint: gtp
                             });
                             if (resProcessing) {
                                 if (resProcessing instanceof HTMLCanvasElement || resProcessing instanceof HTMLImageElement) {
                                     img = resProcessing;
                                 } else {
-                                    resProcessing.then(prepareItem, skipRasterFunc);
+                                    resProcessing.then(function(imageElement) {
+                                        cnt--;
+                                        p.resImage = imageElement;
+                                        chkReadyRasters();
+                                    }, skipRasterFunc);
                                     return;
                                 }
                             } else {
@@ -306,16 +315,25 @@ ScreenVectorTile.prototype = {
                         def.resolve();
                     };
                     if (gmx.imageProcessingHook) {
+                        gmxTilePoint.image = img;
                         var resProcessing = gmx.imageProcessingHook(img, {
                             layerID: gmx.layerID,
                             id: item.id,
+                            gmx: gmx,
+                            geoItem: geo,
+                            item: item,
+                            tpx: gmxTilePoint.x,
+                            tpy: gmxTilePoint.y,
                             gmxTilePoint: gmxTilePoint
                         });
                         if (resProcessing) {
                             if (resProcessing instanceof HTMLCanvasElement || resProcessing instanceof HTMLImageElement) {
                                 img = resProcessing;
                             } else {
-                                resProcessing.then(prepareItem, def.resolve);
+                                resProcessing.then(function(imageElement) {
+                                    rasters[idr] = imageElement;
+                                    def.resolve();
+                                }, def.resolve);
                                 return;
                             }
                         } else {
