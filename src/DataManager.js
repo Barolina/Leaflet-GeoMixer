@@ -620,7 +620,7 @@ var DataManager = L.Class.extend({
         if (this._tileFilteringHook) {
             var filteredTilesList = {};
             for (var tk in newTilesList) {
-                if (this._tileFilteringHook(this._tiles[tk].tile.bounds)) {
+                if (this._tileFilteringHook(this._tiles[tk].tile)) {
                     filteredTilesList[tk] = true;
                 }
             }

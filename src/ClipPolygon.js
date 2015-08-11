@@ -63,8 +63,8 @@ L.gmx.VectorLayer.include({
             this._clipPolygons[id] = item;
             var dataManager = this._gmx.dataManager,
                 _this = this;
-            dataManager.setTileFilteringHook(function (bounds) {
-                return isBoundsIntersects(bounds, _this._clipPolygons);
+            dataManager.setTileFilteringHook(function (tile) {
+                return isBoundsIntersects(tile.bounds, _this._clipPolygons);
             });
 
             dataManager.addFilter('clipFilter', function (item, tile, observer, geom, dataOption) {

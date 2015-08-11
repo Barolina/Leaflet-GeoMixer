@@ -1,7 +1,9 @@
+(function() {
 var delay = 20000,
     layers = {},
     script = '/Layer/CheckVersion.ashx',
-    intervalID = null;
+    intervalID = null,
+    lastLayersStr = '';
 
 var getRequestParams = function(layer) {
     var hosts = {},
@@ -45,30 +47,34 @@ var chkVersion = function (layer, callback) {
                             if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
                         }
                     }
+                    lastLayersStr = '';
                     if (callback) { callback(res); }
                 };
 
-            if ('FormData' in window) {
-                gmxAPIutils.request({
-                    url: url,
-                    async: true,
-                    headers: {
-                        'Content-type': 'application/x-www-form-urlencoded'
-                    },
-                    type: 'POST',
-                    params: 'WrapStyle=None&layers=' + encodeURIComponent(layersStr),
-                    callback: function(response) {
-                        func(JSON.parse(response));
-                    },
-                    onError: function(response) {
-                        console.log('Error: LayerVersion ', response);
-                    }
-                });
-            } else {
-                gmxAPIutils.sendCrossDomainPostRequest(url, {
-                    WrapStyle: 'message',
-                    layers: layersStr
-                }, func);
+            if (lastLayersStr !== layersStr) {
+                lastLayersStr = layersStr;
+                if ('FormData' in window) {
+                    gmxAPIutils.request({
+                        url: url,
+                        async: true,
+                        headers: {
+                            'Content-type': 'application/x-www-form-urlencoded'
+                        },
+                        type: 'POST',
+                        params: 'WrapStyle=None&layers=' + encodeURIComponent(layersStr),
+                        callback: function(response) {
+                            func(JSON.parse(response));
+                        },
+                        onError: function(response) {
+                            console.log('Error: LayerVersion ', response);
+                        }
+                    });
+                } else {
+                    gmxAPIutils.sendCrossDomainPostRequest(url, {
+                        WrapStyle: 'message',
+                        layers: layersStr
+                    }, func);
+                }
             }
         }
     }
@@ -135,3 +141,4 @@ L.gmx.VectorLayer.include({
         }
     }
 });
+})();
