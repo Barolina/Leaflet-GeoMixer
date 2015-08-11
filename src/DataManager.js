@@ -160,7 +160,6 @@ var DataManager = L.Class.extend({
 
         this._needCheckDateInterval = false;
         this._needCheckActiveTiles = true;
-        this._processingTileKey = VectorTile.makeTileKey(-0.5, -0.5, 0, 0, -1, -1);
 
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
@@ -633,8 +632,8 @@ var DataManager = L.Class.extend({
             _this = this,
             key;
 
-        if (this.clientSideTile) {
-            newTilesList[this.clientSideTile] = true;
+        if (this.processingTile) {
+            newTilesList[this.processingTile.vectorTileKey] = true;
         }
 
         var checkSubscription = function(vKey) {
@@ -684,7 +683,7 @@ var DataManager = L.Class.extend({
             skip = {};
 
         if (tile) {
-            var zKey = this._processingTileKey;
+            var zKey = tile.vectorTileKey;
             for (i = 0, len = tile.data.length; i < len; i++) {
                 it = tile.data[i];
                 id = it[0];
@@ -762,31 +761,24 @@ var DataManager = L.Class.extend({
     },
 
     _getProcessingTile: function() {
-        var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
-        var tileKey = VectorTile.makeTileKey(x, y, z, v, s, d),
-            tileLink = this._tiles[tileKey];
+        if (!this.processingTile) {
+            var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
+            
+            this.processingTile = new VectorTile({load: function(x, y, z, v, s, d, callback) {
+                callback([]);
+            }}, x, y, z, v, s, d);
 
-        if (!tileLink) {
-            tileLink = this._tiles[tileKey] = {
-                tile: new VectorTile({load: function(x, y, z, v, s, d, callback) {
-                            callback([]);
-                        }}, x, y, z, v, s, d)
-            };
-            if (!this._gmx.mapName) {     // client side layer
-                this.clientSideTile = tileKey;
-            }
-            this.addTile(tileLink.tile);
+            this.addTile(this.processingTile);
         }
-        return tileLink;
+        return this.processingTile;
     },
 
     addData: function(data) {
         if (!data) {
             data = [];
         }
-        var tileLink = this._getProcessingTile(),
-            chkKeys = this._getDataKeys(data),
-            vTile = tileLink.tile;
+        var vTile = this._getProcessingTile(),
+            chkKeys = this._getDataKeys(data);
 
         vTile.addData(data, chkKeys);
         this._updateItemsFromTile(vTile);
@@ -795,10 +787,8 @@ var DataManager = L.Class.extend({
     },
 
     removeData: function(data) {
-        var tileLink = this._getProcessingTile(),
-            vTile = null;
-        if (tileLink) {
-            vTile = tileLink.tile;
+        var vTile = this.processingTile;
+        if (vTile) {
             var chkKeys = {};
 
             if (!data || !data.length) {
@@ -814,7 +804,6 @@ var DataManager = L.Class.extend({
             vTile.removeData(chkKeys, true);
             this._updateItemsFromTile(vTile);
 
-            //TODO: trigger observers depending on tile position, not all observers
             this._triggerObservers();
         }
 
@@ -822,17 +811,17 @@ var DataManager = L.Class.extend({
     },
 
     initTilesTree: function(layerProperties) {
-        var arr = layerProperties.TemporalTiles || [],
+        var tiles = layerProperties.TemporalTiles || [],
             vers = layerProperties.TemporalVers || [],
             newTiles = {};
 
-        for (var i = 0, len = arr.length; i < len; i++) {
-            var arr1 = arr[i];
-            var z = Number(arr1[4]),
-                y = Number(arr1[3]),
-                x = Number(arr1[2]),
-                s = Number(arr1[1]),
-                d = Number(arr1[0]),
+        for (var i = 0, len = tiles.length; i < len; i++) {
+            var tileInfo = tiles[i];
+            var z = Number(tileInfo[4]),
+                y = Number(tileInfo[3]),
+                x = Number(tileInfo[2]),
+                s = Number(tileInfo[1]),
+                d = Number(tileInfo[0]),
                 v = Number(vers[i]),
                 tileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
 
@@ -845,7 +834,7 @@ var DataManager = L.Class.extend({
         this._tilesTree = new TilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
         if (this.processingTile) {
-            this._tiles[this._processingTileKey] = {
+            this._tiles[this.processingTile.vectorTileKey] = {
                 tile: this.processingTile
             };
         }
@@ -873,7 +862,7 @@ var DataManager = L.Class.extend({
             }
             this._tiles = newTiles;
             if (this.processingTile) {
-                this._tiles[this._processingTileKey] = {
+                this._tiles[this.processingTile.vectorTileKey] = {
                     tile: this.processingTile
                 };
             }
