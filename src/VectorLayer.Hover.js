@@ -18,12 +18,6 @@ L.gmx.VectorLayer.include({
                 dx = iconScale * (sx + lineWidth / 2) / mInPixel,
                 dy = iconScale * (sy + lineWidth / 2) / mInPixel;
 
-            if (dx > dy) {
-                dx = dy;
-            } else {
-                dy = dx;
-            }
-
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) { continue; }
 
             var geom = geoItem[geoItem.length - 1],
@@ -100,7 +94,13 @@ L.gmx.VectorLayer.include({
                 }
                 if (!flag) { continue; }
             } else if (chktype === 'POINT') {
-                if (!dataOption.bounds.intersectsWithDelta(bounds, dx / 2, dy / 2)) { continue; }
+                if (parsedStyle.type === 'square') {
+                    if (!dataOption.bounds.intersectsWithDelta(bounds, dx / 2, dy / 2)) { continue; }
+                } else if (parsedStyle.type === 'circle') {
+                    var x = coords[0] - mercPoint[0],
+                        y = coords[1] - mercPoint[1];
+                    if (x * x + y * y > dx * dx) { continue; }
+                }
             }
 
             return {

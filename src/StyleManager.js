@@ -50,10 +50,15 @@ var StyleManager = function(gmx) {
                 if (pt.fillIconUrl) {
                     pt.imagePattern = it;
                 } else {
-                    pt.maxSize = Math.max(it.width, it.height);
                     pt.sx = it.width;
                     pt.sy = it.height;
                     pt.image = it;
+                    var maxSize = pt.iconAngle ? Math.sqrt(pt.sx * pt.sx + pt.sy * pt.sy) : Math.max(pt.sx, pt.sy);
+                    if (!pt.scaleFunction) {
+                        if (pt.iconScale || pt.iconScale === 1) { maxSize *= pt.iconScale; }
+                        pt.common = true;
+                    }
+                    pt.maxSize = Number(maxSize.toFixed());
                 }
                 needLoadIcons--;
                 _this._chkReady();
