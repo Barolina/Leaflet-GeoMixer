@@ -321,19 +321,29 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     setDateInterval: function (beginDate, endDate) {
         var gmx = this._gmx;
-        gmx.beginDate = beginDate;
-        gmx.endDate = endDate;
+        if (gmx.rawProperties.maxShownPeriod) {
+            var msecPeriod = gmx.rawProperties.maxShownPeriod * 24 * 3600 * 1000;
+            beginDate = new Date( Math.max(beginDate.valueOf(), endDate.valueOf() - msecPeriod));
+        }
+        if (!gmx.beginDate ||
+            !gmx.endDate ||
+            gmx.beginDate.valueOf() !== beginDate.valueOf() ||
+            gmx.endDate.valueOf() !== endDate.valueOf()
+        ) {
+            gmx.beginDate = beginDate;
+            gmx.endDate = endDate;
 
-        var observer = null;
-        for (var key in gmx.tileSubscriptions) {
-            observer = gmx.dataManager.getObserver(key);
-            observer.setDateInterval(beginDate, endDate);
+            var observer = null;
+            for (var key in gmx.tileSubscriptions) {
+                observer = gmx.dataManager.getObserver(key);
+                observer.setDateInterval(beginDate, endDate);
+            }
+            observer = gmx.dataManager.getObserver('_Labels');
+            if (observer) {
+                observer.setDateInterval(beginDate, endDate);
+            }
+            this.fire('dateIntervalChanged');
         }
-        observer = gmx.dataManager.getObserver('_Labels');
-        if (observer) {
-            observer.setDateInterval(beginDate, endDate);
-        }
-        this.fire('dateIntervalChanged');
 
         return this;
     },

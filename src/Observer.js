@@ -231,8 +231,13 @@ var Observer = L.Class.extend({
     },
 
     setDateInterval: function(beginDate, endDate) {
-        this._setDateInterval(beginDate, endDate);
-        this.fire('update', {temporalFilter: true});
+        if (!this.dateInterval ||
+            this.dateInterval.beginDate.valueOf() !== beginDate.valueOf() ||
+            this.dateInterval.endDate.valueOf() !== endDate.valueOf()
+        ) {
+            this._setDateInterval(beginDate, endDate);
+            this.fire('update', {temporalFilter: true});
+        }
         return this;
     }
 });
