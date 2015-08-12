@@ -467,9 +467,13 @@ var DataManager = L.Class.extend({
                 arr = [];
             for (var key in fromTiles) {    // get full object bounds
                 if (this._tiles[key]) {
-                    var dataOptions = this._tiles[key].tile.dataOptions,
-                        num = fromTiles[key];
-                    arr.push(dataOptions[num].bounds);
+                    var num = fromTiles[key],
+                        tile = this._tiles[key].tile;
+                    if (tile.state === 'loaded' && tile.dataOptions[num]) {
+                        arr.push(tile.dataOptions[num].bounds);
+                    } else {
+                        delete fromTiles[key];
+                    }
                 }
             }
             if (arr.length === 1) {
@@ -742,6 +746,8 @@ var DataManager = L.Class.extend({
             } else {
                 this.addData(data);
             }
+        } else {
+            this.removeFilter('processingFilter');
         }
         tile && this._triggerObservers();
     },
@@ -762,10 +768,10 @@ var DataManager = L.Class.extend({
 
     _getProcessingTile: function() {
         if (!this.processingTile) {
-            var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
-            
+        var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
+
             this.processingTile = new VectorTile({load: function(x, y, z, v, s, d, callback) {
-                callback([]);
+                            callback([]);
             }}, x, y, z, v, s, d);
 
             this.addTile(this.processingTile);
