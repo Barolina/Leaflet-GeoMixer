@@ -866,14 +866,23 @@ var gmxAPIutils = {
             y += parseFloat(results[i]) * mul;
             mul /= 60;
         }
+        
+        if (Math.max(text.indexOf('N'), text.indexOf('S')) > Math.max(text.indexOf('E'), text.indexOf('W'))) {
+            var t = x;
+            x = y;
+            y = t;
+        }
+        
         if (Math.abs(x) > 180 || Math.abs(y) > 180) {
             var pos = L.Projection.Mercator.unproject(new L.Point(x, y));
             x = pos.lng;
             y = pos.lat;
         }
+        
         if (text.indexOf('W') !== -1) {
             x = -x;
         }
+        
         if (text.indexOf('S') !== -1) {
             y = -y;
         }
