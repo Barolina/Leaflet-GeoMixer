@@ -681,10 +681,11 @@ var DataManager = L.Class.extend({
 
     _chkProcessing: function(processing) {
         var _items = this._items,
+            tile = this.processingTile,
+            needProcessingFilter = false,
+            skip = {},
             id, i, len, it;
 
-        var tile = this.processingTile,
-            skip = {};
 
         if (tile) {
             var zKey = tile.vectorTileKey;
@@ -709,6 +710,7 @@ var DataManager = L.Class.extend({
                     _items[id].processing = true;
                     _items[id].currentFilter = null;
                 }
+                if (len > 0) { needProcessingFilter = true; }
             }
         }
 
@@ -725,6 +727,7 @@ var DataManager = L.Class.extend({
                 it = processing.Updated[i];
                 if (!skip[it.id]) { out[it.id] = it; }
             }
+            if (!needProcessingFilter && len > 0) { needProcessingFilter = true; }
         }
 
         var data = [];
@@ -738,14 +741,12 @@ var DataManager = L.Class.extend({
         }
 
         if (data.length > 0) {
-            if (!tile) {
-                this.processingTile = tile = this.addData(data);
-                this.addFilter('processingFilter', function(item, tile) {
-                    return tile.z === 0 || !item.processing;
-                });
-            } else {
-                this.addData(data);
-            }
+            this.processingTile = tile = this.addData(data);
+        }
+        if (needProcessingFilter) {
+            this.addFilter('processingFilter', function(item, tile) {
+                return tile.z === 0 || !item.processing;
+            });
         } else {
             this.removeFilter('processingFilter');
         }
