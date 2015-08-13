@@ -834,7 +834,7 @@ var gmxAPIutils = {
          <br/><i>55.74312, 37.61558</i>
          <br/><i>55°44'35" N, 37°36'56" E</i>
          <br/><i>4187347, 7472103</i>
-     * @return {Array} [lng, lat] or null
+     * @return {Array} [lat, lng] or null
     */
     parseCoordinates: function(text) {
         if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
@@ -853,17 +853,17 @@ var gmxAPIutils = {
             return null;
         }
         var ii = Math.floor(results.length / 2),
-            x = 0,
+            y = 0,
             mul = 1,
             i;
         for (i = 0; i < ii; i++) {
-            x += parseFloat(results[i]) * mul;
+            y += parseFloat(results[i]) * mul;
             mul /= 60;
         }
-        var y = 0;
+        var x = 0;
         mul = 1;
         for (i = ii; i < results.length; i++) {
-            y += parseFloat(results[i]) * mul;
+            x += parseFloat(results[i]) * mul;
             mul /= 60;
         }
         
@@ -874,7 +874,7 @@ var gmxAPIutils = {
         }
         
         if (Math.abs(x) > 180 || Math.abs(y) > 180) {
-            var pos = L.Projection.Mercator.unproject(new L.Point(x, y));
+            var pos = L.Projection.Mercator.unproject(new L.Point(y, x));
             x = pos.lng;
             y = pos.lat;
         }
@@ -886,7 +886,7 @@ var gmxAPIutils = {
         if (text.indexOf('S') !== -1) {
             y = -y;
         }
-        return [x, y];
+        return [y, x];
     },
 
 	pad2: function(t) {
