@@ -277,13 +277,6 @@ var DataManager = L.Class.extend({
         var _this = this,
             putData = function(tile) {
                 var data = tile.data;
-                if (!data || (tile.z !== 0
-                    && (bboxActive ? !observer.intersects(bboxActive) : !observer.intersectsWithTile(tile))
-                    )) {
-                    // VectorTile is not loaded or is not within observer bounds
-                    return;
-                }
-
                 for (var j = 0, len1 = data.length; j < len1; j++) {
                     var dataOption = tile.dataOptions[j];
                     if (!observer.intersects(dataOption.bounds)) { continue; }
@@ -322,7 +315,12 @@ var DataManager = L.Class.extend({
             };
         var activeTileKeys =  this._getActiveTileKeys();
         for (var tkey in activeTileKeys) {
-            putData(_this._tiles[tkey].tile);
+            var tile = _this._tiles[tkey].tile;
+            if (tile.data.length > 0 &&
+                (tile.z === 0 || (bboxActive ? observer.intersects(bboxActive) : observer.intersectsWithTile(tile)))
+            ) {
+                putData(tile);
+            }
         }
 
         return resItems;

@@ -10,6 +10,8 @@ var StyleManager = function(gmx) {
         utils = gmxAPIutils,
         _this = this;
 
+    this.parserFunctions = {};
+    this.serverStylesParsed = false;
     this.deferred = new L.gmx.Deferred();
 
     var parsePattern = function(pattern) {
@@ -165,7 +167,10 @@ var StyleManager = function(gmx) {
                         if (renderStyle && renderStyle[key] === val) {
                             st[fkey] = renderStyle[fkey];
                         } else {
-                            st[fkey] = parsers.parseExpression(val);
+                            if (!_this.parserFunctions[val]) {
+                                _this.parserFunctions[val] = parsers.parseExpression(val);
+                            }
+                            st[fkey] = _this.parserFunctions[val];
                         }
                     } else if (typeof (val) === 'function') {
                         st.common = false;
@@ -450,8 +455,8 @@ var StyleManager = function(gmx) {
             if (isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
         }
         checkStyles();
+        _this.serverStylesParsed = true;
     };
-    parseServerStyles();
 
     var getStyleKeys = function(style) {
         var out = {};
@@ -470,6 +475,7 @@ var StyleManager = function(gmx) {
     };
 
     this.getStyles = function () {
+        this.initStyles();
         var out = [];
         for (var i = 0, len = styles.length; i < len; i++) {
             var style = L.extend({}, styles[i]);
@@ -697,12 +703,10 @@ var StyleManager = function(gmx) {
         }
     };
     this.initStyles = function() {
+        if (!this.serverStylesParsed) { parseServerStyles(); }
         for (var i = 0, len = deferredIcons.length; i < len; i++) {
             getImageSize(deferredIcons[i]);
         }
-        // deferredIcons.forEach(function(it) {
-            // getImageSize(it);
-        // });
         deferredIcons = [];
         this._chkReady();
         return this.deferred;
