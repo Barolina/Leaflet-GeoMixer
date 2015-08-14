@@ -3,8 +3,11 @@ var isBoundsIntersects = function (bounds, clipPolygons) {
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
+            var type = arr[i].geometry.type;
             for (var j = 0, len1 = arr[i].boundsArr.length; j < len1; j++) {
-                if (arr[i].boundsArr[j].intersects(bounds)) {
+                var bbox = arr[i].boundsArr[j];
+                if (type === 'MultiPolygon') { bbox = bbox[0]; }
+                if (bbox.intersects(bounds)) {
                     return true;
                 }
             }
@@ -12,12 +15,19 @@ var isBoundsIntersects = function (bounds, clipPolygons) {
     }
     return false;
 };
-var isPointInClipPolygon = function (coords, clipPolygons) {
+var isPointInClipPolygon = function (pcoords, clipPolygons) {
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
-            if (gmxAPIutils.isPointInPolygonWithHoles(coords, arr[i].geometry.coordinates)) {
-                return true;
+            var geometry = arr[i].geometry,
+                type = geometry.type;
+            if (type !== 'Polygon' && type !== 'MultiPolygon') { return true; }
+            var coords = geometry.coordinates;
+            if (type === 'Polygon') { coords = [coords]; }
+            for (j = 0, len1 = coords.length; j < len1; j++) {
+                if (gmxAPIutils.isPointInPolygonWithHoles(pcoords, coords[j])) {
+                    return true;
+                }
             }
         }
     }
@@ -47,13 +57,17 @@ L.gmx.VectorLayer.include({
         var item = [],
             i, len;
 
-        if (polygon instanceof L.Polygon) {
+        if ('coordinates' in polygon && 'type' in polygon) {
+            item.push(getClipPolygonItem(polygon));
+        } else if (polygon instanceof L.Polygon) {
             item.push(getClipPolygonItem(polygon.toGeoJSON().geometry));
         } else if (polygon instanceof L.GeoJSON) {
             var layers = polygon.getLayers();
             for (i = 0, len = layers.length; i < len; i++) {
                 var layer = layers[i];
                 if (layer instanceof L.Polygon && layer.feature) {
+                    item.push(getClipPolygonItem(layer.feature.geometry));
+                } else if (layer instanceof L.MultiPolygon && layer.feature) {
                     item.push(getClipPolygonItem(layer.feature.geometry));
                 }
             }
