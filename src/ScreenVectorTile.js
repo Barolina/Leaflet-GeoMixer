@@ -447,7 +447,7 @@ ScreenVectorTile.prototype = {
 
         tile.zKey = this.zKey;
         if (gmx.sortItems) {
-            geoItems = gmx.objectsReorder.getSortedItems(geoItems);
+            geoItems = this.layer.getSortedItems(geoItems);
         }
 
         var doDraw = function() {

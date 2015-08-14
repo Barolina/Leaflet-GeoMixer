@@ -1,45 +1,53 @@
 /*
  * ObjectsReorder  - Reorder objects in Gemixer layer
  */
-!function() {
+(function() {
 
 var MAX = 1000000;
 
-var ObjectsReorder = function (layer) {
-    this.all = {};
-    this.layer = layer;
-    this.gmx = layer._gmx;
-    this.sortFunc = null;
-    layer.on('click', this.clickFunc, this);
-    this.count = 0;
-    this.disabled = false;
-};
-
-ObjectsReorder.prototype = {
-    clickFunc: function (ev) {
-        if (this.disabled || this.gmx.properties.fromType === 'Raster') {
-            return;
-        }
-        var id = ev.gmx.id;
-        this.addToReorder(id, ev.originalEvent.ctrlKey);
-        this.layer.redrawItem(id);
-    },
-
-    addToReorder: function (id, bottomFlag) {
-        ++this.count;
-        this.all[id] = bottomFlag ? -this.count : this.count;
+L.gmx.VectorLayer.include({
+    _objectsReorder: {
+        all: {},
+        sortFunc: null,
+        count: 0,
+        addToReorder: function (id, bottomFlag) {
+            ++this.count;
+            this.all[id] = bottomFlag ? -this.count : this.count;
+        },
+        clickFunc: function (ev) {
+            var reorder = this._objectsReorder;
+            if (!reorder.disabled) {
+                var id = ev.gmx.id;
+                reorder.addToReorder(id, ev.originalEvent.ctrlKey);
+                this.redrawItem(id);
+            }
+        },
+        onAdd: function (layer) {
+            var gmx = layer._gmx;
+            if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
+                layer.setSortFunc(function(a, b) {
+                    return a.id - b.id;
+                });
+            }
+            layer.on('click', this.clickFunc, layer);
+        },
+        onRemove: function (layer) {
+            layer.off('click', this.clickFunc, layer);
+        },
+        disabled: false
     },
 
     getReorderArrays: function () {
-        var bottom = [],
+        var reorder = this._objectsReorder,
+            bottom = [],
             top = [],
-            arr = Object.keys(this.all).sort(function(a, b) {
-                return this.all[a] - this.all[b];
+            arr = Object.keys(reorder.all).sort(function(a, b) {
+                return reorder.all[a] - reorder.all[b];
             });
 
         for (var i = 0, len = arr.length; i < len; i++) {
             var id = arr[i];
-            if (this.all[id] > 0) {
+            if (reorder.all[id] > 0) {
                 top.push(id);
             } else {
                 bottom.push(id);
@@ -48,25 +56,37 @@ ObjectsReorder.prototype = {
         return {top: top, bottom: bottom};
     },
 
+    bringToTopItem: function (id) {
+        this._objectsReorder.addToReorder(id);
+        this.redrawItem(id);
+    },
+
+    bringToBottomItem: function (id) {
+        this._objectsReorder.addToReorder(id, true);
+        this.redrawItem(id);
+    },
+
     setReorderArrays: function (top, bottom) {
-        this.all = {};
-        this.count = 0;
-        bottom.forEach(function (id) { this.addToReorder(id, true); });
-        top.map(function (id) { this.addToReorder(id); });
-        this.layer.repaint();
+        var reorder = this._objectsReorder;
+        reorder.all = {};
+        reorder.count = 0;
+        bottom.forEach(function (id) { reorder.addToReorder(id, true); });
+        top.map(function (id) { reorder.addToReorder(id); });
+        this.repaint();
     },
 
     getSortedItems: function (arr) {
-        return arr.sort(this.count > 0 ? this.gmx.sortItems : this.sortFunc);
+        var reorder = this._objectsReorder;
+        return arr.sort(reorder.count > 0 ? this._gmx.sortItems : reorder.sortFunc);
     },
 
     setSortFunc: function (func) {
-        this.sortFunc = func;
-        var _this = this;
-        this.gmx.sortItems = function(a, b) {
-            if (_this.count > 0) {
-                var ap = _this.all[a.id],
-                    bp = _this.all[b.id];
+        var reorder = this._objectsReorder;
+        reorder.sortFunc = func;
+        this._gmx.sortItems = function(a, b) {
+            if (reorder.count > 0) {
+                var ap = reorder.all[a.id],
+                    bp = reorder.all[b.id];
 
                 if (ap || bp) {
                     ap = ap ? ap + (ap > 0 ? MAX : -MAX) : 0;
@@ -74,37 +94,11 @@ ObjectsReorder.prototype = {
                     return ap - bp;
                 }
             }
-            return _this.sortFunc ? _this.sortFunc(a, b) : 0;
+            return reorder.sortFunc ? reorder.sortFunc(a, b) : 0;
         };
-        this.layer.repaint();
+        this.repaint();
     },
-
-    disableFlip: function() { this.disabled = true; },
-    enableFlip: function() { this.disabled = false; }
-};
-
-L.gmx.VectorLayer.addInitHook(function () {
-    if (!this._gmx.objectsReorder) {
-        var reorder = new ObjectsReorder(this);
-        this._gmx.objectsReorder = reorder;
-        L.extend(this, {
-            bringToTopItem: function (id) {
-                reorder.addToReorder(id);
-                this.redrawItem(id);
-            },
-
-            bringToBottomItem: function (id) {
-                reorder.addToReorder(id, true);
-                this.redrawItem(id);
-            },
-
-            getReorderArrays: reorder.getReorderArrays.bind(reorder),
-            setReorderArrays: reorder.setReorderArrays.bind(reorder),
-            setSortFunc: reorder.setSortFunc.bind(reorder),
-            disableFlip: reorder.disableFlip.bind(reorder),
-            enableFlip: reorder.enableFlip.bind(reorder)
-        });
-    }
+    disableFlip: function() { this._objectsReorder.disabled = true; },
+    enableFlip: function() { this._objectsReorder.disabled = false; }
 });
-
- }();
+})();

@@ -135,9 +135,6 @@ L.gmx.VectorLayer.include({
                 gmx.dataManager.updateVersion();
                 this.fire('versionchange');
             }
-            //if (layerDescription.geometry) {
-                // todo: update layer geometry
-            //}
         }
     }
 });

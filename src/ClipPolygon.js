@@ -3,7 +3,7 @@ var isBoundsIntersects = function (bounds, clipPolygons) {
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
-            for (var j = 0, len = arr[i].boundsArr.length; j < len; j++) {
+            for (var j = 0, len1 = arr[i].boundsArr.length; j < len1; j++) {
                 if (arr[i].boundsArr[j].intersects(bounds)) {
                     return true;
                 }

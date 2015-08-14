@@ -156,6 +156,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 }
             }
         });
+
+        if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
+            this._objectsReorder.onAdd(this);
+        }
         this.fire('add');
     },
 
@@ -187,6 +191,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         map.off('zoomend', this._zoomEnd, this);
 
         var gmx = this._gmx;
+        if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
+            this._objectsReorder.onRemove(this);
+        }
 
         delete gmx.map;
         if (gmx.applyShift) {
@@ -323,7 +330,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx;
         if (gmx.rawProperties.maxShownPeriod) {
             var msecPeriod = gmx.rawProperties.maxShownPeriod * 24 * 3600 * 1000;
-            beginDate = new Date( Math.max(beginDate.valueOf(), endDate.valueOf() - msecPeriod));
+            beginDate = new Date(Math.max(beginDate.valueOf(), endDate.valueOf() - msecPeriod));
         }
         if (!gmx.beginDate ||
             !gmx.endDate ||
@@ -800,11 +807,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.identityField = prop.identityField; // ogc_fid
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
-        if (!gmx.sortItems && gmx.GeometryType === 'polygon' && gmx.objectsReorder) {
-            gmx.objectsReorder.setSortFunc(function(a, b) {
-                return a.id - b.id;
-            });
-        }
 
         if ('clusters' in prop) {
             gmx.clusters = prop.clusters;
