@@ -13,12 +13,11 @@ var setCanvasStyle = function(item, ctx, style) {
     if (style.dashArray) {
         var dashes = style.dashArray,
             dashOffset = style.dashOffset || 0;
-        if ('setLineDash' in ctx) {     //Chrome
+        if ('setLineDash' in ctx) {
             ctx.setLineDash(dashes);
-            //ctx.lineDashOffset(dashOffset);
-        } else {                        //Firefox
-            ctx.mozDash = dashes;
-            ctx.mozDashOffset = dashOffset;
+            if (ctx.lineDashOffset !== dashOffset) {
+                ctx.lineDashOffset = dashOffset;
+            }
         }
     }
     if (ctx.lineCap !== 'round') { ctx.lineCap = 'round'; }

@@ -113,9 +113,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx = this._gmx;
 
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
+        gmx.currentZoom = map.getZoom();
+        gmx.styleManager.initStyles();
 
         L.TileLayer.Canvas.prototype.onAdd.call(this, map);
-        gmx.styleManager.initStyles();
 
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
@@ -285,10 +286,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var _this = this,
             gmx = this._gmx;
         this.initPromise.then(function() {
-            gmx.styleManager.setStyle(style, num, createFlag);
-            _this.fire('stylechange', {num: num || 0});
-            gmx.styleManager.deferred.then(function () {
-                _this.repaint(_this._gmx.tileSubscriptions);
+            gmx.styleManager.setStyle(style, num, createFlag).then(function () {
+                _this.fire('stylechange', {num: num || 0});
             });
         });
         return this;

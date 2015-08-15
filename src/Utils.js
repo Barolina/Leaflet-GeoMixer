@@ -546,7 +546,9 @@ var gmxAPIutils = {
             hh = img.height;
 
         canvas.width = ww; canvas.height = hh;
-        var ptx = canvas.getContext('2d');
+        var flag = false,
+            imageData,
+            ptx = canvas.getContext('2d');
 
         if (typeof color === 'string') {
             color = parseInt('0x' + color.replace(/#/, ''));
@@ -554,9 +556,7 @@ var gmxAPIutils = {
         if (color !== this.DEFAULT_REPLACEMENT_COLOR) {
             var r = (color >> 16) & 255,
                 g = (color >> 8) & 255,
-                b = color & 255,
-                flag = false,
-                imageData;
+                b = color & 255;
 
             if (fromData) {
                 imageData = ptx.createImageData(ww, hh);
@@ -578,9 +578,9 @@ var gmxAPIutils = {
                     flag = true;
                 }
             }
-            if (flag) {
-                ptx.putImageData(imageData, 0, 0);
-            }
+        }
+        if (flag) {
+            ptx.putImageData(imageData, 0, 0);
         } else {
             ptx.drawImage(img, 0, 0);
         }
