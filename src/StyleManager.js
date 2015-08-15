@@ -72,7 +72,7 @@ StyleManager.prototype = {
     _chkReady: function() {
         if (this._needLoadIcons < 1) {
             var _this = this;
-            this.gmx.dataManager.addFilter('styleFilter', function(it) { return _this._chkStyleFilter(it); } );
+            this.gmx.dataManager.addFilter('styleFilter', function(it) { return _this._chkStyleFilter(it); });
             this.deferred.resolve();
         }
     },
@@ -199,7 +199,7 @@ StyleManager.prototype = {
             _this = this;
 
         opt.layerID = this.gmx.layerID;
-        this._needLoadIcons++;
+        ++this._needLoadIcons;
         gmxImageLoader.unshift(url, opt).then(
             function(it) {
                 pt.version = ++_this._maxVersion;
@@ -386,7 +386,7 @@ StyleManager.prototype = {
                 if (!('iconSize' in st)) { st.iconSize = 4; }
             } else if (st.fillRadialGradient) {
                 type = 'circle';
-                var size = parseRadialGradient(st.fillRadialGradient);
+                var size = StyleManager.parseRadialGradient(st.fillRadialGradient);
                 if (size === null) {
                     st.common = false;
                 } else {
@@ -394,7 +394,7 @@ StyleManager.prototype = {
                 }
             } else if (st.fillLinearGradient) {
                 type = 'square';
-                st.common = parseLinearGradient(st.fillLinearGradient);
+                st.common = StyleManager.parseLinearGradient(st.fillLinearGradient);
             } else if (st.iconSize) {
                 type = 'square';
             }

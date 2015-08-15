@@ -17,8 +17,9 @@ var isBoundsIntersects = function (bounds, clipPolygons) {
 };
 var isPointInClipPolygon = function (pcoords, clipPolygons) {
     for (var key in clipPolygons) {
-        var arr = clipPolygons[key];
-        for (var i = 0, len = arr.length; i < len; i++) {
+        var arr = clipPolygons[key],
+            i, len, j, len1;
+        for (i = 0, len = arr.length; i < len; i++) {
             var geometry = arr[i].geometry,
                 type = geometry.type;
             if (type !== 'Polygon' && type !== 'MultiPolygon') { return true; }

@@ -33,43 +33,6 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
             };
         }
 
-        var objects = [[777, ph.geometry]],
-            itemBounds = gmxAPIutils.geoItemBounds(ph.geometry),
-            bounds = itemBounds.bounds;
-
-        if (bounds.max.x > worldSize) {
-            // for old layers geometry
-            var ww2 = 2 * worldSize,
-                id = 777,
-                coords = ph.geometry.coordinates,
-                bboxArr = itemBounds.boundsArr;
-
-            objects = [];
-            if (ph.geometry.type === 'POLYGON') {
-                coords = [coords];
-                bboxArr = [bboxArr];
-            }
-
-            for (var i = 0, len = coords.length; i < len; i++) {
-                var it = coords[i],
-                    bbox = bboxArr[i][0],
-                    arr = it;
-                objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
-                if (bbox.max.x > worldSize) {
-                    arr = [];
-                    for (var j = 0, len1 = it.length; j < len1; j++) {
-                        var it1 = it[j];
-                        for (var j1 = 0, arr1 = [], len2 = it1.length; j1 < len2; j1++) {
-                            var it2 = it1[j1];
-                            arr1.push([it2[0] - ww2, it2[1]]);
-                        }
-                        arr.push(arr1);
-                    }
-                    objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
-                }
-            }
-        }
-
 		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
         gmx.rawProperties = ph.properties;
 
@@ -87,6 +50,42 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 		};
 
 		var vectorDataProvider = {load: function(x, y, z, v, s, d, callback) {
+            var objects = [[777, ph.geometry]],
+                itemBounds = gmxAPIutils.geoItemBounds(ph.geometry),
+                bounds = itemBounds.bounds;
+
+            if (bounds.max.x > worldSize) {
+                // for old layers geometry
+                var ww2 = 2 * worldSize,
+                    id = 777,
+                    coords = ph.geometry.coordinates,
+                    bboxArr = itemBounds.boundsArr;
+
+                objects = [];
+                if (ph.geometry.type === 'POLYGON') {
+                    coords = [coords];
+                    bboxArr = [bboxArr];
+                }
+
+                for (var i = 0, len = coords.length; i < len; i++) {
+                    var it = coords[i],
+                        bbox = bboxArr[i][0],
+                        arr = it;
+                    objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
+                    if (bbox.max.x > worldSize) {
+                        arr = [];
+                        for (var j = 0, len1 = it.length; j < len1; j++) {
+                            var it1 = it[j];
+                            for (var j1 = 0, arr1 = [], len2 = it1.length; j1 < len2; j1++) {
+                                var it2 = it1[j1];
+                                arr1.push([it2[0] - ww2, it2[1]]);
+                            }
+                            arr.push(arr1);
+                        }
+                        objects.push([id++, {type: 'POLYGON', coordinates: arr}]);
+                    }
+                }
+            }
 			callback(objects);
 		}};
 		gmx.dataManager.addTile(new VectorTile(vectorDataProvider, -0.5,   -0.5, 0, 0, -1, -1));
