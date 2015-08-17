@@ -114,8 +114,9 @@ StyleManager.prototype = {
     },
 
     _changeStylesVersion: function () {
+        var _this = this;
         this._styles.map(function(it) {
-            it.version = ++this._maxVersion;
+            it.version = ++_this._maxVersion;
         });
     },
 
