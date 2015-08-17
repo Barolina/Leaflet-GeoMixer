@@ -302,15 +302,16 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._gmx.styleHook = null;
     },
 
-    setImageProcessingHook: function (func) {
-        this._gmx.imageProcessingHook = func;
+    setRasterHook: function (func) {
+        this._gmx.rasterProcessingHook = func;
         this.repaint();
         return this;
     },
 
-    removeImageProcessingHook: function () {
-        this._gmx.imageProcessingHook = null;
+    removeRasterHook: function () {
+        this._gmx.rasterProcessingHook = null;
         this.repaint();
+        return this;
     },
 
     setFilter: function (func) {
