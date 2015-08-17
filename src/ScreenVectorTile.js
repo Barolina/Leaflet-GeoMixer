@@ -48,6 +48,10 @@ ScreenVectorTile.prototype = {
                 return;
             }
 
+            if (gmx.rasterProcessingHook) {
+                crossOrigin = 'anonymous';
+            }
+
             curRequest = gmxImageLoader.push(rUrl, {
                 layerID: gmx.layerID,
                 zoom: gtp.z,
