@@ -162,42 +162,45 @@ L.gmx.VectorLayer.include({
 
     _openPopup: function (options) {
         var originalEvent = options.originalEvent || {},
-            skip = this._popupDisabled ||
-                    originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
+            skip = this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
             var type = options.type,
+                _popup = this._popup,
                 gmx = options.gmx || {},
                 balloonData = gmx.balloonData || {};
 
             if (type === 'click') {
-                if (this._popup._state === 'mouseover') {   // on click close mouseover popup
-                    this._outPopup();
-                }
                 if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
-                this._popup.options.closeButton = this._popup.options.autoPan = true;
+                _popup.options.autoPan = true;
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {
-                    this._popup._state = '';
+                    _popup._state = '';
                     return;
                 }
-                this._popup.options.closeButton = this._popup.options.autoPan = false;
+                _popup.options.autoPan = false;
             } else {
                 return;
             }
-            this._popup._state = type;
+            _popup._state = type;
             var outItem = this._setPopupContent(options);
-            this._popup.setLatLng(outItem.latlng);
+            _popup.setLatLng(outItem.latlng);
 
             this.fire('popupopen', {
-                popup: this._popup,
+                popup: _popup,
                 gmx: outItem
             });
-            this._popup._initLayout();
-            if (type === 'mouseover') {
-                this._popup._container.style.marginBottom = '7px';
+            this._map.openPopup(_popup);
+            if (_popup._closeButton) {
+                var closeStyle = _popup._closeButton.style;
+                if (type === 'mouseover' && closeStyle !== 'hidden') {
+                    closeStyle.visibility = 'hidden';
+                    _popup._container.style.marginBottom = '7px';
+                } else if (type === 'click' && closeStyle !== 'inherit') {
+                    closeStyle.visibility = 'inherit';
+                    _popup._container.style.marginBottom = '';
+                }
             }
-            this._map.openPopup(this._popup);
         }
     }
 });
