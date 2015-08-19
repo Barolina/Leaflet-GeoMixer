@@ -2024,6 +2024,7 @@ L.extend(L.gmxUtil, {
     isIE9: gmxAPIutils.isIE(9),
     isIE10: gmxAPIutils.isIE(10),
     requestJSONP: gmxAPIutils.requestJSONP,
+    request: gmxAPIutils.request,
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
     getDefaultStyle: gmxAPIutils.getDefaultStyle,
