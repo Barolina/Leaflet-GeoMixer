@@ -171,7 +171,7 @@ L.gmx.VectorLayer.include({
                 balloonData = gmx.balloonData || {};
 
             if (type === 'click') {
-                if (this._popup._state === 'mouseover') {   // on click close mouseover popup 
+                if (this._popup._state === 'mouseover') {   // on click close mouseover popup
                     this._outPopup();
                 }
                 if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }

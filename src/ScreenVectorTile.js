@@ -99,7 +99,7 @@ ScreenVectorTile.prototype = {
     },
 
     // default rasterHook: res - result canvas other parameters as http://www.w3schools.com/tags/canvas_drawimage.asp
-    _defaultRasterHook: function (res, image, sx, sy, sw, sh, dx, dy, dw, dh, info) {
+    _defaultRasterHook: function (res, image, sx, sy, sw, sh, dx, dy, dw, dh) {
         var ptx = res.getContext('2d');
         ptx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     },
@@ -253,14 +253,15 @@ ScreenVectorTile.prototype = {
                             if (itemImageProcessingHook) {
                                 imageElement = itemImageProcessingHook(imageElement, imgAttr);
                             }
-                            var info = {
-                                res: resCanvas,
-                                image: imageElement,
-                                destinationTilePoint: gmxTilePoint,
-                                sourceTilePoint: gtp
-                            };
+                            var pos,
+                                info = {
+                                    res: resCanvas,
+                                    image: imageElement,
+                                    destinationTilePoint: gmxTilePoint,
+                                    sourceTilePoint: gtp
+                                };
                             if (isShift) {
-                                var pos = _this._getShiftPixels(p);
+                                pos = _this._getShiftPixels(p);
                                 if (pos === null) {
                                     skipRasterFunc();
                                     return;
@@ -269,7 +270,7 @@ ScreenVectorTile.prototype = {
                             }
 
                             if (gtp.z !== gmxTilePoint.z) {
-                                var pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, gtp.z);
+                                pos = gmxAPIutils.getTilePosZoomDelta(gmxTilePoint, gmxTilePoint.z, gtp.z);
                                 if (pos.size < 1 / 256) {// меньше 1px
                                     chkReadyRasters();
                                     return;
@@ -317,7 +318,7 @@ ScreenVectorTile.prototype = {
             };
             mainRasterLoader = chkLoad(arr);
 
-            mainRasterLoader.then(function(parr) {
+            mainRasterLoader.then(function() {
                 rasters[idr] = resCanvas;
                 def.resolve();
             });
