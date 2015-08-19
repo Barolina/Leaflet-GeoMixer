@@ -258,7 +258,9 @@ ScreenVectorTile.prototype = {
                                     res: resCanvas,
                                     image: imageElement,
                                     destinationTilePoint: gmxTilePoint,
-                                    sourceTilePoint: gtp
+                                    sourceTilePoint: gtp,
+                                    sx: 0, sy: 0, sw: 256, sh: 256,
+                                    dx: 0, dy: 0, dw: 256, dh: 256
                                 };
                             if (isShift) {
                                 pos = _this._getShiftPixels(p);
