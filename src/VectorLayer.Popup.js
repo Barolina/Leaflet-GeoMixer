@@ -170,8 +170,10 @@ L.gmx.VectorLayer.include({
                 gmx = options.gmx || {},
                 balloonData = gmx.balloonData || {};
 
-            this._popup._state = type;
             if (type === 'click') {
+                if (this._popup._state === 'mouseover') {   // on click close mouseover popup 
+                    this._outPopup();
+                }
                 if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
                 this._popup.options.closeButton = this._popup.options.autoPan = true;
             } else if (type === 'mouseover') {
@@ -183,6 +185,7 @@ L.gmx.VectorLayer.include({
             } else {
                 return;
             }
+            this._popup._state = type;
             var outItem = this._setPopupContent(options);
             this._popup.setLatLng(outItem.latlng);
 
