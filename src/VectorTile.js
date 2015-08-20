@@ -1,5 +1,7 @@
 //Single vector tile, received from GeoMixer server
-//"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with data of loaded tile
+//"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with the following parameters:
+//  - {Object[]} data - information about vector objects in tile
+//  - {Number[4]} [bbox] - optional bbox of objects in tile
 var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     var _this = this;
 
@@ -36,8 +38,9 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
     this.load = function() {
         if (this.state === 'notLoaded') {
             this.state = 'loading';
-            dataProvider.load(x, y, z, v, s, d, function(data) {
+            dataProvider.load(x, y, z, v, s, d, function(data, bbox) {
                 _this.addData(data);
+                _this.bbox = bbox;
             });
         }
 

@@ -86,7 +86,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                     }
                 }
             }
-			callback(objects);
+			callback(objects, [bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y]);
 		}};
 		gmx.dataManager.addTile(new VectorTile(vectorDataProvider, -0.5,   -0.5, 0, 0, -1, -1));
 
