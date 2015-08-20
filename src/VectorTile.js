@@ -9,7 +9,9 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
 
     this.addData = function(data, keys) {
 
-        this.removeData(keys, true);
+        if (keys) {
+            this.removeData(keys, true);
+        }
 
         var len = data.length;
         var dataOptions = new Array(len);
@@ -39,8 +41,8 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         if (this.state === 'notLoaded') {
             this.state = 'loading';
             dataProvider.load(x, y, z, v, s, d, function(data, bbox) {
-                _this.addData(data);
                 _this.bbox = bbox;
+                _this.addData(data);
             });
         }
 
