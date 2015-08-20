@@ -294,7 +294,6 @@ StyleManager.prototype = {
             if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = StyleManager.DEFAULT_STYLE; }
             if (gmxStyle.HoverStyle === undefined) {
                 var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
-                if (hoveredStyle.marker && hoveredStyle.marker.size) { hoveredStyle.marker.size += 1; }
                 if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
                 gmxStyle.HoverStyle = hoveredStyle;
             } else if (gmxStyle.HoverStyle === null) {
@@ -516,7 +515,7 @@ StyleManager.prototype = {
             if (pt.iconSize) {
                 var iconSize = ('sizeFunction' in pt ? pt.sizeFunction(prop, indexes) : pt.iconSize);
                 out.sx = out.sy = iconSize;
-                iconSize += pt.weight ? pt.weight : 0;
+                // iconSize += pt.weight ? pt.weight : 0;
                 out.iconSize = iconSize;
                 if ('iconScale' in pt) {
                     out.iconSize *= pt.iconScale;
