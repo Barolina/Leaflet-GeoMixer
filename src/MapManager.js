@@ -119,6 +119,22 @@ gmxMap.prototype.addLayer = function(layer) {
     return this;
 };
 
+gmxMap.prototype.removeLayer = function(layer) {
+    var props = layer.getGmxProperties();
+
+    for (var i = 0; i < this.layers.length; i++) {
+        if (this.layers[i].getGmxProperties().name === props.name) {
+            this.layers.splice(i, 1);
+            break;
+        }
+    }
+    
+    delete this.layersByTitle[props.title];
+    delete this.layersByID[props.name];
+
+    return this;
+};
+
 gmxMap.prototype.addLayersToMap = function(leafletMap) {
     for (var l = this.layers.length - 1; l >= 0; l--) {
         var layer = this.layers[l];
