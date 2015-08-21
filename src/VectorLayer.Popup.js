@@ -104,8 +104,9 @@ L.gmx.VectorLayer.include({
         }
     },
 
-    _outPopup: function () {
-        if (this._popup._state === 'mouseover') {
+    _outPopup: function (ev) {
+        if (this._popup._state === 'mouseover' && !ev.gmx.prevId) {
+        // if (this._popup._state === 'mouseover') {
             this.closePopup();
         }
     },

@@ -164,6 +164,7 @@ L.gmx.VectorLayer.include({
                     if (target) {
                         var idr = target.id,
                             item = gmx.dataManager.getItem(idr),
+                            prevId = lastHover ? lastHover.id : null,
                             changed = !lastHover || lastHover.id !== idr;
                         if (type === 'mousemove' && lastHover) {
                             if (!changed) {
@@ -182,6 +183,7 @@ L.gmx.VectorLayer.include({
                             balloonData: gmx.styleManager.getItemBalloon(idr),
                             properties: layer.getItemProperties(target.properties),
                             currentFilter: item.currentFilter,
+                            prevId: prevId,
                             id: idr
                         };
                         if (this.hasEventListeners(type)) { this.fire(type, ev); }
@@ -201,9 +203,10 @@ L.gmx.VectorLayer.include({
                 }
             }
         }
-        if (skipOver && type !== 'mousedown' && type !== 'mouseup') {
-            gmx.lastHover = null;
+        if (skipOver) {
+            lastHover.prevId = null;
             chkHover('mouseout');
+            gmx.lastHover = null;
         }
         if (this._map) {
             this._map.doubleClickZoom.enable();
