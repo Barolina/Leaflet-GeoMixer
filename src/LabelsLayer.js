@@ -5,7 +5,7 @@
 L.LabelsLayer = L.Class.extend({
 
     options: {
-        pane: 'markerPane'
+        pane: 'overlayPane'
     },
 
     initialize: function (map, options) {
@@ -155,13 +155,20 @@ L.LabelsLayer = L.Class.extend({
         return this;
     },
 
+    _addToPane: function () {
+        var pane = this._map.getPanes()[this.options.pane];
+        if (pane) {
+            pane.insertBefore(this._canvas, pane.firstChild);
+        }
+    },
+
     onAdd: function (map) {
         this._map = map;
 
         if (!this._canvas) {
             this._initCanvas();
         }
-        map.getPanes()[this.options.pane].appendChild(this._canvas);
+        // this._addToPane();
 
         map.on('moveend', this._reset, this);
         map.on({
@@ -176,7 +183,9 @@ L.LabelsLayer = L.Class.extend({
     },
 
     onRemove: function (map) {
-        map.getPanes()[this.options.pane].removeChild(this._canvas);
+        if (this._canvas.parentNode) {
+            this._canvas.parentNode.removeChild(this._canvas);
+        }
 
         map.off('moveend', this._reset, this);
         map.off('layeradd', this._layeradd);
@@ -313,14 +322,12 @@ L.LabelsLayer = L.Class.extend({
             }
         }
         if (out.length) {
-            if (!_canvas.parentNode) {
-                this._map.getPanes()[this.options.pane].appendChild(_canvas);
-            }
             ctx.clearRect(0, 0, _canvas.width, _canvas.height);
             for (i = 0, len = out.length; i < len; i++) {
                 it = out[i];
                 gmxAPIutils.setLabel(ctx, it.txt, it.coord, it.style);
             }
+            if (!_canvas.parentNode) { this._addToPane(); }
         } else if (_canvas.parentNode) {
             _canvas.parentNode.removeChild(_canvas);
         }
