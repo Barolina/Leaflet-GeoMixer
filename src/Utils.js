@@ -1252,7 +1252,7 @@ var gmxAPIutils = {
     /** Get geoJSON area
      * @memberof L.gmxUtil
      * @param {Object} geojson - object in <a href="http://geojson.org/geojson-spec.html">GeoJSON format</a>
-     * @return {Number} area
+     * @return {Number} area in square meters
     */
     geoJSONGetArea: function(geoJSON) {
         var out = 0;
@@ -1290,7 +1290,7 @@ var gmxAPIutils = {
     /** Get area
      * @memberof L.gmxUtil
      * @param {Array} L.latLng array
-     * @return {Number} area
+     * @return {Number} area in square meters
     */
     getArea: function(arr) {
         var area = 0;
@@ -1299,15 +1299,14 @@ var gmxAPIutils = {
                 p1 = arr[i], p2 = arr[ipp];
             area += p1.lng * Math.sin(gmxAPIutils.degRad(p2.lat)) - p2.lng * Math.sin(gmxAPIutils.degRad(p1.lat));
         }
-        var out = Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY / 2);
-        return out;
+        return Math.abs(area * gmxAPIutils.lambertCoefX * gmxAPIutils.lambertCoefY / 2);
     },
 
-    /** Get prettify area
+    /** Get prettified size of area
      * @memberof L.gmxUtil
-     * @param {Number} area
+     * @param {Number} area in square meters
      * @param {String} type: ('km2', 'ha', 'm2')
-     * @return {String} prettify area
+     * @return {String} prettified area
     */
     prettifyArea: function(area, type) {
         var km2 = ' ' + L.gmxLocale.getText('units.km2');
@@ -1457,7 +1456,7 @@ var gmxAPIutils = {
      * @memberof L.gmxUtil
      * @param {Object} geometry
      * @param {Boolean} [isMerc=true] - true if coordinates in Mercator
-     * @return {Number} area
+     * @return {Number} area in square meters
     */
     geoArea: function(geom, isMerc) {
         var i, len, ret = 0,
