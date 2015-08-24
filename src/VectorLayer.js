@@ -836,9 +836,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
             }
-            if ('clusters' in meta) {    // проверка всех фильтров для обьектов слоя
-                gmx.clusters = meta.clusters.Value;
-            }
+            // if ('clusters' in meta) {    // проверка всех фильтров для обьектов слоя
+                // gmx.clusters = meta.clusters.Value;
+            // }
         }
 
         var tileAttributeIndexes = {},

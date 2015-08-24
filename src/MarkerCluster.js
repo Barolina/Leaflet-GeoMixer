@@ -85,16 +85,34 @@
                 GmxMarkerCluster.prototype.onAdd.call(this, ev.target._map);
             };
 
-            layer.on('add', this.addEvent, this);
+            layer
+                .on('add', this.addEvent, this)
+                .on('dateIntervalChanged', this.setDateInterval, this);
 
             if (this._layer._map) {
                 this.addEvent({target:{_map: this._layer._map}});
             }
         },
 
+        unbindClusters: function () {
+            var map = this._map || this._layer._map;
+            this._layer
+                .off('add', this.addEvent, this)
+                .off('dateIntervalChanged', this.setDateInterval, this);
+            this.onRemove(!map);
+            if (map) {
+                map.off({
+                    moveend: this._updateBbox,
+                    zoomend: this._zoomend,
+                    layeradd: this._layeradd,
+                    layerremove: this._layerremove
+                }, this);
+            }
+        },
+
         // parent layer added to map
         onAdd: function (map) {
-            if (!this._map) {
+           if (!this._map) {
                 this._map = map;
                 this._map.on({
                     moveend: this._updateBbox,
@@ -102,8 +120,6 @@
                     layeradd: this._layeradd,
                     layerremove: this._layerremove
                 }, this);
-                this._layer
-                    .on('dateIntervalChanged', this.setDateInterval, this);
             }
             this._chkZoom();
         },
@@ -113,23 +129,11 @@
             var map = this._map;
             if (this._observer) {
                 this._observer.deactivate();
-                this._observer = null;
             }
             if (this.markers._map) {
                 this._zoomend();
                 this.markers._map.removeLayer(this.markers);
             }
-            map.off({
-                moveend: this._updateBbox,
-                zoomend: this._zoomend,
-                layeradd: this._layeradd,
-                layerremove: this._layerremove
-            }, this);
-            this._layer
-                .off('add', this.addEvent, this)
-                .off('dateIntervalChanged', this.setDateInterval, this);
-
-            this._layer._clusters = null;
             if (!fromMapFlag) {
                 this._layer.onAdd(map);
             }
@@ -214,6 +218,7 @@
             if (this._popup && this.markers._map) {
                 this.markers._map.removeLayer(this._popup);
             }
+            this._chkZoom();
         },
 
         _chkZoom: function () {
@@ -270,7 +275,8 @@
         unbindClusters: function () {
             if (L.MarkerClusterGroup) {
                 if (this._clusters) {
-                    this._clusters.onRemove();
+                    this._clusters.unbindClusters();
+                    this._clusters = null;
                 }
             }
             return this;
