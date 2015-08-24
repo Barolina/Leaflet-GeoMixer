@@ -201,7 +201,7 @@ StyleManager.prototype = {
 
         opt.layerID = this.gmx.layerID;
         ++this._needLoadIcons;
-        gmxImageLoader.unshift(url, opt).then(
+        L.gmx.imageLoader.unshift(url, opt).then(
             function(it) {
                 pt.version = ++_this._maxVersion;
                 if (pt.fillIconUrl) {

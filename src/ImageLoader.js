@@ -1,34 +1,44 @@
+(function() {
+
 var ImageRequest = function(id, url, options) {
     this._id = id;
-    this.def = new L.gmx.Deferred(gmxImageLoader._cancelRequest.bind(gmxImageLoader, this));
+    this.def = new L.gmx.Deferred(L.gmx.imageLoader._cancelRequest.bind(L.gmx.imageLoader, this));
     this.url = url;
     this.options = options || {};
 };
 
-var gmxImageLoader = {
-    maxCount: 20,        // max number of parallel requests
-    curCount: 0,        // number of currently processing requests (number of items in "inProgress")
-    requests: [],       // not yet processed image requests
-    inProgress: {},     // hash of in progress image loadings
-    uniqueID: 0,
-    emptyImageUrl: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=',
-
+var GmxImageLoader = L.Class.extend({
+    includes: L.Mixin.Events,
+    statics: {
+        MAX_COUNT: 20, // max number of parallel requests
+        EMPTY_IMAGE_URL: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=',
+    },
+    
+    initialize: function() {
+        this.curCount = 0;        // number of currently processing requests (number of items in "inProgress")
+        this.requests = [];       // not yet processed image requests
+        this.inProgress = {};     // hash of in progress image loadings
+        this.uniqueID = 0;
+    },
+    
     _imageLoaded: function(url, image) {
         if (url in this.inProgress) {
             var requests = this.inProgress[url].requests;
             for (var k = 0; k < requests.length; k++) {
                 var def = requests[k].def;
                 image ? def.resolve(image) : def.reject();
+                this.fire('requestdone', {request: requests[k]});
             }
             --this.curCount;
             delete this.inProgress[url];
         }
         L.gmxUtil.loaderStatus(url, true);
+        this.fire('imageloaded', {url: url});
         this._nextLoad();
     },
 
     _nextLoad: function() {  // загрузка следующего
-        if (this.curCount >= this.maxCount || !this.requests.length) {
+        if (this.curCount >= GmxImageLoader.MAX_COUNT || !this.requests.length) {
             return;
         }
 
@@ -75,6 +85,9 @@ var gmxImageLoader = {
             _this._imageLoaded(url);
         };
         imageObj.src = url;
+        
+        this.fire('imageloadstart', {url: url});
+        
         return imageObj;
     },
 
@@ -86,7 +99,8 @@ var gmxImageLoader = {
             if (loadingImg.requests.length === 1 && loadingImg.requests[0]._id === id) {
                 --this.curCount;
                 delete this.inProgress[request.url];
-                loadingImg.image = this.emptyImageUrl;
+                loadingImg.image = GmxImageLoader.EMPTY_IMAGE_URL;
+                this.fire('imageloaded', {url: request.url});
                 this._nextLoad();
             } else {
                 for (i = 0; i < loadingImg.requests.length; i++) {
@@ -104,6 +118,23 @@ var gmxImageLoader = {
                 }
             }
         }
+        
+        this.fire('requestdone', {request: request});
+    },
+    
+    _add: function(atBegin, url, options) {
+        var id = 'id' + (++this.uniqueID);
+        var request = new ImageRequest(id, url, options);
+        if (url in this.inProgress) {
+            this.inProgress[url].requests.push(request);
+        } else {
+            atBegin ? this.requests.unshift(request) : this.requests.push(request);
+            this._nextLoad();
+        }
+        
+        this.fire('request', {request: request});
+        
+        return request.def;
     },
 
     clearLayer: function(layerID) {  // remove all the items for a given layer ID
@@ -127,18 +158,6 @@ var gmxImageLoader = {
         requestsToCancel.forEach(this._cancelRequest.bind(this));
     },
 
-    _add: function(atBegin, url, options) {
-        var id = 'id' + (++this.uniqueID);
-        var request = new ImageRequest(id, url, options);
-        if (url in this.inProgress) {
-            this.inProgress[url].requests.push(request);
-        } else {
-            atBegin ? this.requests.unshift(request) : this.requests.push(request);
-            this._nextLoad();
-        }
-        return request.def;
-    },
-
     push: function(url, options) {  // добавить запрос в конец очереди
         return this._add(false, url, options);
     },
@@ -146,4 +165,8 @@ var gmxImageLoader = {
     unshift: function(url, options) {   // добавить запрос в начало очереди
         return this._add(true, url, options);
     }
-};
+});
+
+L.gmx.imageLoader = new GmxImageLoader();
+
+})();

@@ -52,7 +52,7 @@ ScreenVectorTile.prototype = {
                 crossOrigin = 'anonymous';
             }
 
-            curRequest = gmxImageLoader.push(rUrl, {
+            curRequest = L.gmx.imageLoader.push(rUrl, {
                 layerID: gmx.layerID,
                 zoom: gtp.z,
                 crossOrigin: crossOrigin || ''
@@ -309,12 +309,12 @@ ScreenVectorTile.prototype = {
                         };
                         prepareItem(img);
                     };
-                parr.map(function(it) {
+                recursiveLoaders = parr.map(function(it) {
                     var loader = _this._loadTileRecursive(it, urlFunction);
                     loader.then(function(gtp) {
-                            onLoadFunction(gtp, it);
-                        }, skipRasterFunc);
-                    recursiveLoaders.push(loader);
+                        onLoadFunction(gtp, it);
+                    }, skipRasterFunc);
+                    return loader;
                 });
                 return itemRastersPromise;
             };
@@ -326,7 +326,7 @@ ScreenVectorTile.prototype = {
             });
         } else {
             // for quicklook
-            mainRasterLoader = gmxImageLoader.push(url, {
+            mainRasterLoader = L.gmx.imageLoader.push(url, {
                 layerID: gmx.layerID,
                 crossOrigin: gmx.crossOrigin || ''
             });
