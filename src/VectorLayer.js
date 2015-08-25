@@ -14,7 +14,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var _this = this;
 
         this._gmx = {
-            hostName: options.hostName || 'maps.kosmosnimki.ru',
+            hostName: gmxAPIutils.normalizeHostname(options.hostName || 'maps.kosmosnimki.ru'),
             mapName: options.mapID,
             layerID: options.layerID,
             beginDate: options.beginDate,

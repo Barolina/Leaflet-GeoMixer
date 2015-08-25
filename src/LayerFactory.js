@@ -1,17 +1,6 @@
 L.gmx = L.gmx || {};
 
 var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
-var normalizeHostname = function(hostName) {
-    var parsedHost = L.gmxUtil.parseUri(hostName || DEFAULT_HOSTNAME);
-
-    hostName = parsedHost.host + parsedHost.directory;
-
-    if (hostName[hostName.length - 1] === '/') {
-        hostName = hostName.substring(0, hostName.length - 1);
-    }
-
-    return hostName;
-};
 
 //Build in layer classes
 L.gmx._layerClasses = {
@@ -38,7 +27,7 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
         layerParams[p] = options[p];
     }
 
-    var hostName = normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
+    var hostName = gmxAPIutils.normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
     layerParams.hostName = hostName;
 
     gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
@@ -80,7 +69,7 @@ L.gmx.loadLayers = function(layers, globalOptions) {
 
 L.gmx.loadMap = function(mapID, options) {
     options = L.extend({}, options);
-    options.hostName = normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
+    options.hostName = gmxAPIutils.normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
 
     var def = new L.gmx.Deferred();
 

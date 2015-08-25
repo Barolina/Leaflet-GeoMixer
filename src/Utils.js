@@ -21,6 +21,18 @@ var gmxAPIutils = {
     isPageHidden: function()	{		// Видимость окна браузера
         return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden || false;
     },
+    
+    normalizeHostname: function(hostName) {
+        var parsedHost = L.gmxUtil.parseUri(hostName || DEFAULT_HOSTNAME);
+
+        hostName = parsedHost.host + parsedHost.directory;
+
+        if (hostName[hostName.length - 1] === '/') {
+            hostName = hostName.substring(0, hostName.length - 1);
+        }
+
+        return hostName;
+    },
 
     /** Sends JSONP requests
      * @memberof L.gmxUtil
