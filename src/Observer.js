@@ -231,9 +231,13 @@ var Observer = L.Class.extend({
     },
 
     setDateInterval: function(beginDate, endDate) {
-        if (!this.dateInterval ||
-            this.dateInterval.beginDate.valueOf() !== beginDate.valueOf() ||
-            this.dateInterval.endDate.valueOf() !== endDate.valueOf()
+        var isValid = beginDate && endDate;
+        
+        if (!this.dateInterval !== !isValid || 
+            isValid && (
+                this.dateInterval.beginDate.valueOf() !== beginDate.valueOf() ||
+                this.dateInterval.endDate.valueOf() !== endDate.valueOf()
+            )
         ) {
             this._setDateInterval(beginDate, endDate);
             this.fire('update', {temporalFilter: true});
