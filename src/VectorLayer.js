@@ -395,7 +395,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
                 bbox.drawDef.then(
                     bbox.def.resolve.bind(bbox.def, bbox.data),
-                    bbox.def.reject.bind(bbox.def)
+                    bbox.def.reject
                 );
             } else {
                 bbox.def.reject();
@@ -626,7 +626,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
 
        gmx.styleManager.deferred.then(function () {
-            screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject.bind(def));
+            screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject);
        });
 
        return def;
