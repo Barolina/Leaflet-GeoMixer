@@ -25,8 +25,8 @@ var gmxMapManager = {
                     } else {
                         def.reject(json);
                     }
-                });
-            });
+                }, def.reject);
+            }, def.reject);
         }
         return maps[serverHost][mapName].promise;
     },

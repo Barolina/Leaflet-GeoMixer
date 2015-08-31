@@ -50,7 +50,7 @@ var gmxSessionManager = {
                     } else {
                         keys[serverHost].reject();
                     }
-                });
+                }, keys[serverHost].reject);
             } else {
                 keys[serverHost].resolve('');
             }
