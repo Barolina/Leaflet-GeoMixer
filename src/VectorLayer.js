@@ -872,7 +872,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         + '&y=' + y
                         + '&z=' + z
                         + '&LayerName=' + properties[layerLink]
-                        + '&MapName=' + gmx.mapName
                         + '&key=' + encodeURIComponent(gmx.sessionKey);
                 };
                 gmx.imageQuicklookProcessingHook = gmxImageTransform;

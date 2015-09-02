@@ -91,7 +91,7 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
         var props = layerInfo.properties,
             layerOptions = L.extend({
-                mapName: mapInfo.properties.name,
+                mapID: mapInfo.properties.name,
                 layerID: props.name
             }, commonLayerOptions),
             layer;

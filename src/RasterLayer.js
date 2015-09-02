@@ -40,7 +40,6 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 			var tileSenderPrefix = 'http://' + gmx.hostName + '/' +
 				'TileSender.ashx?ModeKey=tile' +
 				'&key=' + encodeURIComponent(gmx.sessionKey) +
-				'&MapName=' + gmx.mapName +
 				'&LayerName=' + gmx.layerID;
 
 			return tileSenderPrefix +
