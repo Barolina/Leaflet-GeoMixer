@@ -47,42 +47,55 @@ L.LabelsLayer = L.Class.extend({
                     labelText = currentStyle.labelText || style.labelText,
                     labelField = currentStyle.labelField || style.labelField,
                     fieldType = gmx.tileAttributeTypes[labelField],
-                    txt = labelText || L.gmxUtil.attrToString(fieldType, gmx.getPropItem(item.properties, labelField)),
-                    fontSize = currentStyle.labelFontSize || style.labelFontSize,
-                    id = '_' + item.id,
-                    options = item.options;
+                    txt = labelText || L.gmxUtil.attrToString(fieldType, gmx.getPropItem(item.properties, labelField));
 
                 if (txt) {
-                    if (!('center' in options)) {
-                        var center = gmxAPIutils.getItemCenter(item, gmx.dataManager.getItemMembers(item.id));
-                        if (!center) { continue; }
-                        options.center = center;
+                    var fontSize = currentStyle.labelFontSize || style.labelFontSize || 12,
+                        id = '_' + item.id,
+                        changed = true,
+                        width = 0,
+                        options = item.options,
+                        labelStyle = {
+                            font: fontSize + 'px "Arial"',
+                            labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || 0,
+                            labelColor: currentStyle.labelColor || style.labelColor,
+                            labelAlign: currentStyle.labelAlign || style.labelAlign,
+                            labelFontSize: fontSize
+                        };
+                    if (options) {
+                        if (!('center' in options)) {
+                            var center = gmxAPIutils.getItemCenter(item, gmx.dataManager.getItemMembers(item.id));
+                            if (!center) { continue; }
+                            options.center = center;
+                        }
+                        if (options.label) {
+                            width = options.label.width;
+                            var pstyle = options.label.style;
+                            changed = options.label.txt !== txt ||
+                                pstyle.labelHaloColor !== labelStyle.labelHaloColor ||
+                                pstyle.labelColor !== labelStyle.labelColor ||
+                                pstyle.labelAlign !== labelStyle.labelAlign ||
+                                pstyle.labelFontSize !== labelStyle.labelFontSize
+                            ;
+                        }
                     }
-                    if (!('label' in options) || options.label.txt !== txt) {
-                        var size = fontSize || 12,
-                            labelStyle = {
-                                font: size + 'px "Arial"',
-                                labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || 0,
-                                labelColor: currentStyle.labelColor || style.labelColor,
-                                labelAlign: currentStyle.labelAlign || style.labelAlign,
-                                labelFontSize: fontSize
-                            },
-                            width = gmxAPIutils.getLabelWidth(txt, labelStyle);
+                    if (changed) {
+                        width = gmxAPIutils.getLabelWidth(txt, labelStyle);
                         if (!width) {
                             delete labels[id];
                             continue;
                         }
-                        options.label = {
-                            isPoint: isPoint,
-                            width: width + 4,
-                            sx: style.sx || 0,
-                            txt: txt,
-                            style: labelStyle
-                        };
+                        width += 4;
+                        item.options.labelStyle = null;
                     }
-                    if (options.label.width) {
-                        labels[id] = item;
-                    }
+                    options.label = {
+                        isPoint: isPoint,
+                        width: width,
+                        sx: style.sx || 0,
+                        txt: txt,
+                        style: labelStyle
+                    };
+                    labels[id] = item;
                 }
             }
             _this._labels[layerId] = labels;
@@ -110,10 +123,6 @@ L.LabelsLayer = L.Class.extend({
                 labels = _this._labels['_' + id],
                 gmx = layer._gmx;
 
-            for (var gid in labels) {
-                delete labels[gid].options.labelStyle;
-                delete labels[gid].options.label;
-            }
             if (!_this._observers[id] && gmx && gmx.labelsLayer && id) {
                 gmx.styleManager.deferred.then(function () {
                     var observer = addObserver(layer);
@@ -122,10 +131,9 @@ L.LabelsLayer = L.Class.extend({
                     }
                     _this._observers[id] = observer;
                     _this._styleManagers[id] = gmx.styleManager;
-                    _this._updateBbox();
 
                     _this._labels['_' + id] = {};
-                    _this.redraw();
+                    _this._updateBbox();
                 });
             }
         };
@@ -300,7 +308,7 @@ L.LabelsLayer = L.Class.extend({
                     }
                     if (isFiltered) { continue; }
 
-                    if (!('labelStyle' in options)) {
+                    if (!options.labelStyle) {
                         options.labelStyle = {
                             font: size + 'px "Arial"',
                             fillStyle: gmxAPIutils.dec2color(style.labelColor || 0, 1),
