@@ -1863,10 +1863,16 @@ var gmxAPIutils = {
     },
 
     getUTCdateTime: function(utime) {
-        return [
-            gmxAPIutils.getUTCdate(utime),
-            gmxAPIutils.getUTCtime(utime % (3600 * 24))
-        ].join(' ');
+        var time = utime % (3600 * 24);
+        
+        if (time) {
+            return [
+                gmxAPIutils.getUTCdate(utime),
+                gmxAPIutils.getUTCtime(utime % (3600 * 24))
+            ].join(' ');
+        } else {
+            return gmxAPIutils.getUTCdate(utime);
+        }
     },
     
     attrToString: function(type, value) {
