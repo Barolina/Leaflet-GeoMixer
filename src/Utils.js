@@ -1680,16 +1680,14 @@ var gmxAPIutils = {
         while (matches && matches.length > 1) {
             var key1 = matches[1],
                 type = tileAttributeTypes[key1],
-                res = key1 in properties ? properties[key1] : '';
-            if (type === 'date') {
-                res = L.gmxUtil.getUTCdate(res);
-            } else if (type === 'time') {
-                res = L.gmxUtil.getUTCtime(res);
-            } else if (type === 'datetime') {
-                res = L.gmxUtil.getUTCdateTime(res);
-            } else if (key1 === 'SUMMARY' && !res) {
+                res = '';
+                
+            if (key1 in properties) {
+                res = L.gmxUtil.attrToString(type, properties[key1]);
+            } else if (key1 === 'SUMMARY') {
                 res = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
             }
+            
             str = str.replace(matches[0], res);
             matches = reg.exec(str);
         }
@@ -1869,6 +1867,18 @@ var gmxAPIutils = {
             gmxAPIutils.getUTCdate(utime),
             gmxAPIutils.getUTCtime(utime % (3600 * 24))
         ].join(' ');
+    },
+    
+    attrToString: function(type, value) {
+        if (type === 'date') {
+            return L.gmxUtil.getUTCdate(value);
+        } else if (type === 'time') {
+            return L.gmxUtil.getUTCtime(value);
+        } else if (type === 'datetime') {
+            return L.gmxUtil.getUTCdateTime(value);
+        } else {
+            return value;
+        }
     }
 };
 
@@ -2045,6 +2055,7 @@ L.extend(L.gmxUtil, {
     getUTCdate: gmxAPIutils.getUTCdate,
     getUTCtime: gmxAPIutils.getUTCtime,
     getUTCdateTime: gmxAPIutils.getUTCdateTime,
+    attrToString: gmxAPIutils.attrToString,
     formatCoordinates: function (latlng, type) {
         return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
     },
