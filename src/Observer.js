@@ -8,6 +8,7 @@ var Observer = L.Class.extend({
             dateInterval: [dateBegin,dateEnd], // temporal interval
             bbox: bbox,                  // bbox to observe on Mercator
             filters: [String]            // filter keys array
+            active: [Boolean=true]       // is this observer active
         }
     */
     initialize: function(options) {
@@ -16,7 +17,7 @@ var Observer = L.Class.extend({
         this._items = {};
         this.bbox = options.bbox;      // set bbox by Mercator bounds
         this.filters = options.filters || [];
-        this.active = true;
+        this.active = 'active' in options ? options.active : true;
 
         if (options.bounds) {   // set bbox by LatLngBounds
             this.setBounds(options.bounds);
