@@ -614,9 +614,11 @@ StyleManager.getStyleKeys = function(style) {
         for (var i = 0, len = keys.client.length; i < len; i++) {
             var key1 = keys.client[i];
             if (key1 in style) {
-                out[key1] = JSON.parse(JSON.stringify(style[key1]));
+                if (style[key1] !== undefined) {
+                    out[key1] = JSON.parse(JSON.stringify(style[key1]));
+                }
                 if (key1 === 'fillPattern') { delete out[key1].patternColorsFunction; }
-                if (key1 === 'fillLinearGradient') { delete out[key1].addColorStopFunctions; }
+                else if (key1 === 'fillLinearGradient') { delete out[key1].addColorStopFunctions; }
             }
         }
     }
