@@ -1,5 +1,5 @@
 L.gmx.VectorLayer.include({
-    _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // Получить верхний обьект по координатам mouseClick
+    _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // Получить верхний объект по координатам mouseClick
         var gmx = this._gmx,
             mInPixel = gmx.mInPixel,
             bounds = gmxAPIutils.bounds([mercPoint]);
@@ -137,69 +137,74 @@ L.gmx.VectorLayer.include({
             this.hasEventListeners(type) ||
             (type === 'mousemove' && gmx.properties.fromType !== 'Raster')
             )) {
-            var zKey = ev.originalEvent.target.zKey;
-            if (!zKey) {
-                var pos = layer._map.gmxMousePos,
-                    px = pos.x + gmx.shiftX,
-                    py = pos.y + gmx.shiftY;
-                zKey = this._map._zoom + ':' + Math.floor(px / 256) + ':' + Math.floor(py / 256);
-            }
-            var observer = gmx.dataManager.getObserver(zKey);
-            if (observer) {
-                var lng = ev.latlng.lng % 360,
-                    latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
-                    point = L.Projection.Mercator.project(latlng)._subtract(
-                        {x: gmx.shiftXlayer || 0, y: gmx.shiftYlayer || 0}
-                    ),
-                    delta = 5 / gmx.mInPixel,
-                    mercatorPoint = [point.x, point.y],
-                    bounds = gmxAPIutils.bounds([mercatorPoint]);
-                bounds = bounds.addBuffer(delta);
-                var geoItems = gmx.dataManager.getItems(zKey, bounds);
+            
+            var lng = ev.latlng.lng % 360,
+                latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
+                point = L.Projection.Mercator.project(latlng)._subtract(
+                    {x: gmx.shiftXlayer || 0, y: gmx.shiftYlayer || 0}
+                ),
+                delta = 5 / gmx.mInPixel,
+                mercatorPoint = [point.x, point.y],
+                bounds = gmxAPIutils.bounds([mercatorPoint]);
+            bounds = bounds.addBuffer(delta);
+            
+            //создаём observer только для того, чтобы сделать выборку данных вокруг курсора
+            var observerOptions = {
+                type: 'resend',
+                bbox: bounds,
+                dateInterval: gmx.layerType === 'VectorTemporal' ? [gmx.beginDate, gmx.endDate] : null,
+                filters: ['clipFilter', 'styleFilter', 'userFilter'],
+                active: false //делаем его неактивным, так как потом будем явно выбирать данные
+            };
+            
+            var observer = gmx.dataManager.addObserver(observerOptions, 'hover');
+            
+            var geoItems = gmx.dataManager.getItems('hover');
+            
+            gmx.dataManager.removeObserver('hover');
 
-                if (geoItems && geoItems.length) {
-                    if (geoItems.length > 1 && gmx.sortItems) { geoItems = this.getSortedItems(geoItems); }
+            if (geoItems && geoItems.length) {
+                if (geoItems.length > 1 && gmx.sortItems) { geoItems = this.getSortedItems(geoItems); }
 
-                    var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
-                    if (target) {
-                        var idr = target.id,
-                            item = gmx.dataManager.getItem(idr),
-                            prevId = lastHover ? lastHover.id : null,
-                            changed = !lastHover || lastHover.id !== idr;
-                        if (type === 'mousemove' && lastHover) {
-                            if (!changed) {
-                                ev.gmx = lastHover;
-                                this.fire(type, ev);
-                                return idr;
-                            }
-                            chkHover(item.currentFilter !== lastHover.currentFilter ? 'mouseout' : '');
-                            gmx.lastHover = null;
+                var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
+                if (target) {
+                    var idr = target.id,
+                        item = gmx.dataManager.getItem(idr),
+                        prevId = lastHover ? lastHover.id : null,
+                        changed = !lastHover || lastHover.id !== idr;
+                    if (type === 'mousemove' && lastHover) {
+                        if (!changed) {
+                            ev.gmx = lastHover;
+                            this.fire(type, ev);
+                            return idr;
                         }
-
-                        ev.gmx = {
-                            layer: this,
-                            targets: geoItems,
-                            target: target,
-                            balloonData: gmx.styleManager.getItemBalloon(idr),
-                            properties: layer.getItemProperties(target.properties),
-                            currentFilter: item.currentFilter,
-                            prevId: prevId,
-                            id: idr
-                        };
-                        if (this.hasEventListeners(type)) { this.fire(type, ev); }
-                        if (type === 'mousemove' && changed) {
-                            lastHover = gmx.lastHover = ev.gmx;
-                            if (item.hoverDiff) {
-                                var currentStyle = gmx.styleManager.getObjStyle(item);
-                                if (currentStyle) {
-                                    lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.maxSize || 256);
-                                }
-                            }
-                            chkHover('mouseover');
-                        }
-                        this._map.doubleClickZoom.disable();
-                        return idr;
+                        chkHover(item.currentFilter !== lastHover.currentFilter ? 'mouseout' : '');
+                        gmx.lastHover = null;
                     }
+
+                    ev.gmx = {
+                        layer: this,
+                        targets: geoItems,
+                        target: target,
+                        balloonData: gmx.styleManager.getItemBalloon(idr),
+                        properties: layer.getItemProperties(target.properties),
+                        currentFilter: item.currentFilter,
+                        prevId: prevId,
+                        id: idr
+                    };
+                    if (this.hasEventListeners(type)) { this.fire(type, ev); }
+                    if (type === 'mousemove' && changed) {
+                        lastHover = gmx.lastHover = ev.gmx;
+                        if (item.hoverDiff) {
+                            var currentStyle = gmx.styleManager.getObjStyle(item);
+                            if (currentStyle) {
+                                lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.maxSize || 256);
+                            }
+                        }
+                        chkHover('mouseover');
+                    }
+                    this._map.doubleClickZoom.disable();
+                    return idr;
                 }
             }
         }

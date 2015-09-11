@@ -258,7 +258,7 @@ var DataManager = L.Class.extend({
         }
     },
 
-    getItems: function(oId, bboxActive) {
+    getItems: function(oId) {
         var resItems = [],
             observer = this._observers[oId];
 
@@ -316,9 +316,7 @@ var DataManager = L.Class.extend({
         var activeTileKeys =  this._getActiveTileKeys();
         for (var tkey in activeTileKeys) {
             var tile = _this._tiles[tkey].tile;
-            if (tile.data.length > 0 &&
-                (tile.z === 0 || (bboxActive ? observer.intersects(bboxActive) : observer.intersectsWithTile(tile)))
-            ) {
+            if (tile.data.length > 0 && (tile.z === 0 || observer.intersectsWithTile(tile))) {
                 putData(tile);
             }
         }
