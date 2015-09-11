@@ -204,7 +204,7 @@ L.gmx.VectorLayer.include({
             }
         }
         if (skipOver) {
-            lastHover.prevId = null;
+            if (lastHover) { lastHover.prevId = null; }
             chkHover('mouseout');
             gmx.lastHover = null;
         }
