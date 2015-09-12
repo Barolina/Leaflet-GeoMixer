@@ -152,6 +152,8 @@ removeClipPolygon|`removeClipPolygon(<`[L.Polygon](http://leafletjs.com/referenc
 | contextmenu | `<Event>` | contextmenu на объекте векторного слоя
 | stylechange | `<Event>` | произошло изменение в стилях слоя
 | versionchange | `<Event>` | произошло изменение версии слоя
+| popupopen | `<PopupEvent>` | происходит при открытии Popup.
+| popupclose | `<PopupEvent>` | происходит при закрытии Popup.
 
 ###Event object
 
@@ -159,9 +161,21 @@ removeClipPolygon|`removeClipPolygon(<`[L.Polygon](http://leafletjs.com/referenc
 
 Свойство|Тип|Описание
 ------|:---------:|-----------
-gmx.target|`<`[VectorTile item](#vectortile-item)`>`| Объект векторного слоя на котором произошло событие.
 gmx.id|`<UInt>`| Идентификатор объекта.
+gmx.target|`<`[VectorTile item](#vectortile-item)`>`| Объект векторного слоя на котором произошло событие.
 gmx.layer|`<`[L.gmx.VectorLayer](#Класс-lgmxvectorlayer)`>`| Слой которому принадлежит `gmx.target`.
+
+###PopupEvent object
+
+Расширяет [Leaflet PopupEvent](http://leafletjs.com/reference.html#popup-event)
+
+Свойство|Тип|Описание
+------|:---------:|-----------
+gmx.id|`<UInt>`| Идентификатор объекта.
+gmx.properties|`<Object>`| Свойства объекта векторного слоя на котором произошло событие.
+gmx.templateBalloon|`<String>`| Шаблон балуна.
+gmx.summary|`<String>`| summary строка балуна.
+gmx.latlng|`<LatLng>`| координаты балуна.
 
 ###VectorTile item
 

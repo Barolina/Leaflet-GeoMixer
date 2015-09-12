@@ -1674,6 +1674,7 @@ var gmxAPIutils = {
             for (var key in properties) {
                 str += '<b>' + key + ':</b> [' +  key + ']<br />';
             }
+            str += '<br />[SUMMARY]<br />';
         }
         var reg = /\[([^\]]+)\]/i;
         var matches = reg.exec(str);

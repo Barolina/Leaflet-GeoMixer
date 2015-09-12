@@ -155,7 +155,7 @@ L.gmx.VectorLayer.include({
             }
 
             this._popup.setContent(templateBalloon);
-            outItem.templateBalloon = templateBalloon;
+            // outItem.templateBalloon = templateBalloon;
         }
         this._popup.options._gmxID = gmx.id;
         return outItem;
