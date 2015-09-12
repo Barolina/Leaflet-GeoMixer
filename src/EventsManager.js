@@ -38,6 +38,7 @@ var GmxEventsManager = L.Handler.extend({
 
         var skipNodeName = {
             IMG: true,
+            DIV: true,
             path: true
         };
 
@@ -45,7 +46,11 @@ var GmxEventsManager = L.Handler.extend({
             var type = ev.type;
             _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
 
-            if (_this._map._animatingZoom || _this._drawstart || (type === 'mousemove' &&  _this._map.gmxMouseDown)) {
+            if (_this._map._animatingZoom ||
+                _this._drawstart ||
+                skipNodeName[ev.originalEvent.target.nodeName] ||
+                (type === 'mousemove' &&  _this._map.gmxMouseDown)
+                ) {
                 return;
             }
             _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
@@ -54,7 +59,7 @@ var GmxEventsManager = L.Handler.extend({
                 layer,
                 cursor = '';
 
-            if (!skipNodeName[ev.originalEvent.target.nodeName]) {
+            // if (!skipNodeName[ev.originalEvent.target.nodeName]) {
                 var arr = Object.keys(_this._layers).sort(function(a, b) {
                     var la = _this._map._layers[a],
                         lb = _this._map._layers[b];
@@ -78,7 +83,7 @@ var GmxEventsManager = L.Handler.extend({
                         }
                     }
                 }
-            }
+            // }
             if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
             _this._lastCursor = cursor;
             if (cursor) {
