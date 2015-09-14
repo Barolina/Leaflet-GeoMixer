@@ -1651,46 +1651,51 @@ var gmxAPIutils = {
     },
 
     parseTemplate: function(str, properties) {
-        var reg = /\[([^\]]+)\]/i,
-            matches = reg.exec(str);
-        while (matches && matches.length > 1) {
-            var key1 = matches[1],
-                res = key1 in properties ? properties[key1] : '';
+        var matches = str.match(/\[([^\]]+)\]/ig);
+        if (matches) {
+            for (var i = 0, len = matches.length; i < len; i++) {
+                var key1 = matches[i],
+                    key = key1.substr(1, key1.length - 2),
+                    res = key in properties ? properties[key] : '';
 
-            str = str.replace(matches[0], res);
-            matches = reg.exec(str);
+                str = str.replace(key1, res);
+            }
         }
         return str;
     },
 
+    getDefaultBalloonTemplate: function(properties) {
+        var str = '';
+        for (var key in properties) {
+            str += '<b>' + key + ':</b> [' +  key + ']<br />';
+        }
+        str += '<br />[SUMMARY]<br />';
+        return str;
+    },
+
     parseBalloonTemplate: function(str, options) {
-        var properties = options.properties,
-            tileAttributeTypes = options.tileAttributeTypes,
-            unitOptions = options.unitOptions,
-            geometries = options.geometries;
+        var properties = options.properties;
 
         if (!str) {
-            str = '';
-            for (var key in properties) {
-                str += '<b>' + key + ':</b> [' +  key + ']<br />';
-            }
-            str += '<br />[SUMMARY]<br />';
+            str = gmxAPIutils.getDefaultBalloonTemplate(properties);
         }
-        var reg = /\[([^\]]+)\]/i;
-        var matches = reg.exec(str);
-        while (matches && matches.length > 1) {
-            var key1 = matches[1],
-                type = tileAttributeTypes[key1],
-                res = '';
-                
-            if (key1 in properties) {
-                res = L.gmxUtil.attrToString(type, properties[key1]);
-            } else if (key1 === 'SUMMARY') {
-                res = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+        var matches = str.match(/\[([^\]]+)\]/ig);
+        if (matches) {
+            var tileAttributeTypes = options.tileAttributeTypes,
+                unitOptions = options.unitOptions,
+                geometries = options.geometries;
+            for (var i = 0, len = matches.length; i < len; i++) {
+                var key1 = matches[i],
+                    key = key1.substr(1, key1.length - 2),
+                    res = '';
+                    
+                if (key in properties) {
+                    res = L.gmxUtil.attrToString(tileAttributeTypes[key], properties[key]);
+                } else if (key === 'SUMMARY') {
+                    res = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                }
+                str = str.replace(key1, res);
             }
-            
-            str = str.replace(matches[0], res);
-            matches = reg.exec(str);
         }
         return str;
     },

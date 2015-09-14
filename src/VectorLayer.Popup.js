@@ -140,7 +140,7 @@ L.gmx.VectorLayer.include({
                 }
             }
             if (notFound) {
-                hook.callback(props, div, node, hooksCount);
+                hook.callback(props, div, null, hooksCount);
             }
         }
     },
@@ -148,10 +148,10 @@ L.gmx.VectorLayer.include({
     _setPopupContent: function (options) {
         var gmx = options.gmx || {},
             balloonData = gmx.balloonData || {},
-            properties = gmx.properties,
+            properties = L.extend({}, gmx.properties),
             target = gmx.target,
             geometry = target.geometry,
-            templateBalloon = this._popup._initContent || balloonData.templateBalloon,
+            templateBalloon = this._popup._initContent || balloonData.templateBalloon || '',
             outItem = {
                 id: gmx.id,
                 latlng: options.latlng,
@@ -180,6 +180,14 @@ L.gmx.VectorLayer.include({
                     unitOptions = this._map ? this._map.options : {};
 
                 outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                if (this._balloonHook) {
+                    if (!templateBalloon) {
+                        templateBalloon = gmxAPIutils.getDefaultBalloonTemplate(properties);
+                    }
+                    for (var key in this._balloonHook) {
+                        properties[key] = gmxAPIutils.parseTemplate(this._balloonHook[key].resStr, properties);
+                    }
+                }
                 templateBalloon = L.gmxUtil.parseBalloonTemplate(templateBalloon, {
                     properties: properties,
                     tileAttributeTypes: this._gmx.tileAttributeTypes,
@@ -192,7 +200,7 @@ L.gmx.VectorLayer.include({
             contentDiv.innerHTML = templateBalloon;
             this._popup.setContent(contentDiv);
             if (this._balloonHook) {
-                this._callBalloonHook(properties, this._popup.getContent());
+                this._callBalloonHook(gmx.properties, this._popup.getContent());
             }
             //outItem.templateBalloon = templateBalloon;
         }
