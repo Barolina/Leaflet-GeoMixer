@@ -111,6 +111,40 @@ L.gmx.VectorLayer.include({
         }
     },
 
+    _callBalloonHook: function (props, div) {
+
+        var spans = div.getElementsByTagName('span'),
+            hooksCount = {},
+            key, i, len;
+        for (key in this._balloonHook) {    // collect hook counts
+            var hookID = this._balloonHook[key].hookID;
+            hooksCount[key] = 0;
+            for (i = 0, len = spans.length; i < len; i++) {
+                if (spans[i].id === hookID) {
+                    hooksCount[key]++;
+                }
+            }
+        }
+
+        for (key in this._balloonHook) {
+            var hook = this._balloonHook[key],
+                fid = hook.hookID,
+                notFound = true;
+
+            for (i = 0, len = spans.length; i < len; i++) {
+                var node = spans[i];
+                if (node.id === fid) {
+                    notFound = false;
+                    node.id += '_' + i;
+                    hook.callback(props, div, node, hooksCount);
+                }
+            }
+            if (notFound) {
+                hook.callback(props, div, node, hooksCount);
+            }
+        }
+    },
+
     _setPopupContent: function (options) {
         var gmx = options.gmx || {},
             balloonData = gmx.balloonData || {},
@@ -121,7 +155,7 @@ L.gmx.VectorLayer.include({
             outItem = {
                 id: gmx.id,
                 latlng: options.latlng,
-                properties: gmx.properties,
+                properties: properties,
                 templateBalloon: templateBalloon
             };
 
@@ -154,8 +188,13 @@ L.gmx.VectorLayer.include({
                 });
             }
 
-            this._popup.setContent(templateBalloon);
-            // outItem.templateBalloon = templateBalloon;
+            var contentDiv = L.DomUtil.create('div', '');
+            contentDiv.innerHTML = templateBalloon;
+            this._popup.setContent(contentDiv);
+            if (this._balloonHook) {
+                this._callBalloonHook(properties, this._popup.getContent());
+            }
+            //outItem.templateBalloon = templateBalloon;
         }
         this._popup.options._gmxID = gmx.id;
         return outItem;
@@ -203,5 +242,24 @@ L.gmx.VectorLayer.include({
                 }
             }
         }
+    },
+
+    addPopupHook: function (key, callback) {
+        if (!this._balloonHook) { this._balloonHook = {}; }
+        if (!this._balloonHook[key]) {
+            var hookID = '_' + L.stamp({});
+            this._balloonHook[key] = {
+                key: key,
+                hookID: hookID,
+                resStr: '<span id="' + hookID + '"></span>',
+                callback: callback
+            };
+        }
+        return this;
+    },
+
+    removePopupHook: function(key) {
+        if (this._balloonHook) { delete this._balloonHook[key]; }
+        return this;
     }
 });
