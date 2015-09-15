@@ -86,6 +86,7 @@ ScreenVectorTile.prototype = {
     _rasterHook: function (attr) {
         var source = attr.sourceTilePoint || attr.destinationTilePoint,
             info = {
+                geoItem: attr.geoItem,
                 destination: {
                     z: attr.destinationTilePoint.z,
                     x: attr.destinationTilePoint.x,
@@ -341,6 +342,7 @@ ScreenVectorTile.prototype = {
                     };
                     var prepareItem = function(imageElement) {
                         var promise = _this._rasterHook({
+                                geoItem: geo,
                                 res: resCanvas,
                                 image: itemImageProcessingHook ? itemImageProcessingHook(imageElement, imgAttr) : imageElement,
                                 destinationTilePoint: gmxTilePoint,
