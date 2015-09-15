@@ -72,6 +72,21 @@
                         }))
                         .openOn(this._map);
                 }
+                this._layer.fire('click', L.extend(ev, {
+                    eventFrom: 'markerClusters',
+                    originalEventType: 'click',
+                    gmx: {
+                        id: propsArr[0],
+                        layer: this._layer,
+                        target: {
+                            id: propsArr[0],
+                            properties: propsArr
+                        }
+                    }
+                }));
+            }, this);
+            this.markers.on('clusterclick', function (ev) {
+                this._layer.fire('click', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
             }, this);
 
             if (mOptions.clusterclick) {
@@ -268,6 +283,7 @@
                     this.unbindClusters();
                 }
                 this._clusters = new GmxMarkerCluster(options, this);
+                this.disablePopup();
             }
             return this;
         },
@@ -277,6 +293,7 @@
                 if (this._clusters) {
                     this._clusters.unbindClusters();
                     this._clusters = null;
+                    this.enablePopup();
                 }
             }
             return this;

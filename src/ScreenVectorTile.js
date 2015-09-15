@@ -247,6 +247,7 @@ ScreenVectorTile.prototype = {
                     };
                     
                     var info = {
+                            geoItem: geo,
                             res: resCanvas,
                             image: img,
                             destinationTilePoint: gmxTilePoint,
