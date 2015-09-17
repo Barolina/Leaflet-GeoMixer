@@ -6,6 +6,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
     },
     initFromDescription: function(ph) {
         var props = ph.properties,
+            styles = props.styles[0] || {MinZoom: props.MinZoom || 0, MaxZoom: props.MaxZoom || 21},
             vectorProperties = {
                 type: 'Vector',
                 fromType: props.type,
@@ -13,12 +14,12 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
                 GeometryType: 'POLYGON',
                 IsRasterCatalog: true,
                 Copyright: props.Copyright || '',
-                RCMinZoomForRasters: props.styles[0].MinZoom,
+                RCMinZoomForRasters: styles.MinZoom,
                 visible: props.visible,
                 styles: [{
                     DisableBalloonOnClick: true,
-                    MinZoom: props.styles[0].MinZoom,
-                    MaxZoom: props.styles[0].MaxZoom,
+                    MinZoom: styles.MinZoom,
+                    MaxZoom: styles.MaxZoom,
                     RenderStyle: {outline: {thickness: 0}, fill: {opacity: 100}},
                     HoverStyle: null
                 }]
