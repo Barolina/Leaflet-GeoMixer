@@ -30,7 +30,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 var pos = map.getCenter();
                 return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
             },
-            renderHooks: []
+            renderHooks: [],
+            preRenderHooks: []
         };
         if (options.crossOrigin) {
             this._gmx.crossOrigin = options.crossOrigin;
@@ -920,9 +921,36 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return properties;
     },
 
+    addPreRenderHook: function(renderHook) {
+        this._gmx.preRenderHooks.push(renderHook);
+        this.repaint();
+    },
+
+    removePreRenderHook: function(hook) {
+        var arr = this._gmx.preRenderHooks;
+        for (var i = 0, len = arr.length; i < len; i++) {
+            if (arr[i] === hook) {
+                arr.splice(i, 1);
+                this.repaint();
+                break;
+            }
+        }
+    },
+
     addRenderHook: function(renderHook) {
         this._gmx.renderHooks.push(renderHook);
         this.repaint();
+    },
+
+    removeRenderHook: function(hook) {
+        var arr = this._gmx.renderHooks;
+        for (var i = 0, len = arr.length; i < len; i++) {
+            if (arr[i] === hook) {
+                arr.splice(i, 1);
+                this.repaint();
+                break;
+            }
+        }
     },
 
     //get original properties from the server
