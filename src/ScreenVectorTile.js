@@ -473,31 +473,46 @@ ScreenVectorTile.prototype = {
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
-            //ctx.save();
-            for (var i = 0; i < itemsLength; i++) {
-                L.gmxUtil.drawGeoItem(geoItems[i], dattr);
-            }
-            //ctx.restore();
-            _this.rasters = {}; // clear rasters
-            if (_this.layer._map) {
-                _this.layer.appendTileToContainer(tile);
-            }
-            //async chain
-            var res = new L.gmx.Deferred(),
-                hookInfo = {
+            var hookInfo = {
                     x: _this.tilePoint.x,
                     y: _this.tilePoint.y,
                     z: _this.zoom
-                };
-
-            res.resolve(tile, hookInfo);
-            gmx.renderHooks.forEach(function (f) {
-                res = res.then(function(tile) {
-                    return f(tile, hookInfo);
+                },
+                bgImage = null,
+                preDef = new L.gmx.Deferred();
+            
+            if (gmx.preRenderHooks.length) {
+                bgImage = document.createElement('canvas');
+                bgImage.width = bgImage.height = 256;
+            }
+            preDef.resolve(bgImage, hookInfo);
+            gmx.preRenderHooks.forEach(function (f) {
+                preDef = preDef.then(function(bgImage) {
+                    return f(bgImage, hookInfo);
                 });
             });
-            res.then(def.resolve, def.reject);
-            //def.resolve();
+            preDef.then(function() {
+                if (gmx.preRenderHooks.length) { dattr.bgImage = bgImage; }
+                //ctx.save();
+                for (var i = 0; i < itemsLength; i++) {
+                    L.gmxUtil.drawGeoItem(geoItems[i], dattr);
+                }
+                //ctx.restore();
+                _this.rasters = {}; // clear rasters
+                if (_this.layer._map) {
+                    _this.layer.appendTileToContainer(tile);
+                }
+                //async chain
+                var res = new L.gmx.Deferred();
+                res.resolve(tile, hookInfo);
+                gmx.renderHooks.forEach(function (f) {
+                    res = res.then(function(tile) {
+                        return f(tile, hookInfo);
+                    });
+                });
+                res.then(def.resolve, def.reject);
+                //def.resolve();
+            });//, preDef.reject);
         };
 
         if (this.showRaster) {

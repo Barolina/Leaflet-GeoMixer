@@ -168,7 +168,9 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
                     flagPixels = true;
                 }
             }
-            if (rasters[idr]) {
+            if (options.bgImage) {
+                dattr.bgImage = options.bgImage;
+            } else if (rasters[idr]) {
                 dattr.bgImage = rasters[idr];
             }
             if (dattr.styleExtend.skipRasters || item.skipRasters) {
