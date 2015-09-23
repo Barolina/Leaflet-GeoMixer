@@ -137,7 +137,7 @@ L.gmx.VectorLayer.include({
             this.hasEventListeners(type) ||
             (type === 'mousemove' && gmx.properties.fromType !== 'Raster')
             )) {
-            
+
             var lng = ev.latlng.lng % 360,
                 latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
                 point = L.Projection.Mercator.project(latlng)._subtract(
@@ -147,7 +147,7 @@ L.gmx.VectorLayer.include({
                 mercatorPoint = [point.x, point.y],
                 bounds = gmxAPIutils.bounds([mercatorPoint]);
             bounds = bounds.addBuffer(delta);
-            
+
             //создаём observer только для того, чтобы сделать выборку данных вокруг курсора
             var observerOptions = {
                 type: 'resend',
@@ -156,11 +156,11 @@ L.gmx.VectorLayer.include({
                 filters: ['clipFilter', 'styleFilter', 'userFilter'],
                 active: false //делаем его неактивным, так как потом будем явно выбирать данные
             };
-            
+
             var observer = gmx.dataManager.addObserver(observerOptions, 'hover');
-            
+
             var geoItems = gmx.dataManager.getItems('hover');
-            
+
             gmx.dataManager.removeObserver('hover');
 
             if (geoItems && geoItems.length) {

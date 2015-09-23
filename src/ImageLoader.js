@@ -11,16 +11,16 @@ var GmxImageLoader = L.Class.extend({
     includes: L.Mixin.Events,
     statics: {
         MAX_COUNT: 20, // max number of parallel requests
-        EMPTY_IMAGE_URL: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=',
+        EMPTY_IMAGE_URL: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
     },
-    
+
     initialize: function() {
         this.curCount = 0;        // number of currently processing requests (number of items in "inProgress")
         this.requests = [];       // not yet processed image requests
         this.inProgress = {};     // hash of in progress image loadings
         this.uniqueID = 0;
     },
-    
+
     _imageLoaded: function(url, image) {
         if (url in this.inProgress) {
             var requests = this.inProgress[url].requests;
@@ -85,9 +85,9 @@ var GmxImageLoader = L.Class.extend({
             _this._imageLoaded(url);
         };
         imageObj.src = url;
-        
+
         this.fire('imageloadstart', {url: url});
-        
+
         return imageObj;
     },
 
@@ -118,10 +118,10 @@ var GmxImageLoader = L.Class.extend({
                 }
             }
         }
-        
+
         this.fire('requestdone', {request: request});
     },
-    
+
     _add: function(atBegin, url, options) {
         var id = 'id' + (++this.uniqueID);
         var request = new ImageRequest(id, url, options);
@@ -131,9 +131,9 @@ var GmxImageLoader = L.Class.extend({
             atBegin ? this.requests.unshift(request) : this.requests.push(request);
             this._nextLoad();
         }
-        
+
         this.fire('request', {request: request});
-        
+
         return request.def;
     },
 

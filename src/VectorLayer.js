@@ -329,7 +329,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     setDateInterval: function (beginDate, endDate) {
         var gmx = this._gmx;
-        
+
         //check that something changed
         if (!gmx.beginDate !== !beginDate ||
             !gmx.endDate !== !endDate ||
@@ -340,7 +340,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 var msecPeriod = gmx.rawProperties.maxShownPeriod * 24 * 3600 * 1000;
                 beginDate = new Date(Math.max(beginDate.valueOf(), endDate.valueOf() - msecPeriod));
             }
-            
+
             gmx.beginDate = beginDate;
             gmx.endDate = endDate;
 

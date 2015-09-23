@@ -233,8 +233,8 @@ var Observer = L.Class.extend({
 
     setDateInterval: function(beginDate, endDate) {
         var isValid = beginDate && endDate;
-        
-        if (!this.dateInterval !== !isValid || 
+
+        if (!this.dateInterval !== !isValid ||
             isValid && (
                 this.dateInterval.beginDate.valueOf() !== beginDate.valueOf() ||
                 this.dateInterval.endDate.valueOf() !== endDate.valueOf()

@@ -128,7 +128,7 @@ gmxMap.prototype.removeLayer = function(layer) {
             break;
         }
     }
-    
+
     delete this.layersByTitle[props.title];
     delete this.layersByID[props.name];
 

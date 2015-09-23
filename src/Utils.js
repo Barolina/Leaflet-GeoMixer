@@ -21,7 +21,7 @@ var gmxAPIutils = {
     isPageHidden: function()	{		// Видимость окна браузера
         return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden || false;
     },
-    
+
     normalizeHostname: function(hostName) {
         var parsedHost = L.gmxUtil.parseUri(hostName || DEFAULT_HOSTNAME);
 
@@ -1688,7 +1688,7 @@ var gmxAPIutils = {
                 var key1 = matches[i],
                     key = key1.substr(1, key1.length - 2),
                     res = '';
-                    
+
                 if (key in properties) {
                     res = L.gmxUtil.attrToString(tileAttributeTypes[key], properties[key]);
                 } else if (key === 'SUMMARY') {
@@ -1870,7 +1870,7 @@ var gmxAPIutils = {
 
     getUTCdateTime: function(utime) {
         var time = utime % (3600 * 24);
-        
+
         if (time) {
             return [
                 gmxAPIutils.getUTCdate(utime),
@@ -1880,7 +1880,7 @@ var gmxAPIutils = {
             return gmxAPIutils.getUTCdate(utime);
         }
     },
-    
+
     attrToString: function(type, value) {
         if (type === 'date') {
             return L.gmxUtil.getUTCdate(value);

@@ -18,13 +18,13 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.rasters = {}; //combined and processed canvases for each vector item in tile
     this.currentDrawDef = null;
     layer._gmx.badTiles = layer._gmx.badTiles || {};
-    
+
     //State of raw raster images. Can be used to understand common state of drawing process
     // this.rawRasters = {};
 }
 
 ScreenVectorTile.prototype = {
-    
+
     //return promise, which resolves with object {gtp, image}
     _loadTileRecursive: function (gtp, urlFunction) {
         var gmx = this.gmx,
@@ -220,10 +220,10 @@ ScreenVectorTile.prototype = {
             url = urlBG;
             itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
         }
-        
+
         if (isTiles) {
             var tileToLoadPoints = isShift ? this._getShiftTilesArray(dataOption.bounds, shiftX, shiftY) : [gmxTilePoint];
-            
+
             var cnt = tileToLoadPoints.length,
                 chkReadyRasters = function() {
                     if (cnt < 1) { mainRasterLoader.resolve(tileToLoadPoints); }
@@ -237,7 +237,7 @@ ScreenVectorTile.prototype = {
                 },
                 onLoadFunction = function(gtp, p, img) {
                     item.skipRasters = false;
-                    
+
                     if (itemImageProcessingHook) {
                         img = itemImageProcessingHook(img, {
                             gmx: gmx,
@@ -245,8 +245,8 @@ ScreenVectorTile.prototype = {
                             item: item,
                             gmxTilePoint: gtp
                         });
-                    };
-                    
+                    }
+
                     var info = {
                             geoItem: geo,
                             res: resCanvas,
@@ -256,7 +256,7 @@ ScreenVectorTile.prototype = {
                             sx: 0, sy: 0, sw: 256, sh: 256,
                             dx: 0, dy: 0, dw: 256, dh: 256
                         };
-                        
+
                     if (isShift) {
                         var pos = _this._getShiftPixels(p);
                         if (pos === null) {
@@ -285,7 +285,7 @@ ScreenVectorTile.prototype = {
                             info.sh = sh;
                         }
                     }
-                    
+
                     // _this.rawRasters[img.src] = 'hooking';
                     var hookResult = _this._rasterHook(info),
                         then = function() {
@@ -313,13 +313,13 @@ ScreenVectorTile.prototype = {
                     }, skipRasterFunc);
                     return loader;
                 });
-            
+
             mainRasterLoader = new L.gmx.Deferred(function() {
                 for (var k = 0; k < recursiveLoaders.length; k++) {
                     recursiveLoaders[k].cancel();
                 }
             });
-            
+
             mainRasterLoader.then(function() {
                 rasters[idr] = resCanvas;
                 def.resolve();
@@ -480,7 +480,7 @@ ScreenVectorTile.prototype = {
                 },
                 bgImage = null,
                 preDef = new L.gmx.Deferred();
-            
+
             if (gmx.preRenderHooks.length) {
                 bgImage = document.createElement('canvas');
                 bgImage.width = bgImage.height = 256;

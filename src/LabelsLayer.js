@@ -120,7 +120,6 @@ L.LabelsLayer = L.Class.extend({
         };
         this.add = function (layer) {
             var id = layer._leaflet_id,
-                labels = _this._labels['_' + id],
                 gmx = layer._gmx;
 
             if (!_this._observers[id] && gmx && gmx.labelsLayer && id) {
