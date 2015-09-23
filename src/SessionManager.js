@@ -16,12 +16,17 @@ var gmxSessionManager = {
             var src = scripts[i].getAttribute('src');
             if (this.SCRIPT_REGEXP.exec(src)) {
                 var query = src.split('?')[1];
-                query && query.split('&').forEach(function(param) {
-                    var parsedParam = param.split('=');
-                    if (parsedParam[0] === _this.APIKEY_PARAM) {
-                        _this._scriptAPIKey = parsedParam[1];
+
+                if (query) {
+                    var params = query.split('&');
+                    for (var p = 0; p < params.length; p++) {
+                        var parsedParam = params[p].split('=');
+                        if (parsedParam[0] === _this.APIKEY_PARAM) {
+                            _this._scriptAPIKey = parsedParam[1];
+                            break;
+                        }
                     }
-                });
+                }
                 break;
             }
         }

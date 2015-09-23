@@ -30,26 +30,26 @@ var getRequestParams = function(layer) {
     return hosts;
 };
 
-
 var chkVersion = function (layer, callback) {
+    var processResponse = function(res) {
+        if (res && res.Status === 'ok' && res.Result) {
+            for (var i = 0, len = res.Result.length; i < len; i++) {
+                var item = res.Result[i],
+                    prop = item.properties,
+                    id = prop.name,
+                    layer = layers[id];
+                if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
+            }
+        }
+        lastLayersStr = '';
+        if (callback) { callback(res); }
+    };
+
     if (document.body && !gmxAPIutils.isPageHidden()) {
         var hosts = getRequestParams(layer);
         for (var hostName in hosts) {
             var url = 'http://' + hostName + script,
-                layersStr = JSON.stringify(hosts[hostName]),
-                func = function(res) {
-                    if (res && res.Status === 'ok' && res.Result) {
-                        for (var i = 0, len = res.Result.length; i < len; i++) {
-                            var item = res.Result[i],
-                                prop = item.properties,
-                                id = prop.name,
-                                layer = layers[id];
-                            if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
-                        }
-                    }
-                    lastLayersStr = '';
-                    if (callback) { callback(res); }
-                };
+                layersStr = JSON.stringify(hosts[hostName]);
 
             if (lastLayersStr !== layersStr) {
                 lastLayersStr = layersStr;
@@ -63,7 +63,7 @@ var chkVersion = function (layer, callback) {
                         type: 'POST',
                         params: 'WrapStyle=None&layers=' + encodeURIComponent(layersStr),
                         callback: function(response) {
-                            func(JSON.parse(response));
+                            processResponse(JSON.parse(response));
                         },
                         onError: function(response) {
                             console.log('Error: LayerVersion ', response);
@@ -73,7 +73,7 @@ var chkVersion = function (layer, callback) {
                     gmxAPIutils.sendCrossDomainPostRequest(url, {
                         WrapStyle: 'message',
                         layers: layersStr
-                    }, func);
+                    }, processResponse);
                 }
             }
         }

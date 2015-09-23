@@ -127,4 +127,3 @@ VectorTile.boundsFromTileKey = function(gmxTileKey) {
     var p = VectorTile.parseTileKey(gmxTileKey);
     return gmxAPIutils.getTileBounds(p.x, p.y, p.z);
 };
-

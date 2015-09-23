@@ -31,8 +31,8 @@ ScreenVectorTile.prototype = {
             curRequest = null,
             def = new L.gmx.Deferred(function() {
                 if (curRequest) { curRequest.cancel(); }
-            }),
-            _this = this;
+            });
+            //_this = this;
 
         var tryLoad = function(gtp, crossOrigin) {
             var rUrl = urlFunction(gtp);

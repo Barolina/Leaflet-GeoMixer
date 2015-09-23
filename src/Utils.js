@@ -23,7 +23,7 @@ var gmxAPIutils = {
     },
 
     normalizeHostname: function(hostName) {
-        var parsedHost = L.gmxUtil.parseUri(hostName || DEFAULT_HOSTNAME);
+        var parsedHost = L.gmxUtil.parseUri(hostName);
 
         hostName = parsedHost.host + parsedHost.directory;
 
@@ -857,9 +857,11 @@ var gmxAPIutils = {
         }
         var regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
         var results = [];
-        var t = null;
-        while (t = regex.exec(text)) {
+
+        var t = regex.exec(text);
+        while (t) {
             results.push(t[1]);
+            t = regex.exec(text);
         }
         if (results.length < 2) {
             return null;

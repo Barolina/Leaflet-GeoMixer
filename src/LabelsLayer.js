@@ -75,8 +75,7 @@ L.LabelsLayer = L.Class.extend({
                                 pstyle.labelHaloColor !== labelStyle.labelHaloColor ||
                                 pstyle.labelColor !== labelStyle.labelColor ||
                                 pstyle.labelAlign !== labelStyle.labelAlign ||
-                                pstyle.labelFontSize !== labelStyle.labelFontSize
-                            ;
+                                pstyle.labelFontSize !== labelStyle.labelFontSize;
                         }
                     }
                     if (changed) {

@@ -157,7 +157,7 @@ L.gmx.VectorLayer.include({
                 active: false //делаем его неактивным, так как потом будем явно выбирать данные
             };
 
-            var observer = gmx.dataManager.addObserver(observerOptions, 'hover');
+            gmx.dataManager.addObserver(observerOptions, 'hover');
 
             var geoItems = gmx.dataManager.getItems('hover');
 

@@ -8,7 +8,7 @@
 (function() {
 	var Parsers = {};						// Парсеры
 
-	var Pair = function(t1, t2) {
+	var makePair = function(t1, t2) {
 		return {head: t1, tail: t2};
 	};
 
@@ -16,13 +16,13 @@
 //   Used purely functionally to get shareable sublists.
 //typedef LinkedList = Pair<Dynamic, LinkedList>;
 	var LinkedList = function(t1, t2) {
-		return Pair(t1, t2);
+		return makePair(t1, t2);
 	};
 
 // Parser state contains position in string and some accumulated data.
 //typedef ParserState = Pair<Int, LinkedList>;
 	var ParserState = function(t1, t2) {
-		return Pair(t1, t2);
+		return makePair(t1, t2);
 	};
 
 // Parser accepts string and state, returns another state.
@@ -539,7 +539,7 @@
 		function(state) {
 			var coords = [];
 			while (state !== null) {
-				coords.push(Std.parseFloat(state.head));
+				coords.push(parseFloat(state.head));
 				state = state.tail;
 			}
 			coords.reverse();
