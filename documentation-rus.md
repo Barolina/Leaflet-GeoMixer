@@ -139,6 +139,10 @@ unbindClusters|`unbindClusters()`|`this`| Отключить кластериз�
 addClipPolygon|`addClipPolygon(<`[L.Polygon](http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](http://leafletjs.com/reference.html#geojson)`>)`|`this`| Добавить полигон обрезки данных слоя.
 removeClipPolygon|`removeClipPolygon(<`[L.Polygon](http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](http://leafletjs.com/reference.html#geojson)`>)`|`this`| Удалить полигон обрезки данных слоя.
 
+#### Примечания
+
+*     Управление отображением слоя по zoom осуществляется при помощи задания MinZoom, MaxZoom в [StyleFilter](#user-content-stylefilter---объект-стиля-слоя) команд установки стилями setStyles, setStyle. (Не используйте прямое изменение minZoom, maxZoom в опциях слоя)
+
 #### Events
 
 | Type | Property | Description

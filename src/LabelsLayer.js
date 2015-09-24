@@ -49,7 +49,7 @@ L.LabelsLayer = L.Class.extend({
                     fieldType = gmx.tileAttributeTypes[labelField],
                     txt = labelText || L.gmxUtil.attrToString(fieldType, gmx.getPropItem(item.properties, labelField));
 
-                if (txt) {
+                if (txt || txt === 0) {
                     var fontSize = currentStyle.labelFontSize || style.labelFontSize || 12,
                         id = '_' + item.id,
                         changed = true,

@@ -1,6 +1,8 @@
 L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
+        minZoom: 1,
+        maxZoom: 25,
         clickable: true
     },
 
@@ -106,12 +108,37 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
+    _onStyleChange: function() {
+        var gmx = this._gmx;
+        if (!gmx.balloonEnable && this._popup) {
+            this.unbindPopup();
+        } else if (gmx.balloonEnable && !this._popup) {
+            this.bindPopup('');
+        }
+        if (this._map) {
+            for (var key in gmx.tileSubscriptions) {    // recheck bbox on screen observers
+                var observer = gmx.dataManager.getObserver(key),
+                    parsedKey = gmx.tileSubscriptions[key],
+                    gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(parsedKey, parsedKey.z),
+                    bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
+                if (!observer.bbox.isEqual(bbox)) {
+                    var proj = L.Projection.Mercator;
+                    observer.setBounds(L.latLngBounds([proj.unproject(bbox.min), proj.unproject(bbox.max)]));
+                }
+            }
+            if (gmx.labelsLayer) {
+                this._map._labelsLayer.add(this);
+            } else if (!gmx.labelsLayer) {
+                this._map._labelsLayer.remove(this);
+            }
+        }
+    },
+
     onAdd: function(map) {
         if (map.options.crs !== L.CRS.EPSG3857 && map.options.crs !== L.CRS.EPSG3395) {
             throw 'GeoMixer-Leaflet: map projection is incompatible with GeoMixer layer';
         }
-        var _this = this,
-            gmx = this._gmx;
+        var gmx = this._gmx;
 
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
         gmx.currentZoom = map.getZoom();
@@ -134,30 +161,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this._container.style.pointerEvents = 'none';
         }
         if (gmx.balloonEnable && !this._popup) { this.bindPopup(''); }
-        this.on('stylechange', function() {
-            if (!gmx.balloonEnable && _this._popup) {
-                _this.unbindPopup();
-            } else if (gmx.balloonEnable && !_this._popup) {
-                _this.bindPopup('');
-            }
-            if (_this._map) {
-                for (var key in gmx.tileSubscriptions) {    // recheck bbox on screen observers
-                    var observer = gmx.dataManager.getObserver(key),
-                        parsedKey = gmx.tileSubscriptions[key],
-                        gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(parsedKey, parsedKey.z),
-                        bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
-                    if (!observer.bbox.isEqual(bbox)) {
-                        var proj = L.Projection.Mercator;
-                        observer.setBounds(L.latLngBounds([proj.unproject(bbox.min), proj.unproject(bbox.max)]));
-                    }
-                }
-                if (gmx.labelsLayer) {
-                    _this._map._labelsLayer.add(_this);
-                } else if (!gmx.labelsLayer) {
-                    _this._map._labelsLayer.remove(_this);
-                }
-            }
-        });
+        this.on('stylechange', this._onStyleChange, this);
 
         if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
             this._objectsReorder.onAdd(this);
@@ -191,6 +195,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._clearAllSubscriptions();
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
+        this.off('stylechange', this._onStyleChange, this);
 
         var gmx = this._gmx;
         if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
