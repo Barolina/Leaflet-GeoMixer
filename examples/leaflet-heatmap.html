@@ -38,16 +38,11 @@
     <link rel="stylesheet" href="examples.css" />
     
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
-    
-    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     
     <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    <script src="./external/heatmap.min.js"></script>
+    <script src="./external/leaflet-heatmap.js"></script>
     <script src="http://scanex.github.io/Leaflet-GeoMixer/build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
-
-  <script src="http://www.patrick-wied.at/static/heatmapjs/assets/js/heatmap.min.js"></script>
-  <script src="http://www.patrick-wied.at/static/heatmapjs/assets/js/leaflet-heatmap.js"></script>
     
 </head>
 
@@ -105,7 +100,7 @@
 
         var heatmap = new HeatmapOverlay(cfg);
         map.addLayer(heatmap);
-        
+      
         L.gmx.loadLayer('49A5F693C43C4EC88109E1F95A59A271', '70D47707A66F4325959306537CE5571A', {
             // beginDate: new Date(ddt2.valueOf() - oneDay),
             // endDate: ddt2
@@ -159,7 +154,8 @@
                 ,type: 'resend'
             });
             
-        })
+        });
+       
 	</script>
 </body>
 </html>
