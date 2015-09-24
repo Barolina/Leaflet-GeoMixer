@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet.heat plugin with GeoMixer data</title>
+	<meta charset="utf-8" />
+    <style>
+        #controls {
+            position: absolute;
+            left: 54px;
+            top: 11px;
+            z-index: 1;
+        }
+        
+        #title{
+            text-align: center;
+        }
+        
+        #slider {
+            width: 300px;
+            margin: 5px;
+        }
+        #timeInfo {
+            text-align: center;
+            padding-top: 12px;
+        }
+        #auto {
+            display: none;
+            margin-left: 10px;
+        }
+        
+        #auto > * {
+            vertical-align: middle;
+        }
+    </style>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="examples.css" />
+    
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+    <script src="http://scanex.github.io/Leaflet-GeoMixer/build/leaflet-geomixer-dev.js?key=U92596WMIH"></script>
+
+  <script src="http://www.patrick-wied.at/static/heatmapjs/assets/js/heatmap.min.js"></script>
+  <script src="http://www.patrick-wied.at/static/heatmapjs/assets/js/leaflet-heatmap.js"></script>
+    
+</head>
+
+<body>
+    <div id="controls" class="gmxPanel">
+        <div id="title">
+            Погода (leaflet-heatmap) <label><input id="useHeatmap" checked type="checkbox">use heatmap</label>
+        </div>
+    </div>
+
+    <div id="map" style="width: 100%; height: 100%"></div>
+
+    <script>
+        var map = L.map('map').setView([30, 0], 3);
+
+        L.tileLayer('http://{s}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+        }).addTo(map);
+
+        var updateInfo = function(currentDate) {
+            var zz = function(x) { return x < 10 ? "0" + x : x}
+            var dateStr = zz(currentDate.getUTCDate()) + '.' + zz(currentDate.getUTCMonth() + 1) + '.' + zz(currentDate.getUTCFullYear());
+            document.getElementById('curDate').innerHTML = dateStr;
+        }
+        
+        var startDate = new Date('2013/11/01'),
+            oneDay = 1000*60*60*24,	// milliseconds in one day
+            now = startDate.getTime(),
+            ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the UTC day
+            ddt2 = new Date(ddt1.getTime() + 20*oneDay);
+
+        var autochkbox = document.getElementById('autochkbox');
+        
+        // From http://www.patrick-wied.at/static/heatmapjs/example-heatmap-leaflet.html
+        var cfg = {
+          // radius should be small ONLY if scaleRadius is true (or small radius is intended)
+          // if scaleRadius is false it will be the constant radius used in pixels
+          "radius": 40,
+          "maxOpacity": .8, 
+          // scales the radius based on map zoom
+          "scaleRadius": false, 
+          // if set to false the heatmap uses the global maximum for colorization
+          // if activated: uses the data maximum within the current map boundaries 
+          //   (there will always be a red spot with useLocalExtremas true)
+          "useLocalExtrema": true,
+          // which field name in your data represents the latitude - default "lat"
+          latField: 'lat',
+          // which field name in your data represents the longitude - default "lng"
+          lngField: 'lng',
+          // which field name in your data represents the data value - default "value"
+          valueField: 'count'
+        };
+
+
+        var heatmap = new HeatmapOverlay(cfg);
+        map.addLayer(heatmap);
+        
+        L.gmx.loadLayer('49A5F693C43C4EC88109E1F95A59A271', '70D47707A66F4325959306537CE5571A', {
+            // beginDate: new Date(ddt2.valueOf() - oneDay),
+            // endDate: ddt2
+        }).then(function(hotspotLayer) {
+            var useHeatmap = function(doUse) {
+                if (doUse) {
+                    observer.activate();
+                    map.addLayer(heatmap);
+                    map.removeLayer(hotspotLayer);
+                } else {
+                    observer.deactivate();
+                    map.removeLayer(heatmap);
+                    hotspotLayer.addTo(map);
+                }
+            }
+            
+            document.getElementById('useHeatmap').onchange = function() {
+                useHeatmap(this.checked);
+                // $('#auto').toggle(this.checked);
+            }
+            
+            var observer = hotspotLayer.addObserver({
+                callback: function(data) {
+                    var latlngs = []
+                        maxVal = 0;
+//console.log(data.added);
+                    for (var i = 0, len = data.added.length; i < len; i++) {
+                        var it = data.added[i].properties,
+                            val = it[12];
+
+                        if (val > -999) {
+                            var geo = it[it.length - 1],
+                                coord = geo.coordinates,
+                                point = L.Projection.Mercator.unproject({x: coord[0], y: coord[1]});
+
+                            val *= 5;
+                            maxVal = Math.max(maxVal, val);
+                            latlngs.push({lat: point.lat, lng: point.lng, count: val});
+                        }
+                    }
+                    
+//console.log(maxVal, latlngs.length);
+                    heatmap.setData({
+                      max: maxVal,
+                      data: latlngs
+                    });
+                   
+                    
+                    // chkAuto();
+                }
+                ,type: 'resend'
+            });
+            
+        })
+	</script>
+</body>
+</html>
