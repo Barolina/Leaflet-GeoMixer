@@ -105,17 +105,19 @@ L.gmx.VectorLayer.include({
             dataManager.addFilter('clipFilter', function (item, tile, observer) {
                 return isObserverIntersects(observer, _this._clipPolygons);
             });
-            gmx.renderHooks.unshift(function (tile, hookInfo) {
-                if (tile && Object.keys(_this._clipPolygons).length > 0) {
-                    clipTileByPolygon({
-                        tile: tile,
-                        tpx: hookInfo.tpx,
-                        tpy: hookInfo.tpy,
-                        gmx: {mInPixel: gmx.mInPixel},
-                        clipPolygons: _this._clipPolygons
-                    });
-                }
-            });
+            if (Object.keys(this._clipPolygons).length === 1) {
+                gmx.renderHooks.unshift(function (tile, hookInfo) {
+                    if (tile && Object.keys(_this._clipPolygons).length > 0) {
+                        clipTileByPolygon({
+                            tile: tile,
+                            tpx: hookInfo.tpx,
+                            tpy: hookInfo.tpy,
+                            gmx: {mInPixel: gmx.mInPixel},
+                            clipPolygons: _this._clipPolygons
+                        });
+                    }
+                });
+            }
         }
         return this;
     },
