@@ -45,15 +45,15 @@ var clipTileByPolygon = function (dattr) {
         clipPolygons = dattr.clipPolygons;
 
     dattr.ctx = ctx;
-    ctx.fillStyle = ctx.createPattern(dattr.tile, "no-repeat");
+    ctx.fillStyle = ctx.createPattern(dattr.tile, 'no-repeat');
 
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
             var geo = arr[i].geometry,
                 coords = geo.coordinates;
-            if (geo.type === 'Polygon') coords = [coords];
-            for (var i1 = 0, len1 = coords.length; i1 < len; i1++) {
+            if (geo.type === 'Polygon') { coords = [coords]; }
+            for (var i1 = 0, len1 = coords.length; i1 < len1; i1++) {
                 var coords1 = coords[i1];
                 ctx.beginPath();
                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
@@ -102,7 +102,7 @@ L.gmx.VectorLayer.include({
                 return isBoundsIntersects(tile.bounds, _this._clipPolygons);
             });
 
-            dataManager.addFilter('clipFilter', function (item, tile, observer, geom, dataOption) {
+            dataManager.addFilter('clipFilter', function (item, tile, observer) {
                 return isObserverIntersects(observer, _this._clipPolygons);
             });
             gmx.renderHooks.unshift(function (tile, hookInfo) {

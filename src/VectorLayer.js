@@ -116,20 +116,24 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this.bindPopup('');
         }
         if (this._map) {
-            for (var key in gmx.tileSubscriptions) {    // recheck bbox on screen observers
-                var observer = gmx.dataManager.getObserver(key),
-                    parsedKey = gmx.tileSubscriptions[key],
-                    gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(parsedKey, parsedKey.z),
-                    bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
-                if (!observer.bbox.isEqual(bbox)) {
-                    var proj = L.Projection.Mercator;
-                    observer.setBounds(L.latLngBounds([proj.unproject(bbox.min), proj.unproject(bbox.max)]));
-                }
-            }
             if (gmx.labelsLayer) {
                 this._map._labelsLayer.add(this);
             } else if (!gmx.labelsLayer) {
                 this._map._labelsLayer.remove(this);
+            }
+            if (Object.keys(gmx.tileSubscriptions).length > 0) {
+                for (var key in gmx.tileSubscriptions) {    // recheck bbox on screen observers
+                    var observer = gmx.dataManager.getObserver(key),
+                        parsedKey = gmx.tileSubscriptions[key],
+                        gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(parsedKey, parsedKey.z),
+                        bbox = gmx.styleManager.getStyleBounds(gmxTilePoint);
+                    if (!observer.bbox.isEqual(bbox)) {
+                        var proj = L.Projection.Mercator;
+                        observer.setBounds(L.latLngBounds([proj.unproject(bbox.min), proj.unproject(bbox.max)]));
+                    }
+                }
+            } else {
+                this.redraw();
             }
         }
     },
