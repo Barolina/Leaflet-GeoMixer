@@ -50,7 +50,7 @@ var clipTileByPolygon = function (dattr) {
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
-            var geo = arr[i].geometry;
+            var geo = arr[i].geometry,
                 coords = geo.coordinates;
             if (geo.type === 'Polygon') coords = [coords];
             for (var i1 = 0, len1 = coords.length; i1 < len; i1++) {
