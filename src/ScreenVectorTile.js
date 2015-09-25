@@ -483,18 +483,25 @@ ScreenVectorTile.prototype = {
                 bgImage = null,
                 preDef = new L.gmx.Deferred();
 
-            if (gmx.preRenderHooks.length) {
-                bgImage = document.createElement('canvas');
-                bgImage.width = bgImage.height = 256;
-            }
-            preDef.resolve(bgImage, hookInfo);
+            preDef.resolve(bgImage);
+            
             gmx.preRenderHooks.forEach(function (f) {
-                preDef = preDef.then(function(bgImage) {
+                preDef = preDef.then(function(hookBgImage) {
+                    
+                    //in-place modifications are possible
+                    bgImage = bgImage || hookBgImage;
+
+                    if (!bgImage) {
+                        bgImage = document.createElement('canvas');
+                        bgImage.width = bgImage.height = 256;
+                    }
+                    
                     return f(bgImage, hookInfo);
                 });
             });
-            preDef.then(function() {
-                if (gmx.preRenderHooks.length) { dattr.bgImage = bgImage; }
+            preDef.then(function(hookBgImage) {
+                bgImage = bgImage || hookBgImage;
+                if (bgImage) { dattr.bgImage = bgImage; }
                 //ctx.save();
                 for (var i = 0; i < itemsLength; i++) {
                     L.gmxUtil.drawGeoItem(geoItems[i], dattr);
@@ -506,15 +513,15 @@ ScreenVectorTile.prototype = {
                 }
                 //async chain
                 var res = new L.gmx.Deferred();
-                res.resolve(tile, hookInfo);
+                res.resolve(tile);
                 gmx.renderHooks.forEach(function (f) {
-                    res = res.then(function(tile) {
+                    res = res.then(function(hookTile) {
+                        tile = tile || hookTile;
                         return f(tile, hookInfo);
                     });
                 });
                 res.then(def.resolve, def.reject);
-                //def.resolve();
-            });//, preDef.reject);
+            }, def.reject);
         };
 
         if (this.showRaster) {
