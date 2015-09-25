@@ -474,6 +474,8 @@ ScreenVectorTile.prototype = {
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
             var hookInfo = {
+                    tpx: _this.tpx,
+                    tpy: _this.tpy,
                     x: _this.tilePoint.x,
                     y: _this.tilePoint.y,
                     z: _this.zoom

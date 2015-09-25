@@ -15,18 +15,14 @@ var isBoundsIntersects = function (bounds, clipPolygons) {
     }
     return false;
 };
-var isPointInClipPolygon = function (pcoords, clipPolygons) {
+var isObserverIntersects = function (observer, clipPolygons) {
     for (var key in clipPolygons) {
-        var arr = clipPolygons[key],
-            i, len, j, len1;
-        for (i = 0, len = arr.length; i < len; i++) {
-            var geometry = arr[i].geometry,
-                type = geometry.type;
-            if (type !== 'Polygon' && type !== 'MultiPolygon') { return true; }
-            var coords = geometry.coordinates;
-            if (type === 'Polygon') { coords = [coords]; }
-            for (j = 0, len1 = coords.length; j < len1; j++) {
-                if (gmxAPIutils.isPointInPolygonWithHoles(pcoords, coords[j])) {
+        var arr = clipPolygons[key];
+        for (var i = 0, len = arr.length; i < len; i++) {
+            var boundsArr = arr[i].boundsArr;
+            for (var j = 0, len1 = boundsArr.length; j < len1; j++) {
+                var bbox = arr[i].boundsArr[j];
+                if (observer.intersects(bbox)) {
                     return true;
                 }
             }
@@ -34,22 +30,44 @@ var isPointInClipPolygon = function (pcoords, clipPolygons) {
     }
     return false;
 };
-var isBoundsIntersectsClipPolygon = function (bounds, clipPolygons) {
-    for (var key in clipPolygons) {
-        var arr = clipPolygons[key];
-        for (var i = 0, len = arr.length; i < len; i++) {
-            if (bounds.clipPolygon(arr[i].geometry.coordinates[0]).length) {
-                return true;
-            }
-        }
-    }
-    return false;
-};
+
 var getClipPolygonItem = function (geo) {
     var geometry = gmxAPIutils.convertGeometry(geo),
         bboxArr = gmxAPIutils.geoItemBounds(geometry);
     bboxArr.geometry = geometry;
     return bboxArr;
+};
+
+var clipTileByPolygon = function (dattr) {
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    var ctx = canvas.getContext('2d'),
+        clipPolygons = dattr.clipPolygons;
+
+    dattr.ctx = ctx;
+    ctx.fillStyle = ctx.createPattern(dattr.tile, "no-repeat");
+
+    for (var key in clipPolygons) {
+        var arr = clipPolygons[key];
+        for (var i = 0, len = arr.length; i < len; i++) {
+            var geo = arr[i].geometry;
+                coords = geo.coordinates;
+            if (geo.type === 'Polygon') coords = [coords];
+            for (var i1 = 0, len1 = coords.length; i1 < len; i1++) {
+                var coords1 = coords[i1];
+                ctx.beginPath();
+                for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
+                    dattr.coords = coords1[j1];
+                    gmxAPIutils.polygonToCanvasFill(dattr);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+    ctx = dattr.tile.getContext('2d');
+    ctx.clearRect(0, 0, 256, 256);
+    ctx.drawImage(canvas, 0, 0);
 };
 
 L.gmx.VectorLayer.include({
@@ -74,36 +92,32 @@ L.gmx.VectorLayer.include({
             }
         }
         if (item.length) {
-            var id = L.stamp(polygon);
+            var gmx = this._gmx,
+                dataManager = gmx.dataManager,
+                _this = this,
+                id = L.stamp(polygon);
+
             this._clipPolygons[id] = item;
-            var dataManager = this._gmx.dataManager,
-                _this = this;
             dataManager.setTileFilteringHook(function (tile) {
                 return isBoundsIntersects(tile.bounds, _this._clipPolygons);
             });
 
             dataManager.addFilter('clipFilter', function (item, tile, observer, geom, dataOption) {
-                if (!isBoundsIntersects(item.bounds, _this._clipPolygons)) {
-                    return false;
+                return isObserverIntersects(observer, _this._clipPolygons);
+            });
+            gmx.renderHooks.unshift(function (tile, hookInfo) {
+                if (tile && Object.keys(_this._clipPolygons).length > 0) {
+                    clipTileByPolygon({
+                        tile: tile,
+                        tpx: hookInfo.tpx,
+                        tpy: hookInfo.tpy,
+                        gmx: {mInPixel: gmx.mInPixel},
+                        clipPolygons: _this._clipPolygons
+                    });
                 }
-                var type = geom.type,
-                    coords = geom.coordinates;
-                if (type === 'POINT' || type === 'MULTIPOINT') {
-                    return isPointInClipPolygon(coords, _this._clipPolygons);
-                } else if (type === 'POLYGON') {
-                    return isBoundsIntersectsClipPolygon(dataOption.bounds, _this._clipPolygons);
-                } else if (type === 'MULTIPOLYGON') {
-                    for (i = 0, len = dataOption.boundsArr.length; i < len; i++) {
-                        if (isBoundsIntersectsClipPolygon(dataOption.boundsArr[i][0], _this._clipPolygons)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-                return true;
             });
         }
-         return this;
+        return this;
     },
 
     removeClipPolygon: function (polygon) {
