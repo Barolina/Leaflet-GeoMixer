@@ -95,18 +95,21 @@
                 });
             }
 
-            this._addObserver();
-            this.addEvent = function (ev) {
-                GmxMarkerCluster.prototype.onAdd.call(this, ev.target._map);
-            };
+            var _this = this;
+            this._layer._gmx.styleManager.initStyles().then(function () {
+                _this._addObserver();
+                _this.addEvent = function (ev) {
+                    GmxMarkerCluster.prototype.onAdd.call(_this, ev.target._map);
+                };
 
-            layer
-                .on('add', this.addEvent, this)
-                .on('dateIntervalChanged', this.setDateInterval, this);
+                layer
+                    .on('add', _this.addEvent, _this)
+                    .on('dateIntervalChanged', _this.setDateInterval, this);
 
-            if (this._layer._map) {
-                this.addEvent({target:{_map: this._layer._map}});
-            }
+                if (_this._layer._map) {
+                    _this.addEvent({target:{_map: _this._layer._map}});
+                }
+            });
         },
 
         unbindClusters: function () {
