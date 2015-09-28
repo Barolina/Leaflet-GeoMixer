@@ -489,7 +489,7 @@ ScreenVectorTile.prototype = {
                 preDef = preDef.then(function(hookBgImage) {
                     
                     //in-place modifications are possible
-                    bgImage = bgImage || hookBgImage;
+                    bgImage = hookBgImage || bgImage;
 
                     if (!bgImage) {
                         bgImage = document.createElement('canvas');
@@ -500,7 +500,7 @@ ScreenVectorTile.prototype = {
                 });
             });
             preDef.then(function(hookBgImage) {
-                bgImage = bgImage || hookBgImage;
+                bgImage = hookBgImage || bgImage;
                 if (bgImage) { dattr.bgImage = bgImage; }
                 //ctx.save();
                 for (var i = 0; i < itemsLength; i++) {
@@ -516,7 +516,7 @@ ScreenVectorTile.prototype = {
                 res.resolve(tile);
                 gmx.renderHooks.forEach(function (f) {
                     res = res.then(function(hookTile) {
-                        tile = tile || hookTile;
+                        tile = hookTile || tile;
                         return f(tile, hookInfo);
                     });
                 });
