@@ -8,6 +8,18 @@ var StyleManager = function(gmx) {
     this._deferredIcons = [];
     this._parserFunctions = {};
     this._serverStylesParsed = false;
+
+    var minZoom = Infinity,
+        maxZoom = -Infinity,
+        arr = gmx.properties.styles || [];
+
+    for (var i = 0, len = arr.length; i < len; i++) {
+        var st = arr[i];
+        minZoom = Math.min(minZoom, st.MinZoom);
+        maxZoom = Math.max(maxZoom, st.MaxZoom);
+    }
+    this.minZoom = minZoom === Infinity ? 0 : minZoom;
+    this.maxZoom = maxZoom === -Infinity ? 18 : maxZoom;
 };
 StyleManager.prototype = {
     _getMaxStyleSize: function(zoom) {  // estimete style size for arbitrary object
@@ -308,7 +320,9 @@ StyleManager.prototype = {
     },
 
     _checkStyles: function() {
-        var balloonEnable = false,
+        var minZoom = Infinity,
+            maxZoom = -Infinity,
+            balloonEnable = false,
             labelsLayer = false;
 
         for (var i = 0, len = this._styles.length; i < len; i++) {
@@ -338,7 +352,11 @@ StyleManager.prototype = {
             if (st.HoverStyle && st.HoverStyle.common) {
                 st.common.HoverStyle = this._itemStyleParser({}, st.HoverStyle);
             }
+            minZoom = Math.min(minZoom, st.MinZoom);
+            maxZoom = Math.max(maxZoom, st.MaxZoom);
         }
+        if (this.minZoom !== Infinity) { this.minZoom = minZoom; }
+        if (this.maxZoom !== -Infinity) { this.maxZoom = maxZoom; }
         this.gmx.balloonEnable = balloonEnable;
         this.gmx.labelsLayer = labelsLayer;
     },
@@ -411,7 +429,7 @@ StyleManager.prototype = {
     _prepareItem: function(style) { // Style Scanex->leaflet
         var pt = {
             MinZoom: style.MinZoom || 0,
-            MaxZoom: style.MaxZoom || 50,
+            MaxZoom: style.MaxZoom || 18,
             Filter: style.Filter || null,
             Balloon: style.Balloon || '',
             RenderStyle: (style.RenderStyle ? this._parseStyle(L.gmxUtil.fromServerStyle(style.RenderStyle)) : {}),

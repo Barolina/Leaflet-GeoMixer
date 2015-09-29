@@ -2,7 +2,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
         minZoom: 1,
-        maxZoom: 25,
+        // maxZoom: 25,
         clickable: true
     },
 
@@ -116,6 +116,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this.bindPopup('');
         }
         if (this._map) {
+            if (this.options.minZoom !== gmx.styleManager.minZoom || this.options.maxZoom !== gmx.styleManager.maxZoom) {
+                this.options.minZoom = gmx.styleManager.minZoom;
+                this.options.maxZoom = gmx.styleManager.maxZoom;
+                this._map._updateZoomLevels();
+            }
             if (gmx.labelsLayer) {
                 this._map._labelsLayer.add(this);
             } else if (!gmx.labelsLayer) {
@@ -237,6 +242,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.initLayerData(ph);
         gmx.dataManager = new DataManager(gmx, ph);
         gmx.styleManager = new StyleManager(gmx);
+        this.options.minZoom = gmx.styleManager.minZoom;
+        this.options.maxZoom = gmx.styleManager.maxZoom;
 
         gmx.dataManager.on('observeractivate', function() {
             if (gmx.dataManager.getActiveObserversCount()) {

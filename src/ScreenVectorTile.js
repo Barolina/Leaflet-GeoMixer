@@ -484,10 +484,10 @@ ScreenVectorTile.prototype = {
                 preDef = new L.gmx.Deferred();
 
             preDef.resolve(bgImage);
-            
+
             gmx.preRenderHooks.forEach(function (f) {
                 preDef = preDef.then(function(hookBgImage) {
-                    
+
                     //in-place modifications are possible
                     bgImage = hookBgImage || bgImage;
 
@@ -495,7 +495,7 @@ ScreenVectorTile.prototype = {
                         bgImage = document.createElement('canvas');
                         bgImage.width = bgImage.height = 256;
                     }
-                    
+
                     return f(bgImage, hookInfo);
                 });
             });
