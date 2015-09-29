@@ -504,8 +504,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
             var zoom = _this._map.getZoom();
             if (zoom > _this.options.maxZoom || zoom < _this.options.minZoom) {
-                // if (_this._clearBgBufferTimer) clearTimeout(_this._clearBgBufferTimer);
-                // _this._clearBgBufferTimer = setTimeout(L.bind(_this._clearBgBuffer, _this), 500);
+                if (_this._clearBgBufferTimer) clearTimeout(_this._clearBgBufferTimer);
+                _this._clearBgBufferTimer = setTimeout(L.bind(_this._clearBgBuffer, _this), 500);
                 // if (_this._animated) {
                     // L.DomUtil.addClass(_this._tileContainer, 'leaflet-zoom-animated');
                 // }
