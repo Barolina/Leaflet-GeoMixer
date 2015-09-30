@@ -42,6 +42,13 @@ var GmxEventsManager = L.Handler.extend({
             path: true
         };
 
+        var clearLastHover = function () {
+            if (_this._lastLayer) {
+                _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
+                _this._lastLayer = null;
+            }
+        };
+
         var eventCheck = function (ev) {
             var type = ev.type;
             _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
@@ -51,46 +58,46 @@ var GmxEventsManager = L.Handler.extend({
                 skipNodeName[ev.originalEvent.target.nodeName] ||
                 (type === 'mousemove' &&  _this._map.gmxMouseDown)
                 ) {
+                clearLastHover();
                 return;
             }
             _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
 
-            var objId = 0,
-                layer,
-                cursor = '';
+            var arr = Object.keys(_this._layers).sort(function(a, b) {
+                var la = _this._map._layers[a],
+                    lb = _this._map._layers[b];
+                if (la && lb) {
+                    var oa = la.options, ob = lb.options,
+                        za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
+                        zb = (ob.zoomOffset || 0) + (ob.zIndex || 0),
+                        delta = zb - za;
+                    return delta ? delta : _this._layers[b] - _this._layers[a];
+                }
+                return 0;
+            });
 
-            // if (!skipNodeName[ev.originalEvent.target.nodeName]) {
-                var arr = Object.keys(_this._layers).sort(function(a, b) {
-                    var la = _this._map._layers[a],
-                        lb = _this._map._layers[b];
-                    if (la && lb) {
-                        var oa = la.options, ob = lb.options,
-                            za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
-                            zb = (ob.zoomOffset || 0) + (ob.zIndex || 0),
-                            delta = zb - za;
-                        return delta ? delta : _this._layers[b] - _this._layers[a];
-                    }
-                    return 0;
-                });
-                for (var i = 0, len = arr.length; i < len; i++) {
-                    var id = arr[i];
-                    layer = _this._map._layers[id];
-                    if (layer && layer._map && !layer._animating && layer.options.clickable) {
-                        objId = layer.gmxEventCheck(ev);
-                        if (objId) {
-                            cursor = 'pointer';
-                            break;
-                        }
+            var layer,
+                cursor = '';
+            for (var i = 0, len = arr.length; i < len; i++) {
+                var id = arr[i];
+                layer = _this._map._layers[id];
+                if (layer && layer._map && !layer._animating && layer.options.clickable) {
+                    if (layer.gmxEventCheck(ev)) {
+                        cursor = 'pointer';
+                        break;
                     }
                 }
-            // }
+            }
             if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
             _this._lastCursor = cursor;
+
             if (cursor) {
+                if (_this._lastLayer !== layer) {
+                    clearLastHover();
+                }
                 _this._lastLayer = layer;
-            } else if (_this._lastLayer) {
-                _this._lastLayer.gmxEventCheck({type: 'mousemove'}, true);
-                _this._lastLayer = null;
+            } else {
+                clearLastHover();
             }
         };
 

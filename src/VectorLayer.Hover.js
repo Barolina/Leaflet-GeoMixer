@@ -21,7 +21,7 @@ L.gmx.VectorLayer.include({
             if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) { continue; }
 
             var geom = geoItem[geoItem.length - 1],
-                fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage,
+                fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage || parsedStyle.fillColor,
                 marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
                 type = geom.type,
                 chktype = type,
@@ -130,7 +130,15 @@ L.gmx.VectorLayer.include({
                     }
                 }
             };
-        if (!skipOver && ev.originalEvent &&
+        var zoom = this._map.getZoom();
+        if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
+            skipOver = true;
+        }
+        if (skipOver) {
+            if (lastHover) { lastHover.prevId = null; }
+            chkHover('mouseout');
+            gmx.lastHover = null;
+        } else if (ev.originalEvent &&
             (
             this.hasEventListeners('mouseover') ||
             this.hasEventListeners('mouseout') ||
@@ -207,11 +215,6 @@ L.gmx.VectorLayer.include({
                     return idr;
                 }
             }
-        }
-        if (skipOver) {
-            if (lastHover) { lastHover.prevId = null; }
-            chkHover('mouseout');
-            gmx.lastHover = null;
         }
         if (this._map) {
             this._map.doubleClickZoom.enable();
