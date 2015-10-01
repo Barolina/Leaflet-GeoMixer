@@ -104,7 +104,7 @@
 
                 layer
                     .on('add', _this.addEvent, _this)
-                    .on('dateIntervalChanged', _this.setDateInterval, this);
+                    .on('dateIntervalChanged', _this.setDateInterval, _this);
 
                 if (_this._layer._map) {
                     _this.addEvent({target:{_map: _this._layer._map}});
