@@ -926,6 +926,9 @@ var gmxAPIutils = {
      * @return {String} point coordinates in string format with degrees
     */
 	latLonFormatCoordinates: function(x, y) {
+        x %= 360;
+        if (x > 180) { x -= 360; }
+        else if (x < -180) { x += 360; }
 		return  gmxAPIutils.formatDegrees(Math.abs(y)) + (y > 0 ? ' N, ' : ' S, ') +
 			gmxAPIutils.formatDegrees(Math.abs(x)) + (x > 0 ? ' E' : ' W');
 	},
