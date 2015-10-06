@@ -3,12 +3,14 @@ var isBoundsIntersects = function (bounds, clipPolygons) {
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
-            var type = arr[i].geometry.type;
-            for (var j = 0, len1 = arr[i].boundsArr.length; j < len1; j++) {
-                var bbox = arr[i].boundsArr[j];
-                if (type === 'MultiPolygon') { bbox = bbox[0]; }
-                if (bbox.intersects(bounds)) {
-                    return true;
+            var it = arr[i],
+                type = it.geometry.type,
+                boundsArr = it.boundsArr;
+            for (var j = 0, len1 = boundsArr.length; j < len1; j++) {
+                var bbox = boundsArr[j];
+                if (type === 'Polygon') { bbox = [bbox]; }
+                for (var j1 = 0, len2 = bbox.length; j1 < len2; j1++) {
+                    if (bbox[j1].intersects(bounds)) { return true; }
                 }
             }
         }
@@ -19,11 +21,16 @@ var isObserverIntersects = function (observer, clipPolygons) {
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
-            var boundsArr = arr[i].boundsArr;
+            var it = arr[i],
+                type = it.geometry.type,
+                boundsArr = it.boundsArr;
             for (var j = 0, len1 = boundsArr.length; j < len1; j++) {
-                var bbox = arr[i].boundsArr[j];
-                if (observer.intersects(bbox)) {
-                    return true;
+                var bbox = boundsArr[j];
+                if (type === 'Polygon') { bbox = [bbox]; }
+                for (var j1 = 0, len2 = bbox.length; j1 < len2; j1++) {
+                    if (observer.intersects(bbox[j1])) {
+                        return true;
+                    }
                 }
             }
         }

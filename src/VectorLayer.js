@@ -288,9 +288,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         this.initPromise.then(function() {
             _this._gmx.styleManager.clearStyles();
-            (styles || []).forEach(function(it, i) {
-                _this.setStyle(it, i, true);
-            });
+            if (styles) {
+                styles.forEach(function(it, i) {
+                    _this.setStyle(it, i, true);
+                });
+            } else {
+                _this.fire('stylechange');
+            }
         });
         return this;
     },
