@@ -39,6 +39,7 @@ var isObserverIntersects = function (observer, clipPolygons) {
 };
 
 var isPointInClipPolygons = function (chkPoint, clipPolygons) {
+    if (Object.keys(clipPolygons).length === 0) { return true; }
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {

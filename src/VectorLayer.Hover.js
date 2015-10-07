@@ -101,9 +101,9 @@ L.gmx.VectorLayer.include({
                 } else if (!dataOption.bounds.intersectsWithDelta(bounds, dx / 2, dy / 2)) {
                     continue;
                 }
-                if (!this.isPointInClipPolygons(mercPoint)) {
-                    continue;
-                }
+            }
+            if (!this.isPointInClipPolygons(mercPoint)) {
+                continue;
             }
 
             return {
