@@ -2,7 +2,9 @@ L.gmx.VectorLayer.include({
     _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // Получить верхний объект по координатам mouseClick
         var gmx = this._gmx,
             mInPixel = gmx.mInPixel,
-            bounds = gmxAPIutils.bounds([mercPoint]);
+            bounds = gmxAPIutils.bounds([mercPoint]),
+            j,
+            len;
 
         for (var i = geoItems.length - 1; i >= 0; i--) {
             var geoItem = geoItems[i].properties,
@@ -53,9 +55,7 @@ L.gmx.VectorLayer.include({
                 if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) { continue; }
             } else if (chktype === 'LIKEMULTILINESTRING') {
                 ph.delta = lineWidth / mInPixel;
-                var flag = false,
-                    j,
-                    len;
+                var flag = false;
                 for (j = 0, len = coords.length; j < len; j++) {
                     ph.coords = coords[j];
                     ph.hidden = hiddenLines[j];
@@ -99,6 +99,9 @@ L.gmx.VectorLayer.include({
                         y = coords[1] - mercPoint[1];
                     if (x * x + y * y > dx * dx) { continue; }
                 } else if (!dataOption.bounds.intersectsWithDelta(bounds, dx / 2, dy / 2)) {
+                    continue;
+                }
+                if (!this.isPointInClipPolygons(mercPoint)) {
                     continue;
                 }
             }

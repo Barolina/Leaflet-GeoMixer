@@ -1084,13 +1084,13 @@ var gmxAPIutils = {
         return out;
     },
 
-    isPointInPolygonArr: function(chkPoint, poly) { // Проверка точки на принадлежность полигону в виде массива
+    isPointInPolygonArr: function(chkPoint, coords) { // Проверка точки на принадлежность полигону в виде массива
         var isIn = false,
             x = chkPoint[0],
             y = chkPoint[1],
-            p1 = poly[0];
-        for (var i = 1, len = poly.length; i < len; i++) {
-            var p2 = poly[i];
+            p1 = coords[0];
+        for (var i = 1, len = coords.length; i < len; i++) {
+            var p2 = coords[i];
             var xmin = Math.min(p1[0], p2[0]);
             var xmax = Math.max(p1[0], p2[0]);
             var ymax = Math.max(p1[1], p2[1]);
@@ -1102,12 +1102,34 @@ var gmxAPIutils = {
         }
         return isIn;
     },
+
+    /** Is point in polygon with holes
+     * @memberof L.gmxUtil
+     * @param {chkPoint} chkPoint - point in [x, y] format
+     * @param {coords} coords - polygon from geoJSON coordinates data format
+     * @return {Boolean} true if polygon contain chkPoint
+    */
     isPointInPolygonWithHoles: function(chkPoint, coords) {
         if (!gmxAPIutils.isPointInPolygonArr(chkPoint, coords[0])) { return false; }
         for (var j = 1, len = coords.length; j < len; j++) {
             if (gmxAPIutils.isPointInPolygonArr(chkPoint, coords[j])) { return false; }
         }
         return true;
+    },
+
+    /** Is polygon clockwise
+     * @memberof L.gmxUtil
+     * @param {ring} ring - ring from geoJSON coordinates data format
+     * @return {Boolean} true if ring is clockwise
+    */
+    isClockwise: function(ring) {
+        var area = 0;
+        for (var i = 0, j, len = ring.length; i < len; i++) {
+            j = (i + 1) % len;
+            area += ring[i][0] * ring[j][1];
+            area -= ring[j][0] * ring[i][1];
+        }
+        return (area < 0);
     },
 
     isPointInPolyLine: function(chkPoint, lineHeight, coords, hiddenLines) {
@@ -2102,6 +2124,8 @@ L.extend(L.gmxUtil, {
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
     parseUri: gmxAPIutils.parseUri,
     isRectangle: gmxAPIutils.isRectangle,
+    isClockwise: gmxAPIutils.isClockwise,
+    isPointInPolygonWithHoles: gmxAPIutils.isPointInPolygonWithHoles,
     getPatternIcon: gmxAPIutils.getPatternIcon
 });
 

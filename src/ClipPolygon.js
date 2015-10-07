@@ -38,6 +38,37 @@ var isObserverIntersects = function (observer, clipPolygons) {
     return false;
 };
 
+var isPointInClipPolygons = function (chkPoint, clipPolygons) {
+    for (var key in clipPolygons) {
+        var arr = clipPolygons[key];
+        for (var i = 0, len = arr.length; i < len; i++) {
+            var it = arr[i],
+                type = it.geometry.type,
+                boundsArr = it.boundsArr;
+            for (var j = 0, len1 = boundsArr.length; j < len1; j++) {
+                var bbox = boundsArr[j];
+                if (type === 'Polygon') { bbox = [bbox]; }
+                for (var j1 = 0, len2 = bbox.length; j1 < len2; j1++) {
+                    if (bbox[j1].contains(chkPoint)) {
+                        var coords = it.geometry.coordinates,
+                            isIn = false;
+                        if (type === 'Polygon') { coords = [coords]; }
+                        for (var j2 = 0, len3 = coords.length; j2 < len3; j2++) {
+                            if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j2])) {
+                                isIn = true;
+                                break;
+                                
+                            }
+                        }
+                        if (isIn) { return true; }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+};
+
 var getClipPolygonItem = function (geo) {
     var geometry = gmxAPIutils.convertGeometry(geo),
         bboxArr = gmxAPIutils.geoItemBounds(geometry);
@@ -79,6 +110,11 @@ var clipTileByPolygon = function (dattr) {
 
 L.gmx.VectorLayer.include({
     _clipPolygons: {},
+
+    isPointInClipPolygons: function (point) { // point [x, y] in Mercator
+        return isPointInClipPolygons(point, this._clipPolygons);
+    },
+
     addClipPolygon: function (polygon) { // (L.Polygon) or (L.GeoJSON with Polygons)
         var item = [],
             i, len;
