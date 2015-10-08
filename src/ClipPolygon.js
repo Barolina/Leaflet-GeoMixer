@@ -39,7 +39,7 @@ var isObserverIntersects = function (observer, clipPolygons) {
 };
 
 var isPointInClipPolygons = function (chkPoint, clipPolygons) {
-    if (Object.keys(clipPolygons).length === 0) { return true; }
+    if (!clipPolygons || Object.keys(clipPolygons).length === 0) { return true; }
     for (var key in clipPolygons) {
         var arr = clipPolygons[key];
         for (var i = 0, len = arr.length; i < len; i++) {
@@ -110,10 +110,9 @@ var clipTileByPolygon = function (dattr) {
 };
 
 L.gmx.VectorLayer.include({
-    _clipPolygons: {},
 
     isPointInClipPolygons: function (point) { // point [x, y] in Mercator
-        return isPointInClipPolygons(point, this._clipPolygons);
+        return isPointInClipPolygons(point, this._gmx._clipPolygons);
     },
 
     addClipPolygon: function (polygon) { // (L.Polygon) or (L.GeoJSON with Polygons)
@@ -141,23 +140,24 @@ L.gmx.VectorLayer.include({
                 _this = this,
                 id = L.stamp(polygon);
 
-            this._clipPolygons[id] = item;
+            if (!this._gmx._clipPolygons) { this._gmx._clipPolygons = {}; }
+            this._gmx._clipPolygons[id] = item;
             dataManager.setTileFilteringHook(function (tile) {
-                return isBoundsIntersects(tile.bounds, _this._clipPolygons);
+                return isBoundsIntersects(tile.bounds, _this._gmx._clipPolygons);
             });
 
             dataManager.addFilter('clipFilter', function (item, tile, observer) {
-                return isObserverIntersects(observer, _this._clipPolygons);
+                return isObserverIntersects(observer, _this._gmx._clipPolygons);
             });
-            if (Object.keys(this._clipPolygons).length === 1) {
+            if (Object.keys(this._gmx._clipPolygons).length === 1) {
                 gmx.renderHooks.unshift(function (tile, hookInfo) {
-                    if (tile && Object.keys(_this._clipPolygons).length > 0) {
+                    if (tile && Object.keys(_this._gmx._clipPolygons).length > 0) {
                         clipTileByPolygon({
                             tile: tile,
                             tpx: hookInfo.tpx,
                             tpy: hookInfo.tpy,
                             gmx: {mInPixel: gmx.mInPixel},
-                            clipPolygons: _this._clipPolygons
+                            clipPolygons: _this._gmx._clipPolygons
                         });
                     }
                 });
@@ -168,10 +168,12 @@ L.gmx.VectorLayer.include({
 
     removeClipPolygon: function (polygon) {
         var id = L.stamp(polygon);
-        delete this._clipPolygons[id];
-        if (Object.keys(this._clipPolygons).length === 0) {
-            this._gmx.dataManager.removeTileFilteringHook();
-            this._gmx.dataManager.removeFilter('clipFilter');
+        if (this._gmx._clipPolygons) {
+            delete this._gmx._clipPolygons[id];
+            if (Object.keys(this._gmx._clipPolygons).length === 0) {
+                this._gmx.dataManager.removeTileFilteringHook();
+                this._gmx.dataManager.removeFilter('clipFilter');
+            }
         }
         return this;
     }
