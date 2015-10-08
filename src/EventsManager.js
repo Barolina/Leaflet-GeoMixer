@@ -89,7 +89,9 @@ var GmxEventsManager = L.Handler.extend({
                 layer = _this._map._layers[id];
                 if (layer && layer._map && !layer._animating && layer.options.clickable) {
                     if (layer.gmxEventCheck(ev)) {
-                        cursor = 'pointer';
+                        if (layer.hasEventListeners('mouseover')) {
+                            cursor = 'pointer';
+                        }
                         break;
                     }
                 }
