@@ -89,9 +89,7 @@ var GmxEventsManager = L.Handler.extend({
                 layer = _this._map._layers[id];
                 if (layer && layer._map && !layer._animating && layer.options.clickable) {
                     if (layer.gmxEventCheck(ev)) {
-                        if (layer._gmx && layer._gmx.properties.fromType !== 'Raster') {
-                            cursor = 'pointer';
-                        }
+                        cursor = 'pointer';
                         break;
                     }
                 }
