@@ -50,18 +50,24 @@ var GmxEventsManager = L.Handler.extend({
         };
 
         var eventCheck = function (ev) {
-            var type = ev.type;
-            _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
+            var type = ev.type,
+                skipNode = false;
+            if (ev.originalEvent) {
+                _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
+                skipNode = skipNodeName[ev.originalEvent.target.nodeName];
+            }
 
             if (_this._map._animatingZoom ||
                 _this._drawstart ||
-                skipNodeName[ev.originalEvent.target.nodeName] ||
+                skipNode ||
                 (type === 'mousemove' &&  _this._map.gmxMouseDown)
                 ) {
                 clearLastHover();
                 return;
             }
-            _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
+            if (ev.layerPoint) {
+                _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
+            }
 
             var arr = Object.keys(_this._layers).sort(function(a, b) {
                 var la = _this._map._layers[a],
@@ -109,6 +115,7 @@ var GmxEventsManager = L.Handler.extend({
                     eventCheck(ev);
                 }, 0);
             },
+            zoomstart: clearLastHover,
             dblclick: eventCheck,
             mousedown: eventCheck,
             mouseup: eventCheck,
