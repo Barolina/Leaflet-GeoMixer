@@ -58,7 +58,6 @@ var isPointInClipPolygons = function (chkPoint, clipPolygons) {
                             if (gmxAPIutils.isPointInPolygonWithHoles(chkPoint, coords[j2])) {
                                 isIn = true;
                                 break;
-                                
                             }
                         }
                         if (isIn) { return true; }
