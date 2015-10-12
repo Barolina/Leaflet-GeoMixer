@@ -65,7 +65,7 @@
             this._chkZoom();
         },
 
-        // remove clusters from parent layer
+        // remove heatmap from parent layer
         onRemove: function (fromMapFlag) {
             var map = this._map;
             if (this._observer) {
@@ -174,7 +174,7 @@
 
     L.gmx.VectorLayer.include({
         bindHeatMap: function (options) {
-            if (L.MarkerClusterGroup) {
+            if (L.heatLayer) {
                 if (this._heatmap) {
                     this.unbindHeatMap();
                 }
@@ -185,7 +185,7 @@
         },
 
         unbindHeatMap: function () {
-            if (L.MarkerClusterGroup) {
+            if (L.heatLayer) {
                 if (this._heatmap) {
                     this._heatmap.unbindHeatMap();
                     this._heatmap = null;

@@ -136,6 +136,8 @@ setRasterOpacity|`setRasterOpacity(<Float>)`|`this`|Изменение opacity �
 setZIndexOffset|`setZIndexOffset(<UInt>)`||Установка `z-index` смещения контейнера слоя(по умолчанию: `0`)
 bindClusters|`bindClusters(options <`[Clusters options](#clusters-options---опции-кластеризации)`>? )`|`this`| Подключить кластеризацию слоя. Пример [bindClusters.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html).
 unbindClusters|`unbindClusters()`|`this`| Отключить кластеризацию слоя.
+bindHeatMap|`bindHeatMap(options <`[HeatMap options](#heatmap-options---опции-heatmap)`>? )`|`this`| Подключить HeatMap слоя. Пример [bindHeatMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindHeatMap.html).
+unbindHeatMap|`unbindHeatMap()`|`this`| Отключить HeatMap слоя.
 addClipPolygon|`addClipPolygon(<`[L.Polygon](http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](http://leafletjs.com/reference.html#geojson)`>)`|`this`| Добавить полигон обрезки данных слоя.
 removeClipPolygon|`removeClipPolygon(<`[L.Polygon](http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](http://leafletjs.com/reference.html#geojson)`>)`|`this`| Удалить полигон обрезки данных слоя.
 
@@ -317,6 +319,18 @@ item|`<Object>`| Дополнительная информация объект�
 *     Иначе если есть `fillColor` – background полигона заполняется используя fillColor, fillOpacity
 *     Иначе заполнения нет
 
+
+### HeatMap options - опции heatmap
+
+HeatMap производится через плагин [Leaflet.heat](https://github.com/Leaflet/Leaflet.heat)
+В качестве опций можно применять все стандартные опции плагина [Leaflet.heat-options](https://github.com/Leaflet/Leaflet.heat#lheatlayerlatlngs-options).
+Ниже представлен список дополнительный опций включенных в плагин HeatMap.
+
+Параметр|Тип|Значение по умолчанию|Описание
+------|:--:|:------:|:-----------
+maxHeatMapZoom|`<Number>`|`6`| Максимальный zoom на котором включен HeatMap слоя. (На всех zoom > maxZoom слой будет ображаться без HeatMap).
+altitudeField|`<String>`|``| Наименование атрибута значение которого используется для расчета `altitude` точки ([интенсивность точки](https://github.com/Leaflet/Leaflet.heat#lheatlayerlatlngs-options)).
+altitudeScale|`<Number>`|`1`| Множитель используемый для расчета `altitude` точки.
 
 ### Clusters options - опции кластеризации
 
