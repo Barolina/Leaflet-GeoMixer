@@ -92,8 +92,8 @@
             var useClusters = function(doUse) {
                 if (doUse) {
                     hotspotLayer.bindHeatMap({
-                        altitudeField: 'HotSpotCount',
-                        altitudeScale: 50
+                        intensityField: 'HotSpotCount',
+                        intensityScale: 50
                     });
                 } else {
                     hotspotLayer.unbindHeatMap();

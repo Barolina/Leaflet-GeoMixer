@@ -329,8 +329,8 @@ HeatMap производится через плагин [Leaflet.heat](https://
 Параметр|Тип|Значение по умолчанию|Описание
 ------|:--:|:------:|:-----------
 maxHeatMapZoom|`<Number>`|`6`| Максимальный zoom на котором включен HeatMap слоя. (На всех zoom > maxZoom слой будет ображаться без HeatMap).
-altitudeField|`<String>`|``| Наименование атрибута значение которого используется для расчета `altitude` точки ([интенсивность точки](https://github.com/Leaflet/Leaflet.heat#lheatlayerlatlngs-options)).
-altitudeScale|`<Number>`|`1`| Множитель используемый для расчета `altitude` точки.
+intensityField|`<String>`|   | Наименование атрибута значение которого используется для расчета [интенсивности точки](https://github.com/Leaflet/Leaflet.heat#lheatlayerlatlngs-options).
+intensityScale|`<Number>`|`1`| Множитель используемый при расчете интенсивности точки.
 
 ### Clusters options - опции кластеризации
 

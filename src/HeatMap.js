@@ -3,8 +3,8 @@
         options: {
             minHeatMapZoom: 1,
             maxHeatMapZoom: 6,
-            altitudeField: '',
-            altitudeScale: 1
+            intensityField: '',
+            intensityScale: 1
         },
 
         initialize: function (options, layer) {
@@ -92,11 +92,11 @@
                 var latlngs = [],
                     indexes = this._layer._gmx.tileAttributeIndexes,
                     altIndex = null,
-                    altitudeField = this.options.altitudeField || '',
-                    altitudeScale = this.options.altitudeScale || 1;
+                    intensityField = this.options.intensityField || '',
+                    intensityScale = this.options.intensityScale || 1;
 
-                if (altitudeField && altitudeField in indexes) {
-                    altIndex = indexes[altitudeField];
+                if (intensityField && intensityField in indexes) {
+                    altIndex = indexes[intensityField];
                 }
                 for (var i = 0, len = data.added.length; i < len; i++) {
                     var it = data.added[i].properties,
@@ -105,7 +105,7 @@
                         coord = geo.coordinates,
                         point = L.Projection.Mercator.unproject({x: coord[0], y: coord[1]});
 
-                    latlngs.push([point.lat, point.lng, altitudeScale * alt]);
+                    latlngs.push([point.lat, point.lng, intensityScale * alt]);
                 }
                 this.markers.setLatLngs(latlngs);
             }
