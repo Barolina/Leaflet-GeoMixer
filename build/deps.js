@@ -28,6 +28,7 @@
     "lang_ru.js",
     "lang_en.js",
     "MarkerCluster.js",
+    "HeatMap.js",
     "ClipPolygon.js"
 ];
 
