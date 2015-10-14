@@ -19,6 +19,8 @@ var setCanvasStyle = function(item, ctx, style) {
                 ctx.lineDashOffset = dashOffset;
             }
         }
+    } else if ('getLineDash' in ctx && ctx.getLineDash().length > 0) {
+        ctx.setLineDash([]);
     }
     if (ctx.lineCap !== 'round') { ctx.lineCap = 'round'; }
     if (ctx.lineJoin !== 'round') { ctx.lineJoin = 'round'; }

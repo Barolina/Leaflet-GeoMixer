@@ -460,7 +460,7 @@ StyleManager.prototype = {
             prop = item.properties || {},
             itemType = item.type,
             type = pt.type,
-            color = pt.color || 255,
+            color = 'color' in pt ? pt.color : 255,
             opacity = 'opacity' in pt ? pt.opacity : 1;
 
         out.sx = pt.sx;
