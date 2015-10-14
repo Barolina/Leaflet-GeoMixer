@@ -73,6 +73,7 @@
             }
             if (this.markers._map) {
                 this.markers._map.removeLayer(this.markers);
+                this.markers._map = null;
             }
             if (!fromMapFlag) {
                 this._layer.onAdd(map);
