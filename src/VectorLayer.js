@@ -234,6 +234,14 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.properties = ph.properties;
         gmx.geometry = ph.geometry;
 
+        if (!gmx.geometry) {
+            var worldSize = gmxAPIutils.tileSizes[1];
+            gmx.geometry = {
+                type: 'POLYGON',
+                coordinates: [[[-worldSize, -worldSize], [-worldSize, worldSize], [worldSize, worldSize], [worldSize, -worldSize], [-worldSize, -worldSize]]]
+            };
+        }
+
         // Original properties from the server.
         // Descendant classes can override this property
         // Not so good solution, but it works
