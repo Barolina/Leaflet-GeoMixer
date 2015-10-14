@@ -455,6 +455,17 @@ var DataManager = L.Class.extend({
         }
     },
 
+    getItemsBounds: function() {
+        if (!this._itemsBounds) {
+            this._itemsBounds = gmxAPIutils.bounds();
+            for (var id in this._items) {
+                var item = this.getItem(id);
+                this._itemsBounds.extendBounds(item.bounds);
+            }
+        }
+        return this._itemsBounds;
+    },
+
     //combine and return all parts of geometry
     getItem: function(id) {
         var item = this._items[id];
@@ -781,15 +792,19 @@ var DataManager = L.Class.extend({
             data = [];
         }
         var vTile = this._getProcessingTile(),
-            chkKeys = this._getDataKeys(data);
+            chkKeys = this._getDataKeys(data),
+            dataBounds = vTile.addData(data, chkKeys);
 
-        vTile.addData(data, chkKeys);
+        if (this._itemsBounds) {
+            this._itemsBounds.extendBounds(dataBounds);
+        }
         this._updateItemsFromTile(vTile);
         this._triggerObservers();
         return vTile;
     },
 
     removeData: function(data) {
+        this._itemsBounds = null;
         var vTile = this.processingTile;
         if (vTile) {
             var chkKeys = {};

@@ -154,7 +154,7 @@ L.gmx.VectorLayer.include({
                 point = L.Projection.Mercator.project(latlng)._subtract(
                     {x: gmx.shiftXlayer || 0, y: gmx.shiftYlayer || 0}
                 ),
-                delta = 5 / gmx.mInPixel,
+                delta = Math.max(5, gmx.styleManager._getMaxStyleSize(zoom)) / gmx.mInPixel,
                 mercatorPoint = [point.x, point.y],
                 bounds = gmxAPIutils.bounds([mercatorPoint]);
             bounds = bounds.addBuffer(delta);

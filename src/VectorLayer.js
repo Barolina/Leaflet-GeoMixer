@@ -988,8 +988,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     //returns L.LatLngBounds
     getBounds: function() {
-        var gmxBounds = gmxAPIutils.geoItemBounds(this._gmx.geometry).bounds,
-            proj = L.Projection.Mercator;
+        var proj = L.Projection.Mercator,
+            gmxBounds = this._gmx.layerID ? gmxAPIutils.geoItemBounds(this._gmx.geometry).bounds : this._gmx.dataManager.getItemsBounds();
 
         if (gmxBounds) {
             return L.latLngBounds([proj.unproject(gmxBounds.min), proj.unproject(gmxBounds.max)]);

@@ -13,11 +13,14 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
             this.removeData(keys, true);
         }
 
-        var len = data.length;
-        var dataOptions = new Array(len);
+        var len = data.length,
+            dataOptions = new Array(len),
+            dataBounds = gmxAPIutils.bounds();
         for (var i = 0; i < len; i++) {
-            var it = data[i];
-            dataOptions[i] = gmxAPIutils.geoItemBounds(it[it.length - 1]);
+            var it = data[i],
+                itBounds = gmxAPIutils.geoItemBounds(it[it.length - 1]);
+            dataOptions[i] = itBounds;
+            dataBounds.extendBounds(itBounds.bounds);
         }
 
         this.data = this.data.concat(data);
@@ -26,6 +29,7 @@ var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
         this.state = 'loaded';
 
         this.loadDef.resolve(this.data);
+        return dataBounds;
     };
 
     this.removeData = function(keys) {
