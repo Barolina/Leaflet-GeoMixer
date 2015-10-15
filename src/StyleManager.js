@@ -298,7 +298,7 @@ StyleManager.prototype = {
     _parseServerStyles: function() {
         var gmx = this.gmx,
             props = gmx.properties,
-            arr = props.styles || [{RenderStyle: StyleManager.DEFAULT_STYLE}],
+            arr = props.styles || [{MinZoom: 1, MaxZoom: 21, RenderStyle: StyleManager.DEFAULT_STYLE}],
             len = Math.max(arr.length, gmx.styles.length);
 
         for (var i = 0; i < len; i++) {
@@ -595,6 +595,7 @@ StyleManager.prototype = {
     }
 };
 StyleManager.MAX_STYLE_SIZE = 256;
+//StyleManager.DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8, circle: true}};
 StyleManager.DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8}};
 StyleManager.DEFAULT_KEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'];
 

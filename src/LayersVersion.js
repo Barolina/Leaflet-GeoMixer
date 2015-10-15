@@ -130,6 +130,9 @@ L.gmx.VectorLayer.include({
     updateVersion: function (layerDescription) {
         if (layerDescription) {
             var gmx = this._gmx;
+            if (layerDescription.geometry) {
+                gmx.geometry = layerDescription.geometry;
+            }
             if (layerDescription.properties) {
                 L.extend(gmx.properties, layerDescription.properties);
                 gmx.rawProperties = gmx.properties;
