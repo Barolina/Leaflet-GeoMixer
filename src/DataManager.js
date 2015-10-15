@@ -512,7 +512,7 @@ var DataManager = L.Class.extend({
                 var tile = this._tiles[key].tile,
                     objIndex = fromTiles[key],
                     props = tile.data[objIndex],
-                    dataOption = tile.dataOptions[objIndex]
+                    dataOption = tile.dataOptions[objIndex],
                     bbox = dataOption.bounds;
 
                 members.push({
