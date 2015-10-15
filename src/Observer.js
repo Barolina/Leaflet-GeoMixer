@@ -75,35 +75,32 @@ var Observer = L.Class.extend({
             //calculate difference with previous data
             var prevItems = this._items,
                 newItems = {},
-                addedFlag = false,
-                removedFlag = false,
                 added = [],
                 removed = [],
-                id;
+                key;
 
             for (var i = 0; i < len; i++) {
                 var it = data[i];
+                
+                key = it.id + '_' + it.tileKey;
 
-                id = it.properties[0];
-                newItems[id] = it;
+                newItems[key] = it;
 
-                if (!prevItems[id]) {
+                if (!prevItems[key]) {
                     added.push(it);
-                    addedFlag = true;
                 }
             }
 
-            for (id in prevItems) {
-                if (!newItems[id]) {
-                    removed.push(prevItems[id]);
-                    removedFlag = true;
+            for (key in prevItems) {
+                if (!newItems[key]) {
+                    removed.push(prevItems[key]);
                 }
             }
 
-            if (addedFlag) {
+            if (added.length) {
                 out.added = added;
             }
-            if (removedFlag) {
+            if (removed.length) {
                 out.removed = removed;
             }
 

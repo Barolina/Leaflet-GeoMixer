@@ -309,7 +309,8 @@ var DataManager = L.Class.extend({
                         id: id,
                         properties: it,
                         item: item,
-                        dataOption: dataOption
+                        dataOption: dataOption,
+                        tileKey: tile.vectorTileKey
                     });
                 }
             };
@@ -509,20 +510,17 @@ var DataManager = L.Class.extend({
         for (var key in fromTiles) {
             if (this._tiles[key]) {
                 var tile = this._tiles[key].tile,
-                    data = tile.data;
-                for (var j = 0, len1 = data.length; j < len1; j++) {
-                    var prop = data[j];
-                    if (id === prop[0]) {
-                        var dataOption = tile.dataOptions[j],
-                            bbox = dataOption.bounds;
-                        members.push({
-                            geo: prop[prop.length - 1],
-                            width: bbox.max.x - bbox.min.x,
-                            dataOption: dataOption
-                        });
-                        break;
-                    }
-                }
+                    objIndex = fromTiles[key],
+                    props = tile.data[objIndex],
+                    dataOption = tile.dataOptions[objIndex]
+                    bbox = dataOption.bounds;
+
+                members.push({
+                    geo: props[props.length - 1],
+                    width: bbox.max.x - bbox.min.x,
+                    dataOption: dataOption
+                });
+
             }
         }
         return members.sort(function(a, b) {
@@ -535,14 +533,10 @@ var DataManager = L.Class.extend({
             geomItems = [];
         for (var key in fromTiles) {
             if (this._tiles[key]) {
-                var data = this._tiles[key].tile.data;
-                for (var j = 0, len1 = data.length; j < len1; j++) {
-                    var prop = data[j];
-                    if (id === prop[0]) {
-                        geomItems.push(prop[prop.length - 1]);
-                        break;
-                    }
-                }
+                var tileData = this._tiles[key].tile.data,
+                    props = tileData[fromTiles[key]];
+
+                geomItems.push(props[props.length - 1]);
             }
         }
         return geomItems;
