@@ -116,6 +116,7 @@
             this._items = {};
             this._observer = this._layer.addObserver({
                 type: 'resend',
+                filters: ['clipFilter', 'userFilter', 'clipPointsFilter'],
                 callback: L.bind(this._updateData, this)
             }).deactivate();
         },

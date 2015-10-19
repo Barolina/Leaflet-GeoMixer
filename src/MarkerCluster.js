@@ -216,7 +216,7 @@
             this._items = {};
             this._observer = this._layer.addObserver({
                 callback: L.bind(this._updateData, this),
-                filters: ['styleFilter']
+                filters: ['clipFilter', 'userFilter', 'clipPointsFilter', 'styleFilter']
             }).deactivate();
         },
 

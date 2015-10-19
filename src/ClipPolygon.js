@@ -148,6 +148,15 @@ L.gmx.VectorLayer.include({
             dataManager.addFilter('clipFilter', function (item, tile, observer) {
                 return isObserverIntersects(observer, _this._gmx._clipPolygons);
             });
+
+            dataManager.addFilter('clipPointsFilter', function (item, tile, observer) {
+                if (item.type === 'POINT') {
+                    var propArr = item.properties,
+                        geom = propArr[propArr.length - 1];
+                    return isPointInClipPolygons(geom.coordinates, _this._gmx._clipPolygons);
+                }
+                return true;
+            });
             if (Object.keys(this._gmx._clipPolygons).length === 1) {
                 gmx.renderHooks.unshift(function (tile, hookInfo) {
                     if (tile && Object.keys(_this._gmx._clipPolygons).length > 0) {

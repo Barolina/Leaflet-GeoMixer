@@ -193,12 +193,12 @@ var DataManager = L.Class.extend({
         });
 
         this._observerTileLoader.on('observertileload', function(event) {
-            var observer = event.observer,
-                data = _this.getItems(observer.id);
-
-            observer.needRefresh = false;
-
-            observer.updateData(data);
+            var observer = event.observer;
+            if (observer.isActive()) {
+                observer.needRefresh = false;
+                var data = _this.getItems(observer.id);
+                observer.updateData(data);
+            }
         });
     },
 
