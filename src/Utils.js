@@ -840,6 +840,57 @@ var gmxAPIutils = {
         return s;
     },
 
+    _vfi: function(fi, a, b) {
+        return [
+            -Math.cos(fi) * Math.sin(a) + Math.sin(fi) * Math.sin(b) * Math.cos(a),
+            Math.cos(fi) * Math.cos(a) + Math.sin(fi) * Math.sin(b) * Math.sin(a),
+            -Math.sin(fi) * Math.cos(b)
+        ];
+    },
+
+    getCircleLatLngs: function(latlng, r) {   // Get latlngs for circle
+        var x = 0, y = 0;
+        if (latlng instanceof L.LatLng) {
+            x = latlng.lng;
+            y = latlng.lat;
+        } else if (L.Util.isArray(latlng)) {
+            x = latlng[1];
+            y = latlng[0];
+        } else {
+            return null;
+        }
+
+        var rad = Math.PI / 180,
+            a = x * rad,  //долгота центра окружности в радианах
+            b = y * rad,  //широта центра окружности в радианах
+            R = gmxAPIutils.rMajor,
+            d = R * Math.sin(r / R),
+            Rd = R * Math.cos(r / R),
+            VR = [
+                Rd * Math.cos(b) * Math.cos(a),
+                Rd * Math.cos(b) * Math.sin(a),
+                Rd * Math.sin(b)
+            ],
+            latlngs = [];
+
+        for (var fi = 0, limit = 2 * Math.PI + 0.000001; fi < limit; fi += rad) {
+            var v = gmxAPIutils._vfi(fi, a, b),
+                circle = [];
+            for (var i = 0; i < 3; i++) { circle[i] = VR[i] + d * v[i]; }
+
+            var t2 = Math.acos(circle[0] / Math.sqrt(circle[0] * circle[0] + circle[1] * circle[1])) / rad;
+            if (circle[1] < 0) { t2 = -t2; }
+
+            if (t2 < x - 180) {
+                t2 += 360;
+            } else if (t2 > x + 180) {
+                t2 -= 360;
+            }
+            latlngs.push([Math.asin(circle[2] / R) / rad, t2]);
+        }
+        return latlngs;
+    },
+
     /** Get point coordinates from string
      * @memberof L.gmxUtil
      * @param {String} text - point coordinates in following formats:
@@ -2126,7 +2177,8 @@ L.extend(L.gmxUtil, {
     isRectangle: gmxAPIutils.isRectangle,
     isClockwise: gmxAPIutils.isClockwise,
     isPointInPolygonWithHoles: gmxAPIutils.isPointInPolygonWithHoles,
-    getPatternIcon: gmxAPIutils.getPatternIcon
+    getPatternIcon: gmxAPIutils.getPatternIcon,
+    getCircleLatLngs: gmxAPIutils.getCircleLatLngs
 });
 
 (function() {

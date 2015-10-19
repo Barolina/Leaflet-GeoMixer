@@ -81,7 +81,7 @@ var Observer = L.Class.extend({
 
             for (var i = 0; i < len; i++) {
                 var it = data[i];
-                
+
                 key = it.id + '_' + it.tileKey;
 
                 newItems[key] = it;
