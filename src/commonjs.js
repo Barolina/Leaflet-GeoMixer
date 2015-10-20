@@ -1,5 +1,5 @@
 var L;
-if (module && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
     L = require('leaflet');
     L.gmx = {};
     module.exports = L.gmx;
