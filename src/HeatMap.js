@@ -150,6 +150,7 @@
                     }
                     layer.onAdd(lmap);
                 }
+                layer.enablePopup();
             } else if (layer._map) {
                 layer.onRemove(lmap);
                 if (!this.markers._map) {
@@ -159,6 +160,7 @@
                     this.setDateInterval();
                     observer.activate();
                 }
+                layer.disablePopup();
             }
         },
 
@@ -181,7 +183,6 @@
                     this.unbindHeatMap();
                 }
                 this._heatmap = new GmxHeatMap(options, this);
-                this.disablePopup();
             }
             return this;
         },

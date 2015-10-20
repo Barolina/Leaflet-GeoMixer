@@ -255,6 +255,7 @@
                     }
                     layer.onAdd(lmap);
                 }
+                layer.enablePopup();
             } else if (layer._map) {
                 layer.onRemove(lmap);
                 if (observer) {
@@ -264,6 +265,7 @@
                 if (!this.markers._map) {
                     lmap.addLayer(this.markers);
                 }
+                layer.disablePopup();
             }
         },
 
@@ -286,7 +288,6 @@
                     this.unbindClusters();
                 }
                 this._clusters = new GmxMarkerCluster(options, this);
-                this.disablePopup();
             }
             return this;
         },
