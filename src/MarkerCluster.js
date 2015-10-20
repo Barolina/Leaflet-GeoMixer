@@ -155,7 +155,7 @@
             if (!fromMapFlag) {
                 this._layer.onAdd(map);
             }
-            this._map = null;
+            // this._map = null;
         },
 
         setDateInterval: function () {
@@ -221,13 +221,15 @@
         },
 
         _layeradd: function (ev) {
-            if (ev.layer.options && ev.layer.options.layerID === this._layer.options.layerID) {
+            var layer = ev.layer;
+            if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
                 this.addEvent({target:{_map: this._layer._map}});
             }
         },
 
         _layerremove: function (ev) {
-            if (ev.layer.options && ev.layer.options.layerID === this._layer.options.layerID) {
+            var layer = ev.layer;
+            if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
                 this.onRemove(true);
             }
         },
