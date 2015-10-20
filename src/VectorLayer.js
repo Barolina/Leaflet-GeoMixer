@@ -245,7 +245,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         // Original properties from the server.
         // Descendant classes can override this property
         // Not so good solution, but it works
-        gmx.rawProperties = ph.properties;
+        gmx.rawProperties = ph.rawProperties || ph.properties;
 
         this.initLayerData(ph);
         gmx.dataManager = new DataManager(gmx, ph);
@@ -843,8 +843,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if ('clusters' in prop) {
             gmx.clusters = prop.clusters;
         }
-        if ('MetaProperties' in prop) {
-            var meta = prop.MetaProperties;
+
+        if ('MetaProperties' in gmx.rawProperties) {
+            var meta = gmx.rawProperties.MetaProperties;
             if ('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя
                 gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
                 gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;
@@ -922,6 +923,82 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 return url;
             };
         }
+    },
+
+    setPositionOffset: function(dx, dy) {
+        var gmx = this._gmx;
+        gmx.shiftXlayer = dx;
+        gmx.shiftYlayer = dy;
+        this._updateShiftY();
+    },
+
+    getPositionOffset: function() {
+        var gmx = this._gmx;
+        return {shiftX: gmx.shiftXlayer, shiftY: gmx.shiftYlayer};
+    },
+
+    _getDragInfo: function (point) {
+        var gmx = this._gmx,
+            dragPosition = point.divideBy(256 / L.gmxUtil.tileSizes[this._map.getZoom()]);
+        return {
+            shiftX: gmx.shiftXlayer + dragPosition.x,
+            shiftY: gmx.shiftYlayer - dragPosition.y
+        };
+    },
+
+    _dragstart: function (ev) {
+        this.fire('dragstart', this._getDragInfo(ev.target._newPos));
+    },
+
+    _dragend: function (ev) {
+        var info = this._getDragInfo(ev.target._newPos);
+        this.fire('dragend', info);
+        L.DomUtil.setPosition(this._tileContainer, new L.Point(0, 0));
+        this._gmx.shiftXlayer = info.shiftX;
+        this._gmx.shiftYlayer = info.shiftY;
+        this._updateShiftY();
+    },
+
+    _drag: function (ev) {
+        this.fire('drag', this._getDragInfo(ev.target._newPos));
+    },
+
+    enableDrag: function () {
+        if (this._map) {
+            this._map.dragging.disable();
+            L.DomUtil.disableImageDrag();
+            if (!this._gmx.shiftXlayer) { this._gmx.shiftXlayer = 0; }
+            if (!this._gmx.shiftYlayer) { this._gmx.shiftYlayer = 0; }
+            L.DomUtil.setPosition(this._tileContainer, new L.Point(0, 0));
+            this._draggable = new L.Draggable(this._tileContainer, this._container);
+            this._draggable
+                .on('dragstart', this._dragstart, this)
+                .on('dragend', this._dragend, this)
+                .on('drag', this._drag, this);
+            this._draggable.enable();
+            this.fire('dragenabled');
+        }
+        return this;
+    },
+
+    disableDrag: function () {
+        if (this._map) {
+            if (this._draggable) {
+                this.fire('dragend');
+            }
+
+            this._map.dragging.enable();
+            L.DomUtil.enableImageDrag();
+            this._draggable.disable();
+            this._draggable
+                .off('dragstart', this._dragstart, this)
+                .off('dragend', this._dragend, this)
+                .off('drag', this._drag, this);
+
+            this._draggable = null;
+        }
+        this.fire('dragdisabled');
+        return this;
     },
 
     addData: function(data, options) {

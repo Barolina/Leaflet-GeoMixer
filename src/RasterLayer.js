@@ -34,8 +34,7 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
             };
         }
 
-		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties});
-        gmx.rawProperties = ph.properties;
+		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties, rawProperties: ph.properties});
 
         gmx.rasterBGfunc = function(x, y, z) {
 			var tileSenderPrefix = 'http://' + gmx.hostName + '/' +
