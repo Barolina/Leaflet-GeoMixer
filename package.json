@@ -5,7 +5,7 @@
 	"devDependencies": {
 		"uglify-js": "~2.3.6",
 		"jake": "~0.5.16",
-        "eslint": "^0.13.0"
+		"eslint": "^0.13.0"
 	},
 	"repository": {
 		"type": "git",
@@ -14,5 +14,6 @@
 	"keywords": ["gis", "leaflet", "geomixer"],
 	"scripts": {
 		"build": "jake"
-	}
+	},
+	"main": "dist/leaflet-geomixer-src.js"
 }
