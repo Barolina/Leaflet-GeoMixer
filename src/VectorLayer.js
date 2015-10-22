@@ -26,6 +26,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             screenTiles: {},
             tileSubscriptions: {},
             _tilesToLoad: 0,
+            shiftXlayer: 0,
+            shiftYlayer: 0,
             getDeltaY: function() {
                 var map = _this._map;
                 if (!map) { return 0; }
@@ -462,20 +464,25 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return def;
     },
 
+    setPositionOffset: function(dx, dy) {
+        var gmx = this._gmx;
+        gmx.shiftXlayer = dx;
+        gmx.shiftYlayer = dy;
+        this._updateShiftY();
+    },
+
+    getPositionOffset: function() {
+        var gmx = this._gmx;
+        return {shiftX: gmx.shiftXlayer, shiftY: gmx.shiftYlayer};
+    },
+
     _updateShiftY: function() {
         var gmx = this._gmx,
             deltaY = gmx.getDeltaY();
 
         gmx.shiftX = Math.floor(gmx.mInPixel * (gmx.shiftXlayer || 0));
         gmx.shiftY = Math.floor(gmx.mInPixel * (deltaY + (gmx.shiftYlayer || 0)));
-
-        for (var t in this._tiles) {
-            var tile = this._tiles[t],
-                pos = this._getTilePos(tile._tilePoint);
-            pos.x += gmx.shiftX;
-            pos.y -= gmx.shiftY;
-            L.DomUtil.setPosition(tile, pos, L.Browser.chrome || L.Browser.android23);
-        }
+        L.DomUtil.setPosition(this._tileContainer, new L.Point(gmx.shiftX, -gmx.shiftY));
         this._update();
     },
 
@@ -684,10 +691,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     appendTileToContainer: function (tile) {
         this._tileContainer.appendChild(tile);
-
         var tilePos = this._getTilePos(tile._tilePoint);
-        tilePos.x += this._gmx.shiftX || 0;
-        tilePos.y -= this._gmx.shiftY || 0; // Сдвиг слоя
         L.DomUtil.setPosition(tile, tilePos, L.Browser.chrome || L.Browser.android23);
     },
 
@@ -923,82 +927,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 return url;
             };
         }
-    },
-
-    setPositionOffset: function(dx, dy) {
-        var gmx = this._gmx;
-        gmx.shiftXlayer = dx;
-        gmx.shiftYlayer = dy;
-        this._updateShiftY();
-    },
-
-    getPositionOffset: function() {
-        var gmx = this._gmx;
-        return {shiftX: gmx.shiftXlayer, shiftY: gmx.shiftYlayer};
-    },
-
-    _getDragInfo: function (point) {
-        var gmx = this._gmx,
-            dragPosition = point.divideBy(256 / L.gmxUtil.tileSizes[this._map.getZoom()]);
-        return {
-            shiftX: gmx.shiftXlayer + dragPosition.x,
-            shiftY: gmx.shiftYlayer - dragPosition.y
-        };
-    },
-
-    _dragstart: function (ev) {
-        this.fire('dragstart', this._getDragInfo(ev.target._newPos));
-    },
-
-    _dragend: function (ev) {
-        var info = this._getDragInfo(ev.target._newPos);
-        this.fire('dragend', info);
-        L.DomUtil.setPosition(this._tileContainer, new L.Point(0, 0));
-        this._gmx.shiftXlayer = info.shiftX;
-        this._gmx.shiftYlayer = info.shiftY;
-        this._updateShiftY();
-    },
-
-    _drag: function (ev) {
-        this.fire('drag', this._getDragInfo(ev.target._newPos));
-    },
-
-    enableDrag: function () {
-        if (this._map) {
-            this._map.dragging.disable();
-            L.DomUtil.disableImageDrag();
-            if (!this._gmx.shiftXlayer) { this._gmx.shiftXlayer = 0; }
-            if (!this._gmx.shiftYlayer) { this._gmx.shiftYlayer = 0; }
-            L.DomUtil.setPosition(this._tileContainer, new L.Point(0, 0));
-            this._draggable = new L.Draggable(this._tileContainer, this._container);
-            this._draggable
-                .on('dragstart', this._dragstart, this)
-                .on('dragend', this._dragend, this)
-                .on('drag', this._drag, this);
-            this._draggable.enable();
-            this.fire('dragenabled');
-        }
-        return this;
-    },
-
-    disableDrag: function () {
-        if (this._map) {
-            if (this._draggable) {
-                this.fire('dragend');
-            }
-
-            this._map.dragging.enable();
-            L.DomUtil.enableImageDrag();
-            this._draggable.disable();
-            this._draggable
-                .off('dragstart', this._dragstart, this)
-                .off('dragend', this._dragend, this)
-                .off('drag', this._drag, this);
-
-            this._draggable = null;
-        }
-        this.fire('dragdisabled');
-        return this;
     },
 
     addData: function(data, options) {
