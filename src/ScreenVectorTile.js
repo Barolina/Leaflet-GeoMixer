@@ -507,7 +507,7 @@ ScreenVectorTile.prototype = {
                     L.gmxUtil.drawGeoItem(geoItems[i], dattr);
                 }
                 //ctx.restore();
-                _this.rasters = {}; // clear rasters
+                // _this.rasters = {}; // clear rasters
                 if (_this.layer._map) {
                     _this.layer.appendTileToContainer(tile);
                 }
@@ -538,5 +538,10 @@ ScreenVectorTile.prototype = {
         if (this.currentDrawDef) {
             this.currentDrawDef.cancel();
         }
+        this.clearCache();
+    },
+
+    clearCache: function () {
+        this.rasters = {}; // clear rasters
     }
 };

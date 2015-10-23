@@ -552,6 +552,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         || parsedKey.y > tileBounds.max.y
                     ) {
                         observer.deactivate();
+                        if (gmx.screenTiles[key]) { gmx.screenTiles[key].clearCache(); }
                     } else {
                         observer.activate();
                     }
