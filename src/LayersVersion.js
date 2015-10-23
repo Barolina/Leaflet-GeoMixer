@@ -31,14 +31,15 @@ var getRequestParams = function(layer) {
 };
 
 var chkVersion = function (layer, callback) {
+    var layerID = layer ? layer._gmx.layerID : null;
     var processResponse = function(res) {
         if (res && res.Status === 'ok' && res.Result) {
             for (var i = 0, len = res.Result.length; i < len; i++) {
                 var item = res.Result[i],
                     prop = item.properties,
                     id = prop.name,
-                    layer = layers[id];
-                if (layer && 'updateVersion' in layer) { layer.updateVersion(item); }
+                    curLayer = layers[id] || (id === layerID ? layer : null);
+                if (curLayer && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
             }
         }
         lastLayersStr = '';
