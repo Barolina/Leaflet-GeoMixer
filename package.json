@@ -2,7 +2,7 @@
 	"name": "leaflet-geomixer",
 	"version": "0.0.1",
 	"description": "GeoMixer layers visualization as plugin for Leaflet",
-	"devDependencies": {
+	"dependencies": {
 		"uglify-js": "~2.3.6",
 		"jake": "~0.5.16",
 		"eslint": "^0.13.0"
