@@ -13,7 +13,8 @@
 	},
 	"keywords": ["gis", "leaflet", "geomixer"],
 	"scripts": {
-		"build": "jake"
+		"build": "jake",
+		"postinstall": "jake"
 	},
 	"main": "dist/leaflet-geomixer-src.js"
 }
