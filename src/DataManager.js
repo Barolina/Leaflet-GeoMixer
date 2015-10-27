@@ -670,16 +670,10 @@ var DataManager = L.Class.extend({
     _propertiesToArray: function(it) {
         var prop = it.properties,
             indexes = this._gmx.tileAttributeIndexes,
-            temporalColumnName = this._gmx.properties.TemporalColumnName,
             arr = [];
 
-        for (var key in indexes) {
-            var zn = prop[key];
-            if (key === temporalColumnName && typeof(zn) === 'string') {
-                zn = Math.floor(new Date(zn.replace(/\./g, '-')).getTime() / 1000);
-            }
-            arr[indexes[key]] = zn;
-        }
+        for (var key in indexes)
+            arr[indexes[key]] = prop[key];
 
         arr[arr.length] = it.geometry;
         arr[0] = it.id;
