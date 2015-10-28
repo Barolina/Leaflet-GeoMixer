@@ -212,10 +212,10 @@ var DataManager = L.Class.extend({
 
         this._needCheckActiveTiles = false;
 
-        var processing = this._gmx.properties.Processing;
+        var processing = this._gmx.properties.GeoProcessing;
         if (processing) {
             this._chkProcessing(processing);
-            delete this._gmx.properties.Processing;
+            delete this._gmx.properties.GeoProcessing;
         }
 
         if (this._isTemporalLayer) {
@@ -719,14 +719,14 @@ var DataManager = L.Class.extend({
         if (processing.Inserted) {
             for (i = 0, len = processing.Inserted.length; i < len; i++) {
                 it = processing.Inserted[i];
-                if (!skip[it.id]) { out[it.id] = it; }
+                if (!skip[it[0]]) { out[it[0]] = it; }
             }
         }
 
         if (processing.Updated) {
             for (i = 0, len = processing.Updated.length; i < len; i++) {
                 it = processing.Updated[i];
-                if (!skip[it.id]) { out[it.id] = it; }
+                if (!skip[it[0]]) { out[it[0]] = it; }
             }
             if (!needProcessingFilter && len > 0) { needProcessingFilter = true; }
         }
@@ -737,8 +737,7 @@ var DataManager = L.Class.extend({
                 this._items[id].processing = true;
                 this._items[id].currentFilter = null;
             }
-
-            data.push(this._propertiesToArray(out[id]));
+            data.push(out[id]);
         }
 
         if (data.length > 0) {
