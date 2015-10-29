@@ -1006,28 +1006,26 @@ var gmxAPIutils = {
         return 256 / gmxAPIutils.tileSizes[zoom];
     },
 
-	forEachPoint: function(coords, callback) {
-		if (!coords || coords.length === 0) { return []; }
-		var ret = [],
-            i = 0;
-		if (!coords[0].length) {
-			if (coords.length === 2) {
-				return callback(coords);
-			} else {
-				for (i = 0; i < coords.length / 2; i++) {
-					ret.push(callback([coords[i * 2], coords[i * 2 + 1]]));
-				}
-                return ret;
-			}
-		} else {
-			for (i = 0; i < coords.length; i++) {
-				if (typeof (coords[i]) !== 'string') {
-                    ret.push(this.forEachPoint(coords[i], callback));
+    forEachPoint: function(coords, callback) {
+        if (!coords || coords.length === 0) { return []; }
+        var i, len, ret = [];
+        if (!coords[0].length) {
+            if (coords.length === 2) {
+                return callback(coords);
+            } else {
+                for (i = 0, len = coords.length / 2; i < len; i++) {
+                    ret.push(callback([coords[i * 2], coords[i * 2 + 1]]));
                 }
-			}
-			return ret;
-		}
-	},
+            }
+        } else {
+            for (i = 0, len = coords.length; i < len; i++) {
+                if (typeof(coords[i]) !== 'string') {
+                    ret.push(gmxAPIutils.forEachPoint(coords[i], callback));
+                }
+            }
+        }
+        return ret;
+    },
 
 	getQuicklookPoints: function(coord) { // получить 4 точки привязки снимка
 		var d1 = Number.MAX_VALUE;
@@ -1540,6 +1538,15 @@ var gmxAPIutils = {
 
     coordsToMercator: function(type, coords) {
         return gmxAPIutils._coordsConvert(type, coords, true);
+    },
+
+    transformGeometry: function(geom, callback) {
+        return !geom ? geom : { 
+            type: geom.type, 
+            coordinates: gmxAPIutils.forEachPoint(geom.coordinates, function(p) { 
+                return callback(p);
+            })
+        }
     },
 
     /** Get area for geometry
@@ -2170,6 +2177,7 @@ L.extend(L.gmxUtil, {
     parseCoordinates: gmxAPIutils.parseCoordinates,
     geometryToGeoJSON: gmxAPIutils.geometryToGeoJSON,
     convertGeometry: gmxAPIutils.convertGeometry,
+    transformGeometry: gmxAPIutils.transformGeometry,
     geoJSONtoGeometry: gmxAPIutils.geoJSONtoGeometry,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
