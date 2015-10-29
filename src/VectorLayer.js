@@ -110,6 +110,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
+    _clearScreenCache: function() {
+        var gmx = this._gmx;
+        for (var key in gmx.screenTiles) {    // recheck bbox on screen observers
+            gmx.screenTiles[key].clearCache();
+        }
+    },
+
     _onStyleChange: function() {
         var gmx = this._gmx;
         if (!gmx.balloonEnable && this._popup) {
@@ -173,6 +180,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         if (gmx.balloonEnable && !this._popup) { this.bindPopup(''); }
         this.on('stylechange', this._onStyleChange, this);
+        this.on('versionchange', this._clearScreenCache, this);
 
         if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
             this._objectsReorder.onAdd(this);
