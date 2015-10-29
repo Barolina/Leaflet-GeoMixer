@@ -1021,7 +1021,7 @@ var gmxAPIutils = {
             }
         } else {
             for (i = 0, len = coords.length; i < len; i++) {
-                if (typeof(coords[i]) !== 'string') {
+                if (typeof coords[i] !== 'string') {
                     ret.push(gmxAPIutils.forEachPoint(coords[i], callback));
                 }
             }
@@ -1543,12 +1543,12 @@ var gmxAPIutils = {
     },
 
     transformGeometry: function(geom, callback) {
-        return !geom ? geom : { 
-            type: geom.type, 
-            coordinates: gmxAPIutils.forEachPoint(geom.coordinates, function(p) { 
+        return !geom ? geom : {
+            type: geom.type,
+            coordinates: gmxAPIutils.forEachPoint(geom.coordinates, function(p) {
                 return callback(p);
             })
-        }
+        };
     },
 
     /** Get area for geometry
