@@ -111,7 +111,9 @@ var gmxAPIutils = {
             }
             var reqId = L.gmxUtil.loaderStatus();
             if (ph.async) {
-                //xhr.withCredentials = true;
+                if (ph.withCredentials) {
+                    xhr.withCredentials = true;
+                }
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
                         L.gmxUtil.loaderStatus(reqId, true);

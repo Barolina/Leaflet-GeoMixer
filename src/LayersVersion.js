@@ -63,6 +63,7 @@ var chkVersion = function (layer, callback) {
                         },
                         type: 'POST',
                         params: 'WrapStyle=None&layers=' + encodeURIComponent(layersStr),
+                        withCredentials: true,
                         callback: function(response) {
                             processResponse(JSON.parse(response));
                         },
