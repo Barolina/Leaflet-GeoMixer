@@ -197,7 +197,7 @@
                             };
                         if (parsedStyle.iconUrl) {
                             opt.icon = L.icon({
-                                iconAnchor: [8, 10],
+                                iconAnchor: parsedStyle.iconAnchor || [8, 10],
                                 iconUrl: parsedStyle.iconUrl
                             });
                         } else {
