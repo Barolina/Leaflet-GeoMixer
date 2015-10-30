@@ -11,17 +11,31 @@ var GmxEventsManager = L.Handler.extend({
         this._lastLayer = null;
         this._lastId = null;
         var _this = this;
-        this._drawstart = false;
+        this._drawstart = null;
+        this._lastDragTime = 0;
         this._lastCursor = '';
 
-        if (map.gmxDrawing) {
-            map.gmxDrawing.on('drawstart', function () {
-                this._drawstart = true;
-            }, this);
-            map.gmxDrawing.on('drawstop', function () {
-                this._drawstart = false;
-            }, this);
-        }
+        var isDrawing = function () {
+            var flag = false;
+            if (_this._drawstart) {
+                return true;
+            } else if (_this._drawstart === null) {
+                if (map.gmxDrawing) {
+                    map.gmxDrawing.on('drawstart', function () {
+                        _this._drawstart = true;
+                    }, _this);
+                    map.gmxDrawing.on('drawstop', function () {
+                        _this._drawstart = false;
+                        _this._lastDragTime = Date.now() + 100;
+                    }, _this);
+                }
+                _this._drawstart = false;
+            }
+            if (_this._lastDragTime - Date.now() > 0) {
+                return true;
+            }
+            return false;
+        };
 
         var getDomIndex = function (layer) {
             var container = layer._container;
@@ -51,27 +65,28 @@ var GmxEventsManager = L.Handler.extend({
 
         var eventCheck = function (ev) {
             var type = ev.type,
+                map = _this._map,
                 skipNode = false;
             if (ev.originalEvent) {
-                _this._map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
+                map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
                 skipNode = skipNodeName[ev.originalEvent.target.nodeName];
             }
 
-            if (_this._map._animatingZoom ||
-                _this._drawstart ||
+            if (map._animatingZoom ||
+                isDrawing() ||
                 skipNode ||
-                (type === 'mousemove' &&  _this._map.gmxMouseDown)
+                (type === 'mousemove' &&  map.gmxMouseDown)
                 ) {
                 clearLastHover();
                 return;
             }
             if (ev.layerPoint) {
-                _this._map.gmxMousePos = _this._map.getPixelOrigin().add(ev.layerPoint);
+                map.gmxMousePos = map.getPixelOrigin().add(ev.layerPoint);
             }
 
             var arr = Object.keys(_this._layers).sort(function(a, b) {
-                var la = _this._map._layers[a],
-                    lb = _this._map._layers[b];
+                var la = map._layers[a],
+                    lb = map._layers[b];
                 if (la && lb) {
                     var oa = la.options, ob = lb.options,
                         za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
@@ -86,7 +101,7 @@ var GmxEventsManager = L.Handler.extend({
                 cursor = '';
             for (var i = 0, len = arr.length; i < len; i++) {
                 var id = arr[i];
-                layer = _this._map._layers[id];
+                layer = map._layers[id];
                 if (layer && layer._map && !layer._animating && layer.options.clickable) {
                     if (layer.gmxEventCheck(ev)) {
                         if (layer.hasEventListeners('mouseover')) {

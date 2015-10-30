@@ -244,9 +244,11 @@ L.gmx.VectorLayer.include({
                 if (type === 'mouseover' && closeStyle !== 'hidden') {
                     closeStyle.visibility = 'hidden';
                     _popup._container.style.marginBottom = '7px';
+                    _popup._container.style.pointerEvents = 'none';
                 } else if (type === 'click' && closeStyle !== 'inherit') {
                     closeStyle.visibility = 'inherit';
                     _popup._container.style.marginBottom = '';
+                    _popup._container.style.pointerEvents = '';
                 }
             }
         }
