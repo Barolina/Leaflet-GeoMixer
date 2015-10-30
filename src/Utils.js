@@ -520,6 +520,7 @@ var gmxAPIutils = {
             sx = currentStyle.sx || style.sx || 4,
             sy = currentStyle.sy || style.sy || 4,
             weight = currentStyle.weight || style.weight || 0,
+            iconAnchor = currentStyle.iconAnchor || style.iconAnchor || null,
             px = attr.tpx,
             py = attr.tpy;
 
@@ -527,6 +528,11 @@ var gmxAPIutils = {
         sy *= iconScale;
         var px1 = coords[0] * mInPixel - px,
             py1 = py - coords[1] * mInPixel;
+
+        if (iconAnchor) {
+            px1 += iconAnchor[0];
+            py1 += iconAnchor[1];
+        }
 
         return ((py1 - sy - weight) > 256 || (px1 - sx - weight) > 256 || (px1 + sx + weight) < 0 || (py1 + sy + weight) < 0)
             ? null
