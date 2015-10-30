@@ -421,6 +421,7 @@ StyleManager.prototype = {
                 st.maxSize = st.iconSize || 0;
                 st.maxSize += st.weight ? st.weight : 0;
                 if ('iconScale' in st) { st.maxSize *= st.iconScale; }
+                if ('iconAnchor' in st) { st.maxSize += Math.max(st.iconAnchor[0], st.iconAnchor[1]); }
             }
         }
         return st;

@@ -674,7 +674,7 @@ var gmxAPIutils = {
         }
     },
     lineToCanvas: function(attr) {  // Lines in canvas
-		var gmx = attr.gmx,
+        var gmx = attr.gmx,
             coords = attr.coords,
             ctx = attr.ctx;
 
@@ -692,7 +692,7 @@ var gmxAPIutils = {
             }
         }
         ctx.stroke();
-	},
+    },
 
     polygonToCanvas: function(attr) {       // Polygons in canvas
         if (attr.coords.length === 0) { return null; }
