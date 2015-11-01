@@ -642,6 +642,12 @@ StyleManager.getStyleKeys = function(style) {
             }
         }
     }
+    if ('iconAnchor' in style) {
+        out.iconAnchor = style.iconAnchor;
+    }
+    if ('labelAnchor' in style) {
+        out.labelAnchor = style.labelAnchor;
+    }
     return out;
 };
 
