@@ -517,6 +517,7 @@ var gmxAPIutils = {
             style = attr.style || {},
             //iconScale = currentStyle.iconScale || style.iconScale || 1,
             iconScale = currentStyle.iconScale || 1,
+            iconCenter = currentStyle.iconCenter || false,
             sx = currentStyle.sx || style.sx || 4,
             sy = currentStyle.sy || style.sy || 4,
             weight = currentStyle.weight || style.weight || 0,
@@ -529,9 +530,9 @@ var gmxAPIutils = {
         var px1 = coords[0] * mInPixel - px,
             py1 = py - coords[1] * mInPixel;
 
-        if (iconAnchor) {
-            px1 += iconAnchor[0];
-            py1 += iconAnchor[1];
+        if (!iconCenter && iconAnchor) {
+            px1 -= iconAnchor[0];
+            py1 -= iconAnchor[1];
         }
 
         return ((py1 - sy - weight) > 256 || (px1 - sx - weight) > 256 || (px1 + sx + weight) < 0 || (py1 + sy + weight) < 0)
@@ -619,9 +620,13 @@ var gmxAPIutils = {
         var item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys,
             iconScale = currentStyle.iconScale || 1,
-            px1sx = px1 - sx / 2, py1sy = py1 - sy / 2,
+            px1sx = px1, py1sy = py1,
             ctx = attr.ctx;
 
+        if (currentStyle.iconCenter) {
+            px1sx -= sx / 2;
+            py1sy -= sy / 2;
+        }
         var image = currentStyle.image || style.image;
         if (image) {
             if ('iconColor' in currentStyle) {
@@ -1881,8 +1886,8 @@ var gmxAPIutils = {
         }
         if ('iconAnchor' in style) {
             if (!out.marker) { out.marker = {}; }
-            out.marker.dx = style.iconAnchor[0];
-            out.marker.dy = style.iconAnchor[1];
+            out.marker.dx = -style.iconAnchor[0];
+            out.marker.dy = -style.iconAnchor[1];
         }
         return out;
     },
@@ -1932,7 +1937,9 @@ var gmxAPIutils = {
         if (style.marker) {
             st = style.marker;
             if ('dx' in st || 'dy' in st) {
-                out.iconAnchor = [st.dx || 0, st.dy || 0];
+                var dx = st.dx || 0,
+                    dy = st.dy || 0;
+                out.iconAnchor = [-dx, -dy];    // For leaflet type iconAnchor
             }
         }
         return out;

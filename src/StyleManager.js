@@ -421,7 +421,7 @@ StyleManager.prototype = {
                 st.maxSize = st.iconSize || 0;
                 st.maxSize += st.weight ? st.weight : 0;
                 if ('iconScale' in st) { st.maxSize *= st.iconScale; }
-                if ('iconAnchor' in st) { st.maxSize += Math.max(st.iconAnchor[0], st.iconAnchor[1]); }
+                if ('iconAnchor' in st && !st.iconCenter) { st.maxSize += Math.max(Math.abs(st.iconAnchor[0]), Math.abs(st.iconAnchor[1])); }
             }
         }
         return st;
@@ -485,6 +485,12 @@ StyleManager.prototype = {
             }
             if ('iconScale' in pt) {
                 out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
+            }
+            if ('iconAnchor' in pt) {
+                out.iconAnchor = pt.iconAnchor;
+            }
+            if ('iconCenter' in pt) {
+                out.iconCenter = pt.iconCenter;
             }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
@@ -590,6 +596,9 @@ StyleManager.prototype = {
                     }
                     out[it] = pt[it];
                 }
+            }
+            if ('labelAnchor' in pt) {
+                out.labelAnchor = pt.labelAnchor;
             }
         }
         return out;
