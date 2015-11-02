@@ -2171,6 +2171,7 @@ L.extend(L.gmxUtil, {
     LatLonFormatCoordinates: gmxAPIutils.latLonFormatCoordinates,
     LatLonFormatCoordinates2: gmxAPIutils.latLonFormatCoordinates2,
     getLength: gmxAPIutils.getLength,
+    geoLength: gmxAPIutils.geoLength,
     prettifyDistance: gmxAPIutils.prettifyDistance,
     getArea: gmxAPIutils.getArea,
     prettifyArea: gmxAPIutils.prettifyArea,
