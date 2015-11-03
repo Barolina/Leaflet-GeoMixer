@@ -12,7 +12,7 @@
 [MultipleMaps.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
 [bindPopup.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Добавление пользовательского контента в тело балуна.
 [bindClusters.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.|
-
+<!--
 ##Плагин [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
 
 Пример|Описание
@@ -26,7 +26,7 @@
 ------|---------
 [Landsat8.html](http://scanex.github.io/Leaflet.imageTransform/examples/Landsat8.html)| Снимки Landsat|
 [Editing.html](http://scanex.github.io/Leaflet.imageTransform/examples/Editing.html)| Перепривязка снимка|
-
+-->
 ##Плагины [контролов](https://github.com/ScanEx/gmxControls) GeoMixer-а
 Пользователь сам выбирает набор необходимых ему контролов.
 
