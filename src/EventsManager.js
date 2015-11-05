@@ -16,7 +16,6 @@ var GmxEventsManager = L.Handler.extend({
         this._lastCursor = '';
 
         var isDrawing = function () {
-            var flag = false;
             if (_this._drawstart) {
                 return true;
             } else if (_this._drawstart === null) {

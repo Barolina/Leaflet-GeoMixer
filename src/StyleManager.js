@@ -32,7 +32,14 @@ StyleManager.prototype = {
                 maxSize = StyleManager.MAX_STYLE_SIZE;
                 break;
             }
-            maxSize = Math.max(RenderStyle.maxSize, maxSize);
+            var maxShift = 0;
+            if ('iconAnchor' in RenderStyle && !RenderStyle.iconCenter) {
+                maxShift = Math.max(
+                    Math.abs(RenderStyle.iconAnchor[0]),
+                    Math.abs(RenderStyle.iconAnchor[1])
+                );
+            }
+            maxSize = Math.max(RenderStyle.maxSize + maxShift, maxSize);
         }
         return maxSize || 256;
     },
@@ -421,7 +428,6 @@ StyleManager.prototype = {
                 st.maxSize = st.iconSize || 0;
                 st.maxSize += st.weight ? st.weight : 0;
                 if ('iconScale' in st) { st.maxSize *= st.iconScale; }
-                if ('iconAnchor' in st && !st.iconCenter) { st.maxSize += Math.max(Math.abs(st.iconAnchor[0]), Math.abs(st.iconAnchor[1])); }
             }
         }
         return st;
@@ -485,12 +491,6 @@ StyleManager.prototype = {
             }
             if ('iconScale' in pt) {
                 out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
-            }
-            if ('iconAnchor' in pt) {
-                out.iconAnchor = pt.iconAnchor;
-            }
-            if ('iconCenter' in pt) {
-                out.iconCenter = pt.iconCenter;
             }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
@@ -558,6 +558,12 @@ StyleManager.prototype = {
 
         if ('iconScale' in pt) {
             out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
+        }
+        if ('iconAnchor' in pt) {
+            out.iconAnchor = pt.iconAnchor;
+        }
+        if ('iconCenter' in pt) {
+            out.iconCenter = pt.iconCenter;
         }
 
         if (type === 'square' || type === 'polygon' || type === 'circle') {

@@ -954,6 +954,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this;
     },
 
+    getItemStyle: function(id) {
+        var gmx = this._gmx,
+            item = gmx.dataManager.getItem(id);
+        return gmx.styleManager.getObjStyle(item);
+    },
+
     getItemProperties: function(propArray) {
         var properties = {},
             indexes = this._gmx.tileAttributeIndexes;

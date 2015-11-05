@@ -626,6 +626,9 @@ var gmxAPIutils = {
         if (currentStyle.iconCenter) {
             px1sx -= sx / 2;
             py1sy -= sy / 2;
+        } else if (style.type === 'circle') {
+            px1 += sx / 2;
+            py1 += sy / 2;
         }
         var image = currentStyle.image || style.image;
         if (image) {
@@ -651,7 +654,7 @@ var gmxAPIutils = {
         } else if (style.fillColor || currentStyle.fillRadialGradient) {
             ctx.beginPath();
             if (style.type === 'circle' || currentStyle.fillRadialGradient) {
-                var circle = style.iconSize;
+                var circle = style.iconSize / 2;
                 if (currentStyle.fillRadialGradient) {
                     var rgr = currentStyle.fillRadialGradient;
                     circle = rgr.r2 * iconScale;
@@ -671,7 +674,7 @@ var gmxAPIutils = {
         if (currentStyle.strokeStyle) {
             ctx.beginPath();
             if (style.type === 'circle') {
-                ctx.arc(px1, py1, style.iconSize, 0, 2 * Math.PI);
+                ctx.arc(px1, py1, style.iconSize / 2, 0, 2 * Math.PI);
             } else {
                 ctx.strokeRect(px1sx, py1sy, sx, sy);
             }
@@ -2037,13 +2040,22 @@ gmxAPIutils.Bounds.prototype = {
         this.min.x -= dxmin;
         this.min.y -= dymin || dxmin;
         this.max.x += dxmax || dxmin;
-        this.max.y += dymax || dxmin;
+        this.max.y += dymax || dymin || dxmin;
         return this;
     },
     contains: function (point) { // ([x, y]) -> Boolean
         var min = this.min, max = this.max,
             x = point[0], y = point[1];
         return x >= min.x && x <= max.x && y >= min.y && y <= max.y;
+    },
+    getCenter: function () {
+        var min = this.min, max = this.max;
+        return [(min.x + max.x) / 2, (min.y + max.y) / 2];
+    },
+    addOffset: function (offset) {
+        this.min.x += offset[0]; this.max.x += offset[0];
+        this.min.y += offset[1]; this.max.y += offset[1];
+        return this;
     },
     intersects: function (bounds) { // (Bounds) -> Boolean
         var min = this.min,

@@ -13,14 +13,33 @@ L.gmx.VectorLayer.include({
                 item = gmx.dataManager.getItem(idr),
                 currentStyle = item.currentStyle || item.parsedStyleKeys,
                 iconScale = currentStyle.iconScale || 1,
+                iconCenter = currentStyle.iconCenter,
+                iconAnchor = !iconCenter && currentStyle.iconAnchor ? currentStyle.iconAnchor : null,
                 parsedStyle = gmx.styleManager.getObjStyle(item),
-                sx = parsedStyle.sx || currentStyle.sx || 0,
-                sy = parsedStyle.sy || currentStyle.sy || 0,
                 lineWidth = currentStyle.lineWidth || parsedStyle.lineWidth || 0,
-                dx = iconScale * (sx + lineWidth / 2) / mInPixel,
-                dy = iconScale * (sy + lineWidth / 2) / mInPixel;
+                sx = lineWidth + (parsedStyle.sx || currentStyle.sx || 0),
+                sy = lineWidth + (parsedStyle.sy || currentStyle.sy || 0),
+                offset = [
+                    iconScale * sx / 2,
+                    iconScale * sy / 2
+                ],
+                radius = offset[0],
+                point = mercPoint;
 
-            if (!dataOption.bounds.intersectsWithDelta(bounds, dx, dy)) { continue; }
+            var objBounds = gmxAPIutils.bounds()
+                .extendBounds(dataOption.bounds)
+                .addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
+            if (iconAnchor) {
+                offset = [
+                    iconAnchor[0] - offset[0],
+                    iconAnchor[1] - offset[1]
+                ];
+                point = [
+                    mercPoint[0] + offset[0] / mInPixel,
+                    mercPoint[1] - offset[1] / mInPixel
+                ];
+            }
+            if (!objBounds.contains(point)) { continue; }
 
             var geom = geoItem[geoItem.length - 1],
                 fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage || parsedStyle.fillColor,
@@ -95,11 +114,9 @@ L.gmx.VectorLayer.include({
                 if (!flag) { continue; }
             } else if (chktype === 'POINT') {
                 if (parsedStyle.type === 'circle') {
-                    var x = coords[0] - mercPoint[0],
-                        y = coords[1] - mercPoint[1];
-                    if (x * x + y * y > dx * dx) { continue; }
-                } else if (!dataOption.bounds.intersectsWithDelta(bounds, dx / 2, dy / 2)) {
-                    continue;
+                    var x = (coords[0] - point[0]) * mInPixel,
+                        y = (coords[1] - point[1]) * mInPixel;
+                    if (x * x + y * y > radius * radius) { continue; }
                 }
             }
             if (!this.isPointInClipPolygons(mercPoint)) {
@@ -111,6 +128,7 @@ L.gmx.VectorLayer.include({
                 properties: item.properties,
                 geometry: geom,
                 bounds: item.bounds,
+                offset: iconAnchor ? offset : null,
                 parsedStyle: parsedStyle
             };
         }
@@ -155,14 +173,12 @@ L.gmx.VectorLayer.include({
                     {x: gmx.shiftXlayer || 0, y: gmx.shiftYlayer || 0}
                 ),
                 delta = Math.max(5, gmx.styleManager._getMaxStyleSize(zoom)) / gmx.mInPixel,
-                mercatorPoint = [point.x, point.y],
-                bounds = gmxAPIutils.bounds([mercatorPoint]);
-            bounds = bounds.addBuffer(delta);
+                mercatorPoint = [point.x, point.y];
 
             //создаём observer только для того, чтобы сделать выборку данных вокруг курсора
             var observerOptions = {
                 type: 'resend',
-                bbox: bounds,
+                bbox: gmxAPIutils.bounds([mercatorPoint]).addBuffer(delta),
                 dateInterval: gmx.layerType === 'VectorTemporal' ? [gmx.beginDate, gmx.endDate] : null,
                 filters: ['clipFilter', 'styleFilter', 'userFilter'],
                 active: false //делаем его неактивным, так как потом будем явно выбирать данные
@@ -209,7 +225,12 @@ L.gmx.VectorLayer.include({
                         if (item.hoverDiff) {
                             var currentStyle = gmx.styleManager.getObjStyle(item);
                             if (currentStyle) {
-                                lastHover.observersToUpdate = layer._getTilesByBounds(target.bounds, currentStyle.maxSize || 256);
+                                var bounds = target.bounds;
+                                if (target.offset) {
+                                    var offset = [-target.offset[0] / gmx.mInPixel, target.offset[1] / gmx.mInPixel];
+                                    bounds = gmxAPIutils.bounds().extendBounds(bounds).addOffset(offset);
+                                }
+                                lastHover.observersToUpdate = layer._getTilesByBounds(bounds, currentStyle.maxSize || 256);
                             }
                         }
                         chkHover('mouseover');

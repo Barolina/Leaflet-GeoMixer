@@ -151,6 +151,7 @@ L.gmx.VectorLayer.include({
             properties = L.extend({}, gmx.properties),
             target = gmx.target,
             geometry = target.geometry,
+            offset = target.offset,
             templateBalloon = this._popup._initContent || balloonData.templateBalloon || '',
             outItem = {
                 id: gmx.id,
@@ -162,6 +163,10 @@ L.gmx.VectorLayer.include({
         if (geometry.type === 'POINT') {
             var coord = geometry.coordinates;
             outItem.latlng = L.Projection.Mercator.unproject({x: coord[0], y: coord[1]});
+        }
+        if (offset) {
+            var protoOffset = L.Popup.prototype.options.offset;
+            this._popup.options.offset = [-protoOffset[0] - offset[0], protoOffset[1] - offset[1]];
         }
 
         if (this._popupopen) {

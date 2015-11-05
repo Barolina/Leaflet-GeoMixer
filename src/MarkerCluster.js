@@ -60,8 +60,17 @@
             this.markers.on('click', function (ev) {
                 var propsArr = ev.layer.options.properties,
                     gmx = this._layer._gmx,
-                    balloonData = gmx.styleManager.getItemBalloon(propsArr[0]);
+                    id = propsArr[0],
+                    balloonData = gmx.styleManager.getItemBalloon(id);
                 if (!balloonData.DisableBalloonOnClick) {
+                    var style = this._layer.getItemStyle(id);
+                    if (style.iconAnchor) {
+                        var protoOffset = L.Popup.prototype.options.offset;
+                        this._popup.options.offset = [
+                            -protoOffset[0] - style.iconAnchor[0] + style.sx / 2,
+                            protoOffset[1] - style.iconAnchor[1] + style.sy / 2
+                        ];
+                    }
                     this._popup
                         .setLatLng(ev.latlng)
                         .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
@@ -76,10 +85,10 @@
                     eventFrom: 'markerClusters',
                     originalEventType: 'click',
                     gmx: {
-                        id: propsArr[0],
+                        id: id,
                         layer: this._layer,
                         target: {
-                            id: propsArr[0],
+                            id: id,
                             properties: propsArr
                         }
                     }
@@ -167,7 +176,7 @@
 
         _updateData: function (data) {
             var arr = [],
-            i, len, vectorTileItem, id, marker;
+                i, len, vectorTileItem, id, marker;
             if (data.removed) {
                 for (i = 0, len = data.removed.length; i < len; i++) {
                     vectorTileItem = data.removed[i];
@@ -196,8 +205,13 @@
                                 mPoint: p
                             };
                         if (parsedStyle.iconUrl) {
+                            var iconAnchor = parsedStyle.iconAnchor;
+                            if (!iconAnchor) {
+                                var style = this._layer.getItemStyle(id);
+                                iconAnchor = style.image ? [style.sx / 2, style.sy / 2] : [8, 10];
+                            }
                             opt.icon = L.icon({
-                                iconAnchor: parsedStyle.iconAnchor || [8, 10],
+                                iconAnchor: iconAnchor,
                                 iconUrl: parsedStyle.iconUrl
                             });
                         } else {
