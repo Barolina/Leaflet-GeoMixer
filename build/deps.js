@@ -1,4 +1,5 @@
 ﻿var depsJS = [
+    "commonjs.js",
     "Parsers.js",
     "Deferred.js",
     "ImageLoader.js",
