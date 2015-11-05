@@ -224,6 +224,11 @@ var DataManager = L.Class.extend({
                 if (!this._tilesTree) {
                     this.initTilesTree(this._gmx.properties);
                 }
+                
+                /*var commonBounds = L.gmxUtil.bounds();
+                for (var obs in this._observers) {
+                    commonBounds.extendBounds(this._observers[obs].bbox);
+                }*/
 
                 newTileKeys = this._tilesTree.selectTiles(this._beginDate, this._endDate).tiles;
             }
