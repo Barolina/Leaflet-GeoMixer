@@ -411,6 +411,7 @@ StyleManager.prototype = {
                 if (!('iconSize' in st)) { st.iconSize = 4; }
             } else if (st.fillRadialGradient) {
                 type = 'circle';
+                if (!('iconCenter' in st)) { st.iconCenter = true; }
                 var size = StyleManager.parseRadialGradient(st.fillRadialGradient);
                 if (size === null) {
                     st.common = false;
