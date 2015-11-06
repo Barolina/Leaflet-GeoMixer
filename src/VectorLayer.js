@@ -809,16 +809,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var item = this._gmx.dataManager.getItem(id),
             gmxTiles = this._getTilesByBounds(item.bounds, 0, true);
 
-        this._redrawTilesHash(gmxTiles);
-    },
-
-    _redrawTilesHash: function (observersToUpdate) {    // Перерисовать список gmxTiles тайлов на экране
-        var dataManager = this._gmx.dataManager;
-        //TODO: just trigger observer, don't get and pass data directly
-        for (var key in observersToUpdate) {
-            var observer = dataManager.getObserver(key);
-            if (observer) { observer.updateData(dataManager.getItems(key)); }
-        }
+        this.repaint(gmxTiles);
     },
 
     initLayerData: function(layerDescription) {     // обработка описания слоя

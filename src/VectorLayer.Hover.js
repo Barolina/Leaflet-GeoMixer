@@ -147,7 +147,7 @@ L.gmx.VectorLayer.include({
                         layer.fire(evType, ev);
                     }
                     if (lastHover.observersToUpdate) {
-                        layer._redrawTilesHash(lastHover.observersToUpdate);
+                        layer.repaint(lastHover.observersToUpdate);
                     }
                 }
             };
