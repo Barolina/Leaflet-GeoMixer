@@ -306,18 +306,19 @@ ScreenVectorTile.prototype = {
                         then();
                     }
                 },
-                recursiveLoaders = tileToLoadPoints.map(function(it) {
-                    var loader = _this._loadTileRecursive(it, urlFunction);
-                    loader.then(function(loadResult) {
-                        onLoadFunction(loadResult.gtp, it, loadResult.image);
-                    }, skipRasterFunc);
-                    return loader;
-                });
+                recursiveLoaders;
 
             mainRasterLoader = new L.gmx.Deferred(function() {
                 for (var k = 0; k < recursiveLoaders.length; k++) {
                     recursiveLoaders[k].cancel();
                 }
+            });
+            recursiveLoaders = tileToLoadPoints.map(function(it) {
+                var loader = _this._loadTileRecursive(it, urlFunction);
+                loader.then(function(loadResult) {
+                    onLoadFunction(loadResult.gtp, it, loadResult.image);
+                }, skipRasterFunc);
+                return loader;
             });
 
             mainRasterLoader.then(function() {
