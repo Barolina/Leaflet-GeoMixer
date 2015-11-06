@@ -2,6 +2,7 @@
 L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 {
     options: {
+        zIndexOffset: 0
         //clickable: false
     },
     initFromDescription: function(ph) {

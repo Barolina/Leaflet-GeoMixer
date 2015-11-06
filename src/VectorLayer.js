@@ -2,7 +2,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
         minZoom: 1,
-        // maxZoom: 25,
+        zIndexOffset: 2000000,
         clickable: true
     },
 
@@ -101,7 +101,14 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _zoomEnd: function() {
-        this._gmx.zoomstart = false;
+        var gmx = this._gmx;
+        gmx.zoomstart = false;
+        if (gmx.IsRasterCatalog && gmx.properties.fromType !== 'Raster') {
+            var zIndexOffset = this._map._zoom < gmx.minZoomRasters ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
+            if (zIndexOffset !== this.options.zIndexOffset) {
+                this.setZIndexOffset(zIndexOffset);
+            }
+        }
     },
 
     _moveEnd: function() {
@@ -507,11 +514,16 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (arguments.length) {
             this.options.zIndexOffset = offset;
         }
-        var options = this.options,
-            zIndex = options.zIndex,
-            zIndexOffset = options.zIndexOffset;
-        if (zIndexOffset) {
-            this.setZIndex(zIndexOffset + zIndex);
+        this._updateZIndex();
+    },
+
+    _updateZIndex: function () {
+        if (this._container) {
+            var options = this.options,
+                zIndex = options.zIndex || 0,
+                zIndexOffset = options.zIndexOffset || 0;
+
+            this._container.style.zIndex = zIndexOffset + zIndex;
         }
     },
 

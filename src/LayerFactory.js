@@ -76,19 +76,14 @@ L.gmx.loadMap = function(mapID, options) {
     gmxMapManager.getMap(options.hostName, options.apiKey, mapID).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
 
-        var curZIndex = 0,
-            vectorLayersOffset = 2000000,
-            layer;
-
         if (options.leafletMap || options.setZIndex) {
+            var curZIndex = 0,
+                layer;
+
             for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                 layer = loadedMap.layers[l];
                 if (options.setZIndex) {
-                    var zIndex = curZIndex++;
-                    if (layer.getGmxProperties().type === 'Vector') {
-                        zIndex += vectorLayersOffset;
-                    }
-                    layer.options.zIndex = zIndex;
+                    layer.options.zIndex = ++curZIndex;
                 }
 
                 if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
