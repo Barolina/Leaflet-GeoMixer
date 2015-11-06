@@ -8,7 +8,7 @@
 ------|---------|-----------
 [loadMap](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html)| Загрузка карты с сервера GeoMixer-а| Отображаются все видимые слои карты.
 [loadLayer](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)| Загрузка одного слоя из карты с сервера GeoMixer-а|
-[loadLayers](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html)| Загрузка нескольких слоев с сервера GeoMixer-а.| Демонстрируется работа с мультивременным слоем.
+[loadLayers](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html)| Загрузка нескольких слоев из различных карт с сервера GeoMixer-а.| Демонстрируется работа с мультивременным слоем.
 [Animation](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html)| Предварительная загрузка данных слоя точек пожаров - показ точек за любой день при помощи ползунка.
 [Plugins](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Интеграция с другими Leaflet плагинами
 [MultipleMaps](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
