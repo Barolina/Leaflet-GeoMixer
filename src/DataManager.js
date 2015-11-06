@@ -580,7 +580,9 @@ var DataManager = L.Class.extend({
         var keys = oKeys || this._observers;
 
         for (var id in keys) {
-            this._observers[id].needRefresh = true;
+            if (this._observers[id]) {
+                this._observers[id].needRefresh = true;
+            }
         }
         this._waitCheckObservers();
     },
