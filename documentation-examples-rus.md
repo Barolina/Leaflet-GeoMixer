@@ -10,7 +10,7 @@
 [loadLayer](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)| Загрузка одного слоя из карты с сервера GeoMixer-а|
 [loadLayers](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html)| Загрузка нескольких слоев из различных карт с сервера GeoMixer-а.| Демонстрируется работа с мультивременным слоем.
 [Animation](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html)| Предварительная загрузка данных слоя точек пожаров - показ точек за любой день при помощи ползунка.
-[Plugins](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Интеграция с другими Leaflet плагинами
+[Plugins](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Интеграция с другими Leaflet плагинами.| Демонстрируется совместная работа плагина Leaflet-GeoMixer с несколькими сторонними плагинами Leaflet.
 [MultipleMaps](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
 [bindPopup](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Добавление пользовательского контента в тело балуна.
 [bindClusters](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.|
