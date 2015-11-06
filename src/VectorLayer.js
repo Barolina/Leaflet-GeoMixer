@@ -101,14 +101,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _zoomEnd: function() {
-        var gmx = this._gmx;
-        gmx.zoomstart = false;
-        if (gmx.IsRasterCatalog && gmx.properties.fromType !== 'Raster') {
-            var zIndexOffset = this._map._zoom < gmx.minZoomRasters ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
-            if (zIndexOffset !== this.options.zIndexOffset) {
-                this.setZIndexOffset(zIndexOffset);
-            }
-        }
+        this._gmx.zoomstart = false;
+        this._zIndexOffsetCheck();
     },
 
     _moveEnd: function() {
@@ -192,6 +186,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
             this._objectsReorder.onAdd(this);
         }
+        this._zIndexOffsetCheck();
         this.fire('add');
     },
 
@@ -508,6 +503,16 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.tileSize = gmxAPIutils.tileSizes[gmx.currentZoom];
         gmx.mInPixel = 256 / gmx.tileSize;
         this.repaint();
+    },
+
+    _zIndexOffsetCheck: function() {
+        var gmx = this._gmx;
+        if (gmx.IsRasterCatalog && gmx.properties.fromType !== 'Raster') {
+            var zIndexOffset = this._map._zoom < gmx.minZoomRasters ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
+            if (zIndexOffset !== this.options.zIndexOffset) {
+                this.setZIndexOffset(zIndexOffset);
+            }
+        }
     },
 
     setZIndexOffset: function (offset) {
