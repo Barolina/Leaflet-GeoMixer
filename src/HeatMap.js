@@ -61,6 +61,7 @@
                     layeradd: this._layeradd,
                     layerremove: this._layerremove
                 }, this);
+                this._updateBbox();
             }
             this._chkZoom();
         },
@@ -116,6 +117,7 @@
             this._items = {};
             this._observer = this._layer.addObserver({
                 type: 'resend',
+                bbox: gmxAPIutils.bounds([[Number.MAX_VALUE, Number.MAX_VALUE]]),
                 filters: ['clipFilter', 'userFilter', 'clipPointsFilter'],
                 callback: L.bind(this._updateData, this)
             }).deactivate();
