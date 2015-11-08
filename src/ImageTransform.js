@@ -6,25 +6,27 @@ var gmxImageTransform = function(img, hash) {
         geoItem = hash.geoItem,
         properties = geoItem.properties,
         dataOption = geoItem.dataOption || {},
-        coord = properties[properties.length - 1].coordinates,
+        geom = properties[properties.length - 1],
+        coord = geom.coordinates[0],
         begx = mInPixel * dataOption.bounds.min.x,
         begy = mInPixel * dataOption.bounds.max.y,
         indexes = gmx.tileAttributeIndexes,
         quicklookPlatform = properties[indexes[gmx.quicklookPlatform]] || gmx.quicklookPlatform || '',
         points = {};
 
+    if (geom.type === 'MULTIPOLYGON') { coord = coord[0]; }
     if (quicklookPlatform === 'LANDSAT8') {
         points.x1 = dataOption.bounds.min.x; points.y1 = dataOption.bounds.max.y;
         points.x2 = dataOption.bounds.max.x; points.y2 = dataOption.bounds.max.y;
         points.x3 = dataOption.bounds.max.x; points.y3 = dataOption.bounds.min.y;
         points.x4 = dataOption.bounds.min.x; points.y4 = dataOption.bounds.min.y;
         ready = true;
-    } else if (quicklookPlatform === 'SPOT 6') {
-        points.x1 = coord[0][0]; points.y1 = coord[0][1];
-        points.x2 = coord[1][0]; points.y2 = coord[1][1];
-        points.x3 = coord[2][0]; points.y3 = coord[2][1];
-        points.x4 = coord[3][0]; points.y4 = coord[3][1];
-        ready = true;
+    // } else if (quicklookPlatform === 'SPOT 6') {
+        // points.x1 = coord[0][0]; points.y1 = coord[0][1];
+        // points.x2 = coord[1][0]; points.y2 = coord[1][1];
+        // points.x3 = coord[2][0]; points.y3 = coord[2][1];
+        // points.x4 = coord[3][0]; points.y4 = coord[3][1];
+        // ready = true;
     } else if (quicklookPlatform === 'imageMercator' || quicklookPlatform === 'image') {
         points.x1 = gmx.quicklookX1 ? properties[indexes[gmx.quicklookX1]] : properties[indexes.x1] || 0;
         points.y1 = gmx.quicklookY1 ? properties[indexes[gmx.quicklookY1]] : properties[indexes.y1] || 0;

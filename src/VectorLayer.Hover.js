@@ -234,6 +234,7 @@ L.gmx.VectorLayer.include({
                             }
                         }
                         chkHover('mouseover');
+                        gmx.lastMouseover = gmx.lastHover;
                     }
                     this._map.doubleClickZoom.disable();
                     return idr;
