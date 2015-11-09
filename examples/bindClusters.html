@@ -23,12 +23,8 @@
             text-align: center;
             padding-top: 12px;
         }
-        #auto {
-            display: none;
-            margin-left: 10px;
-        }
         
-        #auto, #grad > * {
+        .auto > *, .grad > *, .use > * {
             vertical-align: middle;
         }
     </style>
@@ -54,13 +50,13 @@
 <body>
     <div id="controls" class="gmxPanel">
         <div id="title">
-            Fires (based on NASA FIRMS) <label><input id="useClusters" checked type="checkbox">use clusters</label>
+            Fires (based on NASA FIRMS) <label class="use"><input id="useClusters" checked type="checkbox" /><span>use clusters</span></label>
         </div>
         <div id="slider"></div>
         <div id="timeInfo">
             <span id="curDate">Loading data...</span>
-            <label id="auto"><input type="checkbox" id="autochkbox" /><span>animate</span></label>
-            <label id="grad"><input type="checkbox" id="gradStyle" /><span>use gradient style</span></label>
+            <label class="auto"><input type="checkbox" id="autochkbox" /><span>animate</span></label>
+            <label class="grad"><input type="checkbox" id="gradStyle" /><span>use gradient style</span></label>
         </div>
     </div>
 

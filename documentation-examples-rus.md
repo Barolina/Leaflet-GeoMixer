@@ -40,18 +40,18 @@
 [Landsat8](http://scanex.github.io/Leaflet.imageTransform/examples/Landsat8.html)| Снимки Landsat|
 [Editing](http://scanex.github.io/Leaflet.imageTransform/examples/Editing.html)| Перепривязка снимка|
 -->
-##Плагины [контролов](https://github.com/ScanEx/gmxControls) GeoMixer-а
-Пользователь сам выбирает набор необходимых ему контролов.
+##Плагины [контролов GeoMixer-а](https://github.com/ScanEx/gmxControls)
+
+Примеры использования контролов GeoMixer-а.
 
 Пример|Описание|Примечание
 ------|---------|-----------
-[L.Control.gmxLayers](http://scanex.github.io/gmxControls/examples/L.Control.gmxLayers.html)| Контрол слоев|
-[L.Control.gmxZoom](http://scanex.github.io/gmxControls/examples/L.Control.gmxZoom.html)| Контрол зуммирования|
-[L.Control.gmxBottom](http://scanex.github.io/gmxControls/examples/L.Control.gmxBottom.html)| Подкладка нижних контролов|
-[L.Control.gmxCopyright](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Контрол копирайтов|
-[L.Control.gmxLocation](http://scanex.github.io/gmxControls/examples/L.Control.gmxLocation.html)| Контрол текущего масштаба и положения карты|
 [L.Control.gmxIcon](http://scanex.github.io/gmxControls/examples/L.Control.gmxIcon.html)| Контрол иконок|
 [L.Control.gmxIconGroup](http://scanex.github.io/gmxControls/examples/L.Control.gmxIconGroup.html)| Контрол группы иконок|
+[L.Control.gmxLayers](http://scanex.github.io/gmxControls/examples/L.Control.gmxLayers.html)| Контрол слоев|
+[L.Control.gmxZoom](http://scanex.github.io/gmxControls/examples/L.Control.gmxZoom.html)| Контрол зуммирования|
+[L.Control.gmxCopyright](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Контрол копирайтов|
+[L.Control.gmxLocation](http://scanex.github.io/gmxControls/examples/L.Control.gmxLocation.html)| Контрол текущего масштаба и положения карты|
 [L.Control.boxZoom](http://scanex.github.io/gmxControls/examples/L.Control.boxZoom.html)| BoxZoom контрол|
 [L.Control.gmxHide](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Контрол видимости верхних контролов|
 [ScanexControls](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов GeoMixer-а| 

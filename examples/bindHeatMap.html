@@ -23,12 +23,8 @@
             text-align: center;
             padding-top: 12px;
         }
-        #auto {
-            display: none;
-            margin-left: 10px;
-        }
         
-        #auto, #grad > * {
+        .use > * {
             vertical-align: middle;
         }
     </style>
@@ -52,7 +48,7 @@
 <body>
     <div id="controls" class="gmxPanel">
         <div id="title">
-            Fires (based on NASA FIRMS) <label><input id="useHeatMap" checked type="checkbox">use HeatMap</label>
+            Fires (based on NASA FIRMS) <label class="use"><input id="useHeatMap" checked type="checkbox">use HeatMap</label>
         </div>
         <div id="slider"></div>
         <div id="timeInfo">
@@ -101,7 +97,6 @@
             }
             useHeatMap.onchange = function() {
                 runme(this.checked);
-                $('#auto').toggle(this.checked);
             }
 
             var nextDay = function(val) {
@@ -110,7 +105,6 @@
             }
 
             updateInfo(new Date(ddt2.valueOf() - oneDay));
-            $('#auto').show();
             $('#slider').slider({
                 min: ddt1.valueOf() + oneDay,
                 max: ddt2.valueOf(),
