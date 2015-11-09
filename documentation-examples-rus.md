@@ -1,8 +1,10 @@
 # Галерея примеров
 
-##Плагин Leaflet-GeoMixer
+На этой странице собраны примеры использоваения как основного плагина Leaflet-GeoMixer, так и нескольких дополнительных плагинов, разработанных нами в процессе реализации проектов на GeoMixer-е.
 
-Примеры использования плагина "Leaflet-GeoMixer" для интеграции данных с серверов GeoMixer в карту, созданную с использованием библиотеки Leaflet. 
+##Основной функционал - интеграция данных GeoMixer-а на карту
+
+Примеры использования плагина "Leaflet-GeoMixer" для интеграции данных с серверов GeoMixer-а на карту Leaflet.
 
 Пример|Описание|Примечание
 ------|---------|-----------
@@ -14,16 +16,25 @@
 [MultipleMaps](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
 [bindPopup](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Демонстрируется добавление пользовательского контента в тело балуна.
 [bindClusters](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.| Демонстрируется использование плагина кластеризации [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) для отображения данных векторного слоя.
-[bindHeatMap](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindHeatMap.html)| Включение HeatMap для векторного слоя.| Демонстрируется использование HeatMap плагина [Leaflet.heat](https://github.com/Leaflet/Leaflet.heat) для отображения данных векторного слоя.
+[bindHeatMap](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindHeatMap.html)| Включение HeatMap для векторного слоя.|  Демонстрируется использование HeatMap плагина [Leaflet.heat](https://github.com/Leaflet/Leaflet.heat) для отображения данных векторного слоя.
 
-##Плагин gmxBaseLayersManager
+## Редактирование и создание векторных объектов на карте
 
-Примеры использования плагина [gmxBaseLayersManager](https://github.com/ScanEx/Leaflet.gmxBaseLayersManager) для управления базовыми подложками.
+Примеры использования плагина рисования [L.GmxDrawing.js](https://github.com/ScanEx/gmxDrawing). В отличае от [Leaflet.Draw](https://github.com/Leaflet/Leaflet.draw) позволяет редактировать мультиполигоны и полигоны с дырками, имеет возможность дорисовывать линии после первичного создания. Оптимизирован для работы с большими геометриями.
+
+Пример|Описание
+------|---------
+[Add Drawing Objects](http://scanex.github.io/gmxDrawing/examples/addDrawingObjects.html)| Добавление редактируемых объектов на карту
+[Use Drawing Controls](http://scanex.github.io/gmxDrawing/examples/useDrawingControls.html)| Использование контролов рисования
+
+##Работа с подложками карты
+
+Примеры использования плагина [gmxBaseLayersManager](https://github.com/ScanEx/Leaflet.gmxBaseLayersManager) для управления подложками. Позволяет загружать с сервера GeoMixer-а список предустановленных подложек, выбирать из них видимые пользователю и задавать показываемую в данный момент.
 
 Пример|Описание|Примечание
 ------|---------|-----------
-[Add BaseLayers](http://scanex.github.io/Leaflet.gmxBaseLayersManager/examples/BaseLayerManager.html)| Использование менеджера базовых подложек| Демонстрируется добавление базовых подложек через менеджер базовых подложек.
-[initDefaults](http://scanex.github.io/Leaflet.gmxBaseLayersManager/examples/BaseLayersManagerInit.html)| Демонстрируется установка списка базовых подложек по умолчанию с сервера GeoMixer-а.| Подложки "Уклоны", "Экспозиция" начиная с 9 зума.
+[Add Base Layers](http://scanex.github.io/Leaflet.gmxBaseLayersManager/examples/BaseLayerManager.html)| Использование менеджера базовых подложек| Демонстрируется добавление базовых подложек через менеджер базовых подложек.
+[Init Default Base Layers](http://scanex.github.io/Leaflet.gmxBaseLayersManager/examples/BaseLayersManagerInit.html)| Демонстрируется получение списка базовых подложек с сервера GeoMixer-а.|
 
 <!--
 ##Плагин [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
@@ -40,27 +51,18 @@
 [Landsat8](http://scanex.github.io/Leaflet.imageTransform/examples/Landsat8.html)| Снимки Landsat|
 [Editing](http://scanex.github.io/Leaflet.imageTransform/examples/Editing.html)| Перепривязка снимка|
 -->
-##Плагины [контролов GeoMixer-а](https://github.com/ScanEx/gmxControls)
+## Дополнительные контролы
 
-Примеры использования контролов GeoMixer-а.
-
-Пример|Описание|Примечание
-------|---------|-----------
-[L.Control.gmxIcon](http://scanex.github.io/gmxControls/examples/L.Control.gmxIcon.html)| Контрол иконок|
-[L.Control.gmxIconGroup](http://scanex.github.io/gmxControls/examples/L.Control.gmxIconGroup.html)| Контрол группы иконок|
-[L.Control.gmxLayers](http://scanex.github.io/gmxControls/examples/L.Control.gmxLayers.html)| Контрол слоев|
-[L.Control.gmxZoom](http://scanex.github.io/gmxControls/examples/L.Control.gmxZoom.html)| Контрол зуммирования|
-[L.Control.gmxCopyright](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Контрол копирайтов|
-[L.Control.gmxLocation](http://scanex.github.io/gmxControls/examples/L.Control.gmxLocation.html)| Контрол текущего масштаба и положения карты|
-[L.Control.boxZoom](http://scanex.github.io/gmxControls/examples/L.Control.boxZoom.html)| BoxZoom контрол|
-[L.Control.gmxHide](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Контрол видимости верхних контролов|
-[ScanexControls](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов GeoMixer-а| 
-
-##Плагин [L.GmxDrawing.js](https://github.com/ScanEx/gmxDrawing)
-
-Примеры использования плагина рисования.
+Примеры использования дополнительных [контролов GeoMixer-а](https://github.com/ScanEx/gmxControls) на карте Leaflet.
 
 Пример|Описание
 ------|---------
-[addDrawingObjects](http://scanex.github.io/gmxDrawing/examples/addDrawingObjects.html)| Добавление редактируемых объектов на карту
-[useDrawingControls](http://scanex.github.io/gmxDrawing/examples/useDrawingControls.html)| Использование контролов рисования
+[L.Control.gmxIcon](http://scanex.github.io/gmxControls/examples/L.Control.gmxIcon.html)| Контрол иконок
+[L.Control.gmxIconGroup](http://scanex.github.io/gmxControls/examples/L.Control.gmxIconGroup.html)| Контрол группы иконок
+[L.Control.gmxLayers](http://scanex.github.io/gmxControls/examples/L.Control.gmxLayers.html)| Контрол слоев
+[L.Control.gmxZoom](http://scanex.github.io/gmxControls/examples/L.Control.gmxZoom.html)| Контрол зуммирования
+[L.Control.gmxCopyright](http://scanex.github.io/gmxControls/examples/L.Control.gmxCopyright.html)| Контрол копирайтов
+[L.Control.gmxLocation](http://scanex.github.io/gmxControls/examples/L.Control.gmxLocation.html)| Контрол текущего масштаба и положения карты
+[L.Control.boxZoom](http://scanex.github.io/gmxControls/examples/L.Control.boxZoom.html)| BoxZoom контрол
+[L.Control.gmxHide](http://scanex.github.io/gmxControls/examples/L.Control.gmxHide.html)| Контрол видимости верхних контролов
+[ScanexControls](http://scanex.github.io/gmxControls/examples/ScanexControls.html)| Все плагины контролов GeoMixer-а
