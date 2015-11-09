@@ -47,9 +47,7 @@
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
 		});
 
-        L.gmx.loadLayers([
-            {mapID: 'H2DUP', layerID: 'B2CC196063834EF48A163EC14C392FAE'}
-        ]).then(function(testLayer) {
+        L.gmx.loadLayer('H2DUP', 'B2CC196063834EF48A163EC14C392FAE').then(function(testLayer) {
             testLayer
                 .bindPopup('', { maxWidth: 560 })
                 .on('popupopen', function(ev) {

@@ -52,7 +52,7 @@
 <body>
     <div id="controls" class="gmxPanel">
         <div id="title">
-            Fires (based on NASA FIRMS) <label><input id="useClusters" checked type="checkbox">use HeatMap</label>
+            Fires (based on NASA FIRMS) <label><input id="useHeatMap" checked type="checkbox">use HeatMap</label>
         </div>
         <div id="slider"></div>
         <div id="timeInfo">
@@ -73,7 +73,7 @@
         var updateInfo = function(currentDate) {
             var zz = function(x) { return x < 10 ? "0" + x : x}
             var dateStr = zz(currentDate.getUTCDate()) + '.' + zz(currentDate.getUTCMonth() + 1) + '.' + zz(currentDate.getUTCFullYear());
-            document.getElementById('curDate').innerHTML = dateStr;
+            $('#curDate')[0].innerHTML = dateStr;
         }
         
         var startDate = new Date('2013/11/01'),
@@ -82,14 +82,14 @@
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the UTC day
             ddt2 = new Date(ddt1.getTime() + 10*oneDay);
 
-        var useclusters = document.getElementById('useClusters');
-        useclusters.checked = true;
+        var useHeatMap = $('#useHeatMap')[0];
+        useHeatMap.checked = true;
         
         L.gmx.loadLayer('26F864B658344DC2AD59EAE84D28BF19', '3E88643A8AC94AFAB4FD44941220B1CE', {
             beginDate: new Date(ddt2.valueOf() - oneDay),
             endDate: ddt2
         }).then(function(hotspotLayer) {
-            var useClusters = function(doUse) {
+            var runme = function(doUse) {
                 if (doUse) {
                     hotspotLayer.bindHeatMap({
                         intensityField: 'HotSpotCount',
@@ -99,8 +99,8 @@
                     hotspotLayer.unbindHeatMap();
                 }
             }
-            useclusters.onchange = function() {
-                useClusters(this.checked);
+            useHeatMap.onchange = function() {
+                runme(this.checked);
                 $('#auto').toggle(this.checked);
             }
 
@@ -122,7 +122,7 @@
             });
             var zn = $('#slider').slider("value");
             nextDay(zn);
-            useClusters(useclusters.checked);
+            runme(useHeatMap.checked);
             hotspotLayer.addTo(map);
         })
 	</script>

@@ -12,8 +12,10 @@
 [Animation](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html)| Предварительная загрузка данных слоя точек пожаров - показ точек за любой день при помощи ползунка.
 [Plugins](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Интеграция с другими Leaflet плагинами.| Демонстрируется совместная работа плагина Leaflet-GeoMixer с несколькими сторонними плагинами Leaflet.
 [MultipleMaps](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Несколько карт на одной странице
-[bindPopup](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Добавление пользовательского контента в тело балуна.
-[bindClusters](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.|
+[bindPopup](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Включение балуна для векторного слоя| Демонстрируется добавление пользовательского контента в тело балуна.
+[bindClusters](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.| Демонстрируется использование плагина кластеризации [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) для отображения данных векторного слоя.
+[bindHeatMap](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindHeatMap.html)| Включение HeatMap для векторного слоя.| Демонстрируется использование HeatMap плагина [Leaflet.heat](https://github.com/Leaflet/Leaflet.heat) для отображения данных векторного слоя.
+
 <!--
 ##Плагин [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
 

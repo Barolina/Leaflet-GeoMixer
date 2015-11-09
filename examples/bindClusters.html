@@ -77,7 +77,7 @@
         var updateInfo = function(currentDate) {
             var zz = function(x) { return x < 10 ? "0" + x : x}
             var dateStr = zz(currentDate.getUTCDate()) + '.' + zz(currentDate.getUTCMonth() + 1) + '.' + zz(currentDate.getUTCFullYear());
-            document.getElementById('curDate').innerHTML = dateStr;
+            $('#curDate').innerHTML = dateStr;
         }
         
         var startDate = new Date('2013/11/01'),
@@ -86,18 +86,18 @@
             ddt1 = new Date( now - now % oneDay - oneDay), //beginning of the UTC day
             ddt2 = new Date(ddt1.getTime() + 10*oneDay);
 
-        var autochkbox = document.getElementById('autochkbox');
+        var autochkbox = $('#autochkbox')[0];
         autochkbox.checked = false;
-        var useclusters = document.getElementById('useClusters');
+        var useclusters = $('#useClusters')[0];
         useclusters.checked = true;
-        var gradStyle = document.getElementById('gradStyle');
+        var gradStyle = $('#gradStyle')[0];
         gradStyle.checked = false;
         
         L.gmx.loadLayer('26F864B658344DC2AD59EAE84D28BF19', '3E88643A8AC94AFAB4FD44941220B1CE', {
             beginDate: new Date(ddt2.valueOf() - oneDay),
             endDate: ddt2
         }).then(function(hotspotLayer) {
-            var useClusters = function(doUse) {
+            var runme = function(doUse) {
                 if (doUse) {
                     var options = gradStyle.checked ?
                         {"clusterIconOptions":{"radialGradient":{"colorStop":[[0,"#0000ff",0.8],[1,"#ff0000",0.8]]}}}
@@ -113,10 +113,10 @@
                 }
             }
             gradStyle.onchange = function() {
-                useClusters(useclusters.checked);
+                runme(useclusters.checked);
             }
             useclusters.onchange = function() {
-                useClusters(this.checked);
+                runme(this.checked);
                 $('#auto').toggle(this.checked);
                 $('#grad').toggle(this.checked);
             }
@@ -149,7 +149,7 @@
             });
             var zn = $('#slider').slider("value");
             nextDay(zn);
-            useClusters(useclusters.checked);
+            runme(useclusters.checked);
             hotspotLayer.addTo(map);
         })
 	</script>
