@@ -16,6 +16,15 @@
 [bindClusters](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindClusters.html)| Включение кластеризации для векторного слоя.| Демонстрируется использование плагина кластеризации [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) для отображения данных векторного слоя.
 [bindHeatMap](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindHeatMap.html)| Включение HeatMap для векторного слоя.| Демонстрируется использование HeatMap плагина [Leaflet.heat](https://github.com/Leaflet/Leaflet.heat) для отображения данных векторного слоя.
 
+##Плагин gmxBaseLayersManager
+
+Примеры использования плагина [gmxBaseLayersManager](https://github.com/ScanEx/Leaflet.gmxBaseLayersManager) для управления базовыми подложками.
+
+Пример|Описание|Примечание
+------|---------|-----------
+[Add BaseLayers](http://scanex.github.io/Leaflet.gmxBaseLayersManager/examples/BaseLayerManager.html)| Использование менеджера базовых подложек| Демонстрируется добавление базовых подложек через менеджер базовых подложек.
+[initDefaults](http://scanex.github.io/Leaflet.gmxBaseLayersManager/examples/BaseLayersManagerInit.html)| Демонстрируется установка списка базовых подложек по умолчанию с сервера GeoMixer-а.| Подложки "Уклоны", "Экспозиция" начиная с 9 зума.
+
 <!--
 ##Плагин [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
 
