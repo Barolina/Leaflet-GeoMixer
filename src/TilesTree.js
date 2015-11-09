@@ -75,35 +75,34 @@ var TilesTree = function(periods, dateZero) {
 
     //options: bounds (in mercator projection)
     this.selectTiles = function(t1, t2, options) {
-        
+
         options = options || {};
         //options.minLevel = isNaN(options.minLevel) ? 0   : options.minLevel;
         //options.maxLevel = isNaN(options.maxLevel) ? 1e5 : options.maxLevel;
-        
+
         var t1Val = t1.valueOf() / 1000,
             t2Val = t2.valueOf() / 1000;
-        
+
         // We will restrict tile levels by the nearest two levels to target date interval length
         // For example, if date interval length is 3 days, we wll search tiles among 1-day and 4-day tiles
         var minLevel = 0,
-            dateIntervalLength = (t2Val - t1Val)/3600/24;
-            
+            dateIntervalLength = (t2Val - t1Val) / 3600 / 24;
+
         for (var i = 0; i < periods.length; i++) {
             if (periods[i] > dateIntervalLength) {
-                minLevel = Math.max(0, i-1);
+                minLevel = Math.max(0, i - 1);
                 break;
             }
         }
-        
-        
-        if (periods[periods.length-1] <= dateIntervalLength) {
-            minLevel = periods.length-1;
+
+        if (periods[periods.length - 1] <= dateIntervalLength) {
+            minLevel = periods.length - 1;
         }
-        
-        var maxLevel = Math.min(periods.length-1, minLevel + Number(dateIntervalLength > periods[minLevel]));
-        
+
+        var maxLevel = Math.min(periods.length - 1, minLevel + Number(dateIntervalLength > periods[minLevel]));
+
         // console.log(minLevel, maxLevel);
-            
+
         var getCountOfIntersected = function(tileBounds, bounds) {
             var count = 0;
             for (var t = 0; t < tileBounds.length; t++) {
@@ -111,9 +110,9 @@ var TilesTree = function(periods, dateZero) {
                     count++;
                 }
             }
-            
+
             return count;
-        }
+        };
 
         // --------------------
         var selectTilesForNode = function(node, t1, t2) {
@@ -124,9 +123,9 @@ var TilesTree = function(periods, dateZero) {
 
             if (node.d === minLevel) {
                 var count = options.bounds ? getCountOfIntersected(node.tileBounds, options.bounds) : node.count;
-                
+
                 // console.log(node, 'minLevel', count);
-                
+
                 return {
                     tiles: node.tiles,
                     count: count,
@@ -137,7 +136,7 @@ var TilesTree = function(periods, dateZero) {
             var childrenCount = 0, //number of tiles if we use shorter intervals
                 childrenRes = [],
                 ds;
-                
+
             // console.log(node, 'traversing children');
             for (ds = 0; ds < node.children.length; ds++) {
                 if (node.children[ds]) {
@@ -147,11 +146,11 @@ var TilesTree = function(periods, dateZero) {
                 }
                 childrenCount += childrenRes[ds].count;
             }
-            
+
             var intersectCount = options.bounds ? getCountOfIntersected(node.tileBounds, options.bounds) : node.count;
-            
+
             // console.log(node, childrenCount, intersectCount);
-            
+
             if (node.d > maxLevel || childrenCount < intersectCount) {
                 var resTilesArr = [],
                     resNodesArr = [];
