@@ -58,6 +58,8 @@
 
 ##Плагин [L.GmxDrawing.js](https://github.com/ScanEx/gmxDrawing)
 
+Примеры использования плагина рисования.
+
 Пример|Описание
 ------|---------
 [addDrawingObjects](http://scanex.github.io/gmxDrawing/examples/addDrawingObjects.html)| Добавление редактируемых объектов на карту
