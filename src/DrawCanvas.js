@@ -63,11 +63,15 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
 
     style = style || {};
     item.currentStyle = L.extend({}, currentStyle);
-    if (gmx.styleHook && !geoItem.styleExtend) {
-        geoItem.styleExtend = gmx.styleManager.applyStyleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
-    }
-    if (geoItem.styleExtend) {
-        item.currentStyle = L.extend(item.currentStyle, geoItem.styleExtend);
+    if (gmx.styleHook) {
+        if (!geoItem.styleExtend) {
+            geoItem.styleExtend = gmx.styleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
+        }
+        if (geoItem.styleExtend) {
+            item.currentStyle = L.extend(item.currentStyle, geoItem.styleExtend);
+        } else {
+            return false;
+        }
     }
     setCanvasStyle(item, ctx, item.currentStyle);
 

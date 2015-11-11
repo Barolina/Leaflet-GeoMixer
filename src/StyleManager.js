@@ -183,9 +183,9 @@ StyleManager.prototype = {
     },
 
     // apply styleHook func
-    applyStyleHook: function(item, hoverFlag) {
-        return this._itemStyleParser(item, this.gmx.styleHook(item, hoverFlag));
-    },
+    // applyStyleHook: function(item, hoverFlag) {
+        // return this._itemStyleParser(item, this.gmx.styleHook(item, hoverFlag));
+    // },
 
     getObjStyle: function(item) {
         this._chkStyleFilter(item);

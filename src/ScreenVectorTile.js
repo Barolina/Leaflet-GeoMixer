@@ -399,7 +399,7 @@ ScreenVectorTile.prototype = {
                     gmx.dataManager.getItem(idr),
                     gmx.lastHover && idr === gmx.lastHover.id
                 );
-                skipRasters = geo.styleExtend.skipRasters;
+                skipRasters = geo.styleExtend && geo.styleExtend.skipRasters;
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {

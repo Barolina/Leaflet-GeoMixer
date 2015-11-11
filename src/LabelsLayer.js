@@ -32,7 +32,12 @@ L.LabelsLayer = L.Class.extend({
                     currentStyle = item.parsedStyleKeys || item.currentStyle || {};
 
                 if (gmx.styleHook) {
-                    currentStyle = gmx.styleManager.applyStyleHook(item, gmx.lastHover && item.id === gmx.lastHover.id);
+                    var styleExtend = gmx.styleHook(item, gmx.lastHover && item.id === gmx.lastHover.id);
+                    if (styleExtend) {
+                        currentStyle = L.extend(currentStyle, styleExtend);
+                    } else {
+                        continue;
+                    }
                 }
                 if (item.multiFilters) {
                     for (var j = 0, len1 = item.multiFilters.length; j < len1; j++) {

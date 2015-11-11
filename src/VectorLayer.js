@@ -336,6 +336,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     setStyleHook: function (func) {
         this._gmx.styleHook = func;
+        this.repaint();
         return this;
     },
 
