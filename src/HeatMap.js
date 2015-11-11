@@ -107,7 +107,7 @@
                         coord = geo.coordinates,
                         point = L.Projection.Mercator.unproject({x: coord[0], y: coord[1]});
 
-                    latlngs.push([point.lat, point.lng, intensityScale * alt]);
+                    latlngs.push([point.lat, point.lng, typeof intensityScale === 'function' ? intensityScale(alt) : intensityScale * alt]);
                 }
                 this.markers.setLatLngs(latlngs);
             }
