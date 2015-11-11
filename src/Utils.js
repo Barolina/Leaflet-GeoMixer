@@ -1380,6 +1380,16 @@ var gmxAPIutils = {
         return out;
     },
 
+    geoJSONGetLatLng: function(geoJSON) {
+        if (geoJSON.type === 'Feature') {
+            return gmxAPIutils.geoJSONGetLatLng(geoJSON.geometry);
+        } else if (geoJSON.type === 'Point') {
+            return L.latLng(geoJSON.coordinates[1], geoJSON.coordinates[0]);
+        } else {
+            throw new Error('cannot get ' + geoJSON.type + ' latLng');
+        }
+    },
+
     getRingArea: function(coords) {
         var area = 0;
         for (var i = 0, len = coords.length; i < len; i++) {
@@ -2209,6 +2219,7 @@ L.extend(L.gmxUtil, {
     geoJSONtoGeometry: gmxAPIutils.geoJSONtoGeometry,
     geoJSONGetArea: gmxAPIutils.geoJSONGetArea,
     geoJSONGetLength: gmxAPIutils.geoJSONGetLength,
+    geoJSONGetLatLng: gmxAPIutils.geoJSONGetLatLng,
     parseUri: gmxAPIutils.parseUri,
     isRectangle: gmxAPIutils.isRectangle,
     isClockwise: gmxAPIutils.isClockwise,
