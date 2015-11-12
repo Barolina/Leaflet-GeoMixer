@@ -830,9 +830,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.repaint(gmxTiles);
     },
 
-    _updateProperties: function () {
-        var gmx = this._gmx,
-            prop = gmx.rawProperties;
+    _updateProperties: function (prop) {
+        var gmx = this._gmx;
 
         var tileAttributeIndexes = {},
             tileAttributeTypes = {};
@@ -916,7 +915,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _onVersionChange: function () {
-        this._updateProperties();
+        this._updateProperties(this._gmx.rawProperties);
         this._clearScreenCache();
     },
 
@@ -949,7 +948,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.tileCount = cnt;
         gmx.layerType = type;   // VectorTemporal Vector
 
-        this._updateProperties();
+        this._updateProperties(prop);
 
         gmx.getPropItem = function(prop, key) {
             var indexes = gmx.tileAttributeIndexes;
