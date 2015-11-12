@@ -233,7 +233,7 @@ item|`<Object>`| Дополнительная информация объект�
         iconMinScale: <Float>,          // минимальный scale (по умолчанию: 0.01) - marker.minScale
         iconMaxScale: <Float>,          // максимальный scale (по умолчанию: 1000) - marker.maxScale
         iconCircle: <Boolean>,          // Отображение круга (по умолчанию: false) - marker.circle
-        iconCenter: <Boolean>,          // marker.center - флаг центрирования маркера (по умолчанию: false)
+        iconCenter: <Boolean>,          // marker.center - флаг центрирования маркера (по умолчанию: true)
         iconAnchor: [<UInt>, <UInt>],   // marker.dx, marker.dy - смещение X,Y
         iconColor  : <UInt>,            // marker.color - замена цвета 0xff00ff на color в маркере (по умолчанию: 0xff00ff)
 
