@@ -423,6 +423,7 @@ StyleManager.prototype = {
                 st.common = StyleManager.parseLinearGradient(st.fillLinearGradient);
             } else if (st.iconSize) {
                 type = 'square';
+                if (!('iconCenter' in st)) { st.iconCenter = true; }
             }
             st.type = type;
             if (st.common && !st.maxSize) {
