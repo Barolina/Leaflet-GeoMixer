@@ -832,6 +832,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _updateProperties: function (prop) {
         var gmx = this._gmx;
+        
+        gmx.identityField = prop.identityField; // ogc_fid
+        gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
+        gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
 
         var tileAttributeIndexes = {},
             tileAttributeTypes = {};
@@ -878,9 +882,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
             }
         }
-        gmx.identityField = prop.identityField; // ogc_fid
-        gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
-        gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
 
         if (prop.IsRasterCatalog) {
             gmx.IsRasterCatalog = prop.IsRasterCatalog;
