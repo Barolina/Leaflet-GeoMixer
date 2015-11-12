@@ -181,7 +181,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         if (gmx.balloonEnable && !this._popup) { this.bindPopup(''); }
         this.on('stylechange', this._onStyleChange, this);
-        this.on('versionchange', this._clearScreenCache, this);
+        this.on('versionchange', this._onVersionChange, this);
 
         if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
             this._objectsReorder.onAdd(this);
@@ -830,37 +830,24 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.repaint(gmxTiles);
     },
 
-    initLayerData: function(layerDescription) {     // обработка описания слоя
+    _updateProperties: function () {
         var gmx = this._gmx,
-            prop = layerDescription.properties,
-            type = prop.type || 'Vector';
+            prop = gmx.rawProperties;
 
-        if (prop.Temporal) { type += 'Temporal'; }
-        gmx.items = {};
-        gmx.tileCount = 0;
-        this.options.attribution = prop.Copyright || '';
-
-        var cnt;
-        if (type === 'VectorTemporal') {
-            cnt = prop.TemporalTiles;
-            gmx.TemporalColumnName = prop.TemporalColumnName;
-            gmx.TemporalPeriods = prop.TemporalPeriods || [];
-            var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
-            var arr = ZeroDateString.split('.');
-            var zn = new Date(					// Начальная дата
-                (arr.length > 2 ? arr[2] : 2008),
-                (arr.length > 1 ? arr[1] - 1 : 0),
-                (arr.length > 0 ? arr[0] : 1)
-                );
-            gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);	// UTC начальная дата шкалы
-            gmx.ZeroUT = gmx.ZeroDate.getTime() / 1000;
+        var tileAttributeIndexes = {},
+            tileAttributeTypes = {};
+        if (prop.attributes) {
+            var attrs = prop.attributes,
+                attrTypes = prop.attrTypes || null;
+            if (gmx.identityField) { tileAttributeIndexes[gmx.identityField] = 0; }
+            for (var a = 0; a < attrs.length; a++) {
+                var key = attrs[a];
+                tileAttributeIndexes[key] = a + 1;
+                tileAttributeTypes[key] = attrTypes ? attrTypes[a] : 'string';
+            }
         }
-
-        gmx.tileCount = cnt;
-        gmx.layerType = type;   // VectorTemporal Vector
-        gmx.identityField = prop.identityField; // ogc_fid
-        gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
-        gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
+        gmx.tileAttributeTypes = tileAttributeTypes;
+        gmx.tileAttributeIndexes = tileAttributeIndexes;
 
         if ('clusters' in prop) {
             gmx.clusters = prop.clusters;
@@ -891,29 +878,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
             }
-            // if ('clusters' in meta) {    // проверка всех фильтров для обьектов слоя
-                // gmx.clusters = meta.clusters.Value;
-            // }
         }
-
-        var tileAttributeIndexes = {},
-            tileAttributeTypes = {};
-        if (prop.attributes) {
-            var attrs = prop.attributes,
-                attrTypes = prop.attrTypes || null;
-            if (gmx.identityField) { tileAttributeIndexes[gmx.identityField] = 0; }
-            for (var a = 0; a < attrs.length; a++) {
-                var key = attrs[a];
-                tileAttributeIndexes[key] = a + 1;
-                tileAttributeTypes[key] = attrTypes ? attrTypes[a] : 'string';
-            }
-        }
-        gmx.tileAttributeTypes = tileAttributeTypes;
-        gmx.tileAttributeIndexes = tileAttributeIndexes;
-        gmx.getPropItem = function(prop, key) {
-            var indexes = gmx.tileAttributeIndexes;
-            return key in indexes ? prop[indexes[key]] : '';
-        };
+        gmx.identityField = prop.identityField; // ogc_fid
+        gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
+        gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
 
         if (prop.IsRasterCatalog) {
             gmx.IsRasterCatalog = prop.IsRasterCatalog;
@@ -945,6 +913,48 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 return url;
             };
         }
+    },
+
+    _onVersionChange: function () {
+        this._updateProperties();
+        this._clearScreenCache();
+    },
+
+    initLayerData: function(layerDescription) {     // обработка описания слоя
+        var gmx = this._gmx,
+            prop = layerDescription.properties,
+            type = prop.type || 'Vector';
+
+        if (prop.Temporal) { type += 'Temporal'; }
+        gmx.items = {};
+        gmx.tileCount = 0;
+        this.options.attribution = prop.Copyright || '';
+
+        var cnt;
+        if (type === 'VectorTemporal') {
+            cnt = prop.TemporalTiles;
+            gmx.TemporalColumnName = prop.TemporalColumnName;
+            gmx.TemporalPeriods = prop.TemporalPeriods || [];
+            var ZeroDateString = prop.ZeroDate || '01.01.2008';	// нулевая дата
+            var arr = ZeroDateString.split('.');
+            var zn = new Date(					// Начальная дата
+                (arr.length > 2 ? arr[2] : 2008),
+                (arr.length > 1 ? arr[1] - 1 : 0),
+                (arr.length > 0 ? arr[0] : 1)
+                );
+            gmx.ZeroDate = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);	// UTC начальная дата шкалы
+            gmx.ZeroUT = gmx.ZeroDate.getTime() / 1000;
+        }
+
+        gmx.tileCount = cnt;
+        gmx.layerType = type;   // VectorTemporal Vector
+
+        this._updateProperties();
+
+        gmx.getPropItem = function(prop, key) {
+            var indexes = gmx.tileAttributeIndexes;
+            return key in indexes ? prop[indexes[key]] : '';
+        };
     },
 
     addData: function(data, options) {
