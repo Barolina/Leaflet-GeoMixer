@@ -1996,11 +1996,11 @@ var gmxAPIutils = {
 
     attrToString: function(type, value) {
         if (type === 'date') {
-            return L.gmxUtil.getUTCdate(value);
+            return value ? L.gmxUtil.getUTCdate(value) : value;
         } else if (type === 'time') {
-            return L.gmxUtil.getUTCtime(value);
+            return value ? L.gmxUtil.getUTCtime(value) : value;
         } else if (type === 'datetime') {
-            return L.gmxUtil.getUTCdateTime(value);
+            return value ? L.gmxUtil.getUTCdateTime(value) : value;
         } else {
             return value;
         }
