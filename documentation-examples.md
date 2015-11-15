@@ -5,12 +5,12 @@
 Name|Description
 ------|---------
 [GeoMixerMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GeoMixerMap.html)| Loads all layers from the GeoMixer's map
-[satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/satelliteLayer.html)|Load `satellite` layer
+[satelliteLayer.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/satelliteLayer.html)|Load `satellite` layer
 [GMXLayerLeaflet.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/GMXLayerLeaflet.html)| Intergrate GeoMixer layers into map. Demonstrates work with temporal layers.
 [Animation.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Animation.html)| Preload data from hotspot layer and show select day to show hotspots using slider.
 [Plugins.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/Plugins.html)| Integrate GeoMixer layers along with several Leaflet plugins
 [MultipleMaps.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/MultipleMaps.html)| Multiple maps on one page
-[bindPopup.html](http://ScanEx.github.com/Leaflet-GeoMixer/examplesV2/bindPopup.html)| Bind popup window to layer
+[bindPopup.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindPopup.html)| Bind popup window to layer
 
 ##Plugin [leaflet-boundary-canvas](https://github.com/aparshin/leaflet-boundary-canvas)
 
