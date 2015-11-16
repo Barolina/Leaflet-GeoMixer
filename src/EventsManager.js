@@ -97,6 +97,7 @@ var GmxEventsManager = L.Handler.extend({
             });
 
             var layer,
+                foundLayer = null,
                 cursor = '';
             for (var i = 0, len = arr.length; i < len; i++) {
                 var id = arr[i];
@@ -106,6 +107,7 @@ var GmxEventsManager = L.Handler.extend({
                         if (layer.hasEventListeners('mouseover')) {
                             cursor = 'pointer';
                         }
+                        foundLayer = layer;
                         break;
                     }
                 }
@@ -113,11 +115,11 @@ var GmxEventsManager = L.Handler.extend({
             if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
             _this._lastCursor = cursor;
 
-            if (cursor) {
-                if (_this._lastLayer !== layer) {
+            if (foundLayer) {
+                if (_this._lastLayer !== foundLayer) {
                     clearLastHover();
                 }
-                _this._lastLayer = layer;
+                _this._lastLayer = foundLayer;
             } else {
                 clearLastHover();
             }
