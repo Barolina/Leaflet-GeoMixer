@@ -65,6 +65,7 @@ L.LabelsLayer = L.Class.extend({
                             labelHaloColor: currentStyle.labelHaloColor || style.labelHaloColor || 0,
                             labelColor: currentStyle.labelColor || style.labelColor,
                             labelAlign: currentStyle.labelAlign || style.labelAlign,
+                            labelAnchor: currentStyle.labelAnchor || style.labelAnchor,
                             labelFontSize: fontSize
                         };
                     if (options) {
@@ -80,6 +81,7 @@ L.LabelsLayer = L.Class.extend({
                                 pstyle.labelHaloColor !== labelStyle.labelHaloColor ||
                                 pstyle.labelColor !== labelStyle.labelColor ||
                                 pstyle.labelAlign !== labelStyle.labelAlign ||
+                                pstyle.labelAnchor !== labelStyle.labelAnchor ||
                                 pstyle.labelFontSize !== labelStyle.labelFontSize;
                         }
                     }
@@ -297,6 +299,11 @@ L.LabelsLayer = L.Class.extend({
                 }
                 pos[0] -= width2 + this._ctxShift[0];
                 pos[1] = size2 - pos[1] + this._ctxShift[1];
+                if (style.labelAnchor) {
+                    pos[0] += style.labelAnchor[0];
+                    pos[1] += style.labelAnchor[1];
+                }
+
                 for (var tx = pos[0] + start; tx < mapSize.x; tx += w2) {
                     var coord = [Math.floor(tx), Math.floor(pos[1])],
                         bbox = gmxAPIutils.bounds([
