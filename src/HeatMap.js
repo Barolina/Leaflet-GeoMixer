@@ -78,8 +78,9 @@
             }
             if (!fromMapFlag) {
                 this._layer.onAdd(map);
+            } else {
+                this._map = null;
             }
-            // this._map = null;
         },
 
         setDateInterval: function () {
