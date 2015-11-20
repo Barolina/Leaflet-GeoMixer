@@ -64,7 +64,7 @@
                     balloonData = gmx.styleManager.getItemBalloon(id);
                 if (balloonData && !balloonData.DisableBalloonOnClick) {
                     var style = this._layer.getItemStyle(id);
-                    if (style.iconAnchor) {
+                    if (style && style.iconAnchor) {
                         var protoOffset = L.Popup.prototype.options.offset;
                         this._popup.options.offset = [
                             -protoOffset[0] - style.iconAnchor[0] + style.sx / 2,
