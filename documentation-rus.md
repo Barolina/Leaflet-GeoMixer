@@ -343,6 +343,7 @@ maxZoom|`<Number>`|`6`| Максимальный zoom на котором вкл
 showCoverageOnHover|`<Boolean>`|`false`| Показ контуров кластеров по наведению мыши по умолчанию отключен.
 clusterclick|`<Function|Boolean>`|| Установка обработчика `click` на кластере. При `true` - устанавливается обработчик показа членов кластера(с отключением опции zoomToBoundsOnClick).
 clusterIconOptions|`<`[СlusterIcon options](#Сlustericon-options)`>`|| Переопределение иконок кластеров (по умолчанию кластеры отображаются стандартными средствами плагина).
+notClusteredIcon|`<`[L.Icon](http://leafletjs.com/reference.html#icon)`>`|| Иконка для объектов не попавших в кластеры (по умолчанию применяются иконки объектов по соответствующим стилям слоя).
 
 ### СlusterIcon options
 

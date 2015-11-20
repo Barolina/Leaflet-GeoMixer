@@ -62,7 +62,7 @@
                     gmx = this._layer._gmx,
                     id = propsArr[0],
                     balloonData = gmx.styleManager.getItemBalloon(id);
-                if (!balloonData.DisableBalloonOnClick) {
+                if (balloonData && !balloonData.DisableBalloonOnClick) {
                     var style = this._layer.getItemStyle(id);
                     if (style.iconAnchor) {
                         var protoOffset = L.Popup.prototype.options.offset;
@@ -163,8 +163,9 @@
             }
             if (!fromMapFlag) {
                 this._layer.onAdd(map);
+            } else {
+                this._map = null;
             }
-            // this._map = null;
         },
 
         setDateInterval: function () {
@@ -204,18 +205,27 @@
                                 properties: vectorTileItem.properties,
                                 mPoint: p
                             };
-                        if (parsedStyle.iconUrl) {
-                            var iconAnchor = parsedStyle.iconAnchor;
-                            if (!iconAnchor) {
-                                var style = this._layer.getItemStyle(id);
-                                iconAnchor = style.image ? [style.sx / 2, style.sy / 2] : [8, 10];
+                        if (parsedStyle) {
+                            if (parsedStyle.iconUrl) {
+                                var iconAnchor = parsedStyle.iconAnchor;
+                                if (!iconAnchor) {
+                                    var style = this._layer.getItemStyle(id);
+                                    iconAnchor = style.image ? [style.sx / 2, style.sy / 2] : [8, 10];
+                                }
+                                opt.icon = L.icon({
+                                    iconAnchor: iconAnchor,
+                                    iconUrl: parsedStyle.iconUrl
+                                });
+                            } else {
+                                opt.icon = L.gmxUtil.getSVGIcon(parsedStyle);
                             }
-                            opt.icon = L.icon({
-                                iconAnchor: iconAnchor,
-                                iconUrl: parsedStyle.iconUrl
-                            });
-                        } else {
-                            opt.icon = L.gmxUtil.getSVGIcon(parsedStyle);
+                        } else if (this.options.notClusteredIcon) {
+                            var icon = this.options.notClusteredIcon;
+                            if (icon instanceof L.Icon) {
+                                opt.icon = icon;
+                            } else {
+                                opt.icon = L.icon(icon);
+                            }
                         }
                         marker = new L.Marker(latlng, opt);
                         this._items[id] = marker;
@@ -228,9 +238,13 @@
 
         _addObserver: function () {
             this._items = {};
+            var filters = ['clipFilter', 'userFilter', 'clipPointsFilter'];
+            if (!('notClusteredIcon' in this.options)) {
+                filters.push('styleFilter');
+            }
             this._observer = this._layer.addObserver({
                 callback: L.bind(this._updateData, this),
-                filters: ['clipFilter', 'userFilter', 'clipPointsFilter', 'styleFilter']
+                filters: filters
             }).deactivate();
         },
 
