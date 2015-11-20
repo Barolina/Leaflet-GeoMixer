@@ -797,9 +797,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (pixelBounds) {
             minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta) / 256);
             maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta) / 256);
-            minX = minLatLng.lng < -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x);
+            minX = minLatLng.lng <= -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x);
             minX = Math.floor((minX + shiftX - delta) / 256);
-            maxX = maxLatLng.lng > 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x);
+            maxX = maxLatLng.lng >= 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x);
             maxX = Math.floor((maxX + shiftX + delta) / 256);
         } else {
             minY = Math.floor((maxPoint.y + shiftY - delta) / 256);
