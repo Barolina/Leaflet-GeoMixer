@@ -151,6 +151,9 @@ L.gmx.VectorLayer.include({
                     }
                 }
             };
+        if (gmx.zoomstart) {
+            return 0;
+        }
         var zoom = this._map.getZoom();
         if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
             skipOver = true;
