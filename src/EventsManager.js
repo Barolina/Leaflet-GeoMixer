@@ -70,7 +70,6 @@ var GmxEventsManager = L.Handler.extend({
                 map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
                 skipNode = skipNodeName[ev.originalEvent.target.nodeName];
             }
-
             if (map._animatingZoom ||
                 isDrawing() ||
                 skipNode ||
@@ -115,13 +114,15 @@ var GmxEventsManager = L.Handler.extend({
             if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
             _this._lastCursor = cursor;
 
-            if (foundLayer) {
-                if (_this._lastLayer !== foundLayer) {
+            if (type !== 'zoomend') {
+                if (foundLayer) {
+                    if (_this._lastLayer !== foundLayer) {
+                        clearLastHover();
+                    }
+                    _this._lastLayer = foundLayer;
+                } else {
                     clearLastHover();
                 }
-                _this._lastLayer = foundLayer;
-            } else {
-                clearLastHover();
             }
         };
 
@@ -133,7 +134,7 @@ var GmxEventsManager = L.Handler.extend({
                     eventCheck(ev);
                 }, 0);
             },
-            zoomstart: clearLastHover,
+            zoomend: eventCheck,
             dblclick: eventCheck,
             mousedown: eventCheck,
             mouseup: eventCheck,

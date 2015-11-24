@@ -11,7 +11,7 @@ L.gmx.VectorLayer.include({
                 idr = geoItem[0],
                 dataOption = geoItems[i].dataOption || {},
                 item = gmx.dataManager.getItem(idr),
-                currentStyle = item.currentStyle || item.parsedStyleKeys,
+                currentStyle = item.currentStyle || item.parsedStyleKeys || {},
                 iconScale = currentStyle.iconScale || 1,
                 iconCenter = currentStyle.iconCenter,
                 iconAnchor = !iconCenter && currentStyle.iconAnchor ? currentStyle.iconAnchor : null,
@@ -146,14 +146,10 @@ L.gmx.VectorLayer.include({
                         ev.gmx = lastHover;
                         layer.fire(evType, ev);
                     }
-                    if (lastHover.observersToUpdate) {
-                        layer.repaint(lastHover.observersToUpdate);
-                    }
+                    if (lastHover.hoverDiff) { layer.redrawItem(lastHover.id); }
                 }
             };
-        if (gmx.zoomstart) {
-            return 0;
-        }
+
         var zoom = this._map.getZoom();
         if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
             skipOver = true;
@@ -220,22 +216,12 @@ L.gmx.VectorLayer.include({
                         properties: layer.getItemProperties(target.properties),
                         currentFilter: item.currentFilter,
                         prevId: prevId,
+                        hoverDiff: item.hoverDiff,
                         id: idr
                     };
                     if (this.hasEventListeners(type)) { this.fire(type, ev); }
                     if (type === 'mousemove' && changed) {
                         lastHover = gmx.lastHover = ev.gmx;
-                        if (item.hoverDiff) {
-                            var currentStyle = gmx.styleManager.getObjStyle(item);
-                            if (currentStyle) {
-                                var bounds = target.bounds;
-                                if (target.offset) {
-                                    var offset = [-target.offset[0] / gmx.mInPixel, target.offset[1] / gmx.mInPixel];
-                                    bounds = gmxAPIutils.bounds().extendBounds(bounds).addOffset(offset);
-                                }
-                                lastHover.observersToUpdate = layer._getTilesByBounds(bounds, currentStyle.maxSize || 256);
-                            }
-                        }
                         chkHover('mouseover');
                         gmx.lastMouseover = gmx.lastHover;
                     }
@@ -243,6 +229,9 @@ L.gmx.VectorLayer.include({
                     return idr;
                 }
             }
+        } else if (type === 'zoomend' && lastHover && lastHover.hoverDiff) {
+            layer.redrawItem(lastHover.id);
+            return lastHover.id;
         }
         if (this._map) {
             this._map.doubleClickZoom.enable();
