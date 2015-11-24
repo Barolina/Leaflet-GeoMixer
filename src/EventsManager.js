@@ -79,6 +79,7 @@ var GmxEventsManager = L.Handler.extend({
                 return;
             }
             if (ev.layerPoint) {
+                map._gmxMouseLatLng = ev.latlng;
                 map.gmxMousePos = map.getPixelOrigin().add(ev.layerPoint);
             }
 
@@ -127,14 +128,12 @@ var GmxEventsManager = L.Handler.extend({
         };
 
         map.on({
-            click: function (ev) {
-                if (_this.clickPointTimer) { clearTimeout(_this.clickPointTimer); }
-                _this.clickPointTimer = setTimeout(function () {
-                    clearTimeout(_this.clickPointTimer);
-                    eventCheck(ev);
+            zoomend: function (ev) {
+                setTimeout(function () {
+                    eventCheck({type: 'mousemove', latlng: map._gmxMouseLatLng});
                 }, 0);
             },
-            zoomend: eventCheck,
+            click: eventCheck,
             dblclick: eventCheck,
             mousedown: eventCheck,
             mouseup: eventCheck,

@@ -158,13 +158,12 @@ L.gmx.VectorLayer.include({
             if (lastHover) { lastHover.prevId = null; }
             chkHover('mouseout');
             gmx.lastHover = null;
-        } else if (ev.originalEvent &&
-            (
+        } else if (
             this.hasEventListeners('mouseover') ||
             this.hasEventListeners('mouseout') ||
             this.hasEventListeners(type) ||
             (type === 'mousemove' && gmx.properties.fromType !== 'Raster')
-            )) {
+            ) {
 
             var lng = ev.latlng.lng % 360,
                 latlng = new L.LatLng(ev.latlng.lat, lng + (lng < -180 ? 360 : (lng > 180 ? -360 : 0))),
@@ -229,9 +228,6 @@ L.gmx.VectorLayer.include({
                     return idr;
                 }
             }
-        } else if (type === 'zoomend' && lastHover && lastHover.hoverDiff) {
-            layer.redrawItem(lastHover.id);
-            return lastHover.id;
         }
         if (this._map) {
             this._map.doubleClickZoom.enable();
