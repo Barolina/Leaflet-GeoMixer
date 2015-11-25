@@ -251,6 +251,27 @@ StyleManager.prototype = {
         );
     },
 
+    getCurrentFilters: function(propArray, zoom) {
+        var gmx = this.gmx,
+            indexes = gmx.tileAttributeIndexes,
+            z = zoom || 1,
+            out = [];
+
+        if (!this._serverStylesParsed) {
+            this._parseServerStyles();
+        }
+        for (var i = 0, len = this._styles.length; i < len; i++) {
+            var st = this._styles[i];
+            if (z > st.MaxZoom || z < st.MinZoom
+                || (st.filterFunction && !st.filterFunction(propArray, indexes))) {
+                continue;
+            }
+            out.push(i);
+            if (!gmx.multiFilters) { break; }
+        }
+        return out;
+    },
+
     _chkStyleFilter: function(item) {
         var gmx = this.gmx,
             zoom = gmx.currentZoom,
@@ -259,19 +280,15 @@ StyleManager.prototype = {
             needParse = !curr || curr.version !== item.styleVersion;
 
         if (needParse || item._lastZoom !== zoom) {
-            var properties = item.properties,
-                indexes = gmx.tileAttributeIndexes;
             item.currentFilter = -1;
             item.multiFilters = [];
-            for (var i = 0, len = this._styles.length; i < len; i++) {
-                var st = this._styles[i];
-                if (zoom > st.MaxZoom || zoom < st.MinZoom
-                    || (st.filterFunction && !st.filterFunction(properties, indexes))) {
-                    continue;
-                }
+            var filters = this.getCurrentFilters(item.properties, zoom);
+            for (var i = 0, len = filters.length; i < len; i++) {
+                var num = filters[i],
+                    st = this._styles[num];
                 item.hoverDiff = st.hoverDiff;
-                item.currentFilter = i;
-                if (needParse || fnum !== i) {
+                item.currentFilter = num;
+                if (needParse || fnum !== num) {
                     var parsed = st.common && st.common.RenderStyle || this._itemStyleParser(item, st.RenderStyle),
                         parsedHover = null;
 

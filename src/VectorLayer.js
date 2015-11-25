@@ -977,6 +977,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this;
     },
 
+    getStylesByProperties: function(propArray, zoom) {
+        return this._gmx.styleManager.getCurrentFilters(propArray, zoom);
+    },
+
     getItemStyle: function(id) {
         var gmx = this._gmx,
             item = gmx.dataManager.getItem(id);
