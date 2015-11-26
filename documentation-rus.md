@@ -368,7 +368,7 @@ colorStop|`<Array>`|| Массив стоп цветов объекта град
 Метод|Синтаксис|Возвращаемое значение|Описание
 ------|------|:---------:|-----------
 setBounds|`setBounds(<`[L.LatLngBounds](http://leafletjs.com/reference.html#latlngbounds)`>)`|`this`| Изменить прямоугольник отслеживания объектов.
-setDateInterval|`setDateInterval(<Date[]>)`|`this`|Изменить временной интервал.
+setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Изменить временной интервал.
 deactivate|`deactivate()`|`this`|Отключение активности обсервера.
 activate|`activate()`|`this`|Включение активности обсервера.
 isActive|`isActive()`|`Boolean`|Получить флаг активности обсервера (по умолчанию `true`).
