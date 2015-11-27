@@ -828,10 +828,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     redrawItem: function (id) {
-        var item = this._gmx.dataManager.getItem(id),
-            gmxTiles = this._getTilesByBounds(item.bounds, 0, true);
+        if (this._map) {
+            var item = this._gmx.dataManager.getItem(id),
+                gmxTiles = this._getTilesByBounds(item.bounds, 0, true);
 
-        this.repaint(gmxTiles);
+            this.repaint(gmxTiles);
+        }
     },
 
     _updateProperties: function (prop) {

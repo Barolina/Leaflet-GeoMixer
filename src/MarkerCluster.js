@@ -59,9 +59,12 @@
             this.markers = new L.MarkerClusterGroup(mOptions);
             this.markers.on('click', function (ev) {
                 var propsArr = ev.layer.options.properties,
+                    properties = this._layer.getItemProperties(propsArr),
+                    geometry = [propsArr[propsArr.length - 1]],
                     gmx = this._layer._gmx,
                     id = propsArr[0],
                     balloonData = gmx.styleManager.getItemBalloon(id);
+
                 if (balloonData && !balloonData.DisableBalloonOnClick) {
                     var style = this._layer.getItemStyle(id);
                     if (style && style.iconAnchor) {
@@ -74,10 +77,10 @@
                     this._popup
                         .setLatLng(ev.latlng)
                         .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
-                            properties: this._layer.getItemProperties(propsArr),
+                            properties: properties,
                             tileAttributeTypes: gmx.tileAttributeTypes,
                             unitOptions: this._map.options || {},
-                            geometries: [propsArr[propsArr.length - 1]]
+                            geometries: geometry
                         }))
                         .openOn(this._map);
                 }
@@ -87,15 +90,17 @@
                     gmx: {
                         id: id,
                         layer: this._layer,
+                        properties: properties,
                         target: {
                             id: id,
-                            properties: propsArr
+                            properties: propsArr,
+                            geometry: geometry
                         }
                     }
                 }));
             }, this);
             this.markers.on('clusterclick', function (ev) {
-                this._layer.fire('click', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
+                this._layer.fire('clusterclick', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
             }, this);
 
             if (mOptions.clusterclick) {
@@ -119,6 +124,14 @@
                     _this.addEvent({target:{_map: _this._layer._map}});
                 }
             });
+        },
+
+        closePopup: function () {
+            if (this._popup && this._popup._map) { this._popup._map.removeLayer(this._popup); }
+        },
+
+        unspiderfy: function () {
+            if (this.markers._unspiderfy) { this.markers._unspiderfy(); }
         },
 
         unbindClusters: function () {
