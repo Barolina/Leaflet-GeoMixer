@@ -38,12 +38,10 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 		L.gmx.VectorLayer.prototype.initFromDescription.call(this, {geometry: ph.geometry, properties: vectorProperties, rawProperties: ph.properties});
 
         gmx.rasterBGfunc = function(x, y, z) {
-			var tileSenderPrefix = 'http://' + gmx.hostName + '/' +
+			return 'http://' + gmx.hostName + '/' +
 				'TileSender.ashx?ModeKey=tile' +
 				'&key=' + encodeURIComponent(gmx.sessionKey) +
-				'&LayerName=' + gmx.layerID;
-
-			return tileSenderPrefix +
+				'&LayerName=' + gmx.layerID +
 				'&z=' + z +
 				'&x=' + x +
 				'&y=' + y;

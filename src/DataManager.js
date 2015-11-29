@@ -141,17 +141,58 @@ var ObserverTileLoader = L.Class.extend({
 
 var DataManager = L.Class.extend({
     includes: L.Mixin.Events,
-    initialize: function(gmx) {
-        var _this = this,
-            isTemporalLayer = gmx.properties.Temporal;
+
+    options: {
+        LayerID: null,                      // layer ID
+        identityField: '',                  // attribute name for identity items
+        attributes: [],                     // attributes names
+        attrTypes: [],                      // attributes types
+        tiles: null,                        // tiles array for nontemporal data
+        tilesVers: null,                    // tiles version array for nontemporal data
+        GeoProcessing: null,                // processing data
+        Temporal: false,                    // only for temporal data
+        TemporalColumnName: '',             // temporal attribute name
+        ZeroDate: '01.01.2008',             // 0 date string
+        TemporalPeriods: [],                // temporal periods
+        TemporalTiles: [],                  // temporal tiles array
+        TemporalVers: [],                   // temporal version array
+        hostName: 'maps.kosmosnimki.ru',    // default hostName
+        sessionKey: ''                      // session key
+    },
+
+    setOptions: function(options) {
+        L.setOptions(this, options);
+
+        var arr = this.options.ZeroDate.split('.'),
+            zn = new Date(
+                (arr.length > 2 ? arr[2] : 2008),
+                (arr.length > 1 ? arr[1] - 1 : 0),
+                (arr.length > 0 ? arr[0] : 1)
+            );
+        this.dateZero = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);
+        this.ZeroUT = this.dateZero.getTime() / 1000;
+        var tileAttributes = L.gmxUtil.getTileAttributes(this.options);
+        this.tileAttributeIndexes = tileAttributes.tileAttributeIndexes;
+        var hostName = this.options.hostName,
+            sessionKey = this.options.sessionKey;
+        if (!sessionKey) {
+            sessionKey = L.gmx.gmxSessionManager.getSessionKey(hostName);
+        }
+        this.tileSenderPrefix = 'http://' + hostName + '/' +
+            'TileSender.ashx?WrapStyle=None' +
+            '&key=' + encodeURIComponent(sessionKey);
+
+    },
+
+    initialize: function(options) {
+        this.setOptions(options);
 
         this._tilesTree = null;
         this._activeTileKeys = {};
         this._endDate = null;
         this._beginDate = null;
 
-        this._gmx = gmx;
-        this._isTemporalLayer = isTemporalLayer;
+        this._isTemporalLayer = this.options.Temporal;
         this._tiles = {};
         this._filters = {};
         this._freeSubscrID = 0;
@@ -161,11 +202,12 @@ var DataManager = L.Class.extend({
         this._needCheckDateInterval = false;
         this._needCheckActiveTiles = true;
 
+        var _this = this;
         this._vectorTileDataProvider = {
             load: function(x, y, z, v, s, d, callback) {
                 gmxVectorTileLoader.load(
-                    _this._gmx.tileSenderPrefix,
-                    {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this._gmx.layerID}
+                    _this.tileSenderPrefix,
+                    {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this.options.LayerID}
                 ).then(callback, function() {
                     console.log('Error loading vector tile');
                     callback([]);
@@ -173,7 +215,7 @@ var DataManager = L.Class.extend({
                 });
             }
         };
-        if (isTemporalLayer) {
+        if (this._isTemporalLayer) {
             this.addFilter('TemporalFilter', function(item, tile, observer) {
                 var unixTimeStamp = item.options.unixTimeStamp,
                     dates = observer.dateInterval;
@@ -212,17 +254,17 @@ var DataManager = L.Class.extend({
 
         this._needCheckActiveTiles = false;
 
-        var processing = this._gmx.properties.GeoProcessing;
+        var processing = this.options.GeoProcessing;
         if (processing) {
             this._chkProcessing(processing);
-            delete this._gmx.properties.GeoProcessing;
+            this.options.GeoProcessing = null;
         }
 
         if (this._isTemporalLayer) {
             var newTileKeys = {};
             if (this._beginDate && this._endDate) {
                 if (!this._tilesTree) {
-                    this.initTilesTree(this._gmx.properties);
+                    this.initTilesTree();
                 }
 
                 /*var commonBounds = L.gmxUtil.bounds();
@@ -234,7 +276,7 @@ var DataManager = L.Class.extend({
             }
             this._updateActiveTilesList(newTileKeys);
         } else {
-            this.initTilesList(this._gmx.properties);
+            this.initTilesList();
         }
 
         return this._activeTileKeys;
@@ -332,7 +374,6 @@ var DataManager = L.Class.extend({
 
     _updateItemsFromTile: function(tile) {
         var vectorTileKey = tile.vectorTileKey,
-            layerProp = this._gmx.properties,
             data = tile.data,
             len = data.length,
             geomIndex = data[0] && (data[0].length - 1);
@@ -364,8 +405,8 @@ var DataManager = L.Class.extend({
             }
             item.properties = it;
             item.options.fromTiles[vectorTileKey] = i;
-            if (layerProp.TemporalColumnName) {
-                var zn = it[this._gmx.tileAttributeIndexes[layerProp.TemporalColumnName]];
+            if (this.options.TemporalColumnName) {
+                var zn = it[this.tileAttributeIndexes[this.options.TemporalColumnName]];
                 item.options.unixTimeStamp = zn * 1000;
             }
         }
@@ -599,7 +640,7 @@ var DataManager = L.Class.extend({
         var tileKeys = {};
         if (this._isTemporalLayer) {
             if (!this._tilesTree) {
-                this.initTilesTree(this._gmx.properties);
+                this.initTilesTree();
             }
             tileKeys = this._tilesTree.selectTiles(dateBegin, dateEnd).tiles;
         } else {
@@ -676,7 +717,7 @@ var DataManager = L.Class.extend({
 
     _propertiesToArray: function(it) {
         var prop = it.properties,
-            indexes = this._gmx.tileAttributeIndexes,
+            indexes = this.tileAttributeIndexes,
             arr = [];
 
         for (var key in indexes)
@@ -760,7 +801,10 @@ var DataManager = L.Class.extend({
         tile && this._triggerObservers();
     },
 
-    updateVersion: function() {
+    updateVersion: function(properties) {
+        if (properties) {
+            this.setOptions(properties);
+        }
         this._tilesTree = null;
         this._needCheckActiveTiles = true;
         this._getActiveTileKeys(); //force list update
@@ -828,9 +872,9 @@ var DataManager = L.Class.extend({
         return vTile;
     },
 
-    initTilesTree: function(layerProperties) {
-        var tiles = layerProperties.TemporalTiles || [],
-            vers = layerProperties.TemporalVers || [],
+    initTilesTree: function() {
+        var tiles = this.options.TemporalTiles || [],
+            vers = this.options.TemporalVers || [],
             newTiles = {};
 
         for (var i = 0, len = tiles.length; i < len; i++) {
@@ -844,12 +888,12 @@ var DataManager = L.Class.extend({
                 tileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
 
             newTiles[tileKey] = this._tiles[tileKey] || {
-                tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, s, d, this._gmx.ZeroDate)
+                tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, s, d, this.dateZero)
             };
         }
         this._tiles = newTiles;
 
-        this._tilesTree = new TilesTree(this._gmx.TemporalPeriods, this._gmx.ZeroUT);
+        this._tilesTree = new TilesTree(this.options.TemporalPeriods, this.ZeroUT);
         this._tilesTree.initFromTiles(this._tiles);
         if (this.processingTile) {
             this._tiles[this.processingTile.vectorTileKey] = {
@@ -858,11 +902,11 @@ var DataManager = L.Class.extend({
         }
     },
 
-    initTilesList: function(layerProperties) {
+    initTilesList: function() {
         var newActiveTileKeys = {};
-        if (layerProperties.tiles) {
-            var arr = layerProperties.tiles || [],
-                vers = layerProperties.tilesVers,
+        if (this.options.tiles) {
+            var arr = this.options.tiles || [],
+                vers = this.options.tilesVers,
                 newTiles = {};
 
             for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
@@ -903,3 +947,5 @@ var DataManager = L.Class.extend({
     }
 
 });
+L.gmx = L.gmx || {};
+L.gmx.DataManager = DataManager;

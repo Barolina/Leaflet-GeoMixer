@@ -71,3 +71,5 @@ var gmxSessionManager = {
     },
     _sessionKeys: {} //deferred for each host
 };
+L.gmx = L.gmx || {};
+L.gmx.gmxSessionManager = gmxSessionManager;

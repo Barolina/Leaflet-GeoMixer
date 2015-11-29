@@ -9,12 +9,19 @@ var getRequestParams = function(layer) {
     var hosts = {},
         _gmx;
     if (layer) {
-        _gmx = layer._gmx;
-        var prop = _gmx.properties;
-        hosts[_gmx.hostName] = [{
-            Name: prop.name,
-            Version: prop.LayerVersion
-        }];
+        if (layer instanceof L.gmx.DataManager) {
+            hosts[layer.options.hostName] = [{
+                Name: layer.options.LayerID,
+                Version: layer.options.LayerVersion || 0
+            }];
+        } else {
+            _gmx = layer._gmx;
+            var prop = _gmx.properties;
+            hosts[_gmx.hostName] = [{
+                Name: prop.LayerID,
+                Version: prop.LayerVersion || 0
+            }];
+        }
     } else {
         for (var id in layers) {
             var obj = layers[id];
@@ -31,13 +38,16 @@ var getRequestParams = function(layer) {
 };
 
 var chkVersion = function (layer, callback) {
-    var layerID = layer ? layer._gmx.layerID : null;
+    var layerID = null;
+    if (layer) {
+        layerID = layer instanceof L.gmx.DataManager ? layer.options.LayerID : layer._gmx.layerID;
+    }
     var processResponse = function(res) {
         if (res && res.Status === 'ok' && res.Result) {
             for (var i = 0, len = res.Result.length; i < len; i++) {
                 var item = res.Result[i],
                     prop = item.properties,
-                    id = prop.name,
+                    id = prop.LayerID,
                     curLayer = layers[id] || (id === layerID ? layer : null);
                 if (curLayer && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
             }
@@ -138,7 +148,7 @@ L.gmx.VectorLayer.include({
             if (layerDescription.properties) {
                 L.extend(gmx.properties, layerDescription.properties);
                 gmx.rawProperties = gmx.properties;
-                gmx.dataManager.updateVersion();
+                gmx.dataManager.updateVersion(gmx.rawProperties);
                 this.fire('versionchange');
             }
         }

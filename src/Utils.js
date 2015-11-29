@@ -2004,6 +2004,25 @@ var gmxAPIutils = {
         } else {
             return value;
         }
+    },
+
+    getTileAttributes: function(prop) {
+        var tileAttributeIndexes = {},
+            tileAttributeTypes = {};
+        if (prop.attributes) {
+            var attrs = prop.attributes,
+                attrTypes = prop.attrTypes || null;
+            if (prop.identityField) { tileAttributeIndexes[prop.identityField] = 0; }
+            for (var a = 0; a < attrs.length; a++) {
+                var key = attrs[a];
+                tileAttributeIndexes[key] = a + 1;
+                tileAttributeTypes[key] = attrTypes ? attrTypes[a] : 'string';
+            }
+        }
+        return {
+            tileAttributeTypes: tileAttributeTypes,
+            tileAttributeIndexes: tileAttributeIndexes
+        };
     }
 };
 
@@ -2190,6 +2209,7 @@ L.extend(L.gmxUtil, {
     getUTCtime: gmxAPIutils.getUTCtime,
     getUTCdateTime: gmxAPIutils.getUTCdateTime,
     attrToString: gmxAPIutils.attrToString,
+    getTileAttributes: gmxAPIutils.getTileAttributes,
     formatCoordinates: function (latlng, type) {
         return gmxAPIutils['formatCoordinates' + (type ? '2' : '')](latlng.lng, latlng.lat);
     },
