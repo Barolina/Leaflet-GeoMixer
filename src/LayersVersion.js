@@ -148,7 +148,7 @@ L.gmx.VectorLayer.include({
             if (layerDescription.properties) {
                 L.extend(gmx.properties, layerDescription.properties);
                 gmx.rawProperties = gmx.properties;
-                gmx.dataManager.updateVersion(gmx.rawProperties);
+                gmx.dataManager.updateVersion(layerDescription);
                 this.fire('versionchange');
             }
         }

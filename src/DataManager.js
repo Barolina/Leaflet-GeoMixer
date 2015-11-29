@@ -171,6 +171,8 @@ var DataManager = L.Class.extend({
             );
         this.dateZero = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);
         this.ZeroUT = this.dateZero.getTime() / 1000;
+        this._isTemporalLayer = this.options.Temporal;
+
         var tileAttributes = L.gmxUtil.getTileAttributes(this.options);
         this.tileAttributeIndexes = tileAttributes.tileAttributeIndexes;
         var hostName = this.options.hostName,
@@ -192,7 +194,6 @@ var DataManager = L.Class.extend({
         this._endDate = null;
         this._beginDate = null;
 
-        this._isTemporalLayer = this.options.Temporal;
         this._tiles = {};
         this._filters = {};
         this._freeSubscrID = 0;
@@ -801,9 +802,9 @@ var DataManager = L.Class.extend({
         tile && this._triggerObservers();
     },
 
-    updateVersion: function(properties) {
-        if (properties) {
-            this.setOptions(properties);
+    updateVersion: function(layerDescription) {
+        if (layerDescription && layerDescription.properties) {
+            this.setOptions(layerDescription.properties);
         }
         this._tilesTree = null;
         this._needCheckActiveTiles = true;
