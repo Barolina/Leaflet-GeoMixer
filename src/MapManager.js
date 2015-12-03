@@ -130,7 +130,7 @@ gmxMap.prototype.removeLayer = function(layer) {
 gmxMap.prototype.addLayersToMap = function(leafletMap) {
     for (var l = this.layers.length - 1; l >= 0; l--) {
         var layer = this.layers[l];
-        if (layer._gmx.properties.visible) {
+        if (layer.getGmxProperties().visible) {
             layer.addTo(leafletMap);
         }
     }
