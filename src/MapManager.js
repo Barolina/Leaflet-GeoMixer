@@ -93,19 +93,11 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
             layerOptions = L.extend({
                 mapID: mapInfo.properties.name,
                 layerID: props.name
-            }, commonLayerOptions),
-            layer;
-
-        if (props.type === 'Vector') {
-            layer = new L.gmx.VectorLayer(layerOptions);
-        } else {
-            layer = new L.gmx.RasterLayer(layerOptions);
-        }
+            }, commonLayerOptions);
 
         layerInfo.properties.hostName = mapInfo.properties.hostName;
-        layer.initFromDescription(layerInfo);
-
-        _this.addLayer(layer);
+        
+        _this.addLayer(L.gmx.createLayer(layerInfo, layerOptions));
     });
 };
 
