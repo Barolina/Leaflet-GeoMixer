@@ -82,8 +82,8 @@ L.gmx.loadMap = function(mapID, options) {
 
             for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                 layer = loadedMap.layers[l];
-                if (options.setZIndex) {
-                    layer.options.zIndex = ++curZIndex;
+                if (options.setZIndex && layer.setZIndex) {
+                    layer.setZIndex(++curZIndex);
                 }
 
                 if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
@@ -111,6 +111,12 @@ L.gmx.createLayer = function(layerInfo, options) {
     if (type in L.gmx._layerClasses) {
         layer = new L.gmx._layerClasses[type](options);
         layer = layer.initFromDescription(layerInfo);
+    } else {
+        layer = { //dummy layer
+            onAdd: function(){},
+            onRemove: function(){},
+            getGmxProperties: function() {return layerInfo.properties}
+        }
     }
 
     return layer;
