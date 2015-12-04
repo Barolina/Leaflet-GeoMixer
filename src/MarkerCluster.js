@@ -19,6 +19,7 @@
 
     var GmxMarkerCluster = L.Class.extend({
         options: {
+            spiderfyOnMaxZoom: true,
             minZoom: 1,
             maxZoom: 6
         },
@@ -346,4 +347,30 @@
             return this;
         }
     });
+L.Map.addInitHook(function () {
+    L.MarkerClusterGroup.include({
+        _zoomOrSpiderfy: function (e) {
+            var cluster = e.layer,
+                bottomCluster = cluster;
+
+            while (bottomCluster._childClusters.length === 1) {
+                bottomCluster = bottomCluster._childClusters[0];
+            }
+
+            if (bottomCluster._zoom === this._maxZoom && bottomCluster._childCount === cluster._childCount) {
+                // All child markers are contained in a single cluster from this._maxZoom to this cluster.
+                if (this.options.spiderfyOnMaxZoom) {
+                    cluster.spiderfy();
+                }
+            } else if (this.options.zoomToBoundsOnClick) {
+                cluster.zoomToBounds();
+            }
+
+            // Focus the map again for keyboard users.
+            if (e.originalEvent && e.originalEvent.keyCode === 13) {
+                this._map._container.focus();
+            }
+        }
+    });
+});
 })();
