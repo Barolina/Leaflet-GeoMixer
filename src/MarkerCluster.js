@@ -113,7 +113,7 @@
             this._layer._gmx.styleManager.initStyles().then(function () {
                 _this._addObserver();
                 _this.addEvent = function (ev) {
-                    GmxMarkerCluster.prototype.onAdd.call(_this, ev.target._map);
+                    _this.onAdd(ev.target._map);
                 };
 
                 layer
@@ -264,14 +264,13 @@
         _layeradd: function (ev) {
             var layer = ev.layer;
             if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
-                this.addEvent({target:{_map: this._layer._map}});
+                this.addEvent({target:{_map: this._map || this._layer._map}});
             }
         },
 
         _layerremove: function (ev) {
             var layer = ev.layer;
             if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
-                this.markers.clearLayers();
                 this.onRemove(true);
             }
         },
@@ -302,12 +301,12 @@
                 layer.enablePopup();
             } else if (layer._map) {
                 layer.onRemove(lmap);
+                if (!this.markers._map) {
+                    lmap.addLayer(this.markers);
+                }
                 if (observer) {
                     this.setDateInterval();
                     observer.activate();
-                }
-                if (!this.markers._map) {
-                    lmap.addLayer(this.markers);
                 }
                 layer.disablePopup();
             }
