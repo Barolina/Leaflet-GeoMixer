@@ -982,8 +982,8 @@ var gmxAPIutils = {
 		angle = Math.round(10000000 * angle) / 10000000 + 0.00000001;
 		var a1 = Math.floor(angle);
 		var a2 = Math.floor(60 * (angle - a1));
-		var a3 = gmxAPIutils.pad2(3600 * (angle - a1 - a2 / 60)).substring(0, 2);
-		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + '\'' + a3 + '"';
+		var a3 = Math.round(3600 * (angle - a1 - a2 / 60));
+		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + '\'' + gmxAPIutils.pad2(a3) + '"';
 	},
 
     /** Get point coordinates in string format with degrees
