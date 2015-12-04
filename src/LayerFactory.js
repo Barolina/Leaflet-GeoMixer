@@ -101,6 +101,11 @@ L.gmx.loadMap = function(mapID, options) {
     return def;
 };
 
+L.gmx.DummyLayer = function(props) {
+    this.onAdd = this.onRemove = function(){};
+    this.getGmxProperties = function() {return props};
+}
+
 L.gmx.createLayer = function(layerInfo, options) {
     if (!layerInfo) { layerInfo = {}; }
     if (!layerInfo.properties) { layerInfo.properties = {type: 'Vector'}; }
@@ -112,11 +117,7 @@ L.gmx.createLayer = function(layerInfo, options) {
         layer = new L.gmx._layerClasses[type](options);
         layer = layer.initFromDescription(layerInfo);
     } else {
-        layer = { //dummy layer
-            onAdd: function(){},
-            onRemove: function(){},
-            getGmxProperties: function() {return layerInfo.properties}
-        }
+        layer = new L.gmx.DummyLayer(layerInfo.properties);
     }
 
     return layer;
