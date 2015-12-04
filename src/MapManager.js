@@ -131,7 +131,7 @@ gmxMap.prototype.addLayersToMap = function(leafletMap) {
     for (var l = this.layers.length - 1; l >= 0; l--) {
         var layer = this.layers[l];
         if (layer.getGmxProperties().visible) {
-            layer.addTo(leafletMap);
+            leafletMap.addLayer(layer);
         }
     }
 
