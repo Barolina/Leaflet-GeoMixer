@@ -271,6 +271,7 @@
         _layerremove: function (ev) {
             var layer = ev.layer;
             if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
+                this.markers.clearLayers();
                 this.onRemove(true);
             }
         },
