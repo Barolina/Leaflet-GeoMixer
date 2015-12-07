@@ -128,7 +128,7 @@ var GmxEventsManager = L.Handler.extend({
         };
 
         map.on({
-            zoomend: function (ev) {
+            zoomend: function () {
                 if (map._gmxMouseLatLng) {
                     setTimeout(function () {
                         eventCheck({type: 'mousemove', latlng: map._gmxMouseLatLng});

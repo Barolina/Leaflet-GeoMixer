@@ -149,7 +149,7 @@ L.gmx.VectorLayer.include({
                 return isObserverIntersects(observer, _this._gmx._clipPolygons);
             });
 
-            dataManager.addFilter('clipPointsFilter', function (item, tile, observer) {
+            dataManager.addFilter('clipPointsFilter', function (item) {
                 if (item.type === 'POINT') {
                     var propArr = item.properties,
                         geom = propArr[propArr.length - 1];
