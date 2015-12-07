@@ -2245,7 +2245,8 @@ L.extend(L.gmxUtil, {
     isClockwise: gmxAPIutils.isClockwise,
     isPointInPolygonWithHoles: gmxAPIutils.isPointInPolygonWithHoles,
     getPatternIcon: gmxAPIutils.getPatternIcon,
-    getCircleLatLngs: gmxAPIutils.getCircleLatLngs
+    getCircleLatLngs: gmxAPIutils.getCircleLatLngs,
+    normalizeHostname: gmxAPIutils.normalizeHostname
 });
 
 (function() {
