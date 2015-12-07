@@ -919,6 +919,12 @@ var gmxAPIutils = {
         if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
             return null;
         }
+
+        //there should be a separator in the string (exclude strings like "11E11")
+        if (text.indexOf(' ') === -1 && text.indexOf(',') === -1) {
+            return null;
+        }
+
         if (text.indexOf(' ') !== -1) {
             text = text.replace(/,/g, '.');
         }
@@ -2245,7 +2251,8 @@ L.extend(L.gmxUtil, {
     isClockwise: gmxAPIutils.isClockwise,
     isPointInPolygonWithHoles: gmxAPIutils.isPointInPolygonWithHoles,
     getPatternIcon: gmxAPIutils.getPatternIcon,
-    getCircleLatLngs: gmxAPIutils.getCircleLatLngs
+    getCircleLatLngs: gmxAPIutils.getCircleLatLngs,
+    normalizeHostname: gmxAPIutils.normalizeHostname
 });
 
 (function() {

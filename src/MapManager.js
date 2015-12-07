@@ -77,6 +77,8 @@ var gmxMapManager = {
     _maps: {} //Promise for each map. Structure: maps[serverHost][mapID]: {promise:, layers:}
 };
 
+L.gmx.gmxMapManager = gmxMapManager;
+
 var gmxMap = function(mapInfo, commonLayerOptions) {
     this.layers = [];
     this.layersByTitle = {};
