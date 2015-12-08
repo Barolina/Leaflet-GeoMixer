@@ -25,9 +25,17 @@ L.gmx.VectorLayer.include({
         onAdd: function (layer) {
             var gmx = layer._gmx;
             if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-                layer.setSortFunc(function(a, b) {
-                    return a.id - b.id;
-                });
+                layer.setSortFunc(
+                    gmx.zIndexField ?
+                    function(a, b) {
+                        var res = Number(a.properties[gmx.zIndexField]) - Number(b.properties[gmx.zIndexField]);
+                        return res ? res : a.id - b.id;
+                    }
+                    :
+                    function(a, b) {
+                        return a.id - b.id;
+                    }
+                );
             }
             layer.on('click', this.clickFunc, layer);
         },
@@ -64,6 +72,13 @@ L.gmx.VectorLayer.include({
     bringToBottomItem: function (id) {
         this._objectsReorder.addToReorder(id, true);
         this.redrawItem(id);
+    },
+
+    clearReorderArrays: function () {
+        var reorder = this._objectsReorder;
+        reorder.all = {};
+        reorder.count = 0;
+        this.repaint();
     },
 
     setReorderArrays: function (top, bottom) {
