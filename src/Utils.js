@@ -2276,7 +2276,7 @@ L.extend(L.gmxUtil, {
             return;    // message от других запросов
         }
 
-        delete request[dataObj.CallbackName];
+        delete requests[e.origin][dataObj.CallbackName];
         delete dataObj.CallbackName;
 
         if (request.iframe.parentNode) {
