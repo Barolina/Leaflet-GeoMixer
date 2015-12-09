@@ -22,20 +22,24 @@ L.gmx.VectorLayer.include({
                 this.redrawItem(id);
             }
         },
+        resetSortFunc: function (layer) {
+            var zIndexField = layer._gmx.zIndexField;
+            layer.setSortFunc(
+                zIndexField ?
+                function(a, b) {
+                    var res = Number(a.properties[zIndexField]) - Number(b.properties[zIndexField]);
+                    return res ? res : a.id - b.id;
+                }
+                :
+                function(a, b) {
+                    return a.id - b.id;
+                }
+            );
+        },
         onAdd: function (layer) {
             var gmx = layer._gmx;
-            if (!gmx.sortItems && gmx.GeometryType === 'polygon') {
-                layer.setSortFunc(
-                    gmx.zIndexField ?
-                    function(a, b) {
-                        var res = Number(a.properties[gmx.zIndexField]) - Number(b.properties[gmx.zIndexField]);
-                        return res ? res : a.id - b.id;
-                    }
-                    :
-                    function(a, b) {
-                        return a.id - b.id;
-                    }
-                );
+            if (!gmx.sortItems && (gmx.GeometryType === 'polygon' || gmx.GeometryType === 'linestring')) {
+                layer._objectsReorder.resetSortFunc(layer);
             }
             layer.on('click', this.clickFunc, layer);
         },
@@ -93,6 +97,10 @@ L.gmx.VectorLayer.include({
     getSortedItems: function (arr) {
         var reorder = this._objectsReorder;
         return arr.sort(reorder.count > 0 ? this._gmx.sortItems : reorder.sortFunc);
+    },
+
+    resetSortFunc: function () {
+        this._objectsReorder.resetSortFunc(this);
     },
 
     setSortFunc: function (func) {

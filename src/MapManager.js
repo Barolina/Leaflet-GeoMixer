@@ -98,7 +98,7 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
             }, commonLayerOptions);
 
         layerInfo.properties.hostName = mapInfo.properties.hostName;
-        
+
         _this.addLayer(L.gmx.createLayer(layerInfo, layerOptions));
     });
 };

@@ -852,6 +852,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if ('ZIndexField' in prop) {
             if (prop.ZIndexField in gmx.tileAttributeIndexes) {
                 gmx.zIndexField = gmx.tileAttributeIndexes[prop.ZIndexField];   // sort field index
+                this.resetSortFunc();
             // } else {
                 // console.error('Layer:', prop.name, ' "ZIndexField" not found in "attributes"');
             }

@@ -102,9 +102,9 @@ L.gmx.loadMap = function(mapID, options) {
 };
 
 L.gmx.DummyLayer = function(props) {
-    this.onAdd = this.onRemove = function(){};
-    this.getGmxProperties = function() {return props};
-}
+    this.onAdd = this.onRemove = function() {};
+    this.getGmxProperties = function() { return props; };
+};
 
 L.gmx.createLayer = function(layerInfo, options) {
     if (!layerInfo) { layerInfo = {}; }
