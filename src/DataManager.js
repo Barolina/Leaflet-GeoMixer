@@ -258,10 +258,9 @@ var DataManager = L.Class.extend({
         this._needCheckActiveTiles = false;
 
         var processing = this.options.GeoProcessing;
-        if (processing) {
+        if (processing || this.processingTile) {
             this._chkProcessing(processing);
         }
-        this.options.GeoProcessing = null;
 
         if (this._isTemporalLayer) {
             var newTileKeys = {};
@@ -754,45 +753,47 @@ var DataManager = L.Class.extend({
             tile.clear();
         }
 
-        if (processing.Deleted) {
-            for (i = 0, len = processing.Deleted.length; i < len; i++) {
-                id = processing.Deleted[i];
-                skip[id] = true;
-                if (_items[id]) {
-                    _items[id].processing = true;
-                    _items[id].currentFilter = null;
+        if (processing) {
+            if (processing.Deleted) {
+                for (i = 0, len = processing.Deleted.length; i < len; i++) {
+                    id = processing.Deleted[i];
+                    skip[id] = true;
+                    if (_items[id]) {
+                        _items[id].processing = true;
+                        _items[id].currentFilter = null;
+                    }
+                    if (len > 0) { needProcessingFilter = true; }
                 }
-                if (len > 0) { needProcessingFilter = true; }
             }
-        }
 
-        var out = {};
-        if (processing.Inserted) {
-            for (i = 0, len = processing.Inserted.length; i < len; i++) {
-                it = processing.Inserted[i];
-                if (!skip[it[0]]) { out[it[0]] = it; }
+            var out = {};
+            if (processing.Inserted) {
+                for (i = 0, len = processing.Inserted.length; i < len; i++) {
+                    it = processing.Inserted[i];
+                    if (!skip[it[0]]) { out[it[0]] = it; }
+                }
             }
-        }
 
-        if (processing.Updated) {
-            for (i = 0, len = processing.Updated.length; i < len; i++) {
-                it = processing.Updated[i];
-                if (!skip[it[0]]) { out[it[0]] = it; }
+            if (processing.Updated) {
+                for (i = 0, len = processing.Updated.length; i < len; i++) {
+                    it = processing.Updated[i];
+                    if (!skip[it[0]]) { out[it[0]] = it; }
+                }
+                if (!needProcessingFilter && len > 0) { needProcessingFilter = true; }
             }
-            if (!needProcessingFilter && len > 0) { needProcessingFilter = true; }
-        }
 
-        var data = [];
-        for (id in out) {
-            if (this._items[id]) {
-                this._items[id].processing = true;
-                this._items[id].currentFilter = null;
+            var data = [];
+            for (id in out) {
+                if (this._items[id]) {
+                    this._items[id].processing = true;
+                    this._items[id].currentFilter = null;
+                }
+                data.push(out[id]);
             }
-            data.push(out[id]);
-        }
 
-        if (data.length > 0) {
-            this.processingTile = tile = this.addData(data);
+            if (data.length > 0) {
+                this.processingTile = tile = this.addData(data);
+            }
         }
         if (needProcessingFilter) {
             this.addFilter('processingFilter', function(item, tile) {
