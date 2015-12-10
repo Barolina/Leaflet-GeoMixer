@@ -160,6 +160,7 @@
                 layer.onRemove(lmap);
                 if (!this.markers._map) {
                     lmap.addLayer(this.markers);
+                    this.markers._canvas.style.pointerEvents = 'none';
                 }
                 if (observer) {
                     this.setDateInterval();
