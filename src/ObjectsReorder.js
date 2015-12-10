@@ -8,7 +8,7 @@ var MAX = 1000000;
 L.gmx.VectorLayer.include({
     _objectsReorder: {
         all: {},
-        userSetSortFunc: false,     // user sort func flag 
+        userSetSortFunc: false,     // user sort func flag
         sortFunc: null,
         count: 0,
         addToReorder: function (id, bottomFlag) {
