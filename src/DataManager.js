@@ -161,6 +161,9 @@ var DataManager = L.Class.extend({
     },
 
     setOptions: function(options) {
+        if (!options.GeoProcessing) {
+            this.options.GeoProcessing = null;
+        }
         L.setOptions(this, options);
 
         var arr = this.options.ZeroDate.split('.'),
@@ -183,7 +186,6 @@ var DataManager = L.Class.extend({
         this.tileSenderPrefix = 'http://' + hostName + '/' +
             'TileSender.ashx?WrapStyle=None' +
             '&key=' + encodeURIComponent(sessionKey);
-
     },
 
     initialize: function(options) {
@@ -258,8 +260,8 @@ var DataManager = L.Class.extend({
         var processing = this.options.GeoProcessing;
         if (processing) {
             this._chkProcessing(processing);
-            this.options.GeoProcessing = null;
         }
+        this.options.GeoProcessing = null;
 
         if (this._isTemporalLayer) {
             var newTileKeys = {};
