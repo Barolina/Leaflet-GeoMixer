@@ -3,24 +3,27 @@
  */
 (function() {
 
-var MAX = 1000000;
-
-L.gmx.VectorLayer.include({
-    _objectsReorder: {
-        all: {},
-        userSetSortFunc: false,     // user sort func flag
-        sortFunc: null,
-        count: 0,
+var MAX = 1000000,
+    ObjectsReorder = function (layer) {
+        this.all = {};
+        this.userSetSortFunc = false;     // user sort func flag
+        this.sortFunc = null;
+        this.count = 0;
+        this.disabled = false;
+        this.layer = layer;
+        layer.on('add', this.onAdd, this);
+        layer.on('remove', this.onRemove, this);
+    };
+    ObjectsReorder.prototype = {
         addToReorder: function (id, bottomFlag) {
             ++this.count;
             this.all[id] = bottomFlag ? -this.count : this.count;
         },
         clickFunc: function (ev) {
-            var reorder = this._objectsReorder;
-            if (!reorder.disabled) {
+            if (!this.disabled) {
                 var id = ev.gmx.id;
-                reorder.addToReorder(id, ev.originalEvent.ctrlKey);
-                this.redrawItem(id);
+                this.addToReorder(id, ev.originalEvent.ctrlKey);
+                this.layer.redrawItem(id);
             }
         },
         sortItems: function(a, b) {     // layer context
@@ -37,10 +40,10 @@ L.gmx.VectorLayer.include({
             }
             return reorder.sortFunc ? reorder.sortFunc.call(this, a, b) : 0;
         },
-        resetSortFunc: function (layer) {
-            var reorder = layer._objectsReorder;
-            layer._gmx.sortItems = reorder.sortItems;
-            reorder.sortFunc = layer._gmx.zIndexField && !reorder.userSetSortFunc ?
+        resetSortFunc: function () {
+            var layer = this.layer;
+            layer._gmx.sortItems = this.sortItems;
+            this.sortFunc = layer._gmx.zIndexField && !this.userSetSortFunc ?
                 function(a, b) {    // layer context
                     var res = Number(a.properties[this._gmx.zIndexField]) - Number(b.properties[this._gmx.zIndexField]);
                     return res ? res : a.id - b.id;
@@ -51,59 +54,74 @@ L.gmx.VectorLayer.include({
                 }
             ;
         },
-        onAdd: function (layer) {
-            var gmx = layer._gmx;
+        onAdd: function () {
+            var layer = this.layer,
+                gmx = layer._gmx;
             if (!gmx.sortItems && (gmx.GeometryType === 'polygon' || gmx.GeometryType === 'linestring')) {
-                layer._objectsReorder.resetSortFunc(layer);
+                this.resetSortFunc();
             }
-            layer.on('click', this.clickFunc, layer);
+            layer.on('click', this.clickFunc, this);
         },
-        onRemove: function (layer) {
-            layer.off('click', this.clickFunc, layer);
+        onRemove: function () {
+            this.layer.off('click', this.clickFunc, this);
         },
-        disabled: false
+    };
+
+L.gmx.VectorLayer.include({
+    _objectsReorder: null,
+
+    _objectsReorderInit: function () {
+        if (!this._objectsReorder) {
+            this._objectsReorder = new ObjectsReorder(this);
+        }
     },
 
     getReorderArrays: function () {
-        var reorder = this._objectsReorder,
-            bottom = [],
-            top = [],
-            arr = Object.keys(reorder.all).sort(function(a, b) {
-                return reorder.all[a] - reorder.all[b];
-            });
+        var out = {top: [], bottom: []};
+        if (this._objectsReorder) {
+            var reorder = this._objectsReorder,
+                arr = Object.keys(reorder.all).sort(function(a, b) {
+                    return reorder.all[a] - reorder.all[b];
+                });
 
-        for (var i = 0, len = arr.length; i < len; i++) {
-            var id = arr[i];
-            if (reorder.all[id] > 0) {
-                top.push(id);
-            } else {
-                bottom.push(id);
+            for (var i = 0, len = arr.length; i < len; i++) {
+                var id = arr[i];
+                if (reorder.all[id] > 0) {
+                    out.top.push(id);
+                } else {
+                    out.bottom.push(id);
+                }
             }
         }
-        return {top: top, bottom: bottom};
+        return out;
     },
 
     bringToTopItem: function (id) {
+        this._objectsReorderInit();
         this._objectsReorder.addToReorder(id);
         this.redrawItem(id);
         return this;
     },
 
     bringToBottomItem: function (id) {
+        this._objectsReorderInit();
         this._objectsReorder.addToReorder(id, true);
         this.redrawItem(id);
         return this;
     },
 
     clearReorderArrays: function () {
-        var reorder = this._objectsReorder;
-        reorder.all = {};
-        reorder.count = 0;
-        this.repaint();
+        if (this._objectsReorder) {
+            var reorder = this._objectsReorder;
+            reorder.all = {};
+            reorder.count = 0;
+            this.repaint();
+        }
         return this;
     },
 
     setReorderArrays: function (top, bottom) {
+        this._objectsReorderInit();
         var reorder = this._objectsReorder;
         reorder.all = {};
         reorder.count = 0;
@@ -114,15 +132,12 @@ L.gmx.VectorLayer.include({
     },
 
     getSortedItems: function (arr) {
+        this._objectsReorderInit();
         return arr.sort(L.bind(this._objectsReorder.count > 0 ? this._gmx.sortItems : this._objectsReorder.sortFunc, this));
     },
 
-    resetSortFunc: function () {
-        this._objectsReorder.resetSortFunc(this);
-        return this;
-    },
-
     setSortFunc: function (func) {
+        this._objectsReorderInit();
         var reorder = this._objectsReorder;
         reorder.sortFunc = func;
         reorder.userSetSortFunc = func ? true : false;
@@ -130,7 +145,15 @@ L.gmx.VectorLayer.include({
         this.repaint();
         return this;
     },
-    disableFlip: function() { this._objectsReorder.disabled = true; return this; },
-    enableFlip: function() { this._objectsReorder.disabled = false; return this; }
+    disableFlip: function() {
+        this._objectsReorderInit();
+        this._objectsReorder.disabled = true;
+        return this;
+    },
+    enableFlip: function() {
+        this._objectsReorderInit();
+        this._objectsReorder.disabled = false;
+        return this;
+    }
 });
 })();

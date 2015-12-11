@@ -183,9 +183,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.on('stylechange', this._onStyleChange, this);
         this.on('versionchange', this._onVersionChange, this);
 
-        if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
-            this._objectsReorder.onAdd(this);
-        }
         this._zIndexOffsetCheck();
         this.fire('add');
     },
@@ -219,9 +216,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.off('stylechange', this._onStyleChange, this);
 
         var gmx = this._gmx;
-        if (gmx.rawProperties.type !== 'Raster' && this._objectsReorder) {
-            this._objectsReorder.onRemove(this);
-        }
 
         delete gmx.map;
         if (gmx.applyShift) {
@@ -269,6 +263,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         if (gmx.properties.type === 'Vector' && !('chkUpdate' in this.options)) {
             this.options.chkUpdate = true; //Check updates for vector layers by default
+        }
+        if (gmx.rawProperties.type !== 'Raster' && this._objectsReorderInit) {
+            this._objectsReorderInit(this);
         }
 
         if (gmx.clusters) {
@@ -852,9 +849,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if ('ZIndexField' in prop) {
             if (prop.ZIndexField in gmx.tileAttributeIndexes) {
                 gmx.zIndexField = gmx.tileAttributeIndexes[prop.ZIndexField];   // sort field index
-                this.resetSortFunc();
-            // } else {
-                // console.error('Layer:', prop.name, ' "ZIndexField" not found in "attributes"');
             }
         }
 
