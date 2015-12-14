@@ -23,7 +23,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             endDate: options.endDate,
             sortItems: options.sortItems || null,
             styles: options.styles || [],
-            screenTiles: {},
             tileSubscriptions: {},
             _tilesToLoad: 0,
             shiftXlayer: 0,
@@ -47,10 +46,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _clearTileSubscription: function(zKey) {
-        var gmx = this._gmx,
-            screenTiles = gmx.screenTiles;
+        var gmx = this._gmx;
 
         if (zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey];
+            if (subscription.screenTile) {
+                subscription.screenTile.cancel();
+            }
             gmx.dataManager.getObserver(zKey).deactivate();
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
@@ -63,13 +65,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 this._drawQueue.splice(i, 1);
             }
         }
-
         delete this._drawQueueHash[zKey];
-
-        if (screenTiles[zKey]) {
-            screenTiles[zKey].cancel();
-            delete screenTiles[zKey];
-        }
     },
 
     _clearAllSubscriptions: function() {
@@ -77,19 +73,19 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this._drawQueue[0].def.cancel();
         }
 
-        var gmx = this._gmx,
-            subscriptions = gmx.tileSubscriptions;
+        var gmx = this._gmx;
 
-        for (var zKey in subscriptions) {
-            delete subscriptions[zKey];
+        for (var zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey];
+            if (subscription.screenTile) {
+                subscription.screenTile.cancel();
+            }
             gmx.dataManager.getObserver(zKey).deactivate();
             gmx.dataManager.removeObserver(zKey);
+            delete gmx.tileSubscriptions[zKey];
+
             if (zKey in this._drawQueueHash) {
                 this._drawQueueHash[zKey].reject();
-            }
-            if (gmx.screenTiles[zKey]) {
-                gmx.screenTiles[zKey].cancel();
-                delete gmx.screenTiles[zKey];
             }
         }
         this._drawQueueHash = {};
@@ -113,8 +109,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _clearScreenCache: function() {
         var gmx = this._gmx;
-        for (var key in gmx.screenTiles) {    // recheck bbox on screen observers
-            gmx.screenTiles[key].clearCache();
+        for (var zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey];
+            if (subscription.screenTile) {
+                subscription.screenTile.clearCache();    // recheck bbox on screen observers
+            }
         }
     },
 
@@ -411,7 +410,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _drawTileAsync: function (tilePoint, zoom, data) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
-            zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
+            zKey = this._tileCoordsToKey(tilePoint, zoom),
             _this = this;
 
         if (this._drawQueueHash[zKey]) {
@@ -453,7 +452,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 }
             }
         });
-
         queue.push(queueItem);
 
         this._drawQueueHash[zKey] = def;
@@ -561,19 +559,19 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             //L.TileVector will remove all tiles from other zooms.
             //But it will not remove subscriptions without tiles - we should do it ourself
             var dataManager = gmx.dataManager;
-            for (var key in gmx.tileSubscriptions) {
-                var parsedKey = gmx.tileSubscriptions[key];
-                if (parsedKey.z !== zoom) {
-                    _this._clearTileSubscription(key);
+            for (var zKey in gmx.tileSubscriptions) {
+                var subscription = gmx.tileSubscriptions[zKey];
+                if (subscription.z !== zoom) {
+                    _this._clearTileSubscription(zKey);
                 } else {    // deactivate observers for invisible Tiles
-                    var observer = dataManager.getObserver(key);
-                    if (parsedKey.x < tileBounds.min.x
-                        || parsedKey.x > tileBounds.max.x
-                        || parsedKey.y < tileBounds.min.y
-                        || parsedKey.y > tileBounds.max.y
+                    var observer = dataManager.getObserver(zKey);
+                    if (subscription.x < tileBounds.min.x
+                        || subscription.x > tileBounds.max.x
+                        || subscription.y < tileBounds.min.y
+                        || subscription.y > tileBounds.max.y
                     ) {
                         observer.deactivate();
-                        if (gmx.screenTiles[key]) { gmx.screenTiles[key].clearCache(); }
+                        if (subscription.screenTile) { subscription.screenTile.clearCache(); }
                     } else {
                         observer.activate();
                     }
@@ -617,7 +615,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             return;
         }
 
-        var zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y;
+        var zKey = this._tileCoordsToKey(tilePoint, zoom);
         if (!gmx.tileSubscriptions[zKey]) {
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false,
@@ -666,6 +664,21 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
+    _getScreenTile: function (tilePoint, zoom) {
+        var gmx = this._gmx,
+            zKey = this._tileCoordsToKey(tilePoint, zoom),
+            subscription = gmx.tileSubscriptions[zKey],
+            screenTile = null;
+        if (subscription) {
+            if (subscription.screenTile) {
+                screenTile = subscription.screenTile;
+            } else {
+                subscription.screenTile = screenTile = new ScreenVectorTile(this, tilePoint, zoom);
+            }
+        }
+        return screenTile;
+    },
+
     _gmxDrawTile: function (tilePoint, zoom, data) {
         var gmx = this._gmx,
             def = new L.gmx.Deferred();
@@ -674,22 +687,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             def.reject();
             return def;
         }
-
-        zoom = zoom || this._map._zoom;
-        var screenTiles = gmx.screenTiles,
-            zKey = zoom + ':' + tilePoint.x + ':' + tilePoint.y,
-            screenTile = null;
-
-        if (!screenTiles[zKey]) {
-            screenTiles[zKey] = screenTile = new ScreenVectorTile(this, tilePoint, zoom);
-        } else {
-            screenTile = screenTiles[zKey];
+        var screenTile = this._getScreenTile(tilePoint, zoom || this._map._zoom);
+        if (screenTile) {
+            gmx.styleManager.deferred.then(function () {
+                screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject);
+            });
         }
-
-       gmx.styleManager.deferred.then(function () {
-            screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject);
-       });
-
        return def;
     },
 
@@ -805,7 +808,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
             for (var y = minY; y <= maxY; y++) {
-                var zKey = zoom + ':' + x + ':' + y;
+                var zKey = this._tileCoordsToKey({x: x, y: y}, zoom);
                 gmxTiles[zKey] = true;
             }
         }
@@ -1015,5 +1018,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
 
         return this._gmx.latLngGeometry;
+    },
+
+    // prepare for Leaflet 1.0
+    // converts tile coordinates to key for the tile cache
+    _tileCoordsToKey: function (coords, zoom) {
+        return coords.x + ':' + coords.y + ':' + (coords.z || zoom);
     }
 });

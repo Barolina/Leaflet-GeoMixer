@@ -739,7 +739,7 @@ var DataManager = L.Class.extend({
 
 
         if (tile) {
-            var zKey = tile.vectorTileKey;
+            var vKey = tile.vectorTileKey;
             for (i = 0, len = tile.data.length; i < len; i++) {
                 it = tile.data[i];
                 id = it[0];
@@ -747,7 +747,7 @@ var DataManager = L.Class.extend({
                     var item = _items[id];
                     item.processing = false;
                     item.currentFilter = null;
-                    delete item.options.fromTiles[zKey];
+                    delete item.options.fromTiles[vKey];
                 }
             }
             tile.clear();

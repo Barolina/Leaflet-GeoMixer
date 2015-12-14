@@ -64,7 +64,7 @@ var MAX = 1000000,
         },
         onRemove: function () {
             this.layer.off('click', this.clickFunc, this);
-        },
+        }
     };
 
 L.gmx.VectorLayer.include({

@@ -142,6 +142,9 @@ var gmxAPIutils = {
 
     tileSizes: [], // Размеры тайла по zoom
     getTileNumFromLeaflet: function (tilePoint, zoom) {
+        if ('z' in tilePoint) {
+            zoom = tilePoint.z;
+        }
         var pz = Math.pow(2, zoom),
             tx = tilePoint.x % pz + (tilePoint.x < 0 ? pz : 0),
             ty = tilePoint.y % pz + (tilePoint.y < 0 ? pz : 0);

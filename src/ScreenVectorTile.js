@@ -5,7 +5,7 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.zoom = zoom;
     this.gmx = layer._gmx;
     this.tKey = tilePoint.x + ':' + tilePoint.y;
-    this.zKey = zoom + ':' + this.tKey;
+    this.zKey = this.layer._tileCoordsToKey(tilePoint, zoom);
     var utils = gmxAPIutils;
     this.worldWidthMerc = utils.worldWidthMerc;
     var gmxTilePoint = utils.getTileNumFromLeaflet(tilePoint, zoom);
@@ -466,7 +466,6 @@ ScreenVectorTile.prototype = {
                 tpy: this.tpy,
                 ctx: ctx
             };
-
         tile.zKey = this.zKey;
         if (gmx.sortItems) {
             geoItems = this.layer.getSortedItems(geoItems);
