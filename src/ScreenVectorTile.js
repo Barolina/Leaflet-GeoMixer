@@ -49,7 +49,7 @@ ScreenVectorTile.prototype = {
                 }
             };
 
-            if (gmx.badTiles[rUrl]) {
+            if (gmx.badTiles[rUrl] || (gmx.maxNativeZoom && gmx.maxNativeZoom < gtp.z)) {
                 tryHigherLevelTile();
                 return;
             }

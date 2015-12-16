@@ -28,6 +28,9 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
             gmx = this._gmx,
             worldSize = gmxAPIutils.tileSizes[1];
 
+        if (props.MaxZoom) {
+            gmx.maxNativeZoom = props.MaxZoom;
+        }
         if (!ph.geometry) {
             ph.geometry = {
                 type: 'POLYGON',

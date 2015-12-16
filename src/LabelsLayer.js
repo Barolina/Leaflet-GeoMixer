@@ -34,7 +34,7 @@ L.LabelsLayer = L.Class.extend({
                 if (gmx.styleHook) {
                     var styleExtend = gmx.styleHook(item, gmx.lastHover && item.id === gmx.lastHover.id);
                     if (styleExtend) {
-                        currentStyle = L.extend(currentStyle, styleExtend);
+                        currentStyle = L.extend({}, currentStyle, styleExtend);
                     } else {
                         continue;
                     }
