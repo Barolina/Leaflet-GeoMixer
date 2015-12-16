@@ -353,7 +353,6 @@ var DataManager = L.Class.extend({
                     if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
                         tile.calcEdgeLines(j);
                     }
-
                     resItems.push({
                         id: id,
                         properties: it,
@@ -390,6 +389,7 @@ var DataManager = L.Class.extend({
                 if (it[j] === null) { it[j] = ''; }
             }
             if (item) {
+                if (item.processing) { continue; }  // skip processing items
                 if (item.type.indexOf('MULTI') === -1) {
                     item.type = 'MULTI' + item.type;
                 }
@@ -785,6 +785,7 @@ var DataManager = L.Class.extend({
             var data = [];
             for (id in out) {
                 if (this._items[id]) {
+                    this._items[id].properties = out[id];
                     this._items[id].processing = true;
                     this._items[id].currentFilter = null;
                 }
