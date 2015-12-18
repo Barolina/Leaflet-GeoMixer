@@ -848,11 +848,13 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (gmx.dataManager) {
             gmx.dataManager.setOptions(prop);
         }
-
         if ('ZIndexField' in prop) {
             if (prop.ZIndexField in gmx.tileAttributeIndexes) {
                 gmx.zIndexField = gmx.tileAttributeIndexes[prop.ZIndexField];   // sort field index
             }
+        }
+        if (this._objectsReorder) {
+            this._objectsReorder.initialize();
         }
 
         // if ('clusters' in prop) {

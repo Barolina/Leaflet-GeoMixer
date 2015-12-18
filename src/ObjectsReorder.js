@@ -54,13 +54,15 @@ var MAX = 1000000,
                 }
             ;
         },
-        onAdd: function () {
-            var layer = this.layer,
-                gmx = layer._gmx;
-            if (!gmx.sortItems && (gmx.GeometryType === 'polygon' || gmx.GeometryType === 'linestring')) {
+        initialize: function () {
+            var gmx = this.layer._gmx;
+            if (!this.userSetSortFunc && (gmx.GeometryType === 'polygon' || gmx.GeometryType === 'linestring')) {
                 this.resetSortFunc();
             }
-            layer.on('click', this.clickFunc, this);
+        },
+        onAdd: function () {
+            this.initialize();
+            this.layer.on('click', this.clickFunc, this);
         },
         onRemove: function () {
             this.layer.off('click', this.clickFunc, this);
