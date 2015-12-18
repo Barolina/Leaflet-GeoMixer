@@ -753,7 +753,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._tileOnLoad(tile);
     },
 
-    _getTilesByBounds: function (bounds, delta, ignoreMapSize) {    // Получить список gmxTiles по bounds
+    _getTilesByBounds: function (bounds) {    // Получить список gmxTiles по bounds
         var gmx = this._gmx,
             zoom = this._map._zoom,
             shiftX = gmx.shiftX || 0,   // Сдвиг слоя
@@ -775,25 +775,23 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         minLatLng.lng += dx;
         maxLatLng.lng += dx;
 
-        var pixelBounds = ignoreMapSize ? null : this._map.getPixelBounds(),
+        var pixelBounds = this._map.getPixelBounds(),
             minPoint = this._map.project(minLatLng),
             maxPoint = this._map.project(maxLatLng);
 
-        delta = delta || 0;
-
         var minY, maxY, minX, maxX;
         if (pixelBounds) {
-            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY - delta) / 256);
-            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY + delta) / 256);
+            minY = Math.floor((Math.max(maxPoint.y, pixelBounds.min.y) + shiftY) / 256);
+            maxY = Math.floor((Math.min(minPoint.y, pixelBounds.max.y) + shiftY) / 256);
             minX = minLatLng.lng <= -180 ? pixelBounds.min.x : Math.max(minPoint.x, pixelBounds.min.x);
-            minX = Math.floor((minX + shiftX - delta) / 256);
+            minX = Math.floor((minX + shiftX) / 256);
             maxX = maxLatLng.lng >= 180 ? pixelBounds.max.x : Math.min(maxPoint.x, pixelBounds.max.x);
-            maxX = Math.floor((maxX + shiftX + delta) / 256);
+            maxX = Math.floor((maxX + shiftX) / 256);
         } else {
-            minY = Math.floor((maxPoint.y + shiftY - delta) / 256);
-            maxY = Math.floor((minPoint.y + shiftY + delta) / 256);
-            minX = Math.floor((minPoint.x + shiftX - delta) / 256);
-            maxX = Math.floor((maxPoint.x + shiftX + delta) / 256);
+            minY = Math.floor((maxPoint.y + shiftY) / 256);
+            maxY = Math.floor((minPoint.y + shiftY) / 256);
+            minX = Math.floor((minPoint.x + shiftX) / 256);
+            maxX = Math.floor((maxPoint.x + shiftX) / 256);
         }
         var gmxTiles = {};
         for (var x = minX; x <= maxX; x++) {
@@ -814,7 +812,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     redrawItem: function (id) {
         if (this._map) {
             var item = this._gmx.dataManager.getItem(id),
-                gmxTiles = this._getTilesByBounds(item.bounds, 0, true);
+                gmxTiles = this._getTilesByBounds(item.bounds);
 
             this.repaint(gmxTiles);
         }
