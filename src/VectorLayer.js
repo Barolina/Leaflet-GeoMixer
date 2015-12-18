@@ -107,16 +107,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
-    _clearScreenCache: function() {
-        var gmx = this._gmx;
-        for (var zKey in gmx.tileSubscriptions) {
-            var subscription = gmx.tileSubscriptions[zKey];
-            if (subscription.screenTile) {
-                subscription.screenTile.clearCache();    // recheck bbox on screen observers
-            }
-        }
-    },
-
     _onStyleChange: function() {
         var gmx = this._gmx;
         if (!gmx.balloonEnable && this._popup) {
@@ -927,7 +917,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _onVersionChange: function () {
         this._updateProperties(this._gmx.rawProperties);
-        this._clearScreenCache();
     },
 
     addData: function(data, options) {
