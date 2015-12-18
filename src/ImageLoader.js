@@ -99,12 +99,13 @@ var GmxImageLoader = L.Class.extend({
             if (loadingImg.requests.length === 1 && loadingImg.requests[0]._id === id) {
                 --this.curCount;
                 delete this.inProgress[request.url];
+                loadingImg.image.src = '';
                 loadingImg.image = GmxImageLoader.EMPTY_IMAGE_URL;
                 this.fire('imageloaded', {url: request.url});
                 this._nextLoad();
             } else {
                 for (i = 0; i < loadingImg.requests.length; i++) {
-                    if (loadingImg.requests[i].id === id) {
+                    if (loadingImg.requests[i]._id === id) {
                         loadingImg.requests.splice(i, 1);
                         break;
                     }
@@ -112,7 +113,7 @@ var GmxImageLoader = L.Class.extend({
             }
         } else {
             for (i = 0; i < this.requests.length; i++) {
-                if (this.requests[i].id === id) {
+                if (this.requests[i]._id === id) {
                     this.requests.splice(i, 1);
                     break;
                 }
