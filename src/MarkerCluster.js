@@ -110,16 +110,13 @@
                 });
             }
 
+            this._layer
+                .on('add', this.addEvent, this)
+                .on('dateIntervalChanged', this.setDateInterval, this);
+
             var _this = this;
             this._layer._gmx.styleManager.initStyles().then(function () {
                 _this._addObserver();
-                _this.addEvent = function (ev) {
-                    _this.onAdd(ev.target._map);
-                };
-
-                layer
-                    .on('add', _this.addEvent, _this)
-                    .on('dateIntervalChanged', _this.setDateInterval, _this);
 
                 if (_this._layer._map) {
                     _this.addEvent({target:{_map: _this._layer._map}});
@@ -140,28 +137,32 @@
             this._layer
                 .off('add', this.addEvent, this)
                 .off('dateIntervalChanged', this.setDateInterval, this);
+
             this.onRemove(!map);
-            if (map) {
-                map.off({
-                    moveend: this._updateBbox,
-                    zoomend: this._zoomend,
-                    layeradd: this._layeradd,
-                    layerremove: this._layerremove
-                }, this);
-            }
         },
 
-        // parent layer added to map
-        onAdd: function (map) {
-           if (!this._map) {
-                this._map = map;
-                this._map.on({
-                    moveend: this._updateBbox,
-                    zoomend: this._zoomend,
-                    layeradd: this._layeradd,
-                    layerremove: this._layerremove
-                }, this);
-            }
+        _addMapHandlers: function (map) {
+            this._map = map;
+            this._map.on({
+                moveend: this._updateBbox,
+                zoomend: this._zoomend,
+                layeradd: this._layeradd,
+                layerremove: this._layerremove
+            }, this);
+        },
+
+        _removeMapHandlers: function () {
+            this._map.off({
+                moveend: this._updateBbox,
+                zoomend: this._zoomend,
+                layeradd: this._layeradd,
+                layerremove: this._layerremove
+            }, this);
+            this._map = null;
+        },
+
+        addEvent: function (ev) {
+            this._addMapHandlers(ev.target._map);
             this._chkZoom();
         },
 
@@ -177,8 +178,6 @@
             }
             if (!fromMapFlag) {
                 this._layer.onAdd(map);
-            } else {
-                this._map = null;
             }
         },
 
@@ -265,7 +264,7 @@
         _layeradd: function (ev) {
             var layer = ev.layer;
             if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
-                this.addEvent({target:{_map: this._map || this._layer._map}});
+                this._chkZoom();
             }
         },
 
@@ -273,6 +272,7 @@
             var layer = ev.layer;
             if (layer._gmx && layer._gmx.layerID === this._layer.options.layerID) {
                 this.onRemove(true);
+                this._removeMapHandlers();
             }
         },
 
