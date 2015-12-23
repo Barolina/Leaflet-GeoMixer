@@ -109,7 +109,9 @@ StyleManager.prototype = {
     },
 
     getStyles: function () {
-        this.initStyles();
+        if (!this._serverStylesParsed) {
+            this._parseServerStyles();
+        }
         var out = [];
         for (var i = 0, len = this._styles.length; i < len; i++) {
             var style = L.extend({}, this._styles[i]);
