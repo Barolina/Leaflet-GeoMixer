@@ -107,6 +107,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
+    clearScreenCache: function() {
+        var gmx = this._gmx;
+        for (var zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey];
+            if (subscription.screenTile) { subscription.screenTile.clearCache(); }
+        }
+        return this;
+    },
+
     _onStyleChange: function() {
         var gmx = this._gmx;
         if (!gmx.balloonEnable && this._popup) {
@@ -941,6 +950,31 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx,
             item = gmx.dataManager.getItem(id);
         return gmx.styleManager.getObjStyle(item);
+    },
+
+    getTileAttributeTypes: function() {
+        return this._gmx.tileAttributeTypes;
+    },
+
+    getTileAttributeIndexes: function() {
+        return this._gmx.tileAttributeIndexes;
+    },
+
+    getItemBalloon: function(id) {
+        var gmx = this._gmx,
+            item = gmx.dataManager.getItem(id),
+            styles = this.getStyles(),
+            out = '';
+
+        if (item && styles[item.currentFilter]) {
+            var propsArr = item.properties;
+            out = L.gmxUtil.parseBalloonTemplate(styles[item.currentFilter].Balloon, {
+                properties: this.getItemProperties(propsArr),
+                geometries: [propsArr[propsArr.length - 1]],
+                tileAttributeTypes: gmx.tileAttributeTypes
+            });
+        }
+        return out;
     },
 
     getItemProperties: function(propArray) {

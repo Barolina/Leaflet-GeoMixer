@@ -1666,20 +1666,22 @@ var gmxAPIutils = {
         var out = '',
             type = '',
             res = 0;
-        arr.forEach(function(geom) {
-            if (geom) {
-                type = geom.type.toUpperCase();
-                if (type.indexOf('POINT') !== -1) {
-                    var latlng = L.Projection.Mercator.unproject({y: geom.coordinates[1], x: geom.coordinates[0]});
-                    out = '<b>' + L.gmxLocale.getText('Coordinates') + '</b>: '
-                        + gmxAPIutils.formatCoordinates(latlng.lng, latlng.lat);
-                } else if (type.indexOf('LINESTRING') !== -1) {
-                    res += gmxAPIutils.geoLength(geom);
-                } else if (type.indexOf('POLYGON') !== -1) {
-                    res += gmxAPIutils.geoArea(geom);
+        if (arr) {
+            arr.forEach(function(geom) {
+                if (geom) {
+                    type = geom.type.toUpperCase();
+                    if (type.indexOf('POINT') !== -1) {
+                        var latlng = L.Projection.Mercator.unproject({y: geom.coordinates[1], x: geom.coordinates[0]});
+                        out = '<b>' + L.gmxLocale.getText('Coordinates') + '</b>: '
+                            + gmxAPIutils.formatCoordinates(latlng.lng, latlng.lat);
+                    } else if (type.indexOf('LINESTRING') !== -1) {
+                        res += gmxAPIutils.geoLength(geom);
+                    } else if (type.indexOf('POLYGON') !== -1) {
+                        res += gmxAPIutils.geoArea(geom);
+                    }
                 }
-            }
-        });
+            });
+        }
         if (!out) {
             if (type.indexOf('LINESTRING') !== -1) {
                 out = '<b>' + L.gmxLocale.getText('Length') + '</b>: '
