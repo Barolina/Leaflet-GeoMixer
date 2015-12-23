@@ -28,7 +28,7 @@
         updateData: function (data) {
             if (data.added) {
                 var latlngs = [],
-                    indexes = this.indexes,
+                    indexes = this.parentLayer.getTileAttributeIndexes(),
                     altIndex = null,
                     intensityField = this.options.intensityField || '',
                     intensityScale = this.options.intensityScale || 1;
@@ -45,7 +45,7 @@
 
                     latlngs.push([point.lat, point.lng, typeof intensityScale === 'function' ? intensityScale(alt) : intensityScale * alt]);
                 }
-                this.extLayer.setLatLngs(latlngs);
+                this.externalLayer.setLatLngs(latlngs);
             }
         }
     });

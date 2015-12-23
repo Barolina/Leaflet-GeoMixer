@@ -56,51 +56,58 @@
 
             this._popup = new L.Popup({maxWidth: 10000, className: 'gmxPopup'});
             var markers = new L.MarkerClusterGroup(mOptions);
-            markers.on('click', function (ev) {
-                var propsArr = ev.layer.options.properties,
-                    properties = this._layer.getItemProperties(propsArr),
-                    geometry = [propsArr[propsArr.length - 1]],
-                    gmx = this._layer._gmx,
-                    id = propsArr[0],
-                    balloonData = gmx.styleManager.getItemBalloon(id);
 
-                if (balloonData && !balloonData.DisableBalloonOnClick) {
-                    var style = this._layer.getItemStyle(id);
-                    if (style && style.iconAnchor) {
-                        var protoOffset = L.Popup.prototype.options.offset;
-                        this._popup.options.offset = [
-                            -protoOffset[0] - style.iconAnchor[0] + style.sx / 2,
-                            protoOffset[1] - style.iconAnchor[1] + style.sy / 2
-                        ];
-                    }
-                    this._popup
-                        .setLatLng(ev.latlng)
-                        .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
-                            properties: properties,
-                            tileAttributeTypes: gmx.tileAttributeTypes,
-                            unitOptions: this._map.options || {},
-                            geometries: geometry
-                        }))
-                        .openOn(this._map);
-                }
-                this._layer.fire('click', L.extend(ev, {
-                    eventFrom: 'markerClusters',
-                    originalEventType: 'click',
-                    gmx: {
-                        id: id,
-                        layer: this._layer,
-                        properties: properties,
-                        target: {
-                            id: id,
-                            properties: propsArr,
-                            geometry: geometry
+            markers
+                .on('click', function (ev) {
+                    var propsArr = ev.layer.options.properties,
+                        properties = this.parentLayer.getItemProperties(propsArr),
+                        geometry = [propsArr[propsArr.length - 1]],
+                        gmx = this.parentLayer._gmx,
+                        id = propsArr[0],
+                        balloonData = gmx.styleManager.getItemBalloon(id);
+
+                    if (balloonData && !balloonData.DisableBalloonOnClick) {
+                        var style = this.parentLayer.getItemStyle(id);
+                        if (style && style.iconAnchor) {
+                            var protoOffset = L.Popup.prototype.options.offset;
+                            this._popup.options.offset = [
+                                -protoOffset[0] - style.iconAnchor[0] + style.sx / 2,
+                                protoOffset[1] - style.iconAnchor[1] + style.sy / 2
+                            ];
                         }
+                        this._popup
+                            .setLatLng(ev.latlng)
+                            .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
+                                properties: properties,
+                                tileAttributeTypes: gmx.tileAttributeTypes,
+                                unitOptions: this._map.options || {},
+                                geometries: geometry
+                            }))
+                            .openOn(this._map);
                     }
-                }));
-            }, this);
-            markers.on('clusterclick', function (ev) {
-                this._layer.fire('clusterclick', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
-            }, this);
+                    this.parentLayer.fire('click', L.extend(ev, {
+                        eventFrom: 'markerClusters',
+                        originalEventType: 'click',
+                        gmx: {
+                            id: id,
+                            layer: this.parentLayer,
+                            properties: properties,
+                            target: {
+                                id: id,
+                                properties: propsArr,
+                                geometry: geometry
+                            }
+                        }
+                    }));
+                }, this)
+                .on('animationend', function () {
+                    if (this._popup && this._popup._map) {
+                        this._popup._map.removeLayer(this._popup);
+                    }
+                }, this)
+                .on('clusterclick', function (ev) {
+                    this.parentLayer.fire('clusterclick', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
+                }, this);
 
             if (mOptions.clusterclick) {
                 markers.on('clusterclick', mOptions.clusterclick instanceof Function ? mOptions.clusterclick : function (a) {
@@ -127,7 +134,7 @@
                         arr.push(marker);
                     }
                 }
-                this.extLayer.removeLayers(arr);
+                this.externalLayer.removeLayers(arr);
                 arr = [];
             }
             if (data.added) {
@@ -149,7 +156,7 @@
                             if (parsedStyle.iconUrl) {
                                 var iconAnchor = parsedStyle.iconAnchor;
                                 if (!iconAnchor) {
-                                    var style = this._layer.getItemStyle(id);
+                                    var style = this.parentLayer.getItemStyle(id);
                                     iconAnchor = style.image ? [style.sx / 2, style.sy / 2] : [8, 10];
                                 }
                                 opt.icon = L.icon({
@@ -172,7 +179,7 @@
                     }
                     arr.push(marker);
                 }
-                this.extLayer.addLayers(arr);
+                this.externalLayer.addLayers(arr);
             }
         }
     });
