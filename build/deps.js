@@ -28,6 +28,7 @@
     "Locale.js",
     "lang_ru.js",
     "lang_en.js",
+    "ExternalLayer.js",
     "MarkerCluster.js",
     "HeatMap.js",
     "ClipPolygon.js"
