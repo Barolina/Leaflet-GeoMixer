@@ -11,6 +11,7 @@ L.gmx.ExternalLayer = L.Class.extend({
     },
 
     options: {
+        useDataManager: true,
         observerOptions: {
             filters: ['clipFilter', 'userFilter', 'clipPointsFilter']
         }
@@ -23,7 +24,9 @@ L.gmx.ExternalLayer = L.Class.extend({
             .on('add', this._addEvent, this)
             .on('dateIntervalChanged', this._setDateInterval, this);
 
-        this._addObserver(this.options.observerOptions);
+        if (this.options.useDataManager) {
+            this._addObserver(this.options.observerOptions);
+        }
 
         this.externalLayer = this.createExternalLayer();
 

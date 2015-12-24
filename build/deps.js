@@ -29,6 +29,7 @@
     "lang_ru.js",
     "lang_en.js",
     "ExternalLayer.js",
+    "BindWMS.js",
     "MarkerCluster.js",
     "HeatMap.js",
     "ClipPolygon.js"

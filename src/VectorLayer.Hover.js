@@ -136,6 +136,9 @@ L.gmx.VectorLayer.include({
     },
 
     gmxEventCheck: function (ev, skipOver) {
+        if (!this._map) {
+            return 0;
+        }
         var layer = this,
             gmx = layer._gmx,
             type = ev.type,
