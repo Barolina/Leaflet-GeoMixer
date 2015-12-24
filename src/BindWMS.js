@@ -10,14 +10,15 @@
         },
 
         createExternalLayer: function () {
-            var poptions = this.parentLayer.options;
-            return L.tileLayer.wms('http://' + poptions.hostName + '/TileService.ashx', {
-                apikey: this.options.apikey,
-                map: poptions.mapID,
-                layers: poptions.layerID,
-                format: 'png',
-                transparent: true
-            });
+            var poptions = this.parentLayer.options,
+                opt = {
+                    map: poptions.mapID,
+                    layers: poptions.layerID,
+                    format: this.options.format,
+                    transparent: this.options.transparent
+                };
+            if (this.options.apikey) { opt.apikey = this.options.apikey; }
+            return L.tileLayer.wms('http://' + poptions.hostName + '/TileService.ashx', opt);
         },
 
         isExternalVisible: function (zoom) {
@@ -27,15 +28,11 @@
 
     L.gmx.VectorLayer.include({
         bindWMS: function (options) {
-            if (options && options.apikey) {
-                if (this._layerWMS) {
-                    this._layerWMS.unbindLayer();
-                }
-                this._layerWMS = new BindWMS(options, this);
-                return this;
-            } else {
-                return null;
+            if (this._layerWMS) {
+                this._layerWMS.unbindLayer();
             }
+            this._layerWMS = new BindWMS(options, this);
+            return this;
         },
 
         unbindWMS: function () {

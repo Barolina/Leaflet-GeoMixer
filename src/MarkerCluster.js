@@ -19,6 +19,9 @@
     };
     var GmxMarkerCluster = L.gmx.ExternalLayer.extend({
         options: {
+            observerOptions: {
+                filters: ['clipFilter', 'styleFilter', 'userFilter', 'clipPointsFilter']
+            },
             spiderfyOnMaxZoom: true,
             minZoom: 1,
             maxZoom: 6
@@ -145,14 +148,22 @@
                     if (!marker) {
                         var item = vectorTileItem.properties,
                             geo = item[item.length - 1],
-                            parsedStyle = vectorTileItem.item.parsedStyleKeys,
+                            parsedStyle = vectorTileItem.item.parsedStyleKeys || this.parentLayer.getItemStyle(id),
                             p = geo.coordinates,
                             latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]}),
                             opt = {
                                 properties: vectorTileItem.properties,
                                 mPoint: p
                             };
-                        if (parsedStyle) {
+
+                        if (this.options.notClusteredIcon) {
+                            var icon = this.options.notClusteredIcon;
+                            if (icon instanceof L.Icon) {
+                                opt.icon = icon;
+                            } else {
+                                opt.icon = L.icon(icon);
+                            }
+                        } else if (parsedStyle) {
                             if (parsedStyle.iconUrl) {
                                 var iconAnchor = parsedStyle.iconAnchor;
                                 if (!iconAnchor) {
@@ -165,13 +176,6 @@
                                 });
                             } else {
                                 opt.icon = L.gmxUtil.getSVGIcon(parsedStyle);
-                            }
-                        } else if (this.options.notClusteredIcon) {
-                            var icon = this.options.notClusteredIcon;
-                            if (icon instanceof L.Icon) {
-                                opt.icon = icon;
-                            } else {
-                                opt.icon = L.icon(icon);
                             }
                         }
                         marker = new L.Marker(latlng, opt);
