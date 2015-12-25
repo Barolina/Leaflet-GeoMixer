@@ -10,8 +10,7 @@ var ImageRequest = function(id, url, options) {
 var GmxImageLoader = L.Class.extend({
     includes: L.Mixin.Events,
     statics: {
-        MAX_COUNT: 20, // max number of parallel requests
-        EMPTY_IMAGE_URL: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+        MAX_COUNT: 20 // max number of parallel requests
     },
 
     initialize: function() {
@@ -21,12 +20,16 @@ var GmxImageLoader = L.Class.extend({
         this.uniqueID = 0;
     },
 
-    _imageLoaded: function(url, image) {
+    _imageLoaded: function(url, image, canceled) {
         if (url in this.inProgress) {
             var requests = this.inProgress[url].requests;
             for (var k = 0; k < requests.length; k++) {
                 var def = requests[k].def;
-                image ? def.resolve(image) : def.reject();
+                if (image) {
+                    def.resolve(image);
+                } else if (!canceled) {
+                    def.reject();
+                }
                 this.fire('requestdone', {request: requests[k]});
             }
             --this.curCount;
@@ -97,12 +100,10 @@ var GmxImageLoader = L.Class.extend({
         if (request.url in this.inProgress) {
             var loadingImg = this.inProgress[request.url];
             if (loadingImg.requests.length === 1 && loadingImg.requests[0]._id === id) {
-                --this.curCount;
-                delete this.inProgress[request.url];
-                loadingImg.image.src = '';
-                loadingImg.image = GmxImageLoader.EMPTY_IMAGE_URL;
-                this.fire('imageloaded', {url: request.url});
-                this._nextLoad();
+                loadingImg.image.onload = L.Util.falseFn;
+                loadingImg.image.onerror = L.Util.falseFn;
+                loadingImg.image.src = L.Util.emptyImageUrl;
+                this._imageLoaded(request.url, null, true);
             } else {
                 for (i = 0; i < loadingImg.requests.length; i++) {
                     if (loadingImg.requests[i]._id === id) {

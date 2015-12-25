@@ -186,7 +186,7 @@ ScreenVectorTile.prototype = {
             rasters = this.rasters,
             mainRasterLoader = null,
             def = new L.gmx.Deferred(function() {
-                mainRasterLoader.cancel();
+                if (mainRasterLoader) { mainRasterLoader.cancel(); }
             });
 
         if (idr in rasters) {
