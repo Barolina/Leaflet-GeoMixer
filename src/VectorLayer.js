@@ -390,7 +390,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     getDateInterval: function() {
-        return [this._gmx.dateBegin, this._gmx.dateEnd];
+        return {
+            beginDate: this._gmx.beginDate, 
+            endDate: this._gmx.endDate
+        };
     },
 
     addObserver: function (options) {
