@@ -110,7 +110,8 @@ setZIndex| Задать z-индексы создаваемых слоёв в с
 ------|------|:---------:|-----------
 setFilter|`setFilter(function(item): Boolean)`|`this`| Установить ф-цию для фильтрации объектов перед рендерингом. Единственный аргумент - ф-ция, которая получает объект из слоя и возвращает булево значение (`false` - отфильтровать)
 removeFilter|`removeFilter()`||Удалить ф-цию фильтрации объектов перед рендерингом.
-setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Задаёт временной интервал для мультиврменных слоёв. Только объекты из этого интервала будут загружены и показаны на карте. `beginDate` и `endDate` имеют тип `Date`.
+setDateInterval|`setDateInterval(beginDate, endDate)`|`this`|Задаёт временной интервал для мультиврменных слоёв. Только объекты из этого интервала будут показаны на карте. `beginDate` и `endDate` имеют тип `Date`.
+getDateInterval|`getDateInterval()`|`JSON`|Получение временного интервала слоя.
 bindPopup|`bindPopup(html <String> `&#124;` el <HTMLElement> `&#124;` popup <Popup>, options <Popup options>? )`|`this`| Подключить обработчик баллунов по клику на объекте слоя.
 disablePopup|`disablePopup()`|`this`| Отключить показ баллунов.
 enablePopup|`enablePopup()`|`this`| Включить показ баллунов.
