@@ -120,7 +120,7 @@ removePopupHook|`removePopupHook(key)`|`this`| Отменить дополнит
 disableFlip|`disableFlip()`|`this`| Установить флаг отмены ротации объектов слоя.
 enableFlip|`enableFlip()`|`this`| Удалить флаг отмены ротации объектов слоя.
 repaint|`repaint()` ||Перерисовать слой. В отличае от `L.TileLayer.redraw()`, не пересоздаёт тайлы слоя, а лишь перерисовывает их. Работает быстрее и без моргания слоя на экране.
-redrawItem|`redrawItem(<UInt>)` ||Перерисовать объект слоя.
+redrawItem|`redrawItem(id <UInt>)` ||Перерисовать объект слоя с идентификатором id.
 setRasterHook|`setRasterHook(function(dstCanvas, srcImage, sx, sy, sw, sh, dx, dy, dw, dh, info): Promise)`|`this`|Команда  предназначена для предобработки растров объектов слоя (например раскраска по палитре и т.п.). Единственный аргумент - ф-ция, аргументы функции: `dstCanvas` - результирующий холст растра объекта, `srcImage` - тайл растра объекта полученный с сервера (далее источник), sx , sy, sw, sh - описание прямоугольника пикселов из источника `image`, dx, dy, dw, dh - описание прямоугольника пикселов на результирующем холсте `canvas`, info - дополнительное описание. Функция может возвращать возвращать: `Promise` - будет произведена асинхронная обработка, `undefined` - обработка завершена в синхронном режиме.
 removeRasterHook|`removeRasterHook()`|`this`|Удалить функцию обработки растров объектов слоя.
 addObserver|`addObserver(<`[Observer options](#observer-options)`>)`|`<`[Observer](#Класс-observer)`>`|Добавление функции отбора объектов слоя по заданным условиям.
@@ -141,6 +141,8 @@ bindClusters|`bindClusters(options <`[Clusters options](#clusters-options---оп
 unbindClusters|`unbindClusters()`|`this`| Отключить кластеризацию слоя.
 bindHeatMap|`bindHeatMap(options <`[HeatMap options](#heatmap-options---опции-heatmap)`>? )`|`this`| Подключить HeatMap слоя. Пример [bindHeatMap.html](http://ScanEx.github.com/Leaflet-GeoMixer/examples/bindHeatMap.html).
 unbindHeatMap|`unbindHeatMap()`|`this`| Отключить HeatMap слоя.
+bindWMS|`bindWMS(options <`[TileLayer.WMS options](http://leafletjs.com/reference.html#tilelayer-wms-options)`>? )`|`this`| Подключить отображение WMS слоя.
+unbindWMS|`unbindWMS()`|`this`| Отключить отображение WMS слоя.
 addClipPolygon|`addClipPolygon(<`[L.Polygon](http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](http://leafletjs.com/reference.html#geojson)`>)`|`this`| Добавить полигон обрезки данных слоя.
 removeClipPolygon|`removeClipPolygon(<`[L.Polygon](http://leafletjs.com/reference.html#polygon) or [L.GeoJSON](http://leafletjs.com/reference.html#geojson)`>)`|`this`| Удалить полигон обрезки данных слоя.
 
