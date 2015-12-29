@@ -60,6 +60,9 @@
             this._popup = new L.Popup({maxWidth: 10000, className: 'gmxPopup'});
             var markers = new L.MarkerClusterGroup(mOptions);
 
+            // текущий развёрнутый кластер
+            var currentSpiderfiedCluster = null;
+
             markers
                 .on('click', function (ev) {
                     var propsArr = ev.layer.options.properties,
@@ -68,6 +71,10 @@
                         gmx = this.parentLayer._gmx,
                         id = propsArr[0],
                         balloonData = gmx.styleManager.getItemBalloon(id);
+
+                    if (currentSpiderfiedCluster && !(currentSpiderfiedCluster.getAllChildMarkers().indexOf(ev.layer) + 1)) {
+                        currentSpiderfiedCluster.unspiderfy();
+                    }
 
                     if (balloonData && !balloonData.DisableBalloonOnClick) {
                         var style = this.parentLayer.getItemStyle(id);
@@ -110,6 +117,12 @@
                 }, this)
                 .on('clusterclick', function (ev) {
                     this.parentLayer.fire('clusterclick', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
+                }, this)
+                .on('spiderfied', function(ev) {
+                    currentSpiderfiedCluster = ev.cluster;
+                }, this)
+                .on('unspiderfied', function(ev) {
+                    currentSpiderfiedCluster = null;
                 }, this);
 
             if (mOptions.clusterclick) {
