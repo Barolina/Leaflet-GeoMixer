@@ -391,7 +391,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     getDateInterval: function() {
         return {
-            beginDate: this._gmx.beginDate, 
+            beginDate: this._gmx.beginDate,
             endDate: this._gmx.endDate
         };
     },
