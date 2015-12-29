@@ -189,11 +189,6 @@ ScreenVectorTile.prototype = {
                 if (mainRasterLoader) { mainRasterLoader.cancel(); }
             });
 
-        if (idr in rasters) {
-            def.resolve();
-            return def;
-        }
-
         var shiftX = Number(gmx.shiftXfield ? gmx.getPropItem(properties, gmx.shiftXfield) : 0) % this.worldWidthMerc,
             shiftY = Number(gmx.shiftYfield ? gmx.getPropItem(properties, gmx.shiftYfield) : 0),
             isShift = shiftX || shiftY,
@@ -376,10 +371,10 @@ ScreenVectorTile.prototype = {
         var gmx = this.gmx,
             _this = this,
             tbounds = this.tbounds,
-            itemPromises = null,
+            itemPromises = [],
             def = new L.gmx.Deferred(function() {
                 itemPromises.forEach(function(promise) {
-                    if (promise) { promise.cancel(); }
+                    promise.cancel();
                 });
             }),
             needLoadRasters = 0,
@@ -389,12 +384,18 @@ ScreenVectorTile.prototype = {
                 }
             };
 
-        itemPromises = geoItems.map(function(geo) {
+        for (var i = 0, len = geoItems.length; i < len; i++) {
+            var geo = geoItems[i],
+                properties = geo.properties,
+                idr = properties[0];
+
+            if (idr in this.rasters) {
+                continue;
+            }
             var dataOption = geo.dataOption || {},
                 skipRasters = false;
 
             if (gmx.styleHook) {
-                var idr = geo.properties[0];
                 geo.styleExtend = gmx.styleHook(
                     gmx.dataManager.getItem(idr),
                     gmx.lastHover && idr === gmx.lastHover.id
@@ -404,7 +405,7 @@ ScreenVectorTile.prototype = {
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 var flag = true,
-                    geom = geo.properties[geo.properties.length - 1];
+                    geom = properties[properties.length - 1];
                 if (geom.type === 'POLYGON' && !tbounds.clipPolygon(geom.coordinates[0]).length) {
                     flag = false;
                 }
@@ -415,11 +416,13 @@ ScreenVectorTile.prototype = {
                         needLoadRasters--;
                         chkReadyRasters();
                     });
-                    return itemRasterPromise;
+                    itemPromises.push(itemRasterPromise);
                 }
             }
-        });
-        chkReadyRasters();
+        }
+        if (!itemPromises.length) {
+            def.resolve();
+        }
         return def;
     },
 
