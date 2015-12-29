@@ -68,33 +68,17 @@
                     var propsArr = ev.layer.options.properties,
                         properties = this.parentLayer.getItemProperties(propsArr),
                         geometry = [propsArr[propsArr.length - 1]],
-                        gmx = this.parentLayer._gmx,
-                        id = propsArr[0],
-                        balloonData = gmx.styleManager.getItemBalloon(id);
+                        id = propsArr[0];
 
                     if (currentSpiderfiedCluster && !(currentSpiderfiedCluster.getAllChildMarkers().indexOf(ev.layer) + 1)) {
                         currentSpiderfiedCluster.unspiderfy();
+                        markers.once('unspiderfied', function () {
+                            this._openPopup(propsArr, ev.latlng);
+                        }, this);
+                    } else {
+                        this._openPopup(propsArr, ev.latlng);
                     }
 
-                    if (balloonData && !balloonData.DisableBalloonOnClick) {
-                        var style = this.parentLayer.getItemStyle(id);
-                        if (style && style.iconAnchor) {
-                            var protoOffset = L.Popup.prototype.options.offset;
-                            this._popup.options.offset = [
-                                -protoOffset[0] - style.iconAnchor[0] + style.sx / 2,
-                                protoOffset[1] - style.iconAnchor[1] + style.sy / 2
-                            ];
-                        }
-                        this._popup
-                            .setLatLng(ev.latlng)
-                            .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
-                                properties: properties,
-                                tileAttributeTypes: gmx.tileAttributeTypes,
-                                unitOptions: this._map.options || {},
-                                geometries: geometry
-                            }))
-                            .openOn(this._map);
-                    }
                     this.parentLayer.fire('click', L.extend(ev, {
                         eventFrom: 'markerClusters',
                         originalEventType: 'click',
@@ -116,12 +100,15 @@
                     }
                 }, this)
                 .on('clusterclick', function (ev) {
-                    this.parentLayer.fire('clusterclick', L.extend(ev, {eventFrom: 'markerClusters', originalEventType: 'clusterclick'}));
+                    this.parentLayer.fire('clusterclick', L.extend(ev, {
+                        eventFrom: 'markerClusters',
+                        originalEventType: 'clusterclick'
+                    }));
                 }, this)
-                .on('spiderfied', function(ev) {
+                .on('spiderfied', function (ev) {
                     currentSpiderfiedCluster = ev.cluster;
                 }, this)
-                .on('unspiderfied', function(ev) {
+                .on('unspiderfied', function (ev) {
                     currentSpiderfiedCluster = null;
                 }, this);
 
@@ -197,6 +184,33 @@
                     arr.push(marker);
                 }
                 this.externalLayer.addLayers(arr);
+            }
+        },
+
+        _openPopup: function (propsArr, latlng) {
+            var gmx = this.parentLayer._gmx,
+                id = propsArr[0],
+                balloonData = gmx.styleManager.getItemBalloon(id),
+                properties = this.parentLayer.getItemProperties(propsArr),
+                geometry = [propsArr[propsArr.length - 1]];
+
+            if (balloonData && !balloonData.DisableBalloonOnClick) {
+                var style = this.parentLayer.getItemStyle(id);
+                if (style && style.iconAnchor) {
+                    var protoOffset = L.Popup.prototype.options.offset;
+                    this._popup.options.offset = [-protoOffset[0] - style.iconAnchor[0] + style.sx / 2,
+                        protoOffset[1] - style.iconAnchor[1] + style.sy / 2
+                    ];
+                }
+                this._popup
+                    .setLatLng(latlng)
+                    .setContent(L.gmxUtil.parseBalloonTemplate(balloonData.templateBalloon, {
+                        properties: properties,
+                        tileAttributeTypes: gmx.tileAttributeTypes,
+                        unitOptions: this._map.options || {},
+                        geometries: geometry
+                    }))
+                    .openOn(this._map);
             }
         }
     });
