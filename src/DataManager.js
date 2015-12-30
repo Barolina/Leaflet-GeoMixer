@@ -163,6 +163,8 @@ var DataManager = L.Class.extend({
     setOptions: function(options) {
         if (!options.GeoProcessing) {
             this.options.GeoProcessing = null;
+        } else {
+            this.processingTile = this.addData([]);
         }
         L.setOptions(this, options);
 
@@ -803,12 +805,18 @@ var DataManager = L.Class.extend({
         } else {
             this.removeFilter('processingFilter');
         }
-        tile && this._triggerObservers();
+        this.options.GeoProcessing = null;
+        this._needCheckActiveTile = true;
+        // tile && this._triggerObservers();
     },
 
     updateVersion: function(layerDescription) {
         if (layerDescription && layerDescription.properties) {
             this.setOptions(layerDescription.properties);
+            if (layerDescription.properties.GeoProcessing) {
+                this.processingTile = this.addData([]);
+                this.options.GeoProcessing = layerDescription.properties.GeoProcessing;
+            }
         }
         this._tilesTree = null;
         this._needCheckActiveTiles = true;

@@ -108,7 +108,7 @@
                 .on('spiderfied', function (ev) {
                     currentSpiderfiedCluster = ev.cluster;
                 }, this)
-                .on('unspiderfied', function (ev) {
+                .on('unspiderfied', function () {
                     currentSpiderfiedCluster = null;
                 }, this);
 
@@ -136,6 +136,7 @@
                     if (marker) {
                         arr.push(marker);
                     }
+                    delete this._items[id];
                 }
                 this.externalLayer.removeLayers(arr);
                 arr = [];
@@ -145,9 +146,13 @@
                     vectorTileItem = data.added[i];
                     id = vectorTileItem.id;
                     marker = this._items[id];
+                    var item = vectorTileItem.properties;
+                    if (marker && item.processing) {
+                        this.externalLayer.removeLayer(marker);
+                        marker = null;
+                    }
                     if (!marker) {
-                        var item = vectorTileItem.properties,
-                            geo = item[item.length - 1],
+                        var geo = item[item.length - 1],
                             parsedStyle = vectorTileItem.item.parsedStyleKeys || this.parentLayer.getItemStyle(id),
                             p = geo.coordinates,
                             latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]}),
