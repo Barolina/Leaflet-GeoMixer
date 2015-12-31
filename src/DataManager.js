@@ -813,10 +813,6 @@ var DataManager = L.Class.extend({
     updateVersion: function(layerDescription) {
         if (layerDescription && layerDescription.properties) {
             this.setOptions(layerDescription.properties);
-            if (layerDescription.properties.GeoProcessing) {
-                this.processingTile = this.addData([]);
-                this.options.GeoProcessing = layerDescription.properties.GeoProcessing;
-            }
         }
         this._tilesTree = null;
         this._needCheckActiveTiles = true;
