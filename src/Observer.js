@@ -14,7 +14,7 @@ var Observer = L.Class.extend({
     initialize: function(options) {
         this.type = options.type || 'update';
         this._callback = options.callback;
-        this._items = {};
+        this._items = null;
         this.bbox = options.bbox;      // set bbox by Mercator bounds
         this.filters = options.filters || [];
         this.active = 'active' in options ? options.active : true;
@@ -73,6 +73,7 @@ var Observer = L.Class.extend({
 
         if (this.type === 'update') {
             //calculate difference with previous data
+            if (!this._items) { this._items = {}; }
             var prevItems = this._items,
                 newItems = {},
                 added = [],
@@ -110,12 +111,14 @@ var Observer = L.Class.extend({
             out.added = data;
         }
         this._callback(out);
+        out = null;
+        data = null;
 
         return this;
     },
 
     removeData: function(keys) {
-        if (this.type !== 'update') {
+        if (this.type !== 'update' || !this._items) {
             return this;
         }
 

@@ -41,18 +41,20 @@ var MAX = 1000000,
             return reorder.sortFunc ? reorder.sortFunc.call(this, a, b) : 0;
         },
         resetSortFunc: function () {
-            var layer = this.layer;
-            layer._gmx.sortItems = this.sortItems;
-            this.sortFunc = layer._gmx.zIndexField && !this.userSetSortFunc ?
+            var layer = this.layer,
+                gmx = layer._gmx,
+                zIndexField = gmx.zIndexField;
+            gmx.sortItems = this.sortItems;
+            this.sortFunc = (zIndexField && !this.userSetSortFunc ?
                 function(a, b) {    // layer context
-                    var res = Number(a.properties[this._gmx.zIndexField]) - Number(b.properties[this._gmx.zIndexField]);
+                    var res = Number(a.properties[zIndexField]) - Number(b.properties[zIndexField]);
                     return res ? res : a.id - b.id;
                 }
                 :
                 function(a, b) {
                     return a.id - b.id;
                 }
-            ;
+            );
         },
         initialize: function () {
             var gmx = this.layer._gmx;

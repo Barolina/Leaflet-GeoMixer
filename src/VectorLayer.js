@@ -45,6 +45,18 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         });
     },
 
+    _removeTile: function (zKey) {
+        var tileLink = this._tiles[zKey];
+        if (tileLink) {
+            var tile = tileLink.el;
+            if (tile && tile.parentNode) {
+                tile.parentNode.removeChild(tile);
+            }
+
+            delete this._tiles[zKey];
+        }
+    },
+
     _clearTileSubscription: function(zKey) {
         var gmx = this._gmx;
 
@@ -56,6 +68,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.dataManager.getObserver(zKey).deactivate();
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
+            this._removeTile(zKey);
         }
 
         for (var i = this._drawQueue.length - 1; i >= 0; i--) {
@@ -83,6 +96,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.dataManager.getObserver(zKey).deactivate();
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
+            delete this._tiles[zKey];
 
             if (zKey in this._drawQueueHash) {
                 this._drawQueueHash[zKey].reject();
@@ -157,6 +171,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         var gmx = this._gmx;
 
+        gmx.shiftY = 0;
         gmx.applyShift = map.options.crs === L.CRS.EPSG3857;
         gmx.currentZoom = map.getZoom();
         gmx.styleManager.initStyles();
@@ -165,12 +180,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         map.on('zoomstart', this._zoomStart, this);
         map.on('zoomend', this._zoomEnd, this);
-        if (gmx.applyShift) {
-            map.on('moveend', this._updateShiftY, this);
-            this._updateShiftY();
-        } else {
-            gmx.shiftY = 0;
-        }
         if (gmx.properties.type === 'Vector') {
             map.on('moveend', this._moveEnd, this);
         }
@@ -216,9 +225,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx;
 
         delete gmx.map;
-        if (gmx.applyShift) {
-            map.off('moveend', this._updateShiftY, this);
-        }
         if (gmx.properties.type === 'Vector') {
             map.off('moveend', this._moveEnd, this);
         }
@@ -404,11 +410,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this._gmx.dataManager.removeObserver(observer.id);
     },
 
-    addTo: function (map) {
-        map.addLayer(this);
-        return this;
-    },
-
     _drawTileAsync: function (tilePoint, zoom, data) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
@@ -470,7 +471,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var gmx = this._gmx;
         gmx.shiftXlayer = dx;
         gmx.shiftYlayer = dy;
-        this._updateShiftY();
+        this._update();
     },
 
     getPositionOffset: function() {
@@ -484,8 +485,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         gmx.shiftX = Math.floor(gmx.mInPixel * (gmx.shiftXlayer || 0));
         gmx.shiftY = Math.floor(gmx.mInPixel * (deltaY + (gmx.shiftYlayer || 0)));
-        L.DomUtil.setPosition(this._tileContainer, new L.Point(gmx.shiftX, -gmx.shiftY));
-        this._update();
+        gmx.shiftPoint = new L.Point(gmx.shiftX, -gmx.shiftY);     // Сдвиг слоя
+
+        L.DomUtil.setPosition(this._tileContainer, gmx.shiftPoint);
     },
 
     _prpZoomData: function() {
@@ -530,81 +532,92 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.setZIndexOffset();
     },
 
-    _update: function () {
-        var gmx = this._gmx,
-            _this = this;
-        if (!this._map) { return; }
+    _getTiledPixelBounds: function (center) {
+        var map = this._map,
+            gmx = this._gmx,
+            shiftPoint = new L.Point(gmx.shiftX, gmx.shiftY),
+            pixelCenter = map.project(center, this._tileZoom).add(shiftPoint)._floor(),
+            halfSize = map.getSize().divideBy(2);
 
-        gmx.styleManager.deferred.then(function () {
-            if (!_this._map) { return; }
-
-            var zoom = _this._map.getZoom();
-            if (zoom > _this.options.maxZoom || zoom < _this.options.minZoom) {
-                if (_this._clearBgBufferTimer) { clearTimeout(_this._clearBgBufferTimer); }
-                _this._clearBgBufferTimer = setTimeout(function () {
-                    if (_this._bgBuffer) {
-                        _this._clearBgBuffer();
-                    }
-                }, 500);
-                // if (_this._animated) {
-                    // L.DomUtil.addClass(_this._tileContainer, 'leaflet-zoom-animated');
-                // }
-                return;
-            }
-            var tileBounds = _this._getScreenTileBounds();
-            _this._addTilesFromCenterOut(tileBounds);
-
-            if (_this.options.unloadInvisibleTiles || _this.options.reuseTiles) {
-                _this._removeOtherTiles(tileBounds);
-            }
-
-            //L.TileVector will remove all tiles from other zooms.
-            //But it will not remove subscriptions without tiles - we should do it ourself
-            var dataManager = gmx.dataManager;
-            for (var zKey in gmx.tileSubscriptions) {
-                var subscription = gmx.tileSubscriptions[zKey];
-                if (subscription.z !== zoom) {
-                    _this._clearTileSubscription(zKey);
-                } else {    // deactivate observers for invisible Tiles
-                    var observer = dataManager.getObserver(zKey);
-                    if (subscription.x < tileBounds.min.x
-                        || subscription.x > tileBounds.max.x
-                        || subscription.y < tileBounds.min.y
-                        || subscription.y > tileBounds.max.y
-                    ) {
-                        observer.deactivate();
-                        if (subscription.screenTile) { subscription.screenTile.clearCache(); }
-                    } else {
-                        observer.activate();
-                    }
-                }
-            }
-        });
+        return new L.Bounds(pixelCenter.subtract(halfSize), pixelCenter.add(halfSize));
     },
 
-    _getScreenTileBounds: function () {
-        var map = this._map,
-            zoom = map._zoom,
-            pz = Math.pow(2, zoom),
-            bounds = map.getPixelBounds(),
-            shiftX = this._gmx.shiftX || 0,     // Сдвиг слоя
-            shiftY = this._gmx.shiftY || 0,     // Сдвиг слоя + OSM
-            tileSize = this.options.tileSize;
+    _pxBoundsToTileRange: function (bounds) {
+        var tileSize = this.options.tileSize;
+        return new L.Bounds(
+            bounds.min.divideBy(tileSize)._floor(),
+            bounds.max.divideBy(tileSize)._round());
+    },
 
-        bounds.min.y += shiftY; bounds.max.y += shiftY;
-        bounds.min.x -= shiftX; bounds.max.x -= shiftX;
+    _setClearBgBuffer: function (zd) {
+        if (this._clearBgBufferTimer) { clearTimeout(this._clearBgBufferTimer); }
+        var _this = this;
+        this._clearBgBufferTimer = setTimeout(function () {
+            if (_this._bgBuffer) {
+                _this._clearBgBuffer();
+            }
+        }, zd || 0);
+    },
 
-        var nwTilePoint = new L.Point(
-                Math.floor(bounds.min.x / tileSize),
-                Math.floor(bounds.min.y / tileSize)),
+    __update: function () {
+        var map = this._map;
+        if (!map) { return; }
+        var zoom = map.getZoom(),
+            center = map.getCenter();
+        if (this._gmx.applyShift) {
+            this._updateShiftY();
+        }
+        this._tileZoom = zoom;
 
-            seTilePoint = new L.Point(
-                Math.floor(bounds.max.x / tileSize),
-                Math.floor(bounds.max.y / tileSize));
+        var pixelBounds = this._getTiledPixelBounds(center),
+            tileRange = this._pxBoundsToTileRange(pixelBounds);
 
-        if (nwTilePoint.y < 0) { nwTilePoint.y = 0; }
-        if (seTilePoint.y >= pz) { seTilePoint.y = pz - 1; }
-        return new L.Bounds(nwTilePoint, seTilePoint);
+        this._chkTileSubscriptions(zoom, tileRange);
+
+        if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
+            this._setClearBgBuffer(500);
+            return;
+        }
+
+        // create a queue of coordinates to load tiles from
+        for (var j = tileRange.min.y; j <= tileRange.max.y; j++) {
+            for (var i = tileRange.min.x; i <= tileRange.max.x; i++) {
+                var coords = new L.Point(i, j);
+                coords.z = this._tileZoom;
+
+                if (!this._tiles[this._tileCoordsToKey(coords)]) {
+                    this._addTile(coords);
+                }
+            }
+        }
+    },
+
+    _chkTileSubscriptions: function (zoom, tileRange) {
+        //L.TileVector will remove all tiles from other zooms.
+        //But it will not remove subscriptions without tiles - we should do it ourself
+        var gmx = this._gmx,
+            needCheck = {},
+            min = tileRange.min,
+            max = tileRange.max;
+        for (var zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey];
+            if (subscription.z !== zoom
+                || subscription.x < min.x
+                || subscription.x > max.x
+                || subscription.y < min.y
+                || subscription.y > max.y
+            ) {
+                this._clearTileSubscription(zKey);
+            } else if (!subscription.screenTile) {
+                needCheck[zKey] = true;
+            }
+        }
+        this.repaint(needCheck);
+    },
+
+    _update: function () {
+        if (!this._map) { return; }
+        this._gmx.styleManager.deferred.then(this.__update.bind(this));
     },
 
     _addTile: function (tilePoint) {
@@ -622,24 +635,20 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx._tilesToLoad++;
             var isDrawnFirstTime = false,
                 gmxTilePoint = gmxAPIutils.getTileNumFromLeaflet(tilePoint, zoom),
+                done = function() {
+                    if (!isDrawnFirstTime) {
+                        gmx._tilesToLoad--;
+                        myLayer._tileLoaded();
+                        isDrawnFirstTime = true;
+                    }
+                },
                 attr = {
                     type: 'resend',
+                    active: false,
                     bbox: gmx.styleManager.getStyleBounds(gmxTilePoint),
                     filters: ['clipFilter', 'styleFilter', 'userFilter'],
                     callback: function(data) {
-                        myLayer._drawTileAsync(tilePoint, zoom, data).then(function() {
-                            if (!isDrawnFirstTime) {
-                                gmx._tilesToLoad--;
-                                myLayer._tileLoaded();
-                                isDrawnFirstTime = true;
-                            }
-                        }, function() {
-                            if (!isDrawnFirstTime) {
-                                gmx._tilesToLoad--;
-                                myLayer._tileLoaded();
-                                isDrawnFirstTime = true;
-                            }
-                        });
+                        myLayer._drawTileAsync(tilePoint, zoom, data).then(done, done);
                     }
                 };
             if (gmx.layerType === 'VectorTemporal') {
@@ -650,10 +659,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             observer.on('activate', function() {
                 //if observer is deactivated before drawing,
                 //we can consider corresponding tile as already drawn
-                if (!observer.isActive() && !isDrawnFirstTime) {
-                    gmx._tilesToLoad--;
-                    myLayer._tileLoaded();
-                    isDrawnFirstTime = true;
+                if (!observer.isActive()) {
+                    done();
                 }
             });
             gmx.tileSubscriptions[zKey] = {
@@ -663,6 +670,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 px: 256 * gmxTilePoint.x,
                 py: 256 * (1 + gmxTilePoint.y)
             };
+            observer.activate();
         }
     },
 
@@ -699,21 +707,25 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     gmxGetCanvasTile: function (tilePoint) {
-        var tKey = tilePoint.x + ':' + tilePoint.y;
+        var zKey = this._tileCoordsToKey(tilePoint);
 
-        if (tKey in this._tiles) {
-            return this._tiles[tKey];
+        if (zKey in this._tiles) {
+            return this._tiles[zKey];
         }
-
+        // save tile in cache
         var tile = this._getTile();
-        //tile.id = tKey;
+        this._tiles[zKey] = {
+            el: tile,
+            coords: tilePoint,
+            current: true
+        };
+
+        // tile._zKey = zKey;
         tile._zoom = this._map._zoom;
-        tile._layer = this;
         tile._tileComplete = true;
         tile._tilePoint = tilePoint;
-        this._tiles[tKey] = tile;
         this.tileDrawn(tile);
-        return this._tiles[tKey];
+        return this._tiles[zKey];
     },
 
     appendTileToContainer: function (tile) {
@@ -750,8 +762,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
             if (this._animated) {
                 // clear scaled tiles after all new tiles are loaded (for performance)
-                if (this._clearBgBufferTimer) { clearTimeout(this._clearBgBufferTimer); }
-                this._clearBgBufferTimer = setTimeout(L.bind(this._clearBgBuffer, this), 0);
+                this._setClearBgBuffer(0);
             }
         }
     },
@@ -759,6 +770,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _tileOnLoad: function (tile) {
         if (tile) { L.DomUtil.addClass(tile, 'leaflet-tile-loaded'); }
         this._tileLoaded();
+    },
+
+    _tileOnError: function () {
     },
 
     tileDrawn: function (tile) {
@@ -815,9 +829,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return gmxTiles;
     },
 
-    repaint: function (oKeys) {
+    repaint: function (zKeys) {
         if (this._map) {
-            this._gmx.dataManager._triggerObservers(oKeys);
+            this._gmx.dataManager._triggerObservers(zKeys);
         }
     },
 

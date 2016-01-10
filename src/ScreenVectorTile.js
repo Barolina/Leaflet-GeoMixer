@@ -4,7 +4,6 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.tilePoint = tilePoint;
     this.zoom = zoom;
     this.gmx = layer._gmx;
-    this.tKey = tilePoint.x + ':' + tilePoint.y;
     this.zKey = this.layer._tileCoordsToKey(tilePoint, zoom);
     var utils = gmxAPIutils;
     this.worldWidthMerc = utils.worldWidthMerc;
@@ -14,13 +13,10 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.tpy = 256 * (1 + gmxTilePoint.y);
     this.gmxTilePoint = gmxTilePoint;
 
-    this.showRaster = 'rasterBGfunc' in layer._gmx && (zoom >= layer._gmx.minZoomRasters);
+    this.showRaster = 'rasterBGfunc' in this.gmx && (zoom >= this.gmx.minZoomRasters);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
-    this.currentDrawDef = null;
-    layer._gmx.badTiles = layer._gmx.badTiles || {};
-
-    //State of raw raster images. Can be used to understand common state of drawing process
-    // this.rawRasters = {};
+    this.rasterRequests = {}; // all cached raster requests
+    this.gmx.badTiles = this.gmx.badTiles || {};
 }
 
 ScreenVectorTile.prototype = {
@@ -28,11 +24,11 @@ ScreenVectorTile.prototype = {
     //return promise, which resolves with object {gtp, image}
     _loadTileRecursive: function (gtp, urlFunction) {
         var gmx = this.gmx,
-            curRequest = null,
+            _this = this,
+            requestPromise = null,
             def = new L.gmx.Deferred(function() {
-                if (curRequest) { curRequest.cancel(); }
+                if (requestPromise) { requestPromise.reject(); }
             });
-            //_this = this;
 
         var tryLoad = function(gtp, crossOrigin) {
             var rUrl = urlFunction(gtp);
@@ -57,26 +53,29 @@ ScreenVectorTile.prototype = {
             if (gmx.rasterProcessingHook) {
                 crossOrigin = 'anonymous';
             }
-
-            // _this.rawRasters[rUrl] = 'loading';
-            curRequest = L.gmx.imageLoader.push(rUrl, {
-                layerID: gmx.layerID,
-                zoom: gtp.z,
-                crossOrigin: crossOrigin || ''
-            });
-
-            curRequest.then(
-                function(imageObj) {
-                    curRequest = null;
-                    // _this.rawRasters[rUrl] = 'loaded';
+            var imageLoaded = function(imageObj) {
+                    requestPromise = null;
                     def.resolve({gtp: gtp, image: imageObj});
                 },
-                function() {
-                    gmx.badTiles[rUrl] = true;
-                    // _this.rawRasters[rUrl] = 'loaded';
-                    tryHigherLevelTile();
-                }
-            );
+                request = L.gmx.imageLoader.push(rUrl, {
+                    layerID: gmx.layerID,
+                    cache: _this.zKey,
+                    crossOrigin: crossOrigin || ''
+                });
+            if (request.image) {    // synchronous image from cache
+                imageLoaded(request.image);
+            } else {
+                _this.rasterRequests[rUrl] = request;
+                requestPromise = request.def;
+
+                requestPromise.then(
+                    imageLoaded,
+                    function() {
+                        gmx.badTiles[rUrl] = true;
+                        tryHigherLevelTile();
+                    }
+                );
+            }
         };
 
         tryLoad(gtp);
@@ -182,30 +181,25 @@ ScreenVectorTile.prototype = {
     _getItemRasters: function (geo) {
         var properties = geo.properties,
             idr = properties[0],
+            _this = this,
             gmx = this.gmx,
             rasters = this.rasters,
             mainRasterLoader = null,
-            def = new L.gmx.Deferred(function() {
-                if (mainRasterLoader) { mainRasterLoader.cancel(); }
-            });
-
-        var shiftX = Number(gmx.shiftXfield ? gmx.getPropItem(properties, gmx.shiftXfield) : 0) % this.worldWidthMerc,
+            recursiveLoaders,
+            shiftX = Number(gmx.shiftXfield ? gmx.getPropItem(properties, gmx.shiftXfield) : 0) % this.worldWidthMerc,
             shiftY = Number(gmx.shiftYfield ? gmx.getPropItem(properties, gmx.shiftYfield) : 0),
             isShift = shiftX || shiftY,
-            isRasterCatalogID = gmx.getPropItem(properties, 'GMX_RasterCatalogID'),
             urlBG = gmx.getPropItem(properties, 'urlBG'),
             url = '',
             itemImageProcessingHook = null,
             isTiles = false,
             item = gmx.dataManager.getItem(idr),
-            dataOption = geo.dataOption || {},
             gmxTilePoint = this.gmxTilePoint,
-            _this = this,
-            resCanvas = document.createElement('canvas');
-        resCanvas.width = resCanvas.height = 256;
+            resCanvas = null,
+            imageItem = null;
 
         if (gmx.IsRasterCatalog) {  // RasterCatalog
-            if (!isRasterCatalogID && gmx.quicklookBGfunc) {
+            if (gmx.quicklookBGfunc && !gmx.getPropItem(properties, 'GMX_RasterCatalogID')) {
                 url = gmx.quicklookBGfunc(item);
                 itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
             } else {
@@ -215,13 +209,36 @@ ScreenVectorTile.prototype = {
             url = urlBG;
             itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
         }
+        if (isTiles) {
+            mainRasterLoader = new L.gmx.Deferred(function() {
+               recursiveLoaders.forEach(function(it) {
+                    it.reject();
+                });
+            });
+        } else {
+            var request = L.gmx.imageLoader.push(url, {
+                layerID: gmx.layerID,
+                crossOrigin: gmx.crossOrigin || ''
+            });
+            if (request.image) {    // synchronous image from cache
+                imageItem = request.image;
+            } else {
+                this.rasterRequests[url] = request;
+                mainRasterLoader = request.def;
+            }
+        }
+        var itemRasterPromise = new L.gmx.Deferred(function() {
+            if (mainRasterLoader) {
+                mainRasterLoader.reject();
+            }
+        });
 
         if (isTiles) {
-            var tileToLoadPoints = isShift ? this._getShiftTilesArray(dataOption.bounds, shiftX, shiftY) : [gmxTilePoint];
-
-            var cnt = tileToLoadPoints.length,
+            var dataOption = geo.dataOption || {},
+                tileToLoadPoints = isShift ? this._getShiftTilesArray(dataOption.bounds, shiftX, shiftY) : [gmxTilePoint],
+                cnt = tileToLoadPoints.length,
                 chkReadyRasters = function() {
-                    if (cnt < 1) { mainRasterLoader.resolve(tileToLoadPoints); }
+                    if (cnt < 1) { mainRasterLoader.resolve(); }
                 },
                 skipRasterFunc = function() {
                     cnt--;
@@ -232,6 +249,7 @@ ScreenVectorTile.prototype = {
                 },
                 onLoadFunction = function(gtp, p, img) {
                     item.skipRasters = false;
+                    var isImage = true;
 
                     if (itemImageProcessingHook) {
                         img = itemImageProcessingHook(img, {
@@ -240,11 +258,11 @@ ScreenVectorTile.prototype = {
                             item: item,
                             gmxTilePoint: gtp
                         });
+                        isImage = false;
                     }
 
                     var info = {
                             geoItem: geo,
-                            res: resCanvas,
                             image: img,
                             destinationTilePoint: gmxTilePoint,
                             sourceTilePoint: gtp,
@@ -259,6 +277,7 @@ ScreenVectorTile.prototype = {
                             return;
                         }
                         L.extend(info, pos);
+                        isImage = false;
                     }
 
                     if (gtp.z !== gmxTilePoint.z) {
@@ -267,6 +286,7 @@ ScreenVectorTile.prototype = {
                             chkReadyRasters();
                             return;
                         }
+                        isImage = false;
                         info.sx = Math.floor(posInfo.x);
                         info.sy = Math.floor(posInfo.y);
                         info.sw = info.sh = posInfo.size;
@@ -280,34 +300,35 @@ ScreenVectorTile.prototype = {
                             info.sh = sh;
                         }
                     }
-
-                    // _this.rawRasters[img.src] = 'hooking';
-                    var hookResult = _this._rasterHook(info),
-                        then = function() {
-                            // delete _this.rawRasters[img.src];
-                            cnt--;
-                            p.resImage = resCanvas;
-                            chkReadyRasters();
-                        };
-                    if (hookResult) {
-                        if (hookResult instanceof L.gmx.Deferred) {
-                            hookResult.then(then);
-                        }
-                    } else if (hookResult === null) {
-                        item.skipRasters = true;
-                        // delete _this.rawRasters[img.src];
-                        skipRasterFunc();
+                    if (isImage && !gmx.rasterProcessingHook) {
+                        cnt--;
+                        resCanvas = img;
+                        chkReadyRasters();
                     } else {
-                        then();
-                    }
-                },
-                recursiveLoaders;
+                        if (!resCanvas) {
+                            resCanvas = document.createElement('canvas');
+                            resCanvas.width = resCanvas.height = 256;
+                        }
+                        info.res = resCanvas;
+                        var hookResult = _this._rasterHook(info),
+                            then = function() {
+                                cnt--;
+                                p.resImage = resCanvas;
+                                chkReadyRasters();
+                            };
 
-            mainRasterLoader = new L.gmx.Deferred(function() {
-                for (var k = 0; k < recursiveLoaders.length; k++) {
-                    recursiveLoaders[k].cancel();
-                }
-            });
+                        if (hookResult) {
+                            if (hookResult instanceof L.gmx.Deferred) {
+                                hookResult.then(then);
+                            }
+                        } else if (hookResult === null) {
+                            item.skipRasters = true;
+                            skipRasterFunc();
+                        } else {
+                            then();
+                        }
+                    }
+                };
             recursiveLoaders = tileToLoadPoints.map(function(it) {
                 var loader = _this._loadTileRecursive(it, urlFunction);
                 loader.then(function(loadResult) {
@@ -318,72 +339,66 @@ ScreenVectorTile.prototype = {
 
             mainRasterLoader.then(function() {
                 rasters[idr] = resCanvas;
-                def.resolve();
+                itemRasterPromise.resolve();
             });
         } else {
             // for quicklook
-            mainRasterLoader = L.gmx.imageLoader.push(url, {
-                layerID: gmx.layerID,
-                crossOrigin: gmx.crossOrigin || ''
-            });
             item.skipRasters = false;
-
-            mainRasterLoader.then(
-                function(img) {
-                    var imgAttr = {
-                        gmx: gmx,
-                        geoItem: geo,
-                        item: item,
-                        gmxTilePoint: gmxTilePoint
-                    };
-                    var prepareItem = function(imageElement) {
-                        var promise = _this._rasterHook({
-                                geoItem: geo,
-                                res: resCanvas,
-                                image: itemImageProcessingHook ? itemImageProcessingHook(imageElement, imgAttr) : imageElement,
-                                destinationTilePoint: gmxTilePoint,
-                                url: img.src
-                            }),
-                            then = function() {
-                                rasters[idr] = resCanvas;
-                                def.resolve();
-                            };
-                        if (promise) {
-                            if (promise instanceof L.gmx.Deferred) {
-                                promise.then(then);
-                            }
-                        } else if (promise === null) {
-                            item.skipRasters = true;
-                            def.resolve();
-                        } else {
-                            then();
+            var imageLoaded = function(img) {
+                var imgAttr = {
+                    gmx: gmx,
+                    geoItem: geo,
+                    item: item,
+                    gmxTilePoint: gmxTilePoint
+                };
+                if (!resCanvas) {
+                    resCanvas = document.createElement('canvas');
+                    resCanvas.width = resCanvas.height = 256;
+                }
+                var prepareItem = function(imageElement) {
+                    var promise = _this._rasterHook({
+                            geoItem: geo,
+                            res: resCanvas,
+                            image: itemImageProcessingHook ? itemImageProcessingHook(imageElement, imgAttr) : imageElement,
+                            destinationTilePoint: gmxTilePoint,
+                            url: img.src
+                        }),
+                        then = function() {
+                            rasters[idr] = resCanvas;
+                            itemRasterPromise.resolve();
+                        };
+                    if (promise) {
+                        if (promise instanceof L.gmx.Deferred) {
+                            promise.then(then);
                         }
-                    };
-                    prepareItem(img);
-                },
-                def.resolve
-            );
+                    } else if (promise === null) {
+                        item.skipRasters = true;
+                        itemRasterPromise.resolve();
+                    } else {
+                        then();
+                    }
+                };
+                prepareItem(img);
+            };
+            if (imageItem) {
+                imageLoaded(imageItem);
+            } else {
+                mainRasterLoader.then(imageLoaded.bind(this), itemRasterPromise.resolve);
+            }
         }
-        return def;
+        itemRasterPromise.always(function() {
+            mainRasterLoader = null;
+            if (recursiveLoaders) {
+                recursiveLoaders = null;
+            }
+        });
+        return itemRasterPromise;
     },
 
-    _getTileRasters: function (geoItems) {   //load all missing rasters for items we are going to render
+    _getNeedRasterItems: function (geoItems) {
         var gmx = this.gmx,
-            _this = this,
             tbounds = this.tbounds,
-            itemPromises = [],
-            def = new L.gmx.Deferred(function() {
-                itemPromises.forEach(function(promise) {
-                    promise.cancel();
-                });
-            }),
-            needLoadRasters = 0,
-            chkReadyRasters = function() {
-                if (needLoadRasters < 1) {
-                    def.resolve();
-                }
-            };
-
+            out = [];
         for (var i = 0, len = geoItems.length; i < len; i++) {
             var geo = geoItems[i],
                 properties = geo.properties,
@@ -404,63 +419,97 @@ ScreenVectorTile.prototype = {
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                var flag = true,
-                    geom = properties[properties.length - 1];
+                var geom = properties[properties.length - 1];
                 if (geom.type === 'POLYGON' && !tbounds.clipPolygon(geom.coordinates[0]).length) {
-                    flag = false;
+                    continue;
                 }
-                if (flag) {
-                    needLoadRasters++;
-                    var itemRasterPromise = _this._getItemRasters(geo);
-                    itemRasterPromise.then(function() {
-                        needLoadRasters--;
-                        chkReadyRasters();
-                    });
-                    itemPromises.push(itemRasterPromise);
-                }
+                out.push(geo);
             }
         }
-        if (!itemPromises.length) {
+        return out;
+    },
+
+    _getTileRasters: function (geoItems) {   //load all missing rasters for items we are going to render
+        var itemPromises = [],
+            def = new L.gmx.Deferred(function() {
+                itemPromises.forEach(function(promise) {
+                    promise.reject();
+                });
+            }),
+            itemRasters = this._getNeedRasterItems(geoItems),
+            needLoadRasters = itemRasters.length;
+
+        if (needLoadRasters) {
+            var _this = this,
+                chkReadyRasters = function() {
+                    if (needLoadRasters < 1) {
+                        def.resolve();
+                    }
+                };
+            itemRasters.forEach(function (geo) {
+                var itemRasterPromise = _this._getItemRasters(geo);
+                itemRasterPromise.then(function() {
+                    needLoadRasters--;
+                    chkReadyRasters();
+                });
+                itemPromises.push(itemRasterPromise);
+            });
+        } else {
             def.resolve();
         }
         return def;
     },
 
-    drawTile: function (data) {
-        if (this.currentDrawDef) {
-            this.currentDrawDef.cancel();
+    _setDrawPromise: function () {
+        var drawPromise = this.currentDrawPromise,
+            _this = this;
+        if (drawPromise) {
+            drawPromise.reject();
         }
+        drawPromise = new L.gmx.Deferred(function() {
+            if (_this.rastersPromise) {
+                _this.rastersPromise.reject();
+                _this.rastersPromise = null;
+            }
+        });
+        drawPromise.always(function() {
+            _this.currentDrawPromise = null;
+            _this.rastersPromise = null;
+        });
+        return drawPromise;
+    },
 
-        var tileRastersPromise = null,
+    _chkItems: function (data) {
+        var layer = this.layer;
+        if (!layer._map) {
+            return null;
+        }
+        var items = data && data.added && data.added.length ? data.added : null;
+
+        if (!items) {
+            var tLink = layer._tiles[this.zKey];
+            if (tLink && tLink.el) {
+                tLink.el.getContext('2d').clearRect(0, 0, 256, 256);
+            }
+            return null;
+        }
+        return this.gmx.sortItems ? layer.getSortedItems(items) : items;
+    },
+
+    drawTile: function (data) {
+        var drawPromise = this._setDrawPromise();
+        this.currentDrawPromise = drawPromise;
+
+        var geoItems = this._chkItems(data);
+        if (!geoItems) {
+            drawPromise.resolve();
+            return drawPromise;
+        }
+        var tileLink = this.layer.gmxGetCanvasTile(this.tilePoint),
+            tile = tileLink.el,
+            ctx = tile.getContext('2d'),
             gmx = this.gmx,
             _this = this,
-            def = new L.gmx.Deferred(function() {
-                if (tileRastersPromise) { tileRastersPromise.cancel(); }
-                _this.rasters = {};
-            });
-
-        def.always(function() {
-            _this.currentDrawDef = null;
-        });
-
-        this.currentDrawDef = def;
-
-        if (!this.layer._map) {
-            def.resolve();
-            return def;
-        }
-
-        var geoItems = data.added,
-            itemsLength = geoItems.length;
-        if (itemsLength === 0) {
-            if (this.tKey in this.layer._tiles) {
-                this.layer._tiles[this.tKey].getContext('2d').clearRect(0, 0, 256, 256);
-            }
-            def.resolve();
-            return def;
-        }
-        var tile = this.layer.gmxGetCanvasTile(this.tilePoint),
-            ctx = tile.getContext('2d'),
             dattr = {
                 tbounds: this.tbounds,
                 rasters: _this.rasters,
@@ -470,9 +519,6 @@ ScreenVectorTile.prototype = {
                 ctx: ctx
             };
         tile.zKey = this.zKey;
-        if (gmx.sortItems) {
-            geoItems = this.layer.getSortedItems(geoItems);
-        }
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
@@ -506,12 +552,12 @@ ScreenVectorTile.prototype = {
                 bgImage = hookBgImage || bgImage;
                 if (bgImage) { dattr.bgImage = bgImage; }
                 //ctx.save();
-                for (var i = 0; i < itemsLength; i++) {
+                for (var i = 0, len = geoItems.length; i < len; i++) {
                     L.gmxUtil.drawGeoItem(geoItems[i], dattr);
                 }
                 //ctx.restore();
-                // _this.rasters = {}; // clear rasters
-                if (_this.layer._map) {
+                _this.rasters = {}; // clear rasters
+                if (_this.layer._map && !tile.parentNode) {
                     _this.layer.appendTileToContainer(tile);
                 }
                 //async chain
@@ -523,28 +569,32 @@ ScreenVectorTile.prototype = {
                         return f(tile, hookInfo);
                     });
                 });
-                res.then(def.resolve, def.reject);
-            }, def.reject);
+                res.then(drawPromise.resolve, drawPromise.reject);
+            }, drawPromise.reject);
         };
 
         if (this.showRaster) {
-            tileRastersPromise = _this._getTileRasters(geoItems);
-            tileRastersPromise.then(doDraw, def.reject); //first load all raster images, then render all of them at once
+            this.rastersPromise = _this._getTileRasters(geoItems);
+            this.rastersPromise.then(doDraw, drawPromise.reject); //first load all raster images, then render all of them at once
         } else {
             doDraw();
         }
 
-        return def;
+        return drawPromise;
     },
 
     cancel: function () {
-        if (this.currentDrawDef) {
-            this.currentDrawDef.cancel();
+        if (this.currentDrawPromise) {
+            this.currentDrawPromise.reject();
         }
         this.clearCache();
     },
 
     clearCache: function () {
-        this.rasters = {}; // clear rasters
+        for (var url in this.rasterRequests) {
+            var request = this.rasterRequests[url];
+            request.remove();
+        }
+        this.rasterRequests = {};
     }
 };

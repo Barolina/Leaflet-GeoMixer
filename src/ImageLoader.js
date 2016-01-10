@@ -3,6 +3,7 @@
 var ImageRequest = function(id, url, options) {
     this._id = id;
     this.def = new L.gmx.Deferred(L.gmx.imageLoader._cancelRequest.bind(L.gmx.imageLoader, this));
+    this.remove = L.gmx.imageLoader._removeRequestFromCache.bind(L.gmx.imageLoader, this);
     this.url = url;
     this.options = options || {};
 };
@@ -17,21 +18,33 @@ var GmxImageLoader = L.Class.extend({
         this.curCount = 0;        // number of currently processing requests (number of items in "inProgress")
         this.requests = [];       // not yet processed image requests
         this.inProgress = {};     // hash of in progress image loadings
+        this.requestsCache = {};  // for requests cache by uniqueID
         this.uniqueID = 0;
+    },
+
+    _resolveRequest: function(request, image, canceled) {
+        var def = request.def;
+        if (image) {
+            var cacheKey = request.options.cache;
+            if (!canceled && cacheKey) {
+                var url = request.url,
+                    cacheItem = this.requestsCache[url];
+                if (!cacheItem) { cacheItem = this.requestsCache[url] = {image: image, requests:{}}; }
+                if (!cacheItem.requests[cacheKey]) { cacheItem.requests[cacheKey] = request; }
+            }
+            def.resolve(image);
+        } else if (!canceled) {
+            def.reject();
+        }
+        this.fire('requestdone', {request: request});
     },
 
     _imageLoaded: function(url, image, canceled) {
         if (url in this.inProgress) {
-            var requests = this.inProgress[url].requests;
-            for (var k = 0; k < requests.length; k++) {
-                var def = requests[k].def;
-                if (image) {
-                    def.resolve(image);
-                } else if (!canceled) {
-                    def.reject();
-                }
-                this.fire('requestdone', {request: requests[k]});
-            }
+            var resolveRequest = function(it) {
+                this._resolveRequest(it, image, canceled);
+            };
+            this.inProgress[url].requests.forEach(resolveRequest.bind(this));
             --this.curCount;
             delete this.inProgress[url];
         }
@@ -83,7 +96,7 @@ var GmxImageLoader = L.Class.extend({
             imageObj.crossOrigin = request.options.crossOrigin;
         }
 
-        imageObj.onload = this._imageLoaded.bind(this, url, imageObj);
+        imageObj.onload = this._imageLoaded.bind(this, url, imageObj, false);
         imageObj.onerror = function() {
             _this._imageLoaded(url);
         };
@@ -96,24 +109,31 @@ var GmxImageLoader = L.Class.extend({
 
     _cancelRequest: function(request) {
         var id = request._id,
-            i = 0;
-        if (request.url in this.inProgress) {
-            var loadingImg = this.inProgress[request.url];
-            if (loadingImg.requests.length === 1 && loadingImg.requests[0]._id === id) {
+            url = request.url,
+            i = 0, len;
+        if (url in this.inProgress) {
+            var loadingImg = this.inProgress[url],
+                requests = loadingImg.requests;
+
+            len = requests.length;
+            if (len === 1 && requests[0]._id === id) {
+                var req = requests[0];
+                this._clearCacheItem(req.url, req.options.cache);
+                delete req.options.cache;
                 loadingImg.image.onload = L.Util.falseFn;
                 loadingImg.image.onerror = L.Util.falseFn;
                 loadingImg.image.src = L.Util.emptyImageUrl;
-                this._imageLoaded(request.url, null, true);
+                this._imageLoaded(url, null, true);
             } else {
-                for (i = 0; i < loadingImg.requests.length; i++) {
-                    if (loadingImg.requests[i]._id === id) {
-                        loadingImg.requests.splice(i, 1);
+                for (i = 0; i < len; i++) {
+                    if (requests[i]._id === id) {
+                        requests.splice(i, 1);
                         break;
                     }
                 }
             }
         } else {
-            for (i = 0; i < this.requests.length; i++) {
+            for (i = 0, len = this.requests.length; i < len; i++) {
                 if (this.requests[i]._id === id) {
                     this.requests.splice(i, 1);
                     break;
@@ -124,9 +144,29 @@ var GmxImageLoader = L.Class.extend({
         this.fire('requestdone', {request: request});
     },
 
+    _removeRequestFromCache: function(request) {    // remove request from cache
+        this._clearCacheItem(request.url, request.options.cache);
+        this._cancelRequest(request);
+    },
+
+    _clearCacheItem: function(url, cacheKey) {    // remove cache item
+        if (this.requestsCache[url]) {
+            var cacheItem = this.requestsCache[url];
+            delete cacheItem.requests[cacheKey];
+            if (Object.keys(cacheItem.requests).length === 0) {
+                delete this.requestsCache[url];
+            }
+        }
+    },
+
     _add: function(atBegin, url, options) {
-        var id = 'id' + (++this.uniqueID);
-        var request = new ImageRequest(id, url, options);
+        var cacheItem = this.requestsCache[url],
+            image = cacheItem ? cacheItem.image : null;
+        if (image) { return {image: image}; }
+
+        var id = 'id' + (++this.uniqueID),
+            request = new ImageRequest(id, url, options);
+
         if (url in this.inProgress) {
             this.inProgress[url].requests.push(request);
         } else {
@@ -136,27 +176,18 @@ var GmxImageLoader = L.Class.extend({
 
         this.fire('request', {request: request});
 
-        return request.def;
+        return request;
     },
 
     clearLayer: function(layerID) {  // remove all the items for a given layer ID
         var requestsToCancel = [],
-            i = 0;
-        for (var iP in this.inProgress) {
-            var requests = this.inProgress[iP].requests;
-            for (i = 0; i < requests.length; i++) {
-                if (requests[i].options.layerID === layerID) {
-                    requestsToCancel.push(requests[i]);
-                }
-            }
+            addToCancel = function(it) {
+                if (it.options.layerID === layerID) { requestsToCancel.push(it); }
+            };
+        for (var url in this.inProgress) {
+            this.inProgress[url].requests.forEach(addToCancel);
         }
-
-        for (i = 0; i < this.requests.length; i++) {
-            if (this.requests[i].options.layerID === layerID) {
-                requestsToCancel.push(this.requests[i]);
-            }
-        }
-
+        this.requests.forEach(addToCancel);
         requestsToCancel.forEach(this._cancelRequest.bind(this));
     },
 

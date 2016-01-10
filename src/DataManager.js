@@ -190,9 +190,19 @@ var DataManager = L.Class.extend({
             '&key=' + encodeURIComponent(sessionKey);
     },
 
-    initialize: function(options) {
-        this.setOptions(options);
+    _vectorTileDataProviderLoad: function(x, y, z, v, s, d, callback) {
+        var _this = this;
+        gmxVectorTileLoader.load(
+            _this.tileSenderPrefix,
+            {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this.options.LayerID}
+        ).then(callback, function() {
+            console.log('Error loading vector tile');
+            callback([]);
+            _this.fire('chkLayerUpdate', {dataProvider: _this}); //TODO: do we really need event here?
+        });
+    },
 
+    initialize: function(options) {
         this._tilesTree = null;
         this._activeTileKeys = {};
         this._endDate = null;
@@ -209,24 +219,8 @@ var DataManager = L.Class.extend({
 
         var _this = this;
         this._vectorTileDataProvider = {
-            load: function(x, y, z, v, s, d, callback) {
-                gmxVectorTileLoader.load(
-                    _this.tileSenderPrefix,
-                    {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this.options.LayerID}
-                ).then(callback, function() {
-                    console.log('Error loading vector tile');
-                    callback([]);
-                    _this.fire('chkLayerUpdate', {dataProvider: _this}); //TODO: do we really need event here?
-                });
-            }
+            load: this._vectorTileDataProviderLoad.bind(this)
         };
-        if (this._isTemporalLayer) {
-            this.addFilter('TemporalFilter', function(item, tile, observer) {
-                var unixTimeStamp = item.options.unixTimeStamp,
-                    dates = observer.dateInterval;
-                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
-            });
-        }
 
         this._observerTileLoader = new ObserverTileLoader(this);
         this._observerTileLoader.on('tileload', function(event) {
@@ -243,10 +237,17 @@ var DataManager = L.Class.extend({
             var observer = event.observer;
             if (observer.isActive()) {
                 observer.needRefresh = false;
-                var data = _this.getItems(observer.id);
-                observer.updateData(data);
+                observer.updateData(_this.getItems(observer.id));
             }
         });
+        this.setOptions(options);
+        if (this._isTemporalLayer) {
+            this.addFilter('TemporalFilter', function(item, tile, observer) {
+                var unixTimeStamp = item.options.unixTimeStamp,
+                    dates = observer.dateInterval;
+                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
+            });
+        }
     },
 
     _getActiveTileKeys: function() {
@@ -367,7 +368,7 @@ var DataManager = L.Class.extend({
         var activeTileKeys =  this._getActiveTileKeys();
         for (var tkey in activeTileKeys) {
             var tile = _this._tiles[tkey].tile;
-            if (tile.data.length > 0 && (tile.z === 0 || observer.intersectsWithTile(tile))) {
+            if (tile.data && tile.data.length > 0 && (tile.z === 0 || observer.intersectsWithTile(tile))) {
                 putData(tile);
             }
         }
