@@ -25,7 +25,7 @@ var GmxImageLoader = L.Class.extend({
     _resolveRequest: function(request, image, canceled) {
         var def = request.def;
         if (image) {
-            var cacheKey = request.options.cache;
+            var cacheKey = request.options.cacheKey;
             if (!canceled && cacheKey) {
                 var url = request.url,
                     cacheItem = this.requestsCache[url];
@@ -118,8 +118,8 @@ var GmxImageLoader = L.Class.extend({
             len = requests.length;
             if (len === 1 && requests[0]._id === id) {
                 var req = requests[0];
-                this._clearCacheItem(req.url, req.options.cache);
-                delete req.options.cache;
+                this._clearCacheItem(req.url, req.options.cacheKey);
+                delete req.options.cacheKey;
                 loadingImg.image.onload = L.Util.falseFn;
                 loadingImg.image.onerror = L.Util.falseFn;
                 loadingImg.image.src = L.Util.emptyImageUrl;
@@ -145,7 +145,7 @@ var GmxImageLoader = L.Class.extend({
     },
 
     _removeRequestFromCache: function(request) {    // remove request from cache
-        this._clearCacheItem(request.url, request.options.cache);
+        this._clearCacheItem(request.url, request.options.cacheKey);
         this._cancelRequest(request);
     },
 
@@ -160,10 +160,6 @@ var GmxImageLoader = L.Class.extend({
     },
 
     _add: function(atBegin, url, options) {
-        var cacheItem = this.requestsCache[url],
-            image = cacheItem ? cacheItem.image : null;
-        if (image) { return {image: image}; }
-
         var id = 'id' + (++this.uniqueID),
             request = new ImageRequest(id, url, options);
 

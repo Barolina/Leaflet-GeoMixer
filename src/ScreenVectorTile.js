@@ -59,23 +59,19 @@ ScreenVectorTile.prototype = {
                 },
                 request = L.gmx.imageLoader.push(rUrl, {
                     layerID: gmx.layerID,
-                    cache: _this.zKey,
+                    cacheKey: _this.zKey,
                     crossOrigin: crossOrigin || ''
                 });
-            if (request.image) {    // synchronous image from cache
-                imageLoaded(request.image);
-            } else {
-                _this.rasterRequests[rUrl] = request;
-                requestPromise = request.def;
+            _this.rasterRequests[rUrl] = request;
+            requestPromise = request.def;
 
-                requestPromise.then(
-                    imageLoaded,
-                    function() {
-                        gmx.badTiles[rUrl] = true;
-                        tryHigherLevelTile();
-                    }
-                );
-            }
+            requestPromise.then(
+                imageLoaded,
+                function() {
+                    gmx.badTiles[rUrl] = true;
+                    tryHigherLevelTile();
+                }
+            );
         };
 
         tryLoad(gtp);
@@ -220,12 +216,8 @@ ScreenVectorTile.prototype = {
                 layerID: gmx.layerID,
                 crossOrigin: gmx.crossOrigin || ''
             });
-            if (request.image) {    // synchronous image from cache
-                imageItem = request.image;
-            } else {
-                this.rasterRequests[url] = request;
-                mainRasterLoader = request.def;
-            }
+            this.rasterRequests[url] = request;
+            mainRasterLoader = request.def;
         }
         var itemRasterPromise = new L.gmx.Deferred(function() {
             if (mainRasterLoader) {

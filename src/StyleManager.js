@@ -222,7 +222,7 @@ StyleManager.prototype = {
 
         opt.layerID = this.gmx.layerID;
         ++this._needLoadIcons;
-        L.gmx.imageLoader.unshift(url, opt).then(
+        L.gmx.imageLoader.unshift(url, opt).def.then(
             function(it) {
                 pt.version = ++_this._maxVersion;
                 if (pt.fillIconUrl) {
