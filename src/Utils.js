@@ -55,7 +55,6 @@ var gmxAPIutils = {
         if (callbackParamName) {
             var callbackName = gmxAPIutils.uniqueGlobalName(function(obj) {
                 delete window[callbackName];
-                document.getElementsByTagName('head').item(0).removeChild(script);
                 def.resolve(obj);
             });
 
@@ -73,9 +72,11 @@ var gmxAPIutils = {
         script.onerror = function(e) {
             def.reject(e);
             L.gmxUtil.loaderStatus(src, true);
+            script.parentNode.removeChild(script);
         };
         script.onload = function() {
             L.gmxUtil.loaderStatus(src, true);
+            script.parentNode.removeChild(script);
         };
         L.gmxUtil.loaderStatus(src, null, 'vector');
         script.setAttribute('src', src);
