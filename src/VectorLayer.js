@@ -604,7 +604,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             min = tileRange.min,
             max = tileRange.max;
 
-        L.gmx.imageLoader.clearLayer(gmx.layerID, zoom);
         for (var zKey in gmx.tileSubscriptions) {
             var subscription = gmx.tileSubscriptions[zKey];
             if (subscription.z !== zoom

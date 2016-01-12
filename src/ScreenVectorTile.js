@@ -15,7 +15,7 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
 
     this.showRaster = 'rasterBGfunc' in this.gmx && (zoom >= this.gmx.minZoomRasters);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
-    this.rasterRequests = {}; // all cached raster requests
+    this.rasterRequests = []; // all cached raster requests
     this.gmx.badTiles = this.gmx.badTiles || {};
 }
 
@@ -60,10 +60,10 @@ ScreenVectorTile.prototype = {
                 request = L.gmx.imageLoader.push(rUrl, {
                     layerID: gmx.layerID,
                     zoom: _this.zoom,
-                    cacheKey: _this.zKey,
+                    cache: true,
                     crossOrigin: crossOrigin || ''
                 });
-            _this.rasterRequests[rUrl] = request;
+            _this.rasterRequests.push(request);
             requestPromise = request.def;
 
             requestPromise.then(
@@ -217,7 +217,7 @@ ScreenVectorTile.prototype = {
                 layerID: gmx.layerID,
                 crossOrigin: gmx.crossOrigin || ''
             });
-            this.rasterRequests[url] = request;
+            this.rasterRequests.push(request);
             mainRasterLoader = request.def;
         }
         var itemRasterPromise = new L.gmx.Deferred(function() {
@@ -584,10 +584,9 @@ ScreenVectorTile.prototype = {
     },
 
     clearCache: function () {
-        for (var url in this.rasterRequests) {
-            var request = this.rasterRequests[url];
+        this.rasterRequests.forEach(function (request) {
             request.remove();
-        }
-        this.rasterRequests = {};
+        });
+        this.rasterRequests = [];
     }
 };

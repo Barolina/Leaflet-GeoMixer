@@ -25,10 +25,10 @@ var GmxImageLoader = L.Class.extend({
     _resolveRequest: function(request, image, canceled) {
         var def = request.def;
         if (image) {
-            var cacheKey = request.options.cacheKey;
-            if (!canceled && cacheKey) {
+            if (!canceled && request.options.cache) {
                 var url = request.url,
-                    cacheItem = this.requestsCache[url];
+                    cacheItem = this.requestsCache[url],
+                    cacheKey = request._id;
                 if (!cacheItem) { cacheItem = this.requestsCache[url] = {image: image, requests:{}}; }
                 if (!cacheItem.requests[cacheKey]) { cacheItem.requests[cacheKey] = request; }
             }
@@ -117,9 +117,6 @@ var GmxImageLoader = L.Class.extend({
 
             len = requests.length;
             if (len === 1 && requests[0]._id === id) {
-                var req = requests[0];
-                this._clearCacheItem(req.url, req.options.cacheKey);
-                delete req.options.cacheKey;
                 loadingImg.image.onload = L.Util.falseFn;
                 loadingImg.image.onerror = L.Util.falseFn;
                 loadingImg.image.src = L.Util.emptyImageUrl;
@@ -145,8 +142,8 @@ var GmxImageLoader = L.Class.extend({
     },
 
     _removeRequestFromCache: function(request) {    // remove request from cache
-        this._clearCacheItem(request.url, request.options.cacheKey);
         this._cancelRequest(request);
+        this._clearCacheItem(request.url, request._id);
     },
 
     _clearCacheItem: function(url, cacheKey) {    // remove cache item
@@ -172,18 +169,6 @@ var GmxImageLoader = L.Class.extend({
         this.fire('request', {request: request});
 
         return request;
-    },
-
-    clearLayer: function(layerID, zoom) {  // remove all the items for a given layer ID not equal zoom
-        var requestsToCancel = [],
-            addToCancel = function(it) {
-                if (it.options.layerID === layerID && (!zoom || it.options.zoom !== zoom)) { requestsToCancel.push(it); }
-            };
-        for (var url in this.inProgress) {
-            this.inProgress[url].requests.forEach(addToCancel);
-        }
-        this.requests.forEach(addToCancel);
-        requestsToCancel.forEach(this._cancelRequest.bind(this));
     },
 
     push: function(url, options) {  // добавить запрос в конец очереди
