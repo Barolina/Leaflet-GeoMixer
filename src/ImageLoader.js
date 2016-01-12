@@ -158,7 +158,6 @@ var GmxImageLoader = L.Class.extend({
             }
         }
     },
-
     _add: function(atBegin, url, options) {
         var id = 'id' + (++this.uniqueID),
             request = new ImageRequest(id, url, options);
@@ -175,10 +174,10 @@ var GmxImageLoader = L.Class.extend({
         return request;
     },
 
-    clearLayer: function(layerID) {  // remove all the items for a given layer ID
+    clearLayer: function(layerID, zoom) {  // remove all the items for a given layer ID not equal zoom
         var requestsToCancel = [],
             addToCancel = function(it) {
-                if (it.options.layerID === layerID) { requestsToCancel.push(it); }
+                if (it.options.layerID === layerID && (!zoom || it.options.zoom !== zoom)) { requestsToCancel.push(it); }
             };
         for (var url in this.inProgress) {
             this.inProgress[url].requests.forEach(addToCancel);

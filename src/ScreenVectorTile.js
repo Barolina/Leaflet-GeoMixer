@@ -59,6 +59,7 @@ ScreenVectorTile.prototype = {
                 },
                 request = L.gmx.imageLoader.push(rUrl, {
                     layerID: gmx.layerID,
+                    zoom: _this.zoom,
                     cacheKey: _this.zKey,
                     crossOrigin: crossOrigin || ''
                 });
