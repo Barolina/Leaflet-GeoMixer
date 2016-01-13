@@ -476,19 +476,21 @@ ScreenVectorTile.prototype = {
         return this.gmx.sortItems ? layer.getSortedItems(items) : items;
     },
 
+    _cancelRastersPromise: function () {
+        if (this.rastersPromise) {
+            this.rastersPromise.cancel();
+            this.rastersPromise = null;
+        }
+    },
+
     drawTile: function (data) {
         var drawPromise = this.currentDrawPromise,
             _this = this;
         if (drawPromise) {
-            drawPromise.cancel();
-            // drawPromise.reject();
+            drawPromise.reject();
+            this._cancelRastersPromise();
         }
-        drawPromise = new L.gmx.Deferred(function() {
-            if (_this.rastersPromise) {
-                _this.rastersPromise.cancel();
-                _this.rastersPromise = null;
-            }
-        });
+        drawPromise = new L.gmx.Deferred(this._cancelRastersPromise);
         drawPromise.always(function() {
             _this.currentDrawPromise = null;
             _this.rastersPromise = null;
@@ -579,10 +581,7 @@ ScreenVectorTile.prototype = {
     },
 
     destructor: function () {
-        if (this.currentDrawPromise) {
-            this.currentDrawPromise.cancel();
-            this.currentDrawPromise = null;
-        }
+        this._cancelRastersPromise();
         this.clearCache();
     },
 
