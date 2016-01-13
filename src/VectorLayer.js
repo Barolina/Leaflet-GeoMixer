@@ -71,17 +71,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this._removeTile(zKey);
         }
 
-        for (var i = this._drawQueue.length - 1; i >= 0; i--) {
-            var elem = this._drawQueue[i];
-            if (elem.zKey === zKey) {
-                elem.def.cancel();
-                this._drawQueue.splice(i, 1);
-            }
-        }
         if (zKey in this._drawQueueHash) {
-            this._drawQueueHash[zKey].reject();
+            this._drawQueueHash[zKey].cancel();
         }
-        delete this._drawQueueHash[zKey];
     },
 
     _clearAllSubscriptions: function() {
@@ -100,12 +92,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
             delete this._tiles[zKey];
-
-            if (zKey in this._drawQueueHash) {
-                this._drawQueueHash[zKey].reject();
-            }
         }
-        this._drawQueueHash = {};
+
         gmx._tilesToLoad = 0;
     },
 
@@ -429,17 +417,17 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 return;
             }
 
-            var bbox = queue.shift();
-            delete _this._drawQueueHash[bbox.zKey];
-            if (_this._map && bbox.z === _this._map._zoom) {
-                bbox.drawDef = _this._gmxDrawTile(bbox.tp, bbox.z, bbox.data);
+            var queueItem = queue.shift();
+            delete _this._drawQueueHash[queueItem.zKey];
+            if (_this._map && queueItem.z === _this._map._zoom) {
+                queueItem.drawDef = _this._gmxDrawTile(queueItem.tp, queueItem.z, queueItem.data);
 
-                bbox.drawDef.then(
-                    bbox.def.resolve.bind(bbox.def, bbox.data),
-                    bbox.def.reject
+                queueItem.drawDef.then(
+                    queueItem.def.resolve.bind(queueItem.def, queueItem.data),
+                    queueItem.def.reject
                 );
             } else {
-                bbox.def.reject();
+                queueItem.def.reject();
             }
             setTimeout(drawNextTile, 0);
         };
@@ -649,7 +637,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     bbox: gmx.styleManager.getStyleBounds(gmxTilePoint),
                     filters: ['clipFilter', 'styleFilter', 'userFilter'],
                     callback: function(data) {
-                        myLayer._drawTileAsync(tilePoint, zoom, data).then(done, done);
+                        myLayer._drawTileAsync(tilePoint, zoom, data).always(done);
                     }
                 };
             if (gmx.layerType === 'VectorTemporal') {
@@ -692,7 +680,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _gmxDrawTile: function (tilePoint, zoom, data) {
         var gmx = this._gmx,
-            def = new L.gmx.Deferred();
+            cancelled = false,
+            screenTileDrawPromise = null,
+            def = new L.gmx.Deferred(function() {
+                cancelled = true;
+                screenTileDrawPromise && screenTileDrawPromise.cancel();
+            });
 
         if (!this._map) {
             def.reject();
@@ -701,7 +694,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var screenTile = this._getScreenTile(tilePoint, zoom || this._map._zoom);
         if (screenTile) {
             gmx.styleManager.deferred.then(function () {
-                screenTile.drawTile(data).then(def.resolve.bind(def, data), def.reject);
+                if (!cancelled) {
+                    screenTileDrawPromise = screenTile.drawTile(data);
+                    screenTileDrawPromise.then(def.resolve.bind(def, data), def.reject);
+                }
             });
         }
        return def;

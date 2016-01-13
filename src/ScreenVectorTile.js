@@ -26,8 +26,13 @@ ScreenVectorTile.prototype = {
         var gmx = this.gmx,
             _this = this,
             requestPromise = null,
+            currentUrl,
             def = new L.gmx.Deferred(function() {
-                if (requestPromise) { requestPromise.cancel(); }
+                if (requestPromise) {
+                    //don't store cancelled requests in request cache
+                    delete _this.rasterRequests[currentUrl];
+                    requestPromise.cancel();
+                }
             });
 
         var tryLoad = function(gtp, crossOrigin) {
@@ -62,6 +67,7 @@ ScreenVectorTile.prototype = {
                 });
                 _this.rasterRequests[rUrl] = request;
             }
+            currentUrl = rUrl;
             requestPromise = request.def;
 
             requestPromise.then(
@@ -208,13 +214,13 @@ ScreenVectorTile.prototype = {
         }
         if (isTiles) {
             mainRasterLoader = new L.gmx.Deferred(function() {
-               recursiveLoaders.forEach(function(it) {
+                recursiveLoaders.forEach(function(it) {
                     it.cancel();
                 });
                 recursiveLoaders = null;
             });
         } else {
-            var request = _this.rasterRequests[url];
+            var request = this.rasterRequests[url];
             if (!request) {
                 request = L.gmx.imageLoader.push(url, {
                     layerID: gmx.layerID,
@@ -222,7 +228,15 @@ ScreenVectorTile.prototype = {
                 });
                 this.rasterRequests[url] = request;
             }
-            mainRasterLoader = request.def;
+
+            // in fact, we want to return request.def, but need to do additional action during cancellation.
+            // so, we consctruct new promise and add pipe it with request.def
+            mainRasterLoader = new L.gmx.Deferred(function() {
+                //don't cache cancelled requests
+                delete _this.rasterRequests[url];
+                request.def.cancel();
+            });
+            request.def.then(mainRasterLoader.resolve, mainRasterLoader.reject);
         }
         var itemRasterPromise = new L.gmx.Deferred(function() {
             if (mainRasterLoader) {
@@ -486,16 +500,17 @@ ScreenVectorTile.prototype = {
     drawTile: function (data) {
         var drawPromise = this.currentDrawPromise,
             _this = this;
+
         if (drawPromise) {
-            drawPromise.reject();
             this._cancelRastersPromise();
+            drawPromise.reject();
         }
         drawPromise = new L.gmx.Deferred(this._cancelRastersPromise.bind(this));
         drawPromise.always(function() {
             _this.currentDrawPromise = null;
             _this.rastersPromise = null;
         });
-        
+
         this.currentDrawPromise = drawPromise;
 
         var geoItems = this._chkItems(data);
@@ -583,6 +598,8 @@ ScreenVectorTile.prototype = {
     destructor: function () {
         this._cancelRastersPromise();
         this.clearCache();
+
+        this.currentDrawPromise && this.currentDrawPromise.reject();
     },
 
     clearCache: function () {
