@@ -15,7 +15,7 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
 
     this.showRaster = 'rasterBGfunc' in this.gmx && (zoom >= this.gmx.minZoomRasters);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
-    this.rasterRequests = []; // all cached raster requests
+    this.rasterRequests = {}; // all cached raster requests
     this.gmx.badTiles = this.gmx.badTiles || {};
 }
 
@@ -49,25 +49,25 @@ ScreenVectorTile.prototype = {
                 tryHigherLevelTile();
                 return;
             }
-
-            if (gmx.rasterProcessingHook) {
-                crossOrigin = 'anonymous';
-            }
-            var imageLoaded = function(imageObj) {
-                    requestPromise = null;
-                    def.resolve({gtp: gtp, image: imageObj});
-                },
+            var request = _this.rasterRequests[rUrl];
+            if (!request) {
+                if (gmx.rasterProcessingHook) {
+                    crossOrigin = 'anonymous';
+                }
                 request = L.gmx.imageLoader.push(rUrl, {
                     layerID: gmx.layerID,
                     zoom: _this.zoom,
                     cache: true,
                     crossOrigin: crossOrigin || ''
                 });
-            _this.rasterRequests.push(request);
+                _this.rasterRequests[rUrl] = request;
+            }
             requestPromise = request.def;
 
             requestPromise.then(
-                imageLoaded,
+                function(imageObj) {
+                    def.resolve({gtp: gtp, image: imageObj});
+                },
                 function() {
                     gmx.badTiles[rUrl] = true;
                     tryHigherLevelTile();
@@ -213,11 +213,14 @@ ScreenVectorTile.prototype = {
                 });
             });
         } else {
-            var request = L.gmx.imageLoader.push(url, {
-                layerID: gmx.layerID,
-                crossOrigin: gmx.crossOrigin || ''
-            });
-            this.rasterRequests.push(request);
+            var request = _this.rasterRequests[url];
+            if (!request) {
+                request = L.gmx.imageLoader.push(url, {
+                    layerID: gmx.layerID,
+                    crossOrigin: gmx.crossOrigin || ''
+                });
+                this.rasterRequests[url] = request;
+            }
             mainRasterLoader = request.def;
         }
         var itemRasterPromise = new L.gmx.Deferred(function() {
@@ -462,7 +465,6 @@ ScreenVectorTile.prototype = {
         drawPromise = new L.gmx.Deferred(function() {
             if (_this.rastersPromise) {
                 _this.rastersPromise.reject();
-                _this.rastersPromise = null;
             }
         });
         drawPromise.always(function() {
@@ -584,9 +586,9 @@ ScreenVectorTile.prototype = {
     },
 
     clearCache: function () {
-        this.rasterRequests.forEach(function (request) {
-            request.remove();
-        });
-        this.rasterRequests = [];
+        for (var url in this.rasterRequests) {
+            this.rasterRequests[url].remove();
+        }
+        this.rasterRequests = {};
     }
 };

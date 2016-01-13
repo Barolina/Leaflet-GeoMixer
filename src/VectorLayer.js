@@ -600,7 +600,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         //L.TileVector will remove all tiles from other zooms.
         //But it will not remove subscriptions without tiles - we should do it ourself
         var gmx = this._gmx,
-            needCheck = {},
             min = tileRange.min,
             max = tileRange.max;
 
@@ -613,11 +612,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 || subscription.y > max.y
             ) {
                 this._clearTileSubscription(zKey);
-            } else if (!subscription.screenTile) {
-                needCheck[zKey] = true;
             }
         }
-        this.repaint(needCheck);
     },
 
     _update: function () {
