@@ -63,7 +63,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (zKey in gmx.tileSubscriptions) {
             var subscription = gmx.tileSubscriptions[zKey];
             if (subscription.screenTile) {
-                subscription.screenTile.cancel();
+                subscription.screenTile.destructor();
             }
             gmx.dataManager.getObserver(zKey).deactivate();
             gmx.dataManager.removeObserver(zKey);
@@ -94,7 +94,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         for (var zKey in gmx.tileSubscriptions) {
             var subscription = gmx.tileSubscriptions[zKey];
             if (subscription.screenTile) {
-                subscription.screenTile.cancel();
+                subscription.screenTile.destructor();
             }
             gmx.dataManager.getObserver(zKey).deactivate();
             gmx.dataManager.removeObserver(zKey);
@@ -124,7 +124,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
-    clearScreenCache: function() {
+    clearScreenCache: function() { // todo: not need for Gevlich
         var gmx = this._gmx;
         for (var zKey in gmx.tileSubscriptions) {
             var subscription = gmx.tileSubscriptions[zKey];

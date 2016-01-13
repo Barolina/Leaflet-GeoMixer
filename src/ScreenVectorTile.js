@@ -27,7 +27,7 @@ ScreenVectorTile.prototype = {
             _this = this,
             requestPromise = null,
             def = new L.gmx.Deferred(function() {
-                if (requestPromise) { requestPromise.reject(); }
+                if (requestPromise) { requestPromise.cancel(); }
             });
 
         var tryLoad = function(gtp, crossOrigin) {
@@ -209,8 +209,9 @@ ScreenVectorTile.prototype = {
         if (isTiles) {
             mainRasterLoader = new L.gmx.Deferred(function() {
                recursiveLoaders.forEach(function(it) {
-                    it.reject();
+                    it.cancel();
                 });
+                recursiveLoaders = null;
             });
         } else {
             var request = _this.rasterRequests[url];
@@ -225,7 +226,8 @@ ScreenVectorTile.prototype = {
         }
         var itemRasterPromise = new L.gmx.Deferred(function() {
             if (mainRasterLoader) {
-                mainRasterLoader.reject();
+                mainRasterLoader.cancel();
+                mainRasterLoader = null;
             }
         });
 
@@ -429,8 +431,9 @@ ScreenVectorTile.prototype = {
         var itemPromises = [],
             def = new L.gmx.Deferred(function() {
                 itemPromises.forEach(function(promise) {
-                    promise.reject();
+                    promise.cancel();
                 });
+                itemPromises = null;
             }),
             itemRasters = this._getNeedRasterItems(geoItems),
             needLoadRasters = itemRasters.length;
@@ -456,24 +459,6 @@ ScreenVectorTile.prototype = {
         return def;
     },
 
-    _setDrawPromise: function () {
-        var drawPromise = this.currentDrawPromise,
-            _this = this;
-        if (drawPromise) {
-            drawPromise.reject();
-        }
-        drawPromise = new L.gmx.Deferred(function() {
-            if (_this.rastersPromise) {
-                _this.rastersPromise.reject();
-            }
-        });
-        drawPromise.always(function() {
-            _this.currentDrawPromise = null;
-            _this.rastersPromise = null;
-        });
-        return drawPromise;
-    },
-
     _chkItems: function (data) {
         var layer = this.layer;
         if (!layer._map) {
@@ -492,7 +477,23 @@ ScreenVectorTile.prototype = {
     },
 
     drawTile: function (data) {
-        var drawPromise = this._setDrawPromise();
+        var drawPromise = this.currentDrawPromise,
+            _this = this;
+        if (drawPromise) {
+            drawPromise.cancel();
+            // drawPromise.reject();
+        }
+        drawPromise = new L.gmx.Deferred(function() {
+            if (_this.rastersPromise) {
+                _this.rastersPromise.cancel();
+                _this.rastersPromise = null;
+            }
+        });
+        drawPromise.always(function() {
+            _this.currentDrawPromise = null;
+            _this.rastersPromise = null;
+        });
+        
         this.currentDrawPromise = drawPromise;
 
         var geoItems = this._chkItems(data);
@@ -504,7 +505,6 @@ ScreenVectorTile.prototype = {
             tile = tileLink.el,
             ctx = tile.getContext('2d'),
             gmx = this.gmx,
-            _this = this,
             dattr = {
                 tbounds: this.tbounds,
                 rasters: _this.rasters,
@@ -578,9 +578,10 @@ ScreenVectorTile.prototype = {
         return drawPromise;
     },
 
-    cancel: function () {
+    destructor: function () {
         if (this.currentDrawPromise) {
-            this.currentDrawPromise.reject();
+            this.currentDrawPromise.cancel();
+            this.currentDrawPromise = null;
         }
         this.clearCache();
     },
