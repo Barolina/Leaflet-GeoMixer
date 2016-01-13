@@ -490,7 +490,7 @@ ScreenVectorTile.prototype = {
             drawPromise.reject();
             this._cancelRastersPromise();
         }
-        drawPromise = new L.gmx.Deferred(this._cancelRastersPromise);
+        drawPromise = new L.gmx.Deferred(this._cancelRastersPromise.bind(this));
         drawPromise.always(function() {
             _this.currentDrawPromise = null;
             _this.rastersPromise = null;
