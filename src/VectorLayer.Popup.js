@@ -84,9 +84,7 @@ L.gmx.VectorLayer.include({
 	},
 
     _movePopup: function (options) {
-        if (options.originalEvent && options.originalEvent.ctrlKey) {
-            this.closePopup();
-        } else if (this._popup._state === 'mouseover') {
+        if (this._popup._state === 'mouseover') {
             var id = this._popup.options._gmxID || -1;
             if (id !== options.gmx.id) {
                 this._setPopupContent(options);
