@@ -112,15 +112,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
-    clearScreenCache: function() { // todo: not need for Gevlich
-        var gmx = this._gmx;
-        for (var zKey in gmx.tileSubscriptions) {
-            var subscription = gmx.tileSubscriptions[zKey];
-            if (subscription.screenTile) { subscription.screenTile.clearCache(); }
-        }
-        return this;
-    },
-
     _onStyleChange: function() {
         var gmx = this._gmx;
         if (!gmx.balloonEnable && this._popup) {

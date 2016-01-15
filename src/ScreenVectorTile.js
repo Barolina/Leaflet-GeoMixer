@@ -15,7 +15,8 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
 
     this.showRaster = 'rasterBGfunc' in this.gmx && (zoom >= this.gmx.minZoomRasters);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
-    this.rasterRequests = {}; // all cached raster requests
+    this.rasterRequests = {};   // all cached raster requests
+    this._uniqueID = 0;         // draw attempt id
     this.gmx.badTiles = this.gmx.badTiles || {};
 }
 
@@ -60,12 +61,14 @@ ScreenVectorTile.prototype = {
                     crossOrigin = 'anonymous';
                 }
                 request = L.gmx.imageLoader.push(rUrl, {
-                    layerID: gmx.layerID,
+                    tileRastersId: _this._uniqueID,
                     zoom: _this.zoom,
                     cache: true,
                     crossOrigin: crossOrigin || ''
                 });
                 _this.rasterRequests[rUrl] = request;
+            } else {
+                request.options.tileRastersId = _this._uniqueID;
             }
             currentUrl = rUrl;
             requestPromise = request.def;
@@ -223,10 +226,12 @@ ScreenVectorTile.prototype = {
             var request = this.rasterRequests[url];
             if (!request) {
                 request = L.gmx.imageLoader.push(url, {
-                    layerID: gmx.layerID,
+                    tileRastersId: _this._uniqueID,
                     crossOrigin: gmx.crossOrigin || ''
                 });
                 this.rasterRequests[url] = request;
+            } else {
+                request.options.tileRastersId = this._uniqueID;
             }
 
             // in fact, we want to return request.def, but need to do additional action during cancellation.
@@ -416,9 +421,6 @@ ScreenVectorTile.prototype = {
                 properties = geo.properties,
                 idr = properties[0];
 
-            if (idr in this.rasters) {
-                continue;
-            }
             var dataOption = geo.dataOption || {},
                 skipRasters = false;
 
@@ -501,12 +503,15 @@ ScreenVectorTile.prototype = {
         var drawPromise = this.currentDrawPromise,
             _this = this;
 
+        this._uniqueID++;       // count draw attempt
+
         if (drawPromise) {
             this._cancelRastersPromise();
             drawPromise.reject();
         }
         drawPromise = new L.gmx.Deferred(this._cancelRastersPromise.bind(this));
         drawPromise.always(function() {
+            _this._drawDone();
             _this.currentDrawPromise = null;
             _this.rastersPromise = null;
         });
@@ -524,7 +529,7 @@ ScreenVectorTile.prototype = {
             gmx = this.gmx,
             dattr = {
                 tbounds: this.tbounds,
-                rasters: _this.rasters,
+                rasters: this.rasters,
                 gmx: gmx,
                 tpx: this.tpx,
                 tpy: this.tpy,
@@ -586,7 +591,7 @@ ScreenVectorTile.prototype = {
         };
 
         if (this.showRaster) {
-            this.rastersPromise = _this._getTileRasters(geoItems);
+            this.rastersPromise = this._getTileRasters(geoItems);
             this.rastersPromise.then(doDraw, drawPromise.reject); //first load all raster images, then render all of them at once
         } else {
             doDraw();
@@ -597,12 +602,23 @@ ScreenVectorTile.prototype = {
 
     destructor: function () {
         this._cancelRastersPromise();
-        this.clearCache();
+        this._clearCache();
 
         this.currentDrawPromise && this.currentDrawPromise.reject();
     },
 
-    clearCache: function () {
+    _drawDone: function () {
+        for (var url in this.rasterRequests) {
+            var req = this.rasterRequests[url];
+            if (this._uniqueID !== req.options.tileRastersId) {
+                req.remove();
+                delete this.rasterRequests[url];
+            }
+        }
+        // this.layer.fire('tiledrawdone', {zKey: this.zKey});
+    },
+
+    _clearCache: function () {
         for (var url in this.rasterRequests) {
             this.rasterRequests[url].remove();
         }
