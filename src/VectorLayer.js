@@ -13,6 +13,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         this._drawQueue = [];
         this._drawQueueHash = {};
+
+        this._drawInProgress = {};
+
+        this._anyDrawings = false; //are we drawing something?
+
         var _this = this;
 
         this._gmx = {
@@ -188,6 +193,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     done();
                 }
             });
+
+            observer.on('startLoadingTiles', this._chkDrawingState, this);
+
             gmx.tileSubscriptions[zKey] = {
                 z: zoom,
                 x: tilePoint.x,
@@ -197,6 +205,29 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             };
             observer.activate();
         }
+    },
+
+    _chkDrawingState: function() {
+        var gmx = this._gmx,
+            isDrawing = this._drawQueue.length > 0 || Object.keys(this._drawInProgress).length > 0;
+
+        if (!isDrawing) {
+            for (var key in gmx.tileSubscriptions) {
+                var observer = gmx.dataManager.getObserver(key);
+                if (gmx.dataManager.getObserverLoadingState(observer)) {
+                    isDrawing = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isDrawing && this._anyDrawings) {
+            this.fire('doneDraw');
+        } else  if (isDrawing && !this._anyDrawings) {
+            this.fire('startDraw');
+        }
+
+        this._anyDrawings = isDrawing;
     },
 
     _getLoadedTilesPercentage: function (container) {
@@ -627,7 +658,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         return this._gmx.latLngGeometry;
     },
 
-    // internal metods
+    // internal methods
     _clearTileSubscription: function(zKey) {
         var gmx = this._gmx;
 
@@ -640,6 +671,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
             this._removeTile(zKey);
+
+            if (this._anyDrawings) {
+                this._chkDrawingState();
+            }
         }
 
         if (zKey in this._drawQueueHash) {
@@ -663,6 +698,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
             delete this._tiles[zKey];
+        }
+
+        if (this._anyDrawings) {
+            this._chkDrawingState();
         }
 
         gmx._tilesToLoad = 0;
@@ -718,6 +757,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
     },
 
+    _removeInProgressDrawing: function(zKey) {
+        delete this._drawInProgress[zKey];
+        this._chkDrawingState();
+    },
+
     _drawTileAsync: function (tilePoint, zoom, data) {
         var queue = this._drawQueue,
             isEmpty = queue.length === 0,
@@ -729,8 +773,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
 
         var drawNextTile = function() {
-            if (!queue.length) {    // TODO: may be need load rasters in tile
-                _this.fire('doneDraw');
+            _this._chkDrawingState();
+
+            if (!queue.length) {
                 return;
             }
 
@@ -738,6 +783,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             delete _this._drawQueueHash[queueItem.zKey];
             if (_this._map && queueItem.z === _this._map._zoom) {
                 queueItem.drawDef = _this._gmxDrawTile(queueItem.tp, queueItem.z, queueItem.data);
+
+                _this._drawInProgress[queueItem.zKey] = true;
+
+                queueItem.drawDef.always(_this._removeInProgressDrawing.bind(_this, queueItem.zKey));
 
                 queueItem.drawDef.then(
                     queueItem.def.resolve.bind(queueItem.def, queueItem.data),
@@ -754,6 +803,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         var def = queueItem.def = new L.gmx.Deferred(function() {
             queueItem.drawDef && queueItem.drawDef.cancel();
 
+            _this._removeInProgressDrawing(zKey);
+
             delete _this._drawQueueHash[zKey];
             for (var i = queue.length - 1; i >= 0; i--) {
                 var elem = queue[i];
@@ -768,7 +819,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._drawQueueHash[zKey] = def;
 
         if (isEmpty) {
-            this.fire('startDraw');
             setTimeout(drawNextTile, 0);
         }
 
