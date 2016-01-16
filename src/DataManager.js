@@ -191,8 +191,6 @@ var DataManager = L.Class.extend({
     },
 
     initialize: function(options) {
-        this.setOptions(options);
-
         this._tilesTree = null;
         this._activeTileKeys = {};
         this._endDate = null;
@@ -220,13 +218,6 @@ var DataManager = L.Class.extend({
                 });
             }
         };
-        if (this._isTemporalLayer) {
-            this.addFilter('TemporalFilter', function(item, tile, observer) {
-                var unixTimeStamp = item.options.unixTimeStamp,
-                    dates = observer.dateInterval;
-                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
-            });
-        }
 
         this._observerTileLoader = new ObserverTileLoader(this);
         this._observerTileLoader.on('tileload', function(event) {
@@ -247,6 +238,14 @@ var DataManager = L.Class.extend({
                 observer.updateData(data);
             }
         });
+        this.setOptions(options);
+        if (this._isTemporalLayer) {
+            this.addFilter('TemporalFilter', function(item, tile, observer) {
+                var unixTimeStamp = item.options.unixTimeStamp,
+                    dates = observer.dateInterval;
+                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
+            });
+        }
     },
 
     _getActiveTileKeys: function() {
