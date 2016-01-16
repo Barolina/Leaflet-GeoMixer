@@ -157,7 +157,7 @@ var DataManager = L.Class.extend({
     includes: L.Mixin.Events,
 
     options: {
-        LayerID: null,                      // layer ID
+        name: null,                         // layer ID
         identityField: '',                  // attribute name for identity items
         attributes: [],                     // attributes names
         attrTypes: [],                      // attributes types
@@ -202,13 +202,15 @@ var DataManager = L.Class.extend({
         this.tileSenderPrefix = 'http://' + hostName + '/' +
             'TileSender.ashx?WrapStyle=None' +
             '&key=' + encodeURIComponent(sessionKey);
+
+        this._needCheckActiveTiles = true;
     },
 
     _vectorTileDataProviderLoad: function(x, y, z, v, s, d, callback) {
         var _this = this;
         gmxVectorTileLoader.load(
             _this.tileSenderPrefix,
-            {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this.options.LayerID}
+            {x: x, y: y, z: z, v: v, s: s, d: d, layerID: _this.options.name}
         ).then(callback, function() {
             console.log('Error loading vector tile');
             callback([]);
@@ -825,8 +827,6 @@ var DataManager = L.Class.extend({
             this.removeFilter('processingFilter');
         }
         this.options.GeoProcessing = null;
-        this._needCheckActiveTile = true;
-        // tile && this._triggerObservers();
     },
 
     updateVersion: function(layerDescription) {
