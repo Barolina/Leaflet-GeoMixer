@@ -89,6 +89,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.on('versionchange', this._onVersionChange, this);
 
         this._zIndexOffsetCheck();
+        L.gmx.layersVersion.add(this);
         this.fire('add');
     },
 
@@ -125,6 +126,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         delete gmx.map;
         if (gmx.properties.type === 'Vector') {
             map.off('moveend', this._moveEnd, this);
+        }
+        if (gmx.dataManager && !gmx.dataManager.getActiveObserversCount()) {
+            L.gmx.layersVersion.remove(this);
         }
         this.fire('remove');
     },

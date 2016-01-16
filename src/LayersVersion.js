@@ -3,32 +3,32 @@ var delay = 20000,
     layers = {},
     script = '/Layer/CheckVersion.ashx',
     intervalID = null,
+    timeoutID = null,
     lastLayersStr = '';
 
+var isExistsTiles = function(prop) {
+    var tilesKey = prop.Temporal ? 'TemporalTiles' : 'tiles';
+    return tilesKey in prop;
+};
+var getParams = function(prop) {
+    return {
+        Name: prop.name,
+        Version: isExistsTiles(prop) ? prop.LayerVersion : 0
+    };
+};
 var getRequestParams = function(layer) {
     var hosts = {},
-        _gmx;
+        prop;
     if (layer) {
-        if (layer instanceof L.gmx.DataManager) {
-            hosts[layer.options.hostName] = [{
-                Name: layer.options.LayerID,
-                Version: layer.options.LayerVersion || 0
-            }];
-        } else {
-            _gmx = layer._gmx;
-            var prop = _gmx.properties;
-            hosts[_gmx.hostName] = [{
-                Name: prop.LayerID,
-                Version: prop.LayerVersion || 0
-            }];
-        }
+        prop = layer instanceof L.gmx.DataManager ? layer.options : layer._gmx.properties;
+        hosts[prop.hostName] = [getParams(prop)];
     } else {
         for (var id in layers) {
             var obj = layers[id];
             if (obj.options.chkUpdate) {
-                _gmx = obj._gmx;
-                var hostName = _gmx.hostName,
-                    pt = {Name: id, Version: _gmx.properties.LayerVersion || 0};
+                prop = obj._gmx.properties;
+                var hostName = prop.hostName,
+                    pt = getParams(prop);
                 if (hosts[hostName]) { hosts[hostName].push(pt); }
                 else { hosts[hostName] = [pt]; }
             }
@@ -38,16 +38,19 @@ var getRequestParams = function(layer) {
 };
 
 var chkVersion = function (layer, callback) {
-    var layerID = null;
+    var layerID = null,
+        prop;
+
     if (layer) {
-        layerID = layer instanceof L.gmx.DataManager ? layer.options.LayerID : layer._gmx.layerID;
+        prop = layer instanceof L.gmx.DataManager ? layer.options : layer._gmx.properties;
+        layerID = prop.name;
     }
     var processResponse = function(res) {
         if (res && res.Status === 'ok' && res.Result) {
             for (var i = 0, len = res.Result.length; i < len; i++) {
-                var item = res.Result[i],
-                    prop = item.properties,
-                    id = prop.LayerID,
+                var item = res.Result[i];
+                prop = item.properties;
+                var id = prop.name,
                     curLayer = layers[id] || (id === layerID ? layer : null);
                 if (curLayer && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
             }
@@ -96,9 +99,9 @@ var layersVersion = {
 
     remove: function(layer) {
         var _gmx = layer._gmx,
-            layerID = _gmx.layerID;
+            prop = _gmx.properties;
 
-        delete layers[layerID];
+        delete layers[prop.name];
         _gmx.dataManager.off('chkLayerUpdate', _gmx._chkVersion);
     },
 
@@ -106,18 +109,22 @@ var layersVersion = {
         var _gmx = layer._gmx,
             prop = _gmx.properties;
 
-        if (_gmx.layerID in layers) {
+        if (prop.name in layers) {
             return;
         }
 
         if ('LayerVersion' in prop) {
-            layers[_gmx.layerID] = layer;
+            layers[prop.name] = layer;
             _gmx._chkVersion = function () {
                 chkVersion(layer);
             };
             _gmx.dataManager.on('chkLayerUpdate', _gmx._chkVersion);
 
             layersVersion.start();
+            if (!isExistsTiles(prop)) {
+                if (timeoutID) { clearTimeout(timeoutID); }
+                timeoutID = setTimeout(chkVersion, 0);
+            }
         }
     },
 

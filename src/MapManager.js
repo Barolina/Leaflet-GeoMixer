@@ -14,6 +14,7 @@ var gmxMapManager = {
                     'http://' + serverHost + '/TileSender.ashx',
                     {
                         WrapStyle: 'func',
+                        skipTiles: 'NotVisible',
                         key: sessionKey,
                         MapName: mapName,
                         ModeKey: 'map'

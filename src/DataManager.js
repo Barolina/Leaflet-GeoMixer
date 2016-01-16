@@ -86,7 +86,7 @@ var ObserverTileLoader = L.Class.extend({
         for (var tileId in obsData.tiles) {
             this._tileData[tileId].tile.load();
         }
-        
+
         if (!obsData.loadingState) {
             obsData.loadingState = true;
             observer.fire('startLoadingTiles');
@@ -129,7 +129,7 @@ var ObserverTileLoader = L.Class.extend({
         obsData.tiles = newObserverTiles;
         obsData.leftToLoad = leftToLoad;
     },
-    
+
     _tileLoadedCallback: function(tile) {
         this.fire('tileload', {tile: tile});
 
@@ -163,6 +163,7 @@ var DataManager = L.Class.extend({
         attrTypes: [],                      // attributes types
         tiles: null,                        // tiles array for nontemporal data
         tilesVers: null,                    // tiles version array for nontemporal data
+        LayerVersion: 0,                    // layer version
         GeoProcessing: null,                // processing data
         Temporal: false,                    // only for temporal data
         TemporalColumnName: '',             // temporal attribute name
@@ -522,7 +523,7 @@ var DataManager = L.Class.extend({
             }
         }
     },
-    
+
     getObserverLoadingState: function(observer) {
         return this._observerTileLoader.getObserverLoadingState(observer);
     },
