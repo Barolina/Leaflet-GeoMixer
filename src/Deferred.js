@@ -9,9 +9,10 @@ var Deferred = function(cancelFunc) {
         isFulfilled = false,
         isResolved = false,
         fulfilledData,
-        onceAdded = false;
+        onceAdded = false,
+        isCancelled = false;
 
-    var fulfill = this._fulfill = function(resolved) {
+    var fulfill = this._fulfill = function(resolved /*, data*/) {
         if (isFulfilled) {
             return;
         }
@@ -25,19 +26,23 @@ var Deferred = function(cancelFunc) {
     };
 
     this.resolve = function(/*data*/) {
-        fulfill.apply(null, [true].concat([].slice.call(arguments)));
+        isCancelled || fulfill.apply(null, [true].concat([].slice.call(arguments)));
     };
 
     this.reject = function(/*data*/) {
-        fulfill.apply(null, [false].concat([].slice.call(arguments)));
+        isCancelled || fulfill.apply(null, [false].concat([].slice.call(arguments)));
     };
 
     var then = this.then = function(resolveCallback, rejectCallback) {
+        if (isCancelled) {
+            return null;
+        }
+        
         var def = new Deferred(),
             fulfillFunc = function(func, resolved) {
-                return function() {
+                return function(/*data*/) {
                     if (!func) {
-                        def._fulfill.apply([resolved].concat([].slice.call(arguments)));
+                        def._fulfill.apply(null, [resolved].concat([].slice.call(arguments)));
                     } else {
                         var res = func.apply(null, arguments);
                         if (res instanceof Deferred) {
@@ -73,6 +78,7 @@ var Deferred = function(cancelFunc) {
     };
 
     this.cancel = function() {
+        isCancelled = true;
         cancelFunc && cancelFunc();
     };
 };
