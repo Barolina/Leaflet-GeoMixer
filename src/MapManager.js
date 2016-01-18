@@ -2,7 +2,7 @@
 */
 var gmxMapManager = {
     //serverHost should be host only string like 'maps.kosmosnimki.ru' without any slashes or 'http://' prefixes
-    getMap: function(serverHost, apiKey, mapName) {
+    getMap: function(serverHost, apiKey, mapName, skipTiles) {
         var maps = this._maps;
         if (!maps[serverHost] || !maps[serverHost][mapName]) {
             var def = new L.gmx.Deferred();
@@ -14,7 +14,7 @@ var gmxMapManager = {
                     'http://' + serverHost + '/TileSender.ashx',
                     {
                         WrapStyle: 'func',
-                        skipTiles: 'NotVisible',
+                        skipTiles: skipTiles || 'None', // All, NotVisible, None
                         key: sessionKey,
                         MapName: mapName,
                         ModeKey: 'map'

@@ -30,7 +30,7 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
     var hostName = gmxAPIutils.normalizeHostname(options.hostName || DEFAULT_HOSTNAME);
     layerParams.hostName = hostName;
 
-    gmxMapManager.getMap(hostName, options.apiKey, mapID).then(
+    gmxMapManager.getMap(hostName, options.apiKey, mapID, options.skipTiles).then(
         function() {
             var layerInfo = gmxMapManager.findLayerInfo(hostName, mapID, layerID);
 
@@ -73,7 +73,7 @@ L.gmx.loadMap = function(mapID, options) {
 
     var def = new L.gmx.Deferred();
 
-    gmxMapManager.getMap(options.hostName, options.apiKey, mapID).then(function(mapInfo) {
+    gmxMapManager.getMap(options.hostName, options.apiKey, mapID, options.skipTiles).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
 
         if (options.leafletMap || options.setZIndex) {

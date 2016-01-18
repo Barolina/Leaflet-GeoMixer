@@ -279,7 +279,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._tileOnLoad(tile);
     },
 
-    // prepare for Leaflet 1.0 - this metods exists in L.GridLayer
+    // prepare for Leaflet 1.0 - this methods exists in L.GridLayer
     // converts tile coordinates to key for the tile cache
     _tileCoordsToKey: function (coords, zoom) {
         return coords.x + ':' + coords.y + ':' + (coords.z || zoom);
