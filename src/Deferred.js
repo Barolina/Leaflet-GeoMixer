@@ -38,21 +38,29 @@ var Deferred = function(cancelFunc) {
             return null;
         }
         
-        var def = new Deferred(),
-            fulfillFunc = function(func, resolved) {
-                return function(/*data*/) {
-                    if (!func) {
-                        def._fulfill.apply(null, [resolved].concat([].slice.call(arguments)));
+        var def = new Deferred(function() {
+            cancel();
+            userFuncDef && userFuncDef.cancel();
+        });
+        
+        var userFuncDef = null;
+        
+        var fulfillFunc = function(func, resolved) {
+            return function(/*data*/) {
+                if (!func) {
+                    def._fulfill.apply(null, [resolved].concat([].slice.call(arguments)));
+                } else {
+                    var res = func.apply(null, arguments);
+                    if (res instanceof Deferred) {
+                        userFuncDef = res;
+                        res.then(def.resolve, def.reject);
                     } else {
-                        var res = func.apply(null, arguments);
-                        if (res instanceof Deferred) {
-                            res.then(def.resolve, def.reject);
-                        } else {
-                            def.resolve(res);
-                        }
+                        def.resolve(res);
                     }
-                };
+                }
             };
+        };
+        
         if (isFulfilled) {
             fulfillFunc(isResolved ? resolveCallback : rejectCallback, isResolved).apply(null, fulfilledData);
         } else {
@@ -77,9 +85,11 @@ var Deferred = function(cancelFunc) {
         return fulfilledData;
     };
 
-    this.cancel = function() {
-        isCancelled = true;
-        cancelFunc && cancelFunc();
+    var cancel = this.cancel = function() {
+        if (!isCancelled && !isFulfilled) {
+            isCancelled = true;
+            cancelFunc && cancelFunc();
+        }
     };
 };
 
