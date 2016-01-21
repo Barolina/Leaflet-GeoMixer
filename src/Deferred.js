@@ -33,18 +33,24 @@ var Deferred = function(cancelFunc) {
         isCancelled || fulfill.apply(null, [false].concat([].slice.call(arguments)));
     };
 
+    var cancel = this.cancel = function() {
+        if (!isCancelled && !isFulfilled) {
+            isCancelled = true;
+            cancelFunc && cancelFunc();
+        }
+    };
+
     var then = this.then = function(resolveCallback, rejectCallback) {
         if (isCancelled) {
             return null;
         }
-        
+
+        var userFuncDef = null;
         var def = new Deferred(function() {
             cancel();
             userFuncDef && userFuncDef.cancel();
         });
-        
-        var userFuncDef = null;
-        
+
         var fulfillFunc = function(func, resolved) {
             return function(/*data*/) {
                 if (!func) {
@@ -60,7 +66,7 @@ var Deferred = function(cancelFunc) {
                 }
             };
         };
-        
+
         if (isFulfilled) {
             fulfillFunc(isResolved ? resolveCallback : rejectCallback, isResolved).apply(null, fulfilledData);
         } else {
@@ -83,13 +89,6 @@ var Deferred = function(cancelFunc) {
 
     this.getFulfilledData = function() {
         return fulfilledData;
-    };
-
-    var cancel = this.cancel = function() {
-        if (!isCancelled && !isFulfilled) {
-            isCancelled = true;
-            cancelFunc && cancelFunc();
-        }
     };
 };
 

@@ -522,7 +522,6 @@ ScreenVectorTile.prototype = {
             _this.rastersPromise = null;
             _this._preRenderPromise = null;
             _this._renderPromise = null;
-            
         });
 
         this.currentDrawPromise = drawPromise;

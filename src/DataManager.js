@@ -82,7 +82,7 @@ var ObserverTileLoader = L.Class.extend({
             this.fire('observertileload', {observer: observer});
             return this;
         }
-        
+
         if (!obsData.loadingState) {
             obsData.loadingState = true;
             observer.fire('startLoadingTiles');
