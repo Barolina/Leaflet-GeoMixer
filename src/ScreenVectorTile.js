@@ -507,6 +507,12 @@ ScreenVectorTile.prototype = {
 
         if (drawPromise) {
             this._cancelRastersPromise();
+            if (this._preRenderPromise) {
+                this._preRenderPromise.cancel();        // cancel preRenderHooks chain if exists
+            }
+            if (this._renderPromise) {
+                this._renderPromise.cancel();           // cancel renderHooks chain if exists
+            }
             drawPromise.reject();
         }
         drawPromise = new L.gmx.Deferred(this._cancelRastersPromise.bind(this));
@@ -514,6 +520,9 @@ ScreenVectorTile.prototype = {
             _this._drawDone();
             _this.currentDrawPromise = null;
             _this.rastersPromise = null;
+            _this._preRenderPromise = null;
+            _this._renderPromise = null;
+            
         });
 
         this.currentDrawPromise = drawPromise;
@@ -546,13 +555,13 @@ ScreenVectorTile.prototype = {
                     y: _this.tilePoint.y,
                     z: _this.zoom
                 },
-                bgImage = null,
-                preDef = new L.gmx.Deferred();
+                bgImage = null;
 
-            preDef.resolve(bgImage);
+            _this._preRenderPromise = new L.gmx.Deferred();
+            _this._preRenderPromise.resolve(bgImage);
 
             gmx.preRenderHooks.forEach(function (f) {
-                preDef = preDef.then(function(hookBgImage) {
+                _this._preRenderPromise = _this._preRenderPromise.then(function(hookBgImage) {
 
                     //in-place modifications are possible
                     bgImage = hookBgImage || bgImage;
@@ -561,11 +570,10 @@ ScreenVectorTile.prototype = {
                         bgImage = document.createElement('canvas');
                         bgImage.width = bgImage.height = 256;
                     }
-
                     return f(bgImage, hookInfo);
                 });
             });
-            preDef.then(function(hookBgImage) {
+            _this._preRenderPromise.then(function(hookBgImage) {
                 bgImage = hookBgImage || bgImage;
                 if (bgImage) { dattr.bgImage = bgImage; }
                 //ctx.save();
@@ -578,15 +586,15 @@ ScreenVectorTile.prototype = {
                     _this.layer.appendTileToContainer(tile);
                 }
                 //async chain
-                var res = new L.gmx.Deferred();
-                res.resolve(tile);
+                _this._renderPromise = new L.gmx.Deferred();
+                _this._renderPromise.resolve(tile);
                 gmx.renderHooks.forEach(function (f) {
-                    res = res.then(function(hookTile) {
+                    _this._renderPromise = _this._renderPromise.then(function(hookTile) {
                         tile = hookTile || tile;
                         return f(tile, hookInfo);
                     });
                 });
-                res.then(drawPromise.resolve, drawPromise.reject);
+                _this._renderPromise.then(drawPromise.resolve, drawPromise.reject);
             }, drawPromise.reject);
         };
 

@@ -759,14 +759,14 @@ var DataManager = L.Class.extend({
             tile = this.processingTile,
             needProcessingFilter = false,
             skip = {},
-            id, i, len, it;
+            id, i, len, it, data;
 
 
         if (tile) {
             var vKey = tile.vectorTileKey;
-            for (i = 0, len = tile.data.length; i < len; i++) {
-                it = tile.data[i];
-                id = it[0];
+            data = tile.data || [];
+            for (i = 0, len = data.length; i < len; i++) {
+                id = data[i][0];
                 if (_items[id]) {
                     var item = _items[id];
                     item.processing = false;
@@ -806,7 +806,7 @@ var DataManager = L.Class.extend({
                 if (!needProcessingFilter && len > 0) { needProcessingFilter = true; }
             }
 
-            var data = [];
+            data = [];
             for (id in out) {
                 if (this._items[id]) {
                     this._items[id].properties = out[id];
