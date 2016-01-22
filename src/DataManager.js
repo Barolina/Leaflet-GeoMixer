@@ -395,7 +395,7 @@ var DataManager = L.Class.extend({
 
     _updateItemsFromTile: function(tile) {
         var vectorTileKey = tile.vectorTileKey,
-            data = tile.data,
+            data = tile.data || [],
             len = data.length,
             geomIndex = data[0] && (data[0].length - 1);
 
