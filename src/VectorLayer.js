@@ -150,7 +150,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _update: function () {
-        if (!this._map) { return; }
+        if (!this._map ||
+            this._layerWMS && this._layerWMS.isExternalVisible(this._map._zoom) // WMS enabled on this.zoom
+            ) {
+            this._clearAllSubscriptions();
+            return;
+        }
         this._gmx.styleManager.deferred.then(this.__update.bind(this));
     },
 
