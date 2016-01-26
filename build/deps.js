@@ -3,44 +3,48 @@
     "Parsers.js",
     "Deferred.js",
     "ImageLoader.js",
-    "ProjectiveImage.js",
-    "StyleManager.js",
-    "ScreenVectorTile.js",
-    "VectorTile.js",
-    "TilesTree.js",
-    "DataManager.js",
-    "Observer.js",
-    "LabelsLayer.js",
     "Utils.js",
-    "DrawCanvas.js", 
-    "ImageTransform.js",
+    "DrawCanvas.js",
     "SessionManager.js",
     "MapManager.js",
     "EventsManager.js",
-    "VectorTileLoader.js",
-    "VectorLayer.js",
-    "VectorLayer.Popup.js",
-    "VectorLayer.Hover.js",
-    "RasterLayer.js",
-    "LayerFactory.js",
-    "LayersVersion.js",
-    "ObjectsReorder.js",
     "Locale.js",
     "lang_ru.js",
     "lang_en.js",
-    "ExternalLayer.js",
-    "BindWMS.js",
-    "MarkerCluster.js",
-    "HeatMap.js",
-    "ClipPolygon.js"
+
+    "DataManager/VectorTileLoader.js",
+    "DataManager/VectorTile.js",
+    "DataManager/Observer.js",
+    "DataManager/TilesTree.js",
+    "DataManager/DataManager.js",
+
+    "Layer/VectorLayer.js",
+    "Layer/ScreenVectorTile.js",
+    "Layer/ObjectsReorder.js",
+    "Layer/StyleManager.js",
+    "Layer/VectorLayer.Popup.js",
+    "Layer/VectorLayer.Hover.js",
+    "Layer/LayersVersion.js",
+    "Layer/RasterLayer.js",
+    "Layer/LabelsLayer.js",
+    "Layer/ClipPolygon.js",
+    "Layer/ImageTransform.js",
+    "Layer/ProjectiveImage.js",
+    
+    "Layer/external/ExternalLayer.js",
+    "Layer/external/BindWMS.js",
+    "Layer/external/HeatMap.js",
+    "Layer/external/MarkerCluster.js",
+    
+    "LayerFactory.js"
 ];
 
+//for builder
 if (typeof exports !== 'undefined') {
 	exports.depsJS = depsJS;
 }
 
+//for development environment
 if (typeof gmxDevOnLoad === 'function') {
 	gmxDevOnLoad(depsJS);
-} else if (typeof gmxAPI !== 'undefined' && typeof gmxAPI.gmxLayerDevLoader === 'function') {
-	gmxAPI.gmxLayerDevLoader(depsJS);
 }
