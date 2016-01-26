@@ -10,6 +10,13 @@ L.gmx.ExternalLayer = L.Class.extend({
     updateData: function (/*data*/) {           // extend: for data update in this.externalLayer
     },
 
+    setDateInterval: function () {
+        if (this._observer) {
+            var gmx = this.parentLayer._gmx;
+            this._observer.setDateInterval(gmx.beginDate, gmx.endDate);
+        }
+    },
+
     options: {
         useDataManager: true,
         observerOptions: {
@@ -22,7 +29,7 @@ L.gmx.ExternalLayer = L.Class.extend({
         this.parentLayer = layer;
         layer
             .on('add', this._addEvent, this)
-            .on('dateIntervalChanged', this._setDateInterval, this);
+            .on('dateIntervalChanged', this.setDateInterval, this);
 
         if (this.options.useDataManager) {
             this._addObserver(this.options.observerOptions);
@@ -49,7 +56,7 @@ L.gmx.ExternalLayer = L.Class.extend({
     unbindLayer: function () {
         this.parentLayer
             .off('add', this._addEvent, this)
-            .off('dateIntervalChanged', this._setDateInterval, this);
+            .off('dateIntervalChanged', this.setDateInterval, this);
 
         var map = this._map || this.parentLayer._map;
         this._onRemove(!map);
@@ -140,20 +147,14 @@ L.gmx.ExternalLayer = L.Class.extend({
             if (!isExtLayerOnMap) {
                 map.addLayer(this.externalLayer);
             }
+            this.setDateInterval();
             if (observer) {
-                this._setDateInterval();
                 observer.activate();
             }
             layer.disablePopup();
         }
     },
 
-    _setDateInterval: function () {
-        if (this._observer) {
-            var gmx = this.parentLayer._gmx;
-            this._observer.setDateInterval(gmx.beginDate, gmx.endDate);
-        }
-    },
 
     _updateBbox: function () {
         if (!this._map || !this._observer) { return; }
