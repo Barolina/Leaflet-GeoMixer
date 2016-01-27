@@ -7,6 +7,7 @@
     "DrawCanvas.js",
     "SessionManager.js",
     "MapManager.js",
+    "GeomixerMap.js",
     "EventsManager.js",
     "Locale.js",
     "lang_ru.js",
