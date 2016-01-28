@@ -98,17 +98,21 @@ Deferred.all = function() {
     var left = defArray.length;
     var results = new Array(defArray.length);
 
-    defArray.forEach(function(def, i) {
-        def.then(function(res) {
-            results[i] = res;
-            left--;
-            if (left === 0) {
-                resdef.resolve.apply(resdef, results);
-            }
-        }, function() {
-            resdef.reject();
+    if (left) {
+        defArray.forEach(function(def, i) {
+            def.then(function(res) {
+                results[i] = res;
+                left--;
+                if (left === 0) {
+                    resdef.resolve.apply(resdef, results);
+                }
+            }, function() {
+                resdef.reject();
+            });
         });
-    });
+    } else {
+        resdef.resolve();
+    }
 
     return resdef;
 };
