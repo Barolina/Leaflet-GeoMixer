@@ -8,9 +8,48 @@ L.gmx._layerClasses = {
     'Vector': L.gmx.VectorLayer
 };
 
+L.gmx._loadingLayerClasses = {};
 
 L.gmx.addLayerClass = function(type, layerClass) {
     L.gmx._layerClasses[type] = layerClass;
+};
+
+L.gmx._layerClassLoaders = [];
+
+L.gmx.addLayerClassLoader = function(layerClassLoader) {
+    L.gmx._layerClassLoaders.push(layerClassLoader);
+    
+    //delete all loading promises to ensure that new loader will be invoked
+    L.gmx._loadingLayerClasses = {};
+};
+
+L.gmx._loadLayerClass = function(type) {
+    if (!L.gmx._loadingLayerClasses[type]) {
+        var promise = new L.gmx.Deferred();
+        promise.resolve();
+        
+        L.gmx._layerClassLoaders.forEach(function(loader) {
+            promise = promise.then(function(layerClass) {
+                if (layerClass) {
+                    L.gmx._layerClasses[type] = layerClass;
+                    return layerClass;
+                }
+                
+                return loader(type);
+            });
+        });
+        
+        promise.then(function(layerClass) {
+            if (layerClass) {
+                L.gmx._layerClasses[type] = layerClass;
+                return layerClass;
+            }
+        })
+        
+        L.gmx._loadingLayerClasses[type] = promise;
+    }
+    
+    return L.gmx._loadingLayerClasses[type];
 };
 
 L.gmx.loadLayer = function(mapID, layerID, options) {
@@ -41,13 +80,22 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
 
             //to know from what host the layer was loaded
             layerInfo.properties.hostName = hostName;
-
-            var layer = L.gmx.createLayer(layerInfo, layerParams);
-
-            if (layer) {
-                promise.resolve(layer);
+            
+            var type = layerInfo.properties.ContentID || layerInfo.properties.type;
+            
+            var doCreateLayer = function() {
+                var layer = L.gmx.createLayer(layerInfo, layerParams);
+                if (layer) {
+                    promise.resolve(layer);
+                } else {
+                    promise.reject('Unknown type of layer ' + layerID);
+                }    
+            }
+            
+            if (type in L.gmx._layerClasses) {
+                doCreateLayer();
             } else {
-                promise.reject('Unknown type of layer ' + layerID);
+                L.gmx._loadLayerClass(type).then(doCreateLayer);
             }
         },
         function(response) {
@@ -76,23 +124,24 @@ L.gmx.loadMap = function(mapID, options) {
     gmxMapManager.getMap(options.hostName, options.apiKey, mapID, options.skipTiles).then(function(mapInfo) {
         var loadedMap = new gmxMap(mapInfo, options);
 
-        if (options.leafletMap || options.setZIndex) {
-            var curZIndex = 0,
-                layer;
+        loadedMap.layersCreated.then(function() {
+            if (options.leafletMap || options.setZIndex) {
+                var curZIndex = 0,
+                    layer;
 
-            for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
-                layer = loadedMap.layers[l];
-                if (options.setZIndex && layer.setZIndex) {
-                    layer.setZIndex(++curZIndex);
-                }
+                for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
+                    layer = loadedMap.layers[l];
+                    if (options.setZIndex && layer.setZIndex) {
+                        layer.setZIndex(++curZIndex);
+                    }
 
-                if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
-                    layer.addTo(options.leafletMap);
+                    if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
+                        layer.addTo(options.leafletMap);
+                    }
                 }
             }
-        }
-
-        def.resolve(loadedMap);
+            def.resolve(loadedMap);
+        });
     },
     function(response) {
         var errorMessage = (response && response.ErrorInfo && response.ErrorInfo.ErrorMessage) || 'Server error';
