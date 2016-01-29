@@ -965,7 +965,7 @@ var DataManager = L.Class.extend({
             y = Math.floor(vTilePoint.y / pz),
             temp = {v: vTilePoint.v, s: -1, d: -1, isGeneralized: true},
             keys = {};
-            
+
         while (z > 1) {
             var gKey = [z, x, y].join('_');
             keys[gKey] = L.extend({}, temp, {x: x, y: y, z: z});
@@ -982,7 +982,8 @@ var DataManager = L.Class.extend({
             var arr = this.options.tiles || [],
                 vers = this.options.tilesVers,
                 newTiles = {},
-                generalizedKeys = this.options.isGeneralized ? {} : null;
+                generalizedKeys = this.options.isGeneralized ? {} : null,
+                gKey, gPoint;
 
             for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
                 var tPoint = {
@@ -996,8 +997,8 @@ var DataManager = L.Class.extend({
                 newActiveTileKeys[this._addVectorTile(newTiles, tPoint)] = true;
                 if (generalizedKeys) {
                     var gKeys = this._getGeneralizedTileKeys(tPoint);
-                    for (var gKey in gKeys) {
-                        var gPoint = gKeys[gKey];
+                    for (gKey in gKeys) {
+                        gPoint = gKeys[gKey];
                         if (generalizedKeys[gKey]) {
                             generalizedKeys[gKey].v = Math.max(gPoint.v, generalizedKeys[gKey].v);
                         } else {
@@ -1007,9 +1008,9 @@ var DataManager = L.Class.extend({
                 }
             }
             if (generalizedKeys) {
-                for (var gKey in generalizedKeys) {
-                    var gPoint = generalizedKeys[gKey],
-                        tileKey = VectorTile.makeTileKey(gPoint.x, gPoint.y, gPoint.z, gPoint.v, -1, -1);
+                for (gKey in generalizedKeys) {
+                    gPoint = generalizedKeys[gKey];
+                    var tileKey = VectorTile.makeTileKey(gPoint.x, gPoint.y, gPoint.z, gPoint.v, -1, -1);
                     if (!newTiles[tileKey]) {
                         newActiveTileKeys[this._addVectorTile(newTiles, gPoint)] = true;
                     }
