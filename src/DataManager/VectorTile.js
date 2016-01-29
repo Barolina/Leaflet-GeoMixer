@@ -1,25 +1,32 @@
 //Single vector tile, received from GeoMixer server
-//"dataProvider" has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with the following parameters:
-//  - {Object[]} data - information about vector objects in tile
-//  - {Number[4]} [bbox] - optional bbox of objects in tile
-var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
+//  dataProvider: has single method "load": function(x, y, z, v, s, d, callback), which calls "callback" with the following parameters:
+//      - {Object[]} data - information about vector objects in tile
+//      - {Number[4]} [bbox] - optional bbox of objects in tile
+//  options:
+//      x, y, z, v, s, d: GeoMixer vector tile point
+//      zeroDate: zero Date for temporal layers
+//      isGeneralized: flag for generalized tile
+// var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
+var VectorTile = function(dataProvider, options) {
     this.dataProvider = dataProvider;
     this.loadDef = new L.gmx.Deferred();
-    this.bounds = gmxAPIutils.getTileBounds(x, y, z);
     this.data = null;
     this.dataOptions = null;
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.s = s;
-    this.v = v;
-    this.d = d;
-    this.gmxTilePoint = {x: x, y: y, z: z, s: s, d: d};
-    this.vectorTileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
 
-    if (this.s >= 0 && zeroDate) {
-        this.beginDate = new Date(zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
-        this.endDate = new Date(zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
+    this.x = options.x;
+    this.y = options.y;
+    this.z = options.z;
+    this.v = options.v;
+    this.s = options.s || -1;
+    this.d = options.d || -1;
+    this.isGeneralized = options.isGeneralized;
+    this.bounds = gmxAPIutils.getTileBounds(this.x, this.y, this.z);
+    this.gmxTilePoint = {x: this.x, y: this.y, z: this.z, s: this.s, d: this.d};
+    this.vectorTileKey = VectorTile.makeTileKey(this.x, this.y, this.z, this.v, this.s, this.d);
+
+    if (this.s >= 0 && options.zeroDate) {
+        this.beginDate = new Date(options.zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
+        this.endDate = new Date(options.zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
     }
 
     this.state = 'notLoaded'; //notLoaded, loading, loaded

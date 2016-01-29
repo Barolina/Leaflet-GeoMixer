@@ -172,7 +172,8 @@ var DataManager = L.Class.extend({
         TemporalTiles: [],                  // temporal tiles array
         TemporalVers: [],                   // temporal version array
         hostName: 'maps.kosmosnimki.ru',    // default hostName
-        sessionKey: ''                      // session key
+        sessionKey: '',                     // session key
+        isGeneralized: false                // flag for use generalized tiles
     },
 
     setOptions: function(options) {
@@ -830,13 +831,31 @@ var DataManager = L.Class.extend({
         this.options.GeoProcessing = null;
     },
 
+    enableGeneralization: function() {
+        if (!this.options.isGeneralized) {
+            this.options.isGeneralized = true;
+            this._resetTilesTree();
+        }
+    },
+
+    disableGeneralization: function() {
+        if (this.options.isGeneralized) {
+            this.options.isGeneralized = false;
+            this._resetTilesTree();
+        }
+    },
+
+    _resetTilesTree: function() {
+        this._tilesTree = null;
+        this._needCheckActiveTiles = true;
+        this._getActiveTileKeys(); //force list update
+    },
+
     updateVersion: function(layerDescription) {
         if (layerDescription && layerDescription.properties) {
             this.setOptions(layerDescription.properties);
         }
-        this._tilesTree = null;
-        this._needCheckActiveTiles = true;
-        this._getActiveTileKeys(); //force list update
+        this._resetTilesTree();
     },
 
     _getDataKeys: function(data) {
@@ -908,17 +927,15 @@ var DataManager = L.Class.extend({
 
         for (var i = 0, len = tiles.length; i < len; i++) {
             var tileInfo = tiles[i];
-            var z = Number(tileInfo[4]),
-                y = Number(tileInfo[3]),
-                x = Number(tileInfo[2]),
-                s = Number(tileInfo[1]),
-                d = Number(tileInfo[0]),
-                v = Number(vers[i]),
-                tileKey = VectorTile.makeTileKey(x, y, z, v, s, d);
-
-            newTiles[tileKey] = this._tiles[tileKey] || {
-                tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, s, d, this.dateZero)
-            };
+            this._addVectorTile(newTiles, {
+                x: Number(tileInfo[2]),
+                y: Number(tileInfo[3]),
+                z: Number(tileInfo[4]),
+                v: Number(vers[i]),
+                s: Number(tileInfo[1]),
+                d: Number(tileInfo[0]),
+                dateZero: this.dateZero
+            });
         }
         this._tiles = newTiles;
 
@@ -931,25 +948,72 @@ var DataManager = L.Class.extend({
         }
     },
 
+    _addVectorTile: function(tilesHash, options) {
+        var tileKey = VectorTile.makeTileKey(options.x, options.y, options.z, options.v, options.s, options.d);
+
+        tilesHash[tileKey] = this._tiles[tileKey] || {
+            tile: new VectorTile(this._vectorTileDataProvider, options)
+        };
+        return tileKey;
+    },
+
+    _getGeneralizedTileKeys: function(vTilePoint) {
+        var dz = vTilePoint.z % 2 ? 1 : 2,
+            pz = Math.pow(2, dz),
+            z = vTilePoint.z - dz,
+            x = Math.floor(vTilePoint.x / pz),
+            y = Math.floor(vTilePoint.y / pz),
+            temp = {v: vTilePoint.v, s: -1, d: -1, isGeneralized: true},
+            keys = {};
+            
+        while (z > 1) {
+            var gKey = [z, x, y].join('_');
+            keys[gKey] = L.extend({}, temp, {x: x, y: y, z: z});
+            z -= 2;
+            x = Math.floor(x / 4);
+            y = Math.floor(y / 4);
+        }
+        return keys;
+    },
+
     initTilesList: function() {
         var newActiveTileKeys = {};
         if (this.options.tiles) {
             var arr = this.options.tiles || [],
                 vers = this.options.tilesVers,
-                newTiles = {};
+                newTiles = {},
+                generalizedKeys = this.options.isGeneralized ? {} : null;
 
             for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
-                var z = Number(arr[i + 2]),
-                    y = Number(arr[i + 1]),
-                    x = Number(arr[i]),
-                    v = Number(vers[cnt]),
-                    tileKey = VectorTile.makeTileKey(x, y, z, v, -1, -1);
-
-                newTiles[tileKey] = this._tiles[tileKey] || {
-                    tile: new VectorTile(this._vectorTileDataProvider, x, y, z, v, -1, -1)
+                var tPoint = {
+                    x: Number(arr[i]),
+                    y: Number(arr[i + 1]),
+                    z: Number(arr[i + 2]),
+                    v: Number(vers[cnt]),
+                    s: -1,
+                    d: -1
                 };
-
-                newActiveTileKeys[tileKey] = true;
+                newActiveTileKeys[this._addVectorTile(newTiles, tPoint)] = true;
+                if (generalizedKeys) {
+                    var gKeys = this._getGeneralizedTileKeys(tPoint);
+                    for (var gKey in gKeys) {
+                        var gPoint = gKeys[gKey];
+                        if (generalizedKeys[gKey]) {
+                            generalizedKeys[gKey].v = Math.max(gPoint.v, generalizedKeys[gKey].v);
+                        } else {
+                            generalizedKeys[gKey] = gPoint;
+                        }
+                    }
+                }
+            }
+            if (generalizedKeys) {
+                for (var gKey in generalizedKeys) {
+                    var gPoint = generalizedKeys[gKey],
+                        tileKey = VectorTile.makeTileKey(gPoint.x, gPoint.y, gPoint.z, gPoint.v, -1, -1);
+                    if (!newTiles[tileKey]) {
+                        newActiveTileKeys[this._addVectorTile(newTiles, gPoint)] = true;
+                    }
+                }
             }
             this._tiles = newTiles;
             if (this.processingTile) {

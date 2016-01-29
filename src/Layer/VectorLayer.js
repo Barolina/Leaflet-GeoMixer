@@ -3,6 +3,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     options: {
         minZoom: 1,
         zIndexOffset: 2000000,
+        isGeneralized: false,
         clickable: true
     },
 
@@ -190,6 +191,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         myLayer._drawTileAsync(tilePoint, zoom, data).always(done);
                     }
                 };
+            if (this.options.isGeneralized) {
+                attr.targetZoom = zoom;
+            }
             if (gmx.layerType === 'VectorTemporal') {
                 attr.dateInterval = [gmx.beginDate, gmx.endDate];
             }
@@ -330,6 +334,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.rawProperties = ph.rawProperties || ph.properties;
 
         this._updateProperties(ph.properties);
+
+        ph.properties.isGeneralized = this.options.isGeneralized;
         gmx.dataManager = new DataManager(ph.properties);
         gmx.styleManager = new StyleManager(gmx);
         this.options.minZoom = gmx.styleManager.minZoom;
@@ -356,6 +362,28 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         this.initPromise.resolve();
         return this;
+    },
+
+    enableGeneralization: function () {
+        if (!this.options.isGeneralized) {
+            this.options.isGeneralized = true;
+            if (this._gmx.dataManager) {
+                this._clearAllSubscriptions();
+                this._gmx.dataManager.enableGeneralization();
+                this.redraw();
+            }
+        }
+    },
+
+    disableGeneralization: function () {
+        if (this.options.isGeneralized) {
+            this.options.isGeneralized = false;
+            if (this._gmx.dataManager) {
+                this._clearAllSubscriptions();
+                this._gmx.dataManager.disableGeneralization();
+                this.redraw();
+            }
+        }
     },
 
     setRasterOpacity: function (opacity) {

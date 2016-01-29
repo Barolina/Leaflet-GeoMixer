@@ -2,13 +2,14 @@
 var Observer = L.Class.extend({
     includes: L.Mixin.Events,
     /* options : {
-            type: 'resend | update',     // `resend` - send all data (like screen tile observer)
-                                         // `update` - send only changed data
-            callback: Func,              // will be called when layer's data for this observer is changed
+            type: 'resend | update',    // `resend` - send all data (like screen tile observer)
+                                        // `update` - send only changed data
+            callback: Func,             // will be called when layer's data for this observer is changed
             dateInterval: [dateBegin,dateEnd], // temporal interval
-            bbox: bbox,                  // bbox to observe on Mercator
-            filters: [String]            // filter keys array
-            active: [Boolean=true]       // is this observer active
+            bbox: bbox,                 // bbox to observe on Mercator
+            filters: [String]           // filter keys array
+            active: [Boolean=true]      // is this observer active
+            targetZoom: [Number]        // for zoom generalized type default(null)
         }
     */
     initialize: function(options) {
@@ -17,6 +18,7 @@ var Observer = L.Class.extend({
         this._items = null;
         this.bbox = options.bbox;      // set bbox by Mercator bounds
         this.filters = options.filters || [];
+        this.targetZoom = options.targetZoom || null;
         this.active = 'active' in options ? options.active : true;
 
         if (options.bounds) {   // set bbox by LatLngBounds
@@ -214,6 +216,10 @@ var Observer = L.Class.extend({
     },
 
     intersectsWithTile: function(tile) {
+        if (this.targetZoom) {
+            var z = this.targetZoom + (this.targetZoom % 2 ? 1 : 0);
+            if ((tile.isGeneralized && tile.z !== z) || tile.z > z) { return false; }
+        }
         var di = this.dateInterval;
         return this.intersects(tile.bounds) && (!tile.beginDate || (di && di.endDate >= tile.beginDate && di.beginDate <= tile.endDate));
     },

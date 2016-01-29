@@ -184,6 +184,9 @@ L.gmx.VectorLayer.include({
                 filters: ['clipFilter', 'styleFilter', 'userFilter'],
                 active: false //делаем его неактивным, так как потом будем явно выбирать данные
             };
+            if (this.options.isGeneralized) {
+                observerOptions.targetZoom = zoom;
+            }
 
             gmx.dataManager.addObserver(observerOptions, 'hover');
 

@@ -1766,6 +1766,11 @@ var gmxAPIutils = {
         return out;
     },
 
+    toPrecision: function(x, prec) {
+        var zn = 10 * (prec ? prec : 4);
+        return Math.round(zn * x) / zn;
+    },
+
     getTileBounds: function(x, y, z) {  //x, y, z - GeoMixer tile coordinates
         var tileSize = gmxAPIutils.tileSizes[z],
             minx = x * tileSize,
@@ -2258,7 +2263,8 @@ L.extend(L.gmxUtil, {
     isPointInPolygonWithHoles: gmxAPIutils.isPointInPolygonWithHoles,
     getPatternIcon: gmxAPIutils.getPatternIcon,
     getCircleLatLngs: gmxAPIutils.getCircleLatLngs,
-    normalizeHostname: gmxAPIutils.normalizeHostname
+    normalizeHostname: gmxAPIutils.normalizeHostname,
+    getTileBounds: gmxAPIutils.getTileBounds
 });
 
 (function() {
