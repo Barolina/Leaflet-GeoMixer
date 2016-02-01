@@ -179,10 +179,12 @@ L.gmx.VectorLayer.include({
             });
         } else if (!(templateBalloon instanceof L.Popup)) {
             if (!(templateBalloon instanceof HTMLElement)) {
-                var geometries = this._gmx.dataManager.getItemGeometries(gmx.id),
+                var geometries = null,
                     unitOptions = this._map ? this._map.options : {};
-
-                outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                if(!this.options.isGeneralized) {
+                    geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
+                    outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                }
                 if (this._balloonHook) {
                     if (!templateBalloon) {
                         templateBalloon = gmxAPIutils.getDefaultBalloonTemplate(properties);
