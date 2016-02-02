@@ -872,7 +872,7 @@ var DataManager = L.Class.extend({
 
             this.processingTile = new VectorTile({load: function(x, y, z, v, s, d, callback) {
                             callback([]);
-            }}, x, y, z, v, s, d);
+            }}, {x: x, y: y, z: z, v: v, s: s, d: d});
 
             this.addTile(this.processingTile);
         }
