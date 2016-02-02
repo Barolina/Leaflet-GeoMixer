@@ -1657,6 +1657,45 @@ var gmxAPIutils = {
         return out;
     },
 
+    /** Get summary for point
+     * @memberof L.gmxUtil
+     * @param {latlng} point
+     * @param {num} format number:
+     *         0: 62°52'30.68" N, 22°48'27.42" E
+     *         1: 62.875188 N, 22.807617 E
+     *         2: 2538932, 9031643 (EPSG:3395)
+     *         3: 2538932, 9069712 (EPSG:3857)
+     * @return {String} Summary string for LatLng point
+    */
+    getCoordinatesString: function(latlng, num) {
+        var x = latlng.lng,
+            y = latlng.lat,
+            formats = [
+                '',
+                '',
+                ' (EPSG:3395)',
+                ' (EPSG:3857)'
+            ],
+            len = formats.length,
+            merc,
+            out = '';
+        num = num || 0;
+        if (x > 180) { x -= 360; }
+        if (x < -180) { x += 360; }
+        if (num % len === 0) {
+            out = gmxAPIutils.formatCoordinates(x, y);
+        } else if (num % len === 1) {
+            out = gmxAPIutils.formatCoordinates2(x, y);
+        } else if (num % len === 2) {
+            merc = L.Projection.Mercator.project(new L.LatLng(y, x));
+            out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[2];
+        } else {
+            merc = L.CRS.EPSG3857.project(new L.LatLng(y, x));
+            out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[3];
+        }
+        return out;
+    },
+
     /** Get summary for geometries array
      * @memberof L.gmxUtil
      * @param {Array} geometries array in Geomixer format
@@ -1674,7 +1713,7 @@ var gmxAPIutils = {
                     if (type.indexOf('POINT') !== -1) {
                         var latlng = L.Projection.Mercator.unproject({y: geom.coordinates[1], x: geom.coordinates[0]});
                         out = '<b>' + L.gmxLocale.getText('Coordinates') + '</b>: '
-                            + gmxAPIutils.formatCoordinates(latlng.lng, latlng.lat);
+                            + gmxAPIutils.getCoordinatesString(latlng, unitOptions.coordinatesFormat);
                     } else if (type.indexOf('LINESTRING') !== -1) {
                         res += gmxAPIutils.geoLength(geom);
                     } else if (type.indexOf('POLYGON') !== -1) {
@@ -2234,8 +2273,8 @@ L.extend(L.gmxUtil, {
     pad2: gmxAPIutils.pad2,
     dec2hex: gmxAPIutils.dec2hex,
     trunc: gmxAPIutils.trunc,
-    LatLonFormatCoordinates: gmxAPIutils.latLonFormatCoordinates,
-    LatLonFormatCoordinates2: gmxAPIutils.latLonFormatCoordinates2,
+    latLonFormatCoordinates: gmxAPIutils.latLonFormatCoordinates,
+    latLonFormatCoordinates2: gmxAPIutils.latLonFormatCoordinates2,
     getLength: gmxAPIutils.getLength,
     geoLength: gmxAPIutils.geoLength,
     prettifyDistance: gmxAPIutils.prettifyDistance,
@@ -2244,6 +2283,7 @@ L.extend(L.gmxUtil, {
     geoArea: gmxAPIutils.geoArea,
     parseBalloonTemplate: gmxAPIutils.parseBalloonTemplate,
     getSVGIcon: gmxAPIutils.getSVGIcon,
+    getCoordinatesString: gmxAPIutils.getCoordinatesString,
     getGeometriesSummary: gmxAPIutils.getGeometriesSummary,
     getGeometrySummary: gmxAPIutils.getGeometrySummary,
     getGeoJSONSummary: gmxAPIutils.getGeoJSONSummary,
