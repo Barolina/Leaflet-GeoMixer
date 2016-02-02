@@ -180,6 +180,7 @@ L.gmx.VectorLayer.include({
         } else if (!(templateBalloon instanceof L.Popup)) {
             if (!(templateBalloon instanceof HTMLElement)) {
                 var geometries = null,
+                    summary = '',
                     unitOptions = this._map ? this._map.options : {};
                 if(!this.options.isGeneralized) {
                     geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
@@ -197,6 +198,7 @@ L.gmx.VectorLayer.include({
                     properties: properties,
                     tileAttributeTypes: this._gmx.tileAttributeTypes,
                     unitOptions: unitOptions,
+                    summary: summary,
                     geometries: geometries
                 });
             }
