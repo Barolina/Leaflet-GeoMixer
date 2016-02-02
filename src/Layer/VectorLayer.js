@@ -1106,6 +1106,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
             }
+            if ('isGeneralized' in meta) {    // Set generalization
+                this.options.isGeneralized = meta.isGeneralized.Value !== 'false';
+            }
         }
 
         if (prop.IsRasterCatalog) {
