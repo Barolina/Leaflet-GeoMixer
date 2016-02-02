@@ -179,10 +179,29 @@ L.gmx.VectorLayer.include({
             });
         } else if (!(templateBalloon instanceof L.Popup)) {
             if (!(templateBalloon instanceof HTMLElement)) {
-                var geometries = this._gmx.dataManager.getItemGeometries(gmx.id),
+                var geometries = null,
+                    summary = '',
                     unitOptions = this._map ? this._map.options : {};
-
-                outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                if(!this.options.isGeneralized) {
+                    geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
+                    if (geometries && geometries[0].type === 'POINT' && this._map && 'coordinatesformat' in this._map.options) {
+                        if (!this.coordinatesFormatFunc && this._map.gmxControlsManager) {
+                            var locControl = this._map.gmxControlsManager.get('location');
+                            if (locControl) {
+                                this.coordinatesFormatFunc = locControl.getCoordinatesString;
+                            }
+                        }
+                        if (this.coordinatesFormatFunc) {
+                            var latlng = L.Projection.Mercator.unproject(L.point(geometries[0].coordinates));
+                            summary = (L.gmxLocale ? '<b>' + L.gmxLocale.getText('Coordinates') + '</b>: ' : '')
+                                        + this.coordinatesFormatFunc(latlng);
+                        }
+                    }
+                    if (!summary) {
+                        summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                    }
+                    outItem.summary = summary;
+                }
                 if (this._balloonHook) {
                     if (!templateBalloon) {
                         templateBalloon = gmxAPIutils.getDefaultBalloonTemplate(properties);
@@ -195,6 +214,7 @@ L.gmx.VectorLayer.include({
                     properties: properties,
                     tileAttributeTypes: this._gmx.tileAttributeTypes,
                     unitOptions: unitOptions,
+                    summary: summary,
                     geometries: geometries
                 });
             }

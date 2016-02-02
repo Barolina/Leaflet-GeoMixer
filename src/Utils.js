@@ -992,7 +992,7 @@ var gmxAPIutils = {
 		angle = Math.round(10000000 * angle) / 10000000 + 0.00000001;
 		var a1 = Math.floor(angle);
 		var a2 = Math.floor(60 * (angle - a1));
-		var a3 = Math.round(3600 * (angle - a1 - a2 / 60));
+		var a3 = gmxAPIutils.toPrecision(3600 * (angle - a1 - a2 / 60), 2);
 		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + '\'' + gmxAPIutils.pad2(a3) + '"';
 	},
 
@@ -1766,6 +1766,11 @@ var gmxAPIutils = {
         return out;
     },
 
+    toPrecision: function(x, prec) {
+        var zn = Math.pow(10, prec ? prec : 4);
+        return Math.round(zn * x) / zn;
+    },
+
     getTileBounds: function(x, y, z) {  //x, y, z - GeoMixer tile coordinates
         var tileSize = gmxAPIutils.tileSizes[z],
             minx = x * tileSize,
@@ -1815,7 +1820,7 @@ var gmxAPIutils = {
                 if (key in properties) {
                     res = L.gmxUtil.attrToString(tileAttributeTypes[key], properties[key]);
                 } else if (key === 'SUMMARY') {
-                    res = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                    res = options.summary || L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
                 }
                 str = str.replace(key1, res);
             }
@@ -2258,7 +2263,8 @@ L.extend(L.gmxUtil, {
     isPointInPolygonWithHoles: gmxAPIutils.isPointInPolygonWithHoles,
     getPatternIcon: gmxAPIutils.getPatternIcon,
     getCircleLatLngs: gmxAPIutils.getCircleLatLngs,
-    normalizeHostname: gmxAPIutils.normalizeHostname
+    normalizeHostname: gmxAPIutils.normalizeHostname,
+    getTileBounds: gmxAPIutils.getTileBounds
 });
 
 (function() {
