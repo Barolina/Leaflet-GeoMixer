@@ -184,7 +184,7 @@ L.gmx.VectorLayer.include({
                     unitOptions = this._map ? this._map.options : {};
                 if(!this.options.isGeneralized) {
                     geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
-                    outItem.summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
+                    outItem.summary = summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
                 }
                 if (this._balloonHook) {
                     if (!templateBalloon) {
