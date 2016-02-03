@@ -22,6 +22,7 @@
   "globals": {
     "L": true,
     "module": false,
+    "require": false,
     "define": false,
     "ActiveXObject": true,
     "Deferred": true,

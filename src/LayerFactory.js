@@ -18,7 +18,7 @@ L.gmx._layerClassLoaders = [];
 
 L.gmx.addLayerClassLoader = function(layerClassLoader) {
     L.gmx._layerClassLoaders.push(layerClassLoader);
-    
+
     //delete all loading promises to ensure that new loader will be invoked
     L.gmx._loadingLayerClasses = {};
 };
@@ -27,28 +27,28 @@ L.gmx._loadLayerClass = function(type) {
     if (!L.gmx._loadingLayerClasses[type]) {
         var promise = new L.gmx.Deferred();
         promise.resolve();
-        
+
         L.gmx._layerClassLoaders.forEach(function(loader) {
             promise = promise.then(function(layerClass) {
                 if (layerClass) {
                     L.gmx._layerClasses[type] = layerClass;
                     return layerClass;
                 }
-                
+
                 return loader(type);
             });
         });
-        
+
         promise.then(function(layerClass) {
             if (layerClass) {
                 L.gmx._layerClasses[type] = layerClass;
                 return layerClass;
             }
-        })
-        
+        });
+
         L.gmx._loadingLayerClasses[type] = promise;
     }
-    
+
     return L.gmx._loadingLayerClasses[type];
 };
 
@@ -80,18 +80,18 @@ L.gmx.loadLayer = function(mapID, layerID, options) {
 
             //to know from what host the layer was loaded
             layerInfo.properties.hostName = hostName;
-            
+
             var type = layerInfo.properties.ContentID || layerInfo.properties.type;
-            
+
             var doCreateLayer = function() {
                 var layer = L.gmx.createLayer(layerInfo, layerParams);
                 if (layer) {
                     promise.resolve(layer);
                 } else {
                     promise.reject('Unknown type of layer ' + layerID);
-                }    
-            }
-            
+                }
+            };
+
             if (type in L.gmx._layerClasses) {
                 doCreateLayer();
             } else {

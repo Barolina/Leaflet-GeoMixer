@@ -182,7 +182,7 @@ L.gmx.VectorLayer.include({
                 var geometries = null,
                     summary = '',
                     unitOptions = this._map ? this._map.options : {};
-                if(!this.options.isGeneralized) {
+                if (!this.options.isGeneralized) {
                     geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
                     outItem.summary = summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
                 }

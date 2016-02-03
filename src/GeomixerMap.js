@@ -10,11 +10,11 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     this.properties = L.extend({}, mapInfo.properties);
     this.properties.BaseLayers = this.properties.BaseLayers ? JSON.parse(this.properties.BaseLayers) : [];
     this.rawTree = mapInfo;
-    
+
     this.layersCreated = new L.gmx.Deferred();
 
     var missingLayerTypes = {};
-    
+
     gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
         var props = layerInfo.properties,
             layerOptions = L.extend({
@@ -23,9 +23,9 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
             }, commonLayerOptions);
 
         layerInfo.properties.hostName = mapInfo.properties.hostName;
-        
+
         var type = layerInfo.properties.ContentID || layerInfo.properties.type;
-        
+
         if (type in L.gmx._layerClasses) {
             _this.addLayer(L.gmx.createLayer(layerInfo, layerOptions));
         } else {
@@ -36,18 +36,18 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
             });
         }
     });
-    
+
     //load missing layer types
     var loaders = [];
     for (var type in missingLayerTypes) {
-        loaders.push(L.gmx._loadLayerClass(type).then(function(type){
+        loaders.push(L.gmx._loadLayerClass(type).then(function (type) {
             for (var i = 0; i < missingLayerTypes[type].length; i++) {
                 var l = missingLayerTypes[type][i];
                 _this.addLayer(L.gmx.createLayer(l.info, l.options));
             }
         }.bind(null, type)));
     }
-    
+
     L.gmx.Deferred.all.apply(null, loaders).then(this.layersCreated.resolve);
 };
 
