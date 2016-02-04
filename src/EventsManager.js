@@ -12,26 +12,22 @@ var GmxEventsManager = L.Handler.extend({
         this._lastId = null;
         var _this = this;
         this._drawstart = null;
-        this._lastDragTime = 0;
         this._lastCursor = '';
 
         var isDrawing = function () {
             if (_this._drawstart) {
                 return true;
             } else if (_this._drawstart === null) {
-                if (map.gmxDrawing) {
-                    map.gmxDrawing.on('drawstart', function () {
-                        _this._drawstart = true;
-                    }, _this);
-                    map.gmxDrawing.on('drawstop', function () {
-                        _this._drawstart = false;
-                        _this._lastDragTime = Date.now() + 100;
-                    }, _this);
+                if (map.gmxControlsManager) {
+                    var drawingControl = map.gmxControlsManager.get('drawing');
+                    if (drawingControl) {
+                        drawingControl.on('activechange', function (ev) {
+                            _this._drawstart = ev.activeIcon;
+                            map._container.style.cursor = _this._drawstart ? 'pointer' : '';
+                        });
+                    }
                 }
                 _this._drawstart = false;
-            }
-            if (_this._lastDragTime - Date.now() > 0) {
-                return true;
             }
             return false;
         };
@@ -112,7 +108,9 @@ var GmxEventsManager = L.Handler.extend({
                     }
                 }
             }
-            if (_this._lastCursor !== cursor) { map._container.style.cursor = cursor; }
+            if (_this._lastCursor !== cursor && !isDrawing()) {
+                map._container.style.cursor = cursor;
+            }
             _this._lastCursor = cursor;
 
             if (type !== 'zoomend') {
