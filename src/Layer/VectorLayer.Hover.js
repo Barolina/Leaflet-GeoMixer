@@ -1,8 +1,7 @@
 L.gmx.VectorLayer.include({
-    _gmxFirstObjectsByPoint: function (geoItems, mercPoint) {    // Получить верхний объект по координатам mouseClick
+    _gmxFirstObjectsByPoint: function (geoItems, mercPoint, bounds) {    // Получить верхний объект по координатам mouseClick
         var gmx = this._gmx,
             mInPixel = gmx.mInPixel,
-            bounds = gmxAPIutils.bounds([mercPoint]),
             j,
             len;
 
@@ -197,7 +196,7 @@ L.gmx.VectorLayer.include({
             if (geoItems && geoItems.length) {
                 if (geoItems.length > 1 && gmx.sortItems) { geoItems = this.getSortedItems(geoItems); }
 
-                var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint);
+                var target = this._gmxFirstObjectsByPoint(geoItems, mercatorPoint, observerOptions.bbox);
                 if (target) {
                     var idr = target.id,
                         item = gmx.dataManager.getItem(idr),
