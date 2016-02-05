@@ -1472,6 +1472,10 @@ var gmxAPIutils = {
      * @return {Object} geoJSON geometry
     */
     geometryToGeoJSON: function (geom, mercFlag) {
+        if (!geom) {
+            return null;
+        }
+        
         var type = geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
                 : geom.type === 'POLYGON' ? 'Polygon'
                 : geom.type === 'MULTILINESTRING' ? 'MultiLineString'
