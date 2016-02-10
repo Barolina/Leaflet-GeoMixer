@@ -263,7 +263,7 @@ var DataManager = L.Class.extend({
             this.addFilter('TemporalFilter', function(item, tile, observer) {
                 var unixTimeStamp = item.options.unixTimeStamp,
                     dates = observer.dateInterval;
-                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp <= dates.endDate.valueOf();
+                return dates && unixTimeStamp >= dates.beginDate.valueOf() && unixTimeStamp < dates.endDate.valueOf();
             });
         }
     },
