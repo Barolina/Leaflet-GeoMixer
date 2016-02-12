@@ -4,9 +4,9 @@
 //      - {Number[4]} [bbox] - optional bbox of objects in tile
 //  options:
 //      x, y, z, v, s, d: GeoMixer vector tile point
-//      zeroDate: zero Date for temporal layers
+//      dateZero: zero Date for temporal layers
 //      isGeneralized: flag for generalized tile
-// var VectorTile = function(dataProvider, x, y, z, v, s, d, zeroDate) {
+// var VectorTile = function(dataProvider, x, y, z, v, s, d, dateZero) {
 var VectorTile = function(dataProvider, options) {
     this.dataProvider = dataProvider;
     this.loadDef = new L.gmx.Deferred();
@@ -24,9 +24,9 @@ var VectorTile = function(dataProvider, options) {
     this.gmxTilePoint = {x: this.x, y: this.y, z: this.z, s: this.s, d: this.d};
     this.vectorTileKey = VectorTile.makeTileKey(this.x, this.y, this.z, this.v, this.s, this.d);
 
-    if (this.s >= 0 && options.zeroDate) {
-        this.beginDate = new Date(options.zeroDate.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
-        this.endDate = new Date(options.zeroDate.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
+    if (this.s >= 0 && options.dateZero) {
+        this.beginDate = new Date(options.dateZero.valueOf() + this.s * this.d * gmxAPIutils.oneDay * 1000);
+        this.endDate = new Date(options.dateZero.valueOf() + (this.s + 1) * this.d * gmxAPIutils.oneDay * 1000);
     }
 
     this.state = 'notLoaded'; //notLoaded, loading, loaded
