@@ -227,7 +227,7 @@ ScreenVectorTile.prototype = {
             if (!request) {
                 request = L.gmx.imageLoader.push(url, {
                     tileRastersId: _this._uniqueID,
-                    crossOrigin: gmx.crossOrigin || ''
+                    crossOrigin: gmx.crossOrigin || 'anonymous'
                 });
                 this.rasterRequests[url] = request;
             } else {
@@ -378,7 +378,7 @@ ScreenVectorTile.prototype = {
                             res: resCanvas,
                             image: itemImageProcessingHook ? itemImageProcessingHook(imageElement, imgAttr) : imageElement,
                             destinationTilePoint: gmxTilePoint,
-                            url: img.src
+                            url: url
                         }),
                         then = function() {
                             rasters[idr] = resCanvas;
@@ -396,6 +396,7 @@ ScreenVectorTile.prototype = {
                     }
                 };
                 prepareItem(img);
+                delete _this.rasterRequests[url];
             };
             if (imageItem) {
                 imageLoaded(imageItem);

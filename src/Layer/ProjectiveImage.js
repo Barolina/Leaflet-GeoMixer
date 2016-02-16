@@ -302,9 +302,6 @@ var ProjectiveImage = function() {
             pbl = transform.transformProjectiveVector([0, 1, 1]),
             pbr = transform.transformProjectiveVector([1, 1, 1]);
 
-        if (ptl[0] > pbl[0]) { attr.deltaX -= ptl[0]; }
-        if (ptl[1] > ptr[1]) { attr.deltaY -= ptl[1]; }
-
 		var canvas = document.createElement('canvas');
 		canvas.width = canvas.height = 256;
 		attr.canvas = canvas;

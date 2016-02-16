@@ -8,8 +8,6 @@ var gmxImageTransform = function(img, hash) {
         dataOption = geoItem.dataOption || {},
         geom = properties[properties.length - 1],
         coord = geom.coordinates[0],
-        begx = mInPixel * dataOption.bounds.min.x,
-        begy = mInPixel * dataOption.bounds.max.y,
         indexes = gmx.tileAttributeIndexes,
         quicklookPlatform = properties[indexes[gmx.quicklookPlatform]] || gmx.quicklookPlatform || '',
         points = {};
@@ -47,21 +45,19 @@ var gmxImageTransform = function(img, hash) {
             points.x4 = merc.x; points.y4 = merc.y;
         }
         ready = true;
-        begx = mInPixel * points.x1;
-        begy = mInPixel * points.y1;
     } else {
         points = gmxAPIutils.getQuicklookPoints(coord);
     }
 
-    var dx = begx - 256 * gmxTilePoint.x,
-        dy = 256 - begy + 256 * gmxTilePoint.y,
-        x1 = mInPixel * points.x1, y1 = mInPixel * points.y1,
+    var x1 = mInPixel * points.x1, y1 = mInPixel * points.y1,
         x2 = mInPixel * points.x2, y2 = mInPixel * points.y2,
         x3 = mInPixel * points.x3, y3 = mInPixel * points.y3,
         x4 = mInPixel * points.x4, y4 = mInPixel * points.y4,
         boundsP = gmxAPIutils.bounds([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]),
         ww = Math.round(boundsP.max.x - boundsP.min.x),
-        hh = Math.round(boundsP.max.y - boundsP.min.y);
+        hh = Math.round(boundsP.max.y - boundsP.min.y),
+        dx = boundsP.min.x - 256 * gmxTilePoint.x,
+        dy = 256 - boundsP.max.y + 256 * gmxTilePoint.y;
 
     x1 -= boundsP.min.x; y1 = boundsP.max.y - y1;
     x2 -= boundsP.min.x; y2 = boundsP.max.y - y2;
@@ -108,8 +104,6 @@ var gmxImageTransform = function(img, hash) {
         hView: hh,
         deltaX: dx,
         deltaY: dy
-        //,patchSize: 64
-        //,limit: 4
     });
     return pt.canvas;
 };
