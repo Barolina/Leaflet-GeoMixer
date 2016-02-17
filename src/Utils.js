@@ -917,9 +917,20 @@ var gmxAPIutils = {
          <br/><i>55.74312, 37.61558</i>
          <br/><i>55°44'35" N, 37°36'56" E</i>
          <br/><i>4187347, 7472103</i>
+         <br/><i>4219783, 7407468 (EPSG:3395)</i>
+         <br/><i>4219783, 7442673 (EPSG:3857)</i>
      * @return {Array} [lat, lng] or null
     */
     parseCoordinates: function(text) {
+        var crs = null,
+            regex = /\(EPSG:(\d+)\)/g,
+            t = regex.exec(text);
+
+        if (t) {
+            crs = t[1];
+            text = text.replace(regex, '');
+        }
+
         if (text.match(/[йцукенгшщзхъфывапролджэячсмитьбюЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮqrtyuiopadfghjklzxcvbmQRTYUIOPADFGHJKLZXCVBM_:]/)) {
             return null;
         }
@@ -932,10 +943,9 @@ var gmxAPIutils = {
         if (text.indexOf(' ') !== -1) {
             text = text.replace(/,/g, '.');
         }
-        var regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
         var results = [];
-
-        var t = regex.exec(text);
+        regex = /(-?\d+(\.\d+)?)([^\d\-]*)/g;
+        t = regex.exec(text);
         while (t) {
             results.push(t[1]);
             t = regex.exec(text);
@@ -964,8 +974,14 @@ var gmxAPIutils = {
             y = t;
         }
 
+        var pos;
+        if (crs === '3857') {
+            pos = L.Projection.SphericalMercator.unproject(new L.Point(y, x)._divideBy(6378137));
+            x = pos.lng;
+            y = pos.lat;
+        }
         if (Math.abs(x) > 180 || Math.abs(y) > 180) {
-            var pos = L.Projection.Mercator.unproject(new L.Point(y, x));
+            pos = L.Projection.Mercator.unproject(new L.Point(y, x));
             x = pos.lng;
             y = pos.lat;
         }
