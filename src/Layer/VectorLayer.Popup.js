@@ -147,8 +147,8 @@ L.gmx.VectorLayer.include({
         var gmx = options.gmx || {},
             balloonData = gmx.balloonData || {},
             properties = L.extend({}, gmx.properties),
-            target = gmx.target,
-            geometry = target.geometry,
+            target = gmx.target || {},
+            geometry = target.geometry || {},
             offset = target.offset,
             templateBalloon = this._popup._initContent || balloonData.templateBalloon || '',
             outItem = {
@@ -183,7 +183,7 @@ L.gmx.VectorLayer.include({
                     summary = '',
                     unitOptions = this._map ? this._map.options : {};
                 if (!this.options.isGeneralized) {
-                    geometries = this._gmx.dataManager.getItemGeometries(gmx.id);
+                    geometries = gmx.geometries || this._gmx.dataManager.getItemGeometries(gmx.id) || [];
                     outItem.summary = summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
                 }
                 if (this._balloonHook) {

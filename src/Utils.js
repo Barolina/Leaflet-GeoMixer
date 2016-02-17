@@ -1475,7 +1475,7 @@ var gmxAPIutils = {
         if (!geom) {
             return null;
         }
-        
+
         var type = geom.type === 'MULTIPOLYGON' ? 'MultiPolygon'
                 : geom.type === 'POLYGON' ? 'Polygon'
                 : geom.type === 'MULTILINESTRING' ? 'MultiLineString'
@@ -1710,6 +1710,7 @@ var gmxAPIutils = {
         var out = '',
             type = '',
             res = 0;
+        if (!unitOptions) { unitOptions = {}; }
         if (arr) {
             arr.forEach(function(geom) {
                 if (geom) {

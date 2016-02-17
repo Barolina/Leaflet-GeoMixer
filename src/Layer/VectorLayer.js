@@ -623,7 +623,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             out = L.gmxUtil.parseBalloonTemplate(styles[item.currentFilter].Balloon, {
                 properties: this.getItemProperties(propsArr),
                 geometries: [propsArr[propsArr.length - 1]],
-                tileAttributeTypes: gmx.tileAttributeTypes
+                tileAttributeTypes: gmx.tileAttributeTypes,
+                unitOptions: this._map ? this._map.options : {}
             });
         }
         return out;

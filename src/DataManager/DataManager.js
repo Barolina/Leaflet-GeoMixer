@@ -602,7 +602,7 @@ var DataManager = L.Class.extend({
     },
 
     getItemGeometries: function(id) {
-        var fromTiles = this._items[id].options.fromTiles,
+        var fromTiles = this._items[id] ? this._items[id].options.fromTiles : {},
             geomItems = [];
         for (var key in fromTiles) {
             if (this._tiles[key]) {

@@ -174,7 +174,8 @@ StyleManager.prototype = {
 
     getItemBalloon: function(id) {
         var item = this.gmx.dataManager.getItem(id),
-            style = this._styles[item.currentFilter || 0];
+            currentFilter = item ? item.currentFilter : 0,
+            style = this._styles[currentFilter];
         return style ? {
                 DisableBalloonOnMouseMove: style.DisableBalloonOnMouseMove || false,
                 DisableBalloonOnClick: style.DisableBalloonOnClick || false,
