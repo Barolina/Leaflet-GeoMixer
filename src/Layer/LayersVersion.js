@@ -90,6 +90,10 @@ var chkVersion = function (layer, callback) {
                         layers: layersStr
                     }, processResponse);
                 }
+                var timeStamp = Date.now();
+                hosts[hostName].forEach(function(it) {
+                    layers[it.Name]._gmx._stampVersionRequest = timeStamp;
+                });
             }
         }
     }
@@ -121,7 +125,7 @@ var layersVersion = {
             _gmx.dataManager.on('chkLayerUpdate', _gmx._chkVersion);
 
             layersVersion.start();
-            if (!isExistsTiles(prop)) {
+            if (!_gmx._stampVersionRequest || _gmx._stampVersionRequest < Date.now() - 19000 || !isExistsTiles(prop)) {
                 if (timeoutID) { clearTimeout(timeoutID); }
                 timeoutID = setTimeout(chkVersion, 0);
             }
