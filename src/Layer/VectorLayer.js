@@ -1,6 +1,7 @@
 L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 {
     options: {
+        openPopups: [],
         minZoom: 1,
         zIndexOffset: 2000000,
         isGeneralized: false,
@@ -40,7 +41,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 return map.options.crs.project(pos).y - L.Projection.Mercator.project(pos).y;
             },
             renderHooks: [],
-            preRenderHooks: []
+            preRenderHooks: [],
+            _needPopups: {}
         };
         if (options.crossOrigin) {
             this._gmx.crossOrigin = options.crossOrigin;
@@ -903,6 +905,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }, zd || 0);
     },
 
+    _getNeedPopups: function () {
+        var out = {},
+            openPopups = this.options.openPopups;
+        for (var i = 0, len = openPopups.length; i < len; i++) {
+            out[openPopups[i]] = false;
+        }
+        return out;
+    },
+
     __update: function () {
         var map = this._map;
         if (!map) { return; }
@@ -913,6 +924,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this._updateShiftY();
         }
         this._tileZoom = zoom;
+        if (this.options.openPopups.length) {
+            this._gmx._needPopups = this._getNeedPopups();
+            this.options.openPopups = [];
+        }
 
         var pixelBounds = this._getTiledPixelBounds(center),
             tileRange = this._pxBoundsToTileRange(pixelBounds);

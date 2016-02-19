@@ -212,17 +212,11 @@ L.gmx.VectorLayer.include({
                         gmx.lastHover = null;
                     }
 
-                    ev.gmx = {
-                        layer: this,
+                    ev.gmx = L.extend(this.getHoverOption(item), {
                         targets: geoItems,
-                        target: target,
-                        balloonData: gmx.styleManager.getItemBalloon(idr),
-                        properties: layer.getItemProperties(target.properties),
-                        currentFilter: item.currentFilter,
                         prevId: prevId,
-                        hoverDiff: item.hoverDiff,
-                        id: idr
-                    };
+                        hoverDiff: item.hoverDiff
+                    });
                     if (this.hasEventListeners(type)) { this.fire(type, ev); }
                     if (type === 'mousemove' && changed) {
                         lastHover = gmx.lastHover = ev.gmx;
@@ -238,5 +232,16 @@ L.gmx.VectorLayer.include({
             this._map.doubleClickZoom.enable();
         }
         return 0;
+    },
+
+    getHoverOption: function (item) {
+        return {
+            layer: this,
+            target: item,
+            balloonData: this._gmx.styleManager.getItemBalloon(item.id),
+            properties: this.getItemProperties(item.properties),
+            currentFilter: item.currentFilter || 0,
+            id: item.id
+        };
     }
 });

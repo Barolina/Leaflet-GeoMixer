@@ -578,7 +578,12 @@ ScreenVectorTile.prototype = {
                 if (bgImage) { dattr.bgImage = bgImage; }
                 //ctx.save();
                 for (var i = 0, len = geoItems.length; i < len; i++) {
-                    L.gmxUtil.drawGeoItem(geoItems[i], dattr);
+                    var geoItem = geoItems[i],
+                        id = geoItem.id;
+                    L.gmxUtil.drawGeoItem(geoItem, dattr);
+                    if (id in _this.gmx._needPopups && !_this.gmx._needPopups[id]) {
+                        _this.gmx._needPopups[id] = true;
+                    }
                 }
                 //ctx.restore();
                 _this.rasters = {}; // clear rasters

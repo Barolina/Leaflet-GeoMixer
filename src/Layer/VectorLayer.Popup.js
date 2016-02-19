@@ -1,6 +1,6 @@
 L.gmx.VectorLayer.include({
     bindPopup: function (content, options) {
-        var popupOptions = L.extend({maxWidth: 10000, className: 'gmxPopup'}, options);
+        var popupOptions = L.extend({maxWidth: 10000, className: 'gmxPopup', layerId: this._gmx.layerID}, options);
 
         if (this._popup) { this.unbindPopup(); }
         if (content instanceof L.Popup) {
@@ -20,7 +20,7 @@ L.gmx.VectorLayer.include({
                 .on('mousemove', this._movePopup, this)
                 .on('mouseover', this._overPopup, this)
                 .on('mouseout', this._outPopup, this)
-                .on('remove', this.closePopup, this);
+                .on('doneDraw', this._chkNeedOpenPopup, this);
 
             this._popupHandlersAdded = true;
         }
@@ -41,7 +41,7 @@ L.gmx.VectorLayer.include({
                 .off('mousemove', this._movePopup, this)
 			    .off('mouseover', this._overPopup, this)
                 .off('mouseout', this._outPopup, this)
-			    .off('remove', this.closePopup, this);
+                .off('doneDraw', this._chkNeedOpenPopup, this);
 
             this._popupopen = null;
 			this._popupHandlersAdded = false;
@@ -49,6 +49,15 @@ L.gmx.VectorLayer.include({
         this._gmx.balloonEnable = false;
 		return this;
 	},
+
+    _chkNeedOpenPopup: function () {
+        for (var id in this._gmx._needPopups) {
+            if (this._gmx._needPopups[id]) {
+                this.addPopup(id);
+                delete this._gmx._needPopups[id];
+            }
+        }
+    },
 
     disablePopup: function () {
         this._popupDisabled = true;
@@ -104,7 +113,6 @@ L.gmx.VectorLayer.include({
 
     _outPopup: function (ev) {
         if (this._popup._state === 'mouseover' && !ev.gmx.prevId) {
-        // if (this._popup._state === 'mouseover') {
             this.closePopup();
         }
     },
@@ -143,14 +151,15 @@ L.gmx.VectorLayer.include({
         }
     },
 
-    _setPopupContent: function (options) {
+    _setPopupContent: function (options, _popup) {
+        if (!_popup) { _popup = this._popup; }
         var gmx = options.gmx || {},
             balloonData = gmx.balloonData || {},
             properties = L.extend({}, gmx.properties),
             target = gmx.target || {},
             geometry = target.geometry || {},
             offset = target.offset,
-            templateBalloon = this._popup._initContent || balloonData.templateBalloon || '',
+            templateBalloon = _popup._initContent || balloonData.templateBalloon || '',
             outItem = {
                 id: gmx.id,
                 latlng: options.latlng,
@@ -164,15 +173,15 @@ L.gmx.VectorLayer.include({
         }
         if (offset) {
             var protoOffset = L.Popup.prototype.options.offset;
-            this._popup.options.offset = [-protoOffset[0] - offset[0], protoOffset[1] - offset[1]];
+            _popup.options.offset = [-protoOffset[0] - offset[0], protoOffset[1] - offset[1]];
         }
 
         if (this._popupopen) {
             this._popupopen({
-                popup: this._popup,
+                popup: _popup,
                 latlng: outItem.latlng,
                 layerPoint: options.layerPoint,
-                contentNode: this._popup._contentNode,
+                contentNode: _popup._contentNode,
                 containerPoint: options.containerPoint,
                 originalEvent: options.originalEvent,
                 gmx: outItem
@@ -205,18 +214,19 @@ L.gmx.VectorLayer.include({
 
             var contentDiv = L.DomUtil.create('div', '');
             contentDiv.innerHTML = templateBalloon;
-            this._popup.setContent(contentDiv);
+            _popup.setContent(contentDiv);
             if (this._balloonHook) {
-                this._callBalloonHook(gmx.properties, this._popup.getContent());
+                this._callBalloonHook(gmx.properties, _popup.getContent());
             }
             //outItem.templateBalloon = templateBalloon;
         }
-        this._popup.options._gmxID = gmx.id;
+        _popup.options._gmxID = gmx.id;
         return outItem;
     },
 
     _openPopup: function (options) {
-        var originalEvent = options.originalEvent || {},
+        var map = this._map,
+            originalEvent = options.originalEvent || {},
             skip = this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
@@ -227,7 +237,36 @@ L.gmx.VectorLayer.include({
 
             if (type === 'click') {
                 if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
-                _popup.options.autoPan = true;
+
+                if (!('_gmxPopups' in map)) {
+                    map._gmxPopups = [];
+                }
+                if (!('maxPopupCount' in map.options)) { map.options.maxPopupCount = 1; }
+                if (!this._gmx._gmxPopupsInit) {
+                    this._gmx._gmxPopupsInit = true;
+                    map.on({
+                        layerremove: function (ev) {
+                            if (ev.layer instanceof L.Popup) {
+                                this._clearPopup(ev.layer);
+                            } else if (ev.layer === this) {
+                                if (map._gmxPopups) {
+                                    var layerId = this._gmx.layerID;
+                                    map._gmxPopups = map._gmxPopups.reduce(function(p, c) {
+                                        if (c._map) {
+                                            if (c.options.layerId === layerId) { c._map.removeLayer(c); }
+                                            else { p.push(c); }
+                                        }
+                                        return p;
+                                    }, []);
+                                }
+                                this.closePopup();
+                            }
+                        }
+                    }, this);
+                }
+
+                this._clearPopup(gmx.id);
+                _popup = new L.Popup(L.extend({}, this._popup.options, {closeOnClick: map.options.maxPopupCount === 1, autoPan: true}));
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {
                     _popup._state = '';
@@ -237,15 +276,23 @@ L.gmx.VectorLayer.include({
             } else {
                 return;
             }
+            _popup.options.objectId = gmx.id;
             _popup._state = type;
-            var outItem = this._setPopupContent(options);
+            var outItem = this._setPopupContent(options, _popup);
             _popup.setLatLng(outItem.latlng);
 
             this.fire('popupopen', {
                 popup: _popup,
                 gmx: outItem
             });
-            this._map.openPopup(_popup);
+            if (type === 'click') {
+                if (map._gmxPopups.length >= map.options.maxPopupCount) {
+                    map.removeLayer(map._gmxPopups.shift());
+                }
+                map._gmxPopups.push(_popup);
+            }
+            _popup.addTo(map);    // this._map.openPopup(_popup);
+
             if (_popup._closeButton) {
                 var closeStyle = _popup._closeButton.style;
                 if (type === 'mouseover' && closeStyle !== 'hidden') {
@@ -259,6 +306,53 @@ L.gmx.VectorLayer.include({
                 }
             }
         }
+    },
+
+	_clearPopup: function (item /* <L.Popup> or objectId */) {
+        var map = this._map;
+        if (map && map._gmxPopups) {
+            var layerId = this._gmx.layerID,
+                flagPopup = item instanceof L.Popup;
+            map._gmxPopups = map._gmxPopups.reduce(function(p, c) {
+                if (c._map) {
+                    if (flagPopup && c === item) { c._map.removeLayer(c); }
+                    else if (c.options.layerId === layerId && c.options.objectId === item) { c._map.removeLayer(c); }
+                    else { p.push(c); }
+                }
+                return p;
+            }, []);
+        }
+    },
+
+    getPopups: function (flag) {
+        var map = this._map,
+            out = [];
+        if (map && map._gmxPopups) {
+            var layerId = this._gmx.layerID;
+            map._gmxPopups.reduce(function(p, c) {
+                if (c.options.layerId === layerId) { p.push(flag ? c : c.options.objectId); }
+                return p;
+            }, out);
+        }
+        return out;
+    },
+
+    addPopup: function (id) {
+        var gmx = this._gmx,
+            item = gmx.dataManager.getItem(id);
+        if (!item || !this._map) {
+            gmx._needPopups[id] = false;
+        } else {
+            var center = item.bounds.getCenter(),
+                latlng = L.Projection.Mercator.unproject(new L.Point(center[0], center[1]));
+            this._openPopup({
+                type: 'click',
+                latlng: latlng,
+                gmx: this.getHoverOption(item)
+            });
+            delete gmx._needPopups[id];
+        }
+        return this;
     },
 
     addPopupHook: function (key, callback) {
