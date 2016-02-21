@@ -2,7 +2,7 @@ var styleCanvasKeys = ['strokeStyle', 'fillStyle', 'lineWidth'],
     styleCanvasKeysLen = styleCanvasKeys.length,
     utils = gmxAPIutils;
 
-var setCanvasStyle = function(item, ctx, style) {
+var setCanvasStyle = function(prop, indexes, ctx, style) {
     for (var i = 0; i < styleCanvasKeysLen; i++) {
         var key = styleCanvasKeys[i],
             valKey = style[key];
@@ -28,33 +28,56 @@ var setCanvasStyle = function(item, ctx, style) {
     if (style.canvasPattern) {
         ctx.fillStyle = ctx.createPattern(style.canvasPattern.canvas, 'repeat');
     } else if (style.fillLinearGradient) {
-        var prop = item.properties,
-            rgr = style.fillLinearGradient,
-            x1 = rgr.x1Function ? rgr.x1Function(prop) : rgr.x1,
-            y1 = rgr.y1Function ? rgr.y1Function(prop) : rgr.y1,
-            x2 = rgr.x2Function ? rgr.x2Function(prop) : rgr.x2,
-            y2 = rgr.y2Function ? rgr.y2Function(prop) : rgr.y2,
+        var rgr = style.fillLinearGradient,
+            x1 = rgr.x1Function ? rgr.x1Function(prop, indexes) : rgr.x1,
+            y1 = rgr.y1Function ? rgr.y1Function(prop, indexes) : rgr.y1,
+            x2 = rgr.x2Function ? rgr.x2Function(prop, indexes) : rgr.x2,
+            y2 = rgr.y2Function ? rgr.y2Function(prop, indexes) : rgr.y2,
             lineargrad = ctx.createLinearGradient(x1, y1, x2, y2);
         for (var j = 0, len = rgr.addColorStop.length; j < len; j++) {
             var arr1 = rgr.addColorStop[j],
                 arrFunc = rgr.addColorStopFunctions[j],
-                p0 = (arrFunc[0] ? arrFunc[0](prop) : arr1[0]),
-                p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop) : arr1[2])),
-                p1 = utils.dec2color(arrFunc[1] ? arrFunc[1](prop) : arr1[1], p2 > 1 ? p2 / 100 : p2);
+                p0 = (arrFunc[0] ? arrFunc[0](prop, indexes) : arr1[0]),
+                p2 = (arr1.length < 3 ? 100 : (arrFunc[2] ? arrFunc[2](prop, indexes) : arr1[2])),
+                p1 = utils.dec2color(arrFunc[1] ? arrFunc[1](prop, indexes) : arr1[1], p2 > 1 ? p2 / 100 : p2);
             lineargrad.addColorStop(p0, p1);
         }
         ctx.fillStyle = style.fillStyle = lineargrad;
     }
 };
 
-var drawGeoItem = function(geoItem, options, currentStyle, style) {
+L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
+/*
+geoItem
+     properties: объект (в формате векторного тайла)
+     dataOption: дополнительные свойства объекта
+item
+     skipRasters: скрыть растр
+     currentStyle: текущий canvas стиль объекта
+     parsedStyleKeys: стиль прошедший парсинг
+options
+     ctx: canvas context
+     tbounds: tile bounds
+     tpx: X смещение тайла
+     tpy: Y смещение тайла
+     gmx: ссылка на layer._gmx
+        gmx.currentZoom
+        gmx.lastHover
+        gmx.tileAttributeIndexes
+     bgImage: растр для background
+     rasters: растры по объектам для background
+currentStyle
+    текущий стиль
+style
+    стиль в новом формате
+    style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
+*/
     var propsArr = geoItem.properties,
         idr = propsArr[0],
         j = 0,
         len = 0,
         gmx = options.gmx,
         ctx = options.ctx,
-        item = gmx.dataManager.getItem(idr),
         geom = propsArr[propsArr.length - 1],
         coords = null,
         dataOption = geoItem.dataOption,
@@ -73,7 +96,8 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
             return false;
         }
     }
-    setCanvasStyle(item, ctx, item.currentStyle);
+
+    setCanvasStyle(propsArr, gmx.tileAttributeIndexes, ctx, item.currentStyle);
 
     var geoType = geom.type,
         dattr = {
@@ -89,7 +113,7 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
         dattr.pointAttr = utils.getPixelPoint(dattr, geom.coordinates);
         if (!dattr.pointAttr) { return false; }   // point not in canvas tile
     }
-    if (geoType === 'POINT' || geoType === 'MULTIPOINT') {	// Отрисовка геометрии точек
+    if (geoType === 'POINT' || geoType === 'MULTIPOINT') { // Отрисовка геометрии точек
         coords = geom.coordinates;
         if ('iconColor' in style && style.image) {
             if (style.lastImage !== style.image) {
@@ -215,39 +239,4 @@ var drawGeoItem = function(geoItem, options, currentStyle, style) {
         }
     }
     return true;
-};
-
-L.gmxUtil.drawGeoItem = function(geoItem, options) {
-/*
-geoItem
-     properties: объект (в формате векторного тайла)
-     dataOption: дополнительные свойства объекта
-options
-     ctx: canvas context
-     tbounds: tile bounds
-     tpx: X смещение тайла
-     tpy: Y смещение тайла
-     gmx: ссылка на layer._gmx
-        gmx.dataManager
-        gmx.styleManager
-        gmx.currentZoom
-     style: стиль в новом формате
-         style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
-*/
-    var gmx = options.gmx,
-        item = gmx.dataManager.getItem(geoItem.id);
-
-    if (item) {
-        var style = gmx.styleManager.getObjStyle(item),
-            hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
-        if (gmx.multiFilters) {
-            item.multiFilters.forEach(function(it) {
-                drawGeoItem(geoItem, options, hover ? it.parsedStyleHover : it.parsedStyle, style);
-            });
-        } else {
-            drawGeoItem(geoItem, options, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
-        }
-        return true;
-    }
-    return false;
 };

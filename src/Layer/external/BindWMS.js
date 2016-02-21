@@ -50,6 +50,7 @@
                 this._layerWMS.unbindLayer();
             }
             this._layerWMS = new BindWMS(options, this);
+            this.isExternalVisible = this._layerWMS.isExternalVisible;
             return this;
         },
 
@@ -57,6 +58,7 @@
             if (this._layerWMS) {
                 this._layerWMS.unbindLayer();
                 this._layerWMS = null;
+                this.isExternalVisible = null;
                 this.enablePopup();
             }
             return this;

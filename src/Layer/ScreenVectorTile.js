@@ -579,10 +579,20 @@ ScreenVectorTile.prototype = {
                 //ctx.save();
                 for (var i = 0, len = geoItems.length; i < len; i++) {
                     var geoItem = geoItems[i],
-                        id = geoItem.id;
-                    L.gmxUtil.drawGeoItem(geoItem, dattr);
-                    if (id in _this.gmx._needPopups && !_this.gmx._needPopups[id]) {
-                        _this.gmx._needPopups[id] = true;
+                        id = geoItem.id,
+                        item = gmx.dataManager.getItem(id),
+                        style = gmx.styleManager.getObjStyle(item),
+                        hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
+
+                    if (gmx.multiFilters) {
+                        item.multiFilters.forEach(function(it) {
+                            L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? it.parsedStyleHover : it.parsedStyle, style);
+                        });
+                    } else {
+                        L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
+                    }
+                    if (id in gmx._needPopups && !gmx._needPopups[id]) {
+                        gmx._needPopups[id] = true;
                     }
                 }
                 //ctx.restore();

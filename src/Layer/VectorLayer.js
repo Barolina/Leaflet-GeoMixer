@@ -154,7 +154,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _update: function () {
         if (!this._map ||
-            this._layerWMS && this._layerWMS.isExternalVisible(this._map._zoom) // WMS enabled on this.zoom
+            this.isExternalVisible && this.isExternalVisible(this._map._zoom) // WMS enabled on this.zoom
             ) {
             this._clearAllSubscriptions();
             return;
@@ -930,7 +930,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
 
         var pixelBounds = this._getTiledPixelBounds(center),
-            tileRange = this._pxBoundsToTileRange(pixelBounds);
+            tileRange = this._pxBoundsToTileRange(pixelBounds),
+            limit = this._getWrapTileNum();
+
+        if (tileRange.min.y < 0) { tileRange.min.y = 0; }
+        if (tileRange.max.y >= limit.y) { tileRange.max.y = limit.y - 1; }
 
         this._chkTileSubscriptions(zoom, tileRange);
 
