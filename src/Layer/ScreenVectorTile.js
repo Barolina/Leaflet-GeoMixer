@@ -413,19 +413,68 @@ ScreenVectorTile.prototype = {
         return itemRasterPromise;
     },
 
+    _getVisibleItems: function (geoItems) {
+        if (!geoItems.length) {
+            return geoItems;
+        }
+        if (!gmxAPIutils._tileCanvas) {
+            gmxAPIutils._tileCanvas = document.createElement('canvas');
+            gmxAPIutils._tileCanvas.width = gmxAPIutils._tileCanvas.height = 256;
+        }
+        var i, len,
+            gmx = this.gmx,
+            dm = gmx.dataManager,
+            canvas = gmxAPIutils._tileCanvas,
+            ctx = canvas.getContext('2d'),
+            dattr = {
+                tbounds: this.tbounds,
+                gmx: gmx,
+                tpx: this.tpx,
+                tpy: this.tpy,
+                ctx: ctx
+            };
+        ctx.clearRect(0, 0, 256, 256);
+        ctx.imageSmoothingEnabled = false;
+        for (i = 0, len = geoItems.length; i < len; i++) {
+            ctx.fillStyle = gmxAPIutils.dec2rgba(i + 1, 1);
+            var geoItem = geoItems[i];
+            L.gmxUtil.drawGeoItem(
+                geoItem,
+                dm.getItem(geoItem.properties[0]),
+                dattr,
+                {fillStyle: ctx.fillStyle}
+            );
+        }
+        var items = {},
+            data = ctx.getImageData(0, 0, 256, 256).data;
+
+        for (i = 0, len = data.length; i < len; i += 4) {
+            if (data[i + 3]) {
+                var color = data[i + 2];
+                if (data[i + 1]) { color += data[i + 1] << 8; }
+                if (data[i]) { color += data[i] << 64;}
+                items[color] = true;
+            }
+        }
+        delete items[0];
+        var out = [];
+        for (var num in items) {
+            out.push(geoItems[num - 1]);
+        }
+        return out;
+    },
+
     _getNeedRasterItems: function (geoItems) {
         var gmx = this.gmx,
             tbounds = this.tbounds,
             out = [];
         for (var i = 0, len = geoItems.length; i < len; i++) {
             var geo = geoItems[i],
-                properties = geo.properties,
-                idr = properties[0];
-
-            var dataOption = geo.dataOption || {},
+                dataOption = geo.dataOption || {},
                 skipRasters = false;
 
             if (gmx.styleHook) {
+                var idr = geo.properties[0];
                 geo.styleExtend = gmx.styleHook(
                     gmx.dataManager.getItem(idr),
                     gmx.lastHover && idr === gmx.lastHover.id
@@ -434,14 +483,10 @@ ScreenVectorTile.prototype = {
             }
 
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                var geom = properties[properties.length - 1];
-                if (geom.type === 'POLYGON' && !tbounds.clipPolygon(geom.coordinates[0]).length) {
-                    continue;
-                }
                 out.push(geo);
             }
         }
-        return out;
+        return this._getVisibleItems(out);
     },
 
     _getTileRasters: function (geoItems) {   //load all missing rasters for items we are going to render
@@ -585,9 +630,10 @@ ScreenVectorTile.prototype = {
                         hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
 
                     if (gmx.multiFilters) {
-                        item.multiFilters.forEach(function(it) {
+                        for (var j = 0, len1 = item.multiFilters.length; j < len1; j++) {
+                            var it = item.multiFilters[j];
                             L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? it.parsedStyleHover : it.parsedStyle, style);
-                        });
+                        }
                     } else {
                         L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
                     }

@@ -46,7 +46,6 @@ var setCanvasStyle = function(prop, indexes, ctx, style) {
     }
 };
 
-L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
 /*
 geoItem
      properties: объект (в формате векторного тайла)
@@ -72,6 +71,7 @@ style
     стиль в новом формате
     style.image - для type='image' (`<HTMLCanvasElement || HTMLImageElement>`)
 */
+L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
     var propsArr = geoItem.properties,
         idr = propsArr[0],
         j = 0,
@@ -81,23 +81,25 @@ style
         geom = propsArr[propsArr.length - 1],
         coords = null,
         dataOption = geoItem.dataOption,
-        rasters = options.rasters,
+        rasters = options.rasters || {},
         tbounds = options.tbounds;
 
-    style = style || {};
     item.currentStyle = L.extend({}, currentStyle);
-    if (gmx.styleHook) {
-        if (!geoItem.styleExtend) {
-            geoItem.styleExtend = gmx.styleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
+    if (style) {
+        if (gmx.styleHook) {
+            if (!geoItem.styleExtend) {
+                geoItem.styleExtend = gmx.styleHook(item, gmx.lastHover && idr === gmx.lastHover.id);
+            }
+            if (geoItem.styleExtend) {
+                item.currentStyle = L.extend(item.currentStyle, geoItem.styleExtend);
+            } else {
+                return false;
+            }
         }
-        if (geoItem.styleExtend) {
-            item.currentStyle = L.extend(item.currentStyle, geoItem.styleExtend);
-        } else {
-            return false;
-        }
+        setCanvasStyle(propsArr, gmx.tileAttributeIndexes, ctx, item.currentStyle);
+    } else {
+        style = {};
     }
-
-    setCanvasStyle(propsArr, gmx.tileAttributeIndexes, ctx, item.currentStyle);
 
     var geoType = geom.type,
         dattr = {
