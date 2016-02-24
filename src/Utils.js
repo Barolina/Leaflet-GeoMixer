@@ -262,6 +262,42 @@ var gmxAPIutils = {
         ];
     },
 
+    getQuicklookPointsFromProperties: function(pArr, gmx) {
+        var points = {
+                x1: gmx.getPropItem(pArr, gmx.quicklookX1 || 'x1') || 0,
+                y1: gmx.getPropItem(pArr, gmx.quicklookY1 || 'y1') || 0,
+                x2: gmx.getPropItem(pArr, gmx.quicklookX2 || 'x2') || 0,
+                y2: gmx.getPropItem(pArr, gmx.quicklookY2 || 'y2') || 0,
+                x3: gmx.getPropItem(pArr, gmx.quicklookX3 || 'x3') || 0,
+                y3: gmx.getPropItem(pArr, gmx.quicklookY3 || 'y3') || 0,
+                x4: gmx.getPropItem(pArr, gmx.quicklookX4 || 'x4') || 0,
+                y4: gmx.getPropItem(pArr, gmx.quicklookY4 || 'y4') || 0
+            },
+            bounds = gmxAPIutils.bounds([
+                [points.x1, points.y1],
+                [points.x2, points.y2],
+                [points.x3, points.y3],
+                [points.x4, points.y4]
+            ]);
+
+        if (bounds.max.x === bounds.min.x || bounds.max.y === bounds.min.y) {
+            return null;
+        }
+
+        if (gmx.quicklookPlatform === 'image') {
+            var merc = L.Projection.Mercator.project(L.latLng(points.y1, points.x1));
+            points.x1 = merc.x; points.y1 = merc.y;
+            merc = L.Projection.Mercator.project(L.latLng(points.y2, points.x2));
+            points.x2 = merc.x; points.y2 = merc.y;
+            merc = L.Projection.Mercator.project(L.latLng(points.y3, points.x3));
+            points.x3 = merc.x; points.y3 = merc.y;
+            merc = L.Projection.Mercator.project(L.latLng(points.y4, points.x4));
+            points.x4 = merc.x; points.y4 = merc.y;
+        }
+
+        return points;
+    },
+
     /** Get hash properties from array properties
      * @memberof L.gmxUtil
      * @param {Array} properties in Array format

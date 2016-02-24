@@ -19,31 +19,8 @@ var gmxImageTransform = function(img, hash) {
         points.x3 = dataOption.bounds.max.x; points.y3 = dataOption.bounds.min.y;
         points.x4 = dataOption.bounds.min.x; points.y4 = dataOption.bounds.min.y;
         ready = true;
-    // } else if (quicklookPlatform === 'SPOT 6') {
-        // points.x1 = coord[0][0]; points.y1 = coord[0][1];
-        // points.x2 = coord[1][0]; points.y2 = coord[1][1];
-        // points.x3 = coord[2][0]; points.y3 = coord[2][1];
-        // points.x4 = coord[3][0]; points.y4 = coord[3][1];
-        // ready = true;
     } else if (quicklookPlatform === 'imageMercator' || quicklookPlatform === 'image') {
-        points.x1 = gmx.quicklookX1 ? properties[indexes[gmx.quicklookX1]] : properties[indexes.x1] || 0;
-        points.y1 = gmx.quicklookY1 ? properties[indexes[gmx.quicklookY1]] : properties[indexes.y1] || 0;
-        points.x2 = gmx.quicklookX2 ? properties[indexes[gmx.quicklookX2]] : properties[indexes.x2] || 0;
-        points.y2 = gmx.quicklookY2 ? properties[indexes[gmx.quicklookY2]] : properties[indexes.y2] || 0;
-        points.x3 = gmx.quicklookX3 ? properties[indexes[gmx.quicklookX3]] : properties[indexes.x3] || 0;
-        points.y3 = gmx.quicklookY3 ? properties[indexes[gmx.quicklookY3]] : properties[indexes.y3] || 0;
-        points.x4 = gmx.quicklookX4 ? properties[indexes[gmx.quicklookX4]] : properties[indexes.x4] || 0;
-        points.y4 = gmx.quicklookY4 ? properties[indexes[gmx.quicklookY4]] : properties[indexes.y4] || 0;
-        if (quicklookPlatform === 'image') {
-            var merc = L.Projection.Mercator.project(L.latLng(points.y1, points.x1));
-            points.x1 = merc.x; points.y1 = merc.y;
-            merc = L.Projection.Mercator.project(L.latLng(points.y2, points.x2));
-            points.x2 = merc.x; points.y2 = merc.y;
-            merc = L.Projection.Mercator.project(L.latLng(points.y3, points.x3));
-            points.x3 = merc.x; points.y3 = merc.y;
-            merc = L.Projection.Mercator.project(L.latLng(points.y4, points.x4));
-            points.x4 = merc.x; points.y4 = merc.y;
-        }
+        points = gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx);
         ready = true;
     } else {
         points = gmxAPIutils.getQuicklookPoints(coord);

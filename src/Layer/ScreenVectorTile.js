@@ -436,7 +436,7 @@ ScreenVectorTile.prototype = {
         ctx.clearRect(0, 0, 256, 256);
         ctx.imageSmoothingEnabled = false;
         for (i = 0, len = geoItems.length; i < len; i++) {
-            ctx.fillStyle = gmxAPIutils.dec2rgba(i + 1, 1);
+            ctx.fillStyle = gmxAPIutils.dec2color(i + 1, 1);
             var geoItem = geoItems[i];
             L.gmxUtil.drawGeoItem(
                 geoItem,
@@ -451,15 +451,15 @@ ScreenVectorTile.prototype = {
         for (i = 0, len = data.length; i < len; i += 4) {
             if (data[i + 3]) {
                 var color = data[i + 2];
-                if (data[i + 1]) { color += data[i + 1] << 8; }
-                if (data[i]) { color += data[i] << 64;}
-                items[color] = true;
+                if (data[i + 1]) { color += (data[i + 1] << 8); }
+                if (data[i]) { color += (data[i] << 64); }
+                if (color) { items[color] = true; }
             }
         }
-        delete items[0];
         var out = [];
         for (var num in items) {
-            out.push(geoItems[num - 1]);
+            var it = geoItems[Number(num) - 1];
+            if (it) { out.push(it); }
         }
         return out;
     },
@@ -470,18 +470,29 @@ ScreenVectorTile.prototype = {
             out = [];
         for (var i = 0, len = geoItems.length; i < len; i++) {
             var geo = geoItems[i],
+                properties = geo.properties,
+                idr = properties[0],
                 dataOption = geo.dataOption || {},
                 skipRasters = false;
 
+            if (gmx.IsRasterCatalog) {  // RasterCatalog
+                if (gmx.quicklookBGfunc && !gmx.getPropItem(properties, 'GMX_RasterCatalogID')) {
+                    var platform = gmx.getPropItem(properties, gmx.quicklookPlatform) || gmx.quicklookPlatform || '';
+                    if ((platform === 'imageMercator' || platform === 'image') &&
+                        !gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx)
+                    ) {
+                        continue;
+                    }
+                }
+            }
+
             if (gmx.styleHook) {
-                var idr = geo.properties[0];
                 geo.styleExtend = gmx.styleHook(
                     gmx.dataManager.getItem(idr),
                     gmx.lastHover && idr === gmx.lastHover.id
                 );
                 skipRasters = geo.styleExtend && geo.styleExtend.skipRasters;
             }
-
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
                 out.push(geo);
             }
