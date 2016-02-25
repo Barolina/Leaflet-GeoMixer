@@ -436,7 +436,7 @@ ScreenVectorTile.prototype = {
         ctx.clearRect(0, 0, 256, 256);
         ctx.imageSmoothingEnabled = false;
         for (i = 0, len = geoItems.length; i < len; i++) {
-            ctx.fillStyle = gmxAPIutils.dec2color(i + 1, 1);
+            ctx.fillStyle = gmxAPIutils.dec2rgba(i + 1, 1);
             var geoItem = geoItems[i];
             L.gmxUtil.drawGeoItem(
                 geoItem,
@@ -449,10 +449,10 @@ ScreenVectorTile.prototype = {
             data = ctx.getImageData(0, 0, 256, 256).data;
 
         for (i = 0, len = data.length; i < len; i += 4) {
-            if (data[i + 3]) {
+            if (data[i + 3] === 255) {
                 var color = data[i + 2];
                 if (data[i + 1]) { color += (data[i + 1] << 8); }
-                if (data[i]) { color += (data[i] << 64); }
+                if (data[i]) { color += (data[i] << 16); }
                 if (color) { items[color] = true; }
             }
         }
