@@ -64,7 +64,7 @@ var GmxEventsManager = L.Handler.extend({
                 skipNode = false;
             if (ev.originalEvent) {
                 map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
-                skipNode = skipNodeName[ev.originalEvent.target.nodeName];
+                skipNode = skipNodeName[ev.originalEvent.target.nodeName] && !L.DomUtil.hasClass(ev.originalEvent.target, 'leaflet-tile');
             }
             if (map._animatingZoom ||
                 isDrawing() ||
@@ -84,8 +84,8 @@ var GmxEventsManager = L.Handler.extend({
                     lb = map._layers[b];
                 if (la && lb) {
                     var oa = la.options, ob = lb.options,
-                        za = (oa.zoomOffset || 0) + (oa.zIndex || 0),
-                        zb = (ob.zoomOffset || 0) + (ob.zIndex || 0),
+                        za = (oa.zIndexOffset || 0) + (oa.zIndex || 0),
+                        zb = (ob.zIndexOffset || 0) + (ob.zIndex || 0),
                         delta = zb - za;
                     return delta ? delta : _this._layers[b] - _this._layers[a];
                 }
@@ -95,6 +95,7 @@ var GmxEventsManager = L.Handler.extend({
             var layer,
                 foundLayer = null,
                 cursor = '';
+
             for (var i = 0, len = arr.length; i < len; i++) {
                 var id = arr[i];
                 layer = map._layers[id];
