@@ -410,8 +410,7 @@ var DataManager = L.Class.extend({
                 if (it[j] === null) { it[j] = ''; }
             }
             if (item) {
-                if (item.processing) { continue; }  // skip processing items
-                if (item.type.indexOf('MULTI') === -1) {
+                if (!item.processing && item.type.indexOf('MULTI') === -1) {
                     item.type = 'MULTI' + item.type;
                 }
                 delete item.bounds;
