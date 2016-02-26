@@ -28,7 +28,7 @@ StyleManager.prototype = {
             var style = this._styles[i];
             if (zoom > style.MaxZoom || zoom < style.MinZoom) { continue; }
             var RenderStyle = style.RenderStyle;
-            if (this._needLoadIcons || !RenderStyle || !RenderStyle.common || !RenderStyle.maxSize) {
+            if (this._needLoadIcons || !RenderStyle || !RenderStyle.common || !('maxSize' in RenderStyle)) {
                 maxSize = StyleManager.MAX_STYLE_SIZE;
                 break;
             }
@@ -41,7 +41,7 @@ StyleManager.prototype = {
             }
             maxSize = Math.max(RenderStyle.maxSize + maxShift, maxSize);
         }
-        return maxSize || 256;
+        return maxSize;
     },
 
     getStyleBounds: function(gmxTilePoint) {
@@ -329,18 +329,20 @@ StyleManager.prototype = {
             len = Math.max(arr.length, gmx.styles.length);
 
         for (var i = 0; i < len; i++) {
-            var gmxStyle = gmx.styles[i] || arr[i];
-            if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = StyleManager.DEFAULT_STYLE; }
-            if (gmxStyle.HoverStyle === undefined) {
-                var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
-                if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
-                gmxStyle.HoverStyle = hoveredStyle;
-            } else if (gmxStyle.HoverStyle === null) {
-                delete gmxStyle.HoverStyle;
+            if (!this._styles[i]) {
+                var gmxStyle = gmx.styles[i] || arr[i];
+                if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = StyleManager.DEFAULT_STYLE; }
+                if (gmxStyle.HoverStyle === undefined) {
+                    var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
+                    if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
+                    gmxStyle.HoverStyle = hoveredStyle;
+                } else if (gmxStyle.HoverStyle === null) {
+                    delete gmxStyle.HoverStyle;
+                }
+                var pt = this._prepareItem(gmxStyle);
+                this._styles.push(pt);
+                if (this._isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
             }
-            var pt = this._prepareItem(gmxStyle);
-            this._styles.push(pt);
-            if (this._isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
         }
         this._checkStyles();
         this._serverStylesParsed = true;
