@@ -445,6 +445,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     removeStyleHook: function () {
         this._gmx.styleHook = null;
+        return this;
     },
 
     setRasterHook: function (func) {
