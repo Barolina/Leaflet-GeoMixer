@@ -92,7 +92,7 @@ var chkVersion = function (layer, callback) {
                 }
                 var timeStamp = Date.now();
                 hosts[hostName].forEach(function(it) {
-                    layers[it.Name]._gmx._stampVersionRequest = timeStamp;
+                    if (layers[it.Name]) { layers[it.Name]._gmx._stampVersionRequest = timeStamp; }
                 });
             }
         }

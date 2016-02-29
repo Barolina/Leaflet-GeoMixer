@@ -1074,7 +1074,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.sessionKey = prop.sessionKey = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.identityField = prop.identityField; // ogc_fid
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
-        gmx.minZoomRasters = prop.RCMinZoomForRasters;// мин. zoom для растров
+        gmx.minZoomRasters = prop.RCMinZoomForRasters || 1;// мин. zoom для растров
 
         var type = prop.type || 'Vector';
         if (prop.Temporal) { type += 'Temporal'; }
@@ -1146,7 +1146,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                         + '&LayerName=' + properties[layerLink]
                         + '&key=' + encodeURIComponent(gmx.sessionKey);
                 };
-                gmx.imageQuicklookProcessingHook = gmxImageTransform;
             }
         }
         if (prop.Quicklook) {
@@ -1161,6 +1160,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 }
                 return url;
             };
+            gmx.imageQuicklookProcessingHook = gmxImageTransform;
         }
         this.options.attribution = prop.Copyright || '';
     },
