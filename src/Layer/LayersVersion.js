@@ -13,7 +13,7 @@ var isExistsTiles = function(prop) {
 var getParams = function(prop) {
     return {
         Name: prop.name,
-        Version: isExistsTiles(prop) ? prop.LayerVersion : 0
+        Version: isExistsTiles(prop) ? prop.LayerVersion : -1
     };
 };
 var getRequestParams = function(layer) {
