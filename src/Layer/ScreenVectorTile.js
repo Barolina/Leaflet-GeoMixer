@@ -205,7 +205,7 @@ ScreenVectorTile.prototype = {
             resCanvas = null,
             imageItem = null;
 
-        if (gmx.IsRasterCatalog && gmx.getPropItem(properties, 'GMX_RasterCatalogID')) {
+        if (gmx.IsRasterCatalog && (gmx.rawProperties.type === 'Raster' || gmx.getPropItem(properties, 'GMX_RasterCatalogID'))) {
             isTiles = true;                     // Raster Layer
         } else if (gmx.quicklookBGfunc) {
             url = gmx.quicklookBGfunc(item);    // Quicklook
