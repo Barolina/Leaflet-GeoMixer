@@ -410,8 +410,11 @@ var DataManager = L.Class.extend({
                 if (it[j] === null) { it[j] = ''; }
             }
             if (item) {
-                if (!item.processing && item.type.indexOf('MULTI') === -1) {
-                    item.type = 'MULTI' + item.type;
+                if (!item.processing) {
+                    item.properties = it;
+                    if (item.type.indexOf('MULTI') === -1) {
+                        item.type = 'MULTI' + item.type;
+                    }
                 }
                 delete item.bounds;
                 item.currentFilter = null;
@@ -419,13 +422,13 @@ var DataManager = L.Class.extend({
                 item = {
                     id: id,
                     type: geom.type,
+                    properties: it,
                     options: {
                         fromTiles: {}
                     }
                 };
                 this._items[id] = item;
             }
-            item.properties = it;
             item.options.fromTiles[vectorTileKey] = i;
             if (this.options.TemporalColumnName) {
                 var zn = it[this.tileAttributeIndexes[this.options.TemporalColumnName]];
