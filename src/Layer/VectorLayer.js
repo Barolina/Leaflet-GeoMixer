@@ -390,10 +390,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     setRasterOpacity: function (opacity) {
         var _this = this;
-        this._gmx.rasterOpacity = opacity;
-        this.initPromise.then(function() {
-            _this.repaint();
-        });
+        if (this._gmx.rasterOpacity !== opacity) {
+            this._gmx.rasterOpacity = opacity;
+            this.initPromise.then(function() {
+                _this.repaint();
+            });
+        }
         return this;
     },
 
