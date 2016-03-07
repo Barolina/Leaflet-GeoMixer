@@ -142,63 +142,44 @@ L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
                 utils.pointToCanvas(dattr);
             }
         } else {
-            dattr.flagPixels = false;
-            if (!dataOption.pixels) { dataOption.pixels = {}; }
             coords = geom.coordinates;
-            var hiddenLines = dataOption.hiddenLines || [],
-                pixelsMap = {},
-                flagPixels = false;
-
             if (geoType === 'POLYGON') { coords = [coords]; }
+
+            var hiddenLines = dataOption.hiddenLines || [],
+                pixelsMap = dataOption.pixels,
+                flagPixels = true;
+
+            if (!pixelsMap || pixelsMap.z !== gmx.currentZoom) {
+                pixelsMap = dataOption.pixels = utils.getCoordsPixels({
+                    gmx: gmx,
+                    coords: coords,
+                    tpx: options.tpx,
+                    tpy: options.tpy,
+                    hiddenLines: dataOption.hiddenLines || []
+                });
+            }
+
             var coordsToCanvas = function(func, flagFill) {
-                var out = null;
-                if (flagPixels) {
-                    coords = pixelsMap.coords;
-                    hiddenLines = pixelsMap.hidden;
-                    dattr.flagPixels = flagPixels;
-                } else {
-                    out = {coords: [], hidden: []};
-                    var pixels = [], hidden = [];
-                }
+                coords = pixelsMap.coords;
+                hiddenLines = pixelsMap.hidden;
+                dattr.flagPixels = flagPixels;
                 for (j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j];
                     var hiddenLines1 = hiddenLines[j] || [];
-                    if (out) {
-                        var pixels1 = [], hidden1 = [];
-                    }
                     ctx.beginPath();
                     for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                         dattr.coords = coords1[j1];
                         dattr.hiddenLines = hiddenLines1[j1] || [];
-                        var res = func(dattr);
-                        if (out && res) {
-                            pixels1.push(res.coords);
-                            hidden1.push(res.hidden);
-                        }
+                        func(dattr);
                     }
                     ctx.closePath();
                     if (flagFill) { ctx.fill(); }
-                    if (out) {
-                        pixels.push(pixels1);
-                        hidden.push(hidden1);
-                    }
                 }
-                if (out) {
-                    out.coords = pixels;
-                    out.hidden = hidden;
-                }
-                return out;
             };
             var strokeStyle = item.currentStyle.strokeStyle || style.strokeStyle,
                 lineWidth = item.currentStyle.lineWidth || style.lineWidth;
             if (strokeStyle && lineWidth) {
-                var pixels = coordsToCanvas(utils.polygonToCanvas);
-                if (pixels) {
-                    pixelsMap = pixels;
-                    pixelsMap.z = gmx.currentZoom;
-                    dataOption.pixels = pixelsMap;
-                    flagPixels = true;
-                }
+                coordsToCanvas(utils.polygonToCanvas);
             }
             if (options.bgImage) {
                 dattr.bgImage = options.bgImage;
@@ -207,10 +188,6 @@ L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
             }
             if (dattr.styleExtend.skipRasters || item.skipRasters) {
                 delete dattr.bgImage;
-            }
-            if (flagPixels) {
-                coords = pixelsMap.coords;
-                hiddenLines = pixelsMap.hidden;
             }
             if (style.imagePattern) {
                 item.currentStyle.fillStyle = ctx.createPattern(style.imagePattern, 'repeat');
