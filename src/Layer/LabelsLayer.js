@@ -52,7 +52,7 @@ L.LabelsLayer = L.Class.extend({
                     labelText = currentStyle.labelText || style.labelText,
                     labelField = currentStyle.labelField || style.labelField,
                     fieldType = gmx.tileAttributeTypes[labelField],
-                    txt = labelText || L.gmxUtil.attrToString(fieldType, layer.getPropItem(labelField, item.properties));
+                    txt = labelText || L.gmxUtil.attrToString(fieldType, gmx.getPropItem(item.properties, labelField));
 
                 if (txt || txt === 0) {
                     var fontSize = currentStyle.labelFontSize || style.labelFontSize || 12,

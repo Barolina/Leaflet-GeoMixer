@@ -1,4 +1,4 @@
-L.gmx.gmxImageTransform = function(img, hash) {
+var gmxImageTransform = function(img, hash) {
     var ready = false,
         gmx = hash.gmx,
         gmxTilePoint = hash.gmxTilePoint,
@@ -73,9 +73,7 @@ L.gmx.gmxImageTransform = function(img, hash) {
         shiftPoints = chPoints(shiftPoints);
     }
 
-    if (!gmx.ProjectiveImage) {
-        gmx.ProjectiveImage = L.gmx.projectiveImageWebGL() || L.gmx.projectiveImage();
-    }
+    if (!gmx.ProjectiveImage) { gmx.ProjectiveImage = new ProjectiveImage(); }
     var pt = gmx.ProjectiveImage.getCanvas({
         imageObj: img,
         points: shiftPoints,

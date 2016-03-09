@@ -3,24 +3,10 @@
       http://en.wikipedia.org/wiki/Parsing_expression_grammar
    Inspired by Chris Double's parser combinator library in JavaScript:
       http://www.bluishcoder.co.nz/2007/10/javascript-packrat-parser.html
-	+ Добавлены функции: Math.floor
+	+ Добавлены функции: Math.floor, Math.round
 */
 (function() {
-    var regexExpression = /\[(.+?)\]/g,
-        regexMath = /(floor\()/g;
-	var Parsers = {						// Парсеры
-        functionFromExpression: function(s) {
-            return new Function(
-                'props',
-                'indexes',
-                'return ' +
-                    s
-                     .replace(regexExpression, 'props[indexes["$1"]]')
-                     .replace(regexMath, 'Math.$1')
-                    + ';'
-            );
-        }
-    };
+	var Parsers = {};						// Парсеры
 
 	var makePair = function(t1, t2) {
 		return {head: t1, tail: t2};
@@ -535,7 +521,6 @@
 	Parsers.parseExpression = function(s) {
 		var result = applyParser(s, arithmeticExpression);
         return result.head === s.length ? result.tail.head : null;
-        // return result.head === s.length ? Parsers.functionFromExpression(s) : null;
 	};
 
 	var svgPath = action(

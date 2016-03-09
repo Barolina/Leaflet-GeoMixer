@@ -263,16 +263,15 @@ var gmxAPIutils = {
     },
 
     getQuicklookPointsFromProperties: function(pArr, gmx) {
-        var indexes = gmx.tileAttributeIndexes;
         var points = {
-                x1: gmxAPIutils.getPropItem(gmx.quicklookX1 || 'x1', pArr, indexes) || 0,
-                y1: gmxAPIutils.getPropItem(gmx.quicklookY1 || 'y1', pArr, indexes) || 0,
-                x2: gmxAPIutils.getPropItem(gmx.quicklookX2 || 'x2', pArr, indexes) || 0,
-                y2: gmxAPIutils.getPropItem(gmx.quicklookY2 || 'y2', pArr, indexes) || 0,
-                x3: gmxAPIutils.getPropItem(gmx.quicklookX3 || 'x3', pArr, indexes) || 0,
-                y3: gmxAPIutils.getPropItem(gmx.quicklookY3 || 'y3', pArr, indexes) || 0,
-                x4: gmxAPIutils.getPropItem(gmx.quicklookX4 || 'x4', pArr, indexes) || 0,
-                y4: gmxAPIutils.getPropItem(gmx.quicklookY4 || 'y4', pArr, indexes) || 0
+                x1: gmx.getPropItem(pArr, gmx.quicklookX1 || 'x1') || 0,
+                y1: gmx.getPropItem(pArr, gmx.quicklookY1 || 'y1') || 0,
+                x2: gmx.getPropItem(pArr, gmx.quicklookX2 || 'x2') || 0,
+                y2: gmx.getPropItem(pArr, gmx.quicklookY2 || 'y2') || 0,
+                x3: gmx.getPropItem(pArr, gmx.quicklookX3 || 'x3') || 0,
+                y3: gmx.getPropItem(pArr, gmx.quicklookY3 || 'y3') || 0,
+                x4: gmx.getPropItem(pArr, gmx.quicklookX4 || 'x4') || 0,
+                y4: gmx.getPropItem(pArr, gmx.quicklookY4 || 'y4') || 0
             },
             bounds = gmxAPIutils.bounds([
                 [points.x1, points.y1],
@@ -311,10 +310,6 @@ var gmxAPIutils = {
             properties[key] = arr[indexes[key]];
         }
         return properties;
-    },
-
-    getPropItem: function(key, arr, indexes) {
-        return key in indexes ? arr[indexes[key]] : '';
     },
 
     dec2rgba: function(i, a)	{				// convert decimal to rgb
@@ -749,109 +744,67 @@ var gmxAPIutils = {
 
     polygonToCanvas: function(attr) {       // Polygons in canvas
         if (attr.coords.length === 0) { return null; }
-        var hiddenLines = attr.hiddenLines || [],
-            coords = attr.coords,
-            ctx = attr.ctx,
-            px = attr.tpx,
-            py = attr.tpy,
-            cnt = 0, cntHide = 0,
-            lastX = null, lastY = null;
-
-        ctx.beginPath();
-        for (var i = 0, len = coords.length; i < len; i++) {
-            var x = Math.round(coords[i][0] - px),
-                y = Math.round(py - coords[i][1]),
-                lineIsOnEdge = false;
-
-            if (i === hiddenLines[cntHide]) {
-                lineIsOnEdge = true;
-                cntHide++;
-            }
-
-            if (lastX !== x || lastY !== y) {
-                ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](x, y);
-                lastX = x; lastY = y;
-                cnt++;
-            }
-        }
-        if (cnt === 1) { ctx.lineTo(lastX + 1, lastY); }
-        ctx.stroke();
-    },
-
-    polygonToCanvasFill: function(attr) {     // Polygon fill
-        if (attr.coords.length < 3) { return; }
-        var coords = attr.coords,
-            px = attr.tpx,
-            py = attr.tpy,
-            ctx = attr.ctx;
-
-        ctx.lineWidth = 0;
-        ctx.moveTo(Math.round(coords[0][0] - px), Math.round(py - coords[0][1]));
-        for (var i = 1, len = coords.length; i < len; i++) {
-            ctx.lineTo(Math.round(coords[i][0] - px), Math.round(py - coords[i][1]));
-        }
-    },
-
-    getCoordsPixels: function(attr) {
-        var gmx = attr.gmx,
-            coords = attr.coords,
-            hiddenLines = attr.hiddenLines || [],
-            pixels = [],
-            hidden = [],
-            hash = {
-                gmx: gmx,
-                tpx: attr.tpx,
-                tpy: attr.tpy,
-                coords: null,
-                hiddenLines: null
-            };
-        for (var j = 0, len = coords.length; j < len; j++) {
-            var coords1 = coords[j],
-                hiddenLines1 = hiddenLines[j] || [],
-                pixels1 = [], hidden1 = [];
-            for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
-                hash.coords = coords1[j1];
-                hash.hiddenLines = hiddenLines1[j1] || [];
-                var res = gmxAPIutils.getRingPixels(hash);
-                pixels1.push(res.coords);
-                hidden1.push(res.hidden);
-            }
-            pixels.push(pixels1);
-            hidden.push(hidden1);
-        }
-        return {coords: pixels, hidden: hidden, z: gmx.currentZoom};
-    },
-
-    getRingPixels: function(attr) {
-        if (attr.coords.length === 0) { return null; }
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
-            coords = attr.coords,
+            flagPixels = attr.flagPixels || false,
             hiddenLines = attr.hiddenLines || [],
+            coords = attr.coords,
+            len = coords.length,
+            ctx = attr.ctx,
             px = attr.tpx,
             py = attr.tpy,
             cnt = 0, cntHide = 0,
             lastX = null, lastY = null,
             pixels = [], hidden = [];
-        for (var i = 0, len = coords.length; i < len; i++) {
+
+        ctx.beginPath();
+        for (var i = 0; i < len; i++) {
             var lineIsOnEdge = false;
             if (i === hiddenLines[cntHide]) {
                 lineIsOnEdge = true;
                 cntHide++;
             }
-            var p1 = [coords[i][0] * mInPixel, coords[i][1] * mInPixel];
+            var p1 = [coords[i][0], coords[i][1]];
+            if (!flagPixels) { p1 = [p1[0] * mInPixel, p1[1] * mInPixel]; }
             var p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
 
             if (lastX !== p2[0] || lastY !== p2[1]) {
                 lastX = p2[0]; lastY = p2[1];
-                pixels.push([p1[0], p1[1]]);
-                if (lineIsOnEdge) { hidden.push(cnt); }
+                ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](p2[0], p2[1]);
+                if (!flagPixels) {
+                    //pixels.push([L.Util.formatNum(p1[0], 2), L.Util.formatNum(p1[1], 2)]);
+                    pixels.push([p1[0], p1[1]]);
+                    if (lineIsOnEdge) { hidden.push(cnt); }
+                }
                 cnt++;
             }
         }
-        return {coords: pixels, hidden: hidden};
+        if (cnt === 1) { ctx.lineTo(lastX + 1, lastY); }
+        ctx.stroke();
+        return flagPixels ? null : {coords: pixels, hidden: hidden};
     },
 
+    polygonToCanvasFill: function(attr) {     // Polygon fill
+        if (attr.coords.length < 3) { return; }
+        var gmx = attr.gmx,
+            mInPixel = gmx.mInPixel,
+            flagPixels = attr.flagPixels || false,
+            coords = attr.coords,
+            len = coords.length,
+            px = attr.tpx,
+            py = attr.tpy,
+            ctx = attr.ctx;
+
+        ctx.lineWidth = 0;
+        var p1 = flagPixels ? coords[0] : [coords[0][0] * mInPixel, coords[0][1] * mInPixel],
+            p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
+        ctx.moveTo(p2[0], p2[1]);
+        for (var i = 1; i < len; i++) {
+            p1 = flagPixels ? coords[i] : [coords[i][0] * mInPixel, coords[i][1] * mInPixel];
+            p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
+            ctx.lineTo(p2[0], p2[1]);
+        }
+    },
     isPatternNode: function(it) {
         return it instanceof HTMLCanvasElement || it instanceof HTMLImageElement;
     },

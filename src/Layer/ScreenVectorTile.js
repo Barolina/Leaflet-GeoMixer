@@ -190,14 +190,13 @@ ScreenVectorTile.prototype = {
             idr = properties[0],
             _this = this,
             gmx = this.gmx,
-            indexes = gmx.tileAttributeIndexes,
             rasters = this.rasters,
             mainRasterLoader = null,
             recursiveLoaders,
-            shiftX = Number(gmx.shiftXfield ? gmxAPIutils.getPropItem(gmx.shiftXfield, properties, indexes) : 0) % this.worldWidthMerc,
-            shiftY = Number(gmx.shiftYfield ? gmxAPIutils.getPropItem(gmx.shiftYfield, properties, indexes) : 0),
+            shiftX = Number(gmx.shiftXfield ? gmx.getPropItem(properties, gmx.shiftXfield) : 0) % this.worldWidthMerc,
+            shiftY = Number(gmx.shiftYfield ? gmx.getPropItem(properties, gmx.shiftYfield) : 0),
             isShift = shiftX || shiftY,
-            urlBG = gmxAPIutils.getPropItem('urlBG', properties, indexes),
+            urlBG = gmx.getPropItem(properties, 'urlBG'),
             url = '',
             itemImageProcessingHook = null,
             isTiles = false,
@@ -206,7 +205,7 @@ ScreenVectorTile.prototype = {
             resCanvas = null,
             imageItem = null;
 
-        if (gmx.IsRasterCatalog && (gmx.rawProperties.type === 'Raster' || gmxAPIutils.getPropItem('GMX_RasterCatalogID', properties, indexes))) {
+        if (gmx.IsRasterCatalog && (gmx.rawProperties.type === 'Raster' || gmx.getPropItem(properties, 'GMX_RasterCatalogID'))) {
             isTiles = true;                     // Raster Layer
         } else if (gmx.quicklookBGfunc) {
             url = gmx.quicklookBGfunc(item);    // Quicklook
@@ -467,7 +466,6 @@ ScreenVectorTile.prototype = {
 
     _getNeedRasterItems: function (geoItems) {
         var gmx = this.gmx,
-            indexes = gmx.tileAttributeIndexes,
             tbounds = this.tbounds,
             out = [];
         for (var i = 0, len = geoItems.length; i < len; i++) {
@@ -477,8 +475,8 @@ ScreenVectorTile.prototype = {
                 dataOption = geo.dataOption || {},
                 skipRasters = false;
 
-            if (gmx.quicklookBGfunc && !gmxAPIutils.getPropItem('GMX_RasterCatalogID', properties, indexes)) {
-                var platform = gmxAPIutils.getPropItem(gmx.quicklookPlatform, properties, indexes) || gmx.quicklookPlatform || '';
+            if (gmx.quicklookBGfunc && !gmx.getPropItem(properties, 'GMX_RasterCatalogID')) {
+                var platform = gmx.getPropItem(properties, gmx.quicklookPlatform) || gmx.quicklookPlatform || '';
                 if ((platform === 'imageMercator' || platform === 'image') &&
                     !gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx)
                 ) {
