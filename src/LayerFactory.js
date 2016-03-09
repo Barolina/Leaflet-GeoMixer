@@ -163,8 +163,12 @@ L.gmx.createLayer = function(layerInfo, options) {
         layer;
 
     if (type in L.gmx._layerClasses) {
-        layer = new L.gmx._layerClasses[type](options);
-        layer = layer.initFromDescription(layerInfo);
+        try {
+            layer = new L.gmx._layerClasses[type](options);
+            layer = layer.initFromDescription(layerInfo);
+        } catch (e) {
+            layer = new L.gmx.DummyLayer(layerInfo.properties);
+        }
     } else {
         layer = new L.gmx.DummyLayer(layerInfo.properties);
     }
