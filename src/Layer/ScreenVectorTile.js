@@ -223,6 +223,7 @@ ScreenVectorTile.prototype = {
                 recursiveLoaders = null;
             });
         } else {
+            url += (url.indexOf('?') === -1 ? '?' : '&') + gmx.sessionKey;  //  for browser cache from another tabs
             var request = this.rasterRequests[url];
             if (!request) {
                 request = L.gmx.imageLoader.push(url, {
