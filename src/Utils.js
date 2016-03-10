@@ -263,15 +263,16 @@ var gmxAPIutils = {
     },
 
     getQuicklookPointsFromProperties: function(pArr, gmx) {
+        var indexes = gmx.tileAttributeIndexes;
         var points = {
-                x1: gmx.getPropItem(pArr, gmx.quicklookX1 || 'x1') || 0,
-                y1: gmx.getPropItem(pArr, gmx.quicklookY1 || 'y1') || 0,
-                x2: gmx.getPropItem(pArr, gmx.quicklookX2 || 'x2') || 0,
-                y2: gmx.getPropItem(pArr, gmx.quicklookY2 || 'y2') || 0,
-                x3: gmx.getPropItem(pArr, gmx.quicklookX3 || 'x3') || 0,
-                y3: gmx.getPropItem(pArr, gmx.quicklookY3 || 'y3') || 0,
-                x4: gmx.getPropItem(pArr, gmx.quicklookX4 || 'x4') || 0,
-                y4: gmx.getPropItem(pArr, gmx.quicklookY4 || 'y4') || 0
+                x1: gmxAPIutils.getPropItem(gmx.quicklookX1 || 'x1', pArr, indexes) || 0,
+                y1: gmxAPIutils.getPropItem(gmx.quicklookY1 || 'y1', pArr, indexes) || 0,
+                x2: gmxAPIutils.getPropItem(gmx.quicklookX2 || 'x2', pArr, indexes) || 0,
+                y2: gmxAPIutils.getPropItem(gmx.quicklookY2 || 'y2', pArr, indexes) || 0,
+                x3: gmxAPIutils.getPropItem(gmx.quicklookX3 || 'x3', pArr, indexes) || 0,
+                y3: gmxAPIutils.getPropItem(gmx.quicklookY3 || 'y3', pArr, indexes) || 0,
+                x4: gmxAPIutils.getPropItem(gmx.quicklookX4 || 'x4', pArr, indexes) || 0,
+                y4: gmxAPIutils.getPropItem(gmx.quicklookY4 || 'y4', pArr, indexes) || 0
             },
             bounds = gmxAPIutils.bounds([
                 [points.x1, points.y1],
@@ -310,6 +311,10 @@ var gmxAPIutils = {
             properties[key] = arr[indexes[key]];
         }
         return properties;
+    },
+
+    getPropItem: function(key, arr, indexes) {
+        return key in indexes ? arr[indexes[key]] : '';
     },
 
     dec2rgba: function(i, a)	{				// convert decimal to rgb
