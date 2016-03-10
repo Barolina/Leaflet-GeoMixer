@@ -747,69 +747,111 @@ var gmxAPIutils = {
         ctx.stroke();
     },
 
-    polygonToCanvas: function(attr) {       // Polygons in canvas
+    getCoordsPixels: function(attr) {
+        var gmx = attr.gmx,
+            coords = attr.coords,
+            hiddenLines = attr.hiddenLines || [],
+            pixels = [],
+            hidden = [],
+            hash = {
+                gmx: gmx,
+                tpx: attr.tpx,
+                tpy: attr.tpy,
+                coords: null,
+                hiddenLines: null
+            };
+        for (var j = 0, len = coords.length; j < len; j++) {
+            var coords1 = coords[j],
+                hiddenLines1 = hiddenLines[j] || [],
+                pixels1 = [], hidden1 = [];
+            for (var j1 = 0, len1 = coords1.length; j1 < len1; j1++) {
+                hash.coords = coords1[j1];
+                hash.hiddenLines = hiddenLines1[j1] || [];
+                var res = gmxAPIutils.getRingPixels(hash);
+                pixels1.push(res.coords);
+                hidden1.push(res.hidden);
+            }
+            pixels.push(pixels1);
+            hidden.push(hidden1);
+        }
+        return {coords: pixels, hidden: hidden, z: gmx.currentZoom};
+    },
+
+    getRingPixels: function(attr) {
         if (attr.coords.length === 0) { return null; }
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
-            flagPixels = attr.flagPixels || false,
-            hiddenLines = attr.hiddenLines || [],
             coords = attr.coords,
-            len = coords.length,
-            ctx = attr.ctx,
+            hiddenLines = attr.hiddenLines || [],
             px = attr.tpx,
             py = attr.tpy,
             cnt = 0, cntHide = 0,
             lastX = null, lastY = null,
             pixels = [], hidden = [];
-
-        ctx.beginPath();
-        for (var i = 0; i < len; i++) {
+        for (var i = 0, len = coords.length; i < len; i++) {
             var lineIsOnEdge = false;
             if (i === hiddenLines[cntHide]) {
                 lineIsOnEdge = true;
                 cntHide++;
             }
-            var p1 = [coords[i][0], coords[i][1]];
-            if (!flagPixels) { p1 = [p1[0] * mInPixel, p1[1] * mInPixel]; }
+            var p1 = [coords[i][0] * mInPixel, coords[i][1] * mInPixel];
             var p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
 
             if (lastX !== p2[0] || lastY !== p2[1]) {
                 lastX = p2[0]; lastY = p2[1];
-                ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](p2[0], p2[1]);
-                if (!flagPixels) {
-                    //pixels.push([L.Util.formatNum(p1[0], 2), L.Util.formatNum(p1[1], 2)]);
-                    pixels.push([p1[0], p1[1]]);
-                    if (lineIsOnEdge) { hidden.push(cnt); }
-                }
+                pixels.push([p1[0], p1[1]]);
+                if (lineIsOnEdge) { hidden.push(cnt); }
+                cnt++;
+            }
+        }
+        return {coords: pixels, hidden: hidden};
+    },
+
+    polygonToCanvas: function(attr) {       // Polygons in canvas
+        if (attr.coords.length === 0) { return null; }
+        var hiddenLines = attr.hiddenLines || [],
+            coords = attr.coords,
+            ctx = attr.ctx,
+            px = attr.tpx,
+            py = attr.tpy,
+            cnt = 0, cntHide = 0,
+            lastX = null, lastY = null;
+
+        ctx.beginPath();
+        for (var i = 0, len = coords.length; i < len; i++) {
+            var x = Math.round(coords[i][0] - px),
+                y = Math.round(py - coords[i][1]),
+                lineIsOnEdge = false;
+
+            if (i === hiddenLines[cntHide]) {
+                lineIsOnEdge = true;
+                cntHide++;
+            }
+
+            if (lastX !== x || lastY !== y) {
+                ctx[(lineIsOnEdge ? 'moveTo' : 'lineTo')](x, y);
+                lastX = x; lastY = y;
                 cnt++;
             }
         }
         if (cnt === 1) { ctx.lineTo(lastX + 1, lastY); }
         ctx.stroke();
-        return flagPixels ? null : {coords: pixels, hidden: hidden};
     },
 
     polygonToCanvasFill: function(attr) {     // Polygon fill
         if (attr.coords.length < 3) { return; }
-        var gmx = attr.gmx,
-            mInPixel = gmx.mInPixel,
-            flagPixels = attr.flagPixels || false,
-            coords = attr.coords,
-            len = coords.length,
+        var coords = attr.coords,
             px = attr.tpx,
             py = attr.tpy,
             ctx = attr.ctx;
 
         ctx.lineWidth = 0;
-        var p1 = flagPixels ? coords[0] : [coords[0][0] * mInPixel, coords[0][1] * mInPixel],
-            p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
-        ctx.moveTo(p2[0], p2[1]);
-        for (var i = 1; i < len; i++) {
-            p1 = flagPixels ? coords[i] : [coords[i][0] * mInPixel, coords[i][1] * mInPixel];
-            p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
-            ctx.lineTo(p2[0], p2[1]);
+        ctx.moveTo(Math.round(coords[0][0] - px), Math.round(py - coords[0][1]));
+        for (var i = 1, len = coords.length; i < len; i++) {
+            ctx.lineTo(Math.round(coords[i][0] - px), Math.round(py - coords[i][1]));
         }
     },
+
     isPatternNode: function(it) {
         return it instanceof HTMLCanvasElement || it instanceof HTMLImageElement;
     },
