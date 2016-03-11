@@ -60,41 +60,44 @@ var chkVersion = function (layer, callback) {
     };
 
     if (document.body && !gmxAPIutils.isPageHidden()) {
-        var hosts = getRequestParams(layer);
-        for (var hostName in hosts) {
-            var url = 'http://' + hostName + script,
-                layersStr = JSON.stringify(hosts[hostName]);
+        var hosts = getRequestParams(layer),
+            chkHost = function(hostName) {
+                var url = 'http://' + hostName + script,
+                    layersStr = JSON.stringify(hosts[hostName]);
 
-            if (lastLayersStr !== layersStr) {
-                lastLayersStr = layersStr;
-                if ('FormData' in window) {
-                    gmxAPIutils.request({
-                        url: url,
-                        async: true,
-                        headers: {
-                            'Content-type': 'application/x-www-form-urlencoded'
-                        },
-                        type: 'POST',
-                        params: 'WrapStyle=None&layers=' + encodeURIComponent(layersStr),
-                        withCredentials: true,
-                        callback: function(response) {
-                            processResponse(JSON.parse(response));
-                        },
-                        onError: function(response) {
-                            console.log('Error: LayerVersion ', response);
-                        }
+                if (lastLayersStr !== layersStr) {
+                    lastLayersStr = layersStr;
+                    if ('FormData' in window) {
+                        gmxAPIutils.request({
+                            url: url,
+                            async: true,
+                            headers: {
+                                'Content-type': 'application/x-www-form-urlencoded'
+                            },
+                            type: 'POST',
+                            params: 'WrapStyle=None&layers=' + encodeURIComponent(layersStr),
+                            withCredentials: true,
+                            callback: function(response) {
+                                processResponse(JSON.parse(response));
+                            },
+                            onError: function(response) {
+                                console.log('Error: LayerVersion ', response);
+                            }
+                        });
+                    } else {
+                        gmxAPIutils.sendCrossDomainPostRequest(url, {
+                            WrapStyle: 'message',
+                            layers: layersStr
+                        }, processResponse);
+                    }
+                    var timeStamp = Date.now();
+                    hosts[hostName].forEach(function(it) {
+                        if (layers[it.Name]) { layers[it.Name]._gmx._stampVersionRequest = timeStamp; }
                     });
-                } else {
-                    gmxAPIutils.sendCrossDomainPostRequest(url, {
-                        WrapStyle: 'message',
-                        layers: layersStr
-                    }, processResponse);
                 }
-                var timeStamp = Date.now();
-                hosts[hostName].forEach(function(it) {
-                    if (layers[it.Name]) { layers[it.Name]._gmx._stampVersionRequest = timeStamp; }
-                });
-            }
+            };
+        for (var hostName in hosts) {
+            chkHost(hostName);
         }
     }
 };
