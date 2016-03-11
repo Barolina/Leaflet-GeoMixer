@@ -184,14 +184,6 @@ var DataManager = L.Class.extend({
         }
         L.setOptions(this, options);
 
-        var arr = this.options.ZeroDate.split('.'),
-            zn = new Date(
-                (arr.length > 2 ? arr[2] : 2008),
-                (arr.length > 1 ? arr[1] - 1 : 0),
-                (arr.length > 0 ? arr[0] : 1)
-            );
-        this.dateZero = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);
-        this.ZeroUT = this.dateZero.getTime() / 1000;
         this._isTemporalLayer = this.options.Temporal;
 
         var tileAttributes = L.gmxUtil.getTileAttributes(this.options);
@@ -925,24 +917,39 @@ var DataManager = L.Class.extend({
     initTilesTree: function() {
         var tiles = this.options.TemporalTiles || [],
             vers = this.options.TemporalVers || [],
+            smin = Number.MAX_VALUE,
+            periods = this.options.TemporalPeriods,
+            maxPeriod = periods[periods.length - 1],
             newTiles = {};
 
+        var arr = this.options.ZeroDate.split('.'),
+            zn = new Date(
+                (arr.length > 2 ? arr[2] : 2008),
+                (arr.length > 1 ? arr[1] - 1 : 0),
+                (arr.length > 0 ? arr[0] : 1)
+            );
+        this.dateZero = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);
+
         for (var i = 0, len = tiles.length; i < len; i++) {
-            var tileInfo = tiles[i];
+            var tileInfo = tiles[i],
+                s = Number(tileInfo[1]),
+                d = Number(tileInfo[0]);
             this._addVectorTile(newTiles, {
                 x: Number(tileInfo[2]),
                 y: Number(tileInfo[3]),
                 z: Number(tileInfo[4]),
                 v: Number(vers[i]),
-                s: Number(tileInfo[1]),
-                d: Number(tileInfo[0]),
+                s: s,
+                d: d,
                 dateZero: this.dateZero
             });
+            if (d === maxPeriod) {
+                smin = Math.min(smin, s);
+            }
         }
         this._tiles = newTiles;
 
-        this._tilesTree = new TilesTree(this.options.TemporalPeriods, this.ZeroUT);
-        this._tilesTree.initFromTiles(this._tiles);
+        this._tilesTree = L.gmx.tilesTree(this._tiles, periods, this.dateZero.getTime() / 1000, smin);
         if (this.processingTile) {
             this._tiles[this.processingTile.vectorTileKey] = {
                 tile: this.processingTile

@@ -1,77 +1,67 @@
+(function() {
 //tree for fast tiles selection inside temporal interval
-var TilesTree = function(periods, dateZero) {
+var TilesTree = function(tiles, periods, zeroUT, smin) {
     var _rootNodes = [];
-    this.initFromTiles = function(tiles) {
-        var addTile = function (node, tile, key) {
-            var d = node.d;
-            if (tile.d === periods[d]) {
-                node.count++;
-                node.tiles.push(key);
-                node.tileBounds.push(tile.bounds);
-                return;
-            }
 
-            var childrenCount = periods[d] / periods[d - 1];
-
-            if (!('children' in node)) {
-                node.children = new Array(childrenCount);
-            }
-
-            var sChild = Math.floor(tile.s * tile.d / periods[d - 1]);
-            var ds = sChild - node.s * childrenCount;
-
-            if (!node.children[ds]) {
-                node.children[ds] = {
-                    d: d - 1,
-                    s: sChild,
-                    t1: sChild * periods[d - 1] * gmxAPIutils.oneDay + dateZero,
-                    t2: (sChild + 1) * periods[d - 1] * gmxAPIutils.oneDay + dateZero,
-                    count: 0,
-                    tiles: [],
-                    tileBounds: []
-                };
-            }
-
-            addTile(node.children[ds], tile, key);
-        };
-
-        var smin = Number.MAX_VALUE,
-            dmax = periods.length - 1,
-            key,
-            t;
-
-        for (key in tiles) {
-            t = tiles[key].tile;
-            if (t.d === periods[dmax]) {
-                smin = Math.min(smin, t.s);
-            }
+    var addTile = function (node, tile, key) {
+        var d = node.d;
+        if (tile.d === periods[d]) {
+            node.count++;
+            node.tiles.push(key);
+            node.tileBounds.push(tile.bounds);
+            return;
         }
 
-        _rootNodes = [];
+        var pd = periods[d - 1],
+            childrenCount = periods[d] / pd;
 
-        for (key in tiles) {
-            t = tiles[key].tile;
+        if (!('children' in node)) {
+            node.children = new Array(childrenCount);
+        }
 
-            if (t.d < 0) {
-                continue;
-            }
+        var sChild = Math.floor(tile.s * tile.d / pd),
+            ds = sChild - node.s * childrenCount;
 
-            var ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
-                cs = ds + smin;
-
-            _rootNodes[ds] = _rootNodes[ds] || {
-                d: dmax,
-                s: cs,
-                t1: cs * periods[dmax] * gmxAPIutils.oneDay + dateZero,
-                t2: (cs + 1) * periods[dmax] * gmxAPIutils.oneDay + dateZero,
+        if (!node.children[ds]) {
+            var pdOneDay = pd * gmxAPIutils.oneDay,
+                t1 = sChild * pdOneDay + zeroUT;
+            node.children[ds] = {
+                d: d - 1,
+                s: sChild,
+                t1: t1,
+                t2: t1 + pdOneDay,
                 count: 0,
                 tiles: [],
                 tileBounds: []
             };
-
-            addTile(_rootNodes[ds], t, key);
         }
+
+        addTile(node.children[ds], tile, key);
     };
+
+    var dmax = periods.length - 1,
+        dmaxOneDay = periods[dmax] * gmxAPIutils.oneDay;
+    for (var key in tiles) {
+        var t = tiles[key].tile;
+        if (t.d < 0) {
+            continue;
+        }
+
+        var ds = Math.floor(t.s * t.d / periods[dmax]) - smin,
+            cs = ds + smin;
+
+        _rootNodes[ds] = _rootNodes[ds] || {
+            d: dmax,
+            s: cs,
+            t1: cs * dmaxOneDay + zeroUT,
+            t2: (cs + 1) * dmaxOneDay + zeroUT,
+            count: 0,
+            tiles: [],
+            tileBounds: []
+        };
+
+        addTile(_rootNodes[ds], t, key);
+    }
 
     //options: bounds (in mercator projection)
     this.selectTiles = function(t1, t2, options) {
@@ -220,3 +210,7 @@ var TilesTree = function(periods, dateZero) {
         return null;
     };
 };
+L.gmx.tilesTree = function(tiles, periods, zeroUT, smin) {
+    return new TilesTree(tiles, periods, zeroUT, smin);
+};
+})();

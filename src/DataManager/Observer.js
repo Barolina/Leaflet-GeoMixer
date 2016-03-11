@@ -252,3 +252,6 @@ var Observer = L.Class.extend({
         return this;
     }
 });
+L.gmx.observer = function(options) {
+    return new Observer(options);
+};
