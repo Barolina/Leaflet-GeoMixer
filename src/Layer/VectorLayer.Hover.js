@@ -45,7 +45,7 @@ L.gmx.VectorLayer.include({
                 marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
                 type = geom.type,
                 chktype = type,
-                hiddenLines = dataOption.hiddenLines,
+                hiddenLines = dataOption.hiddenLines || [],
                 boundsArr = dataOption.boundsArr,
                 coords = geom.coordinates,
                 ph = {
@@ -76,7 +76,7 @@ L.gmx.VectorLayer.include({
                 var flag = false;
                 for (j = 0, len = coords.length; j < len; j++) {
                     ph.coords = coords[j];
-                    ph.hidden = hiddenLines[j];
+                    ph.hidden = hiddenLines ? hiddenLines[j] : null;
                     ph.boundsArr = boundsArr[j];
                     if (gmxAPIutils.isPointInLines(ph)) {
                         flag = true;

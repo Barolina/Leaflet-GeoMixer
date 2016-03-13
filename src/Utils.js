@@ -226,6 +226,35 @@ var gmxAPIutils = {
         };
     },
 
+    geoFlatten: function(geo) {  // get flatten geometry
+        var type = geo.type,
+            isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
+            isPolygon = type === 'POLYGON' || type === 'Polygon',
+            coords = geo.coordinates;
+
+        if (isLikePolygon) {
+            if (isPolygon) { coords = [coords]; }
+            for (var i = 0, len = coords.length; i < len; i++) {
+                for (var j = 0, len1 = coords[i].length; j < len1; j++) {
+                    coords[i][j] = gmxAPIutils.flattenRing(coords[i][j]);
+                }
+            }
+        }
+    },
+
+    flattenRing: function(arr) {
+        var len = arr.length,
+            cnt = 0,
+            CurArray = typeof Float32Array === 'function' ? Float64Array : Array,
+            res = new CurArray(2 * len);
+
+        for (var i = 0; i < len; i++) {
+            res[cnt++] = arr[i][0];
+            res[cnt++] = arr[i][1];
+        }
+        return res;
+    },
+
     /** Check rectangle type by coordinates
      * @memberof L.gmxUtil
      * @param {coordinates} coordinates - geoJSON coordinates data format
@@ -753,6 +782,7 @@ var gmxAPIutils = {
             hiddenLines = attr.hiddenLines || [],
             pixels = [],
             hidden = [],
+            hiddenFlag = false,
             hash = {
                 gmx: gmx,
                 tpx: attr.tpx,
@@ -770,11 +800,14 @@ var gmxAPIutils = {
                 var res = gmxAPIutils.getRingPixels(hash);
                 pixels1.push(res.coords);
                 hidden1.push(res.hidden);
+                if (res.hidden) {
+                    hiddenFlag = true;
+                }
             }
             pixels.push(pixels1);
             hidden.push(hidden1);
         }
-        return {coords: pixels, hidden: hidden, z: gmx.currentZoom};
+        return {coords: pixels, hidden: hiddenFlag ? hidden : null, z: gmx.currentZoom};
     },
 
     getRingPixels: function(attr) {
@@ -782,7 +815,7 @@ var gmxAPIutils = {
         var gmx = attr.gmx,
             mInPixel = gmx.mInPixel,
             coords = attr.coords,
-            hiddenLines = attr.hiddenLines || [],
+            hiddenLines = attr.hiddenLines || null,
             px = attr.tpx,
             py = attr.tpy,
             cnt = 0, cntHide = 0,
@@ -790,7 +823,7 @@ var gmxAPIutils = {
             pixels = [], hidden = [];
         for (var i = 0, len = coords.length; i < len; i++) {
             var lineIsOnEdge = false;
-            if (i === hiddenLines[cntHide]) {
+            if (hiddenLines && i === hiddenLines[cntHide]) {
                 lineIsOnEdge = true;
                 cntHide++;
             }
@@ -804,12 +837,12 @@ var gmxAPIutils = {
                 cnt++;
             }
         }
-        return {coords: pixels, hidden: hidden};
+        return {coords: pixels, hidden: hidden.length ? hidden : null};
     },
 
     polygonToCanvas: function(attr) {       // Polygons in canvas
         if (attr.coords.length === 0) { return null; }
-        var hiddenLines = attr.hiddenLines || [],
+        var hiddenLines = attr.hiddenLines || null,
             coords = attr.coords,
             ctx = attr.ctx,
             px = attr.tpx,
@@ -823,7 +856,7 @@ var gmxAPIutils = {
                 y = Math.round(py - coords[i][1]),
                 lineIsOnEdge = false;
 
-            if (i === hiddenLines[cntHide]) {
+            if (hiddenLines && i === hiddenLines[cntHide]) {
                 lineIsOnEdge = true;
                 cntHide++;
             }
@@ -2219,9 +2252,16 @@ gmxAPIutils.Bounds.prototype = {
         return this.extendArray([[bounds.min.x, bounds.min.y], [bounds.max.x, bounds.max.y]]);
     },
     extendArray: function(arr) {
-        if (!arr) { return this; }
-        for (var i = 0, len = arr.length; i < len; i++) {
-            this.extend(arr[i][0], arr[i][1]);
+        if (!arr || !arr.length) { return this; }
+        var i, len;
+        if (typeof arr[0] === 'number') {
+            for (i = 0, len = arr.length; i < len; i += 2) {
+                this.extend(arr[i], arr[i + 1]);
+            }
+        } else {
+            for (i = 0, len = arr.length; i < len; i++) {
+                this.extend(arr[i][0], arr[i][1]);
+            }
         }
         return this;
     },

@@ -1,14 +1,34 @@
 (function() {
 //tree for fast tiles selection inside temporal interval
-var TilesTree = function(tiles, periods, zeroUT, smin) {
-    var _rootNodes = [];
+//  options:
+//      TemporalTiles: tilePoints array
+//      TemporalVers: tiles version array
+//      TemporalPeriods: periods
+//      ZeroDate: start Date
+var TilesTree = function(options) {
+    var _rootNodes = [],
+        tiles = options.TemporalTiles || [],
+        vers = options.TemporalVers || [],
+        periods = options.TemporalPeriods || [],
+        maxPeriod = periods[periods.length - 1],
+        smin = Number.MAX_VALUE,
+        arr = options.ZeroDate.split('.'),
+        zn = new Date(
+            (arr.length > 2 ? arr[2] : 2008),
+            (arr.length > 1 ? arr[1] - 1 : 0),
+            (arr.length > 0 ? arr[0] : 1)
+        ),
+        dateZero = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000),
+        zeroUT = dateZero.getTime() / 1000;
+
+    this.dateZero = dateZero;
 
     var addTile = function (node, tile, key) {
         var d = node.d;
         if (tile.d === periods[d]) {
             node.count++;
             node.tiles.push(key);
-            node.tileBounds.push(tile.bounds);
+            node.tileBounds.push(gmxAPIutils.getTileBounds(tile.x, tile.y, tile.z));
             return;
         }
 
@@ -40,9 +60,28 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
     };
 
     var dmax = periods.length - 1,
-        dmaxOneDay = periods[dmax] * gmxAPIutils.oneDay;
-    for (var key in tiles) {
-        var t = tiles[key].tile;
+        dmaxOneDay = periods[dmax] * gmxAPIutils.oneDay,
+        i, len;
+
+    for (i = 0, len = tiles.length; i < len; i++) {
+        arr = tiles[i];
+        var s = Number(arr[1]),
+            d = Number(arr[0]);
+
+        if (d === maxPeriod) {
+            smin = Math.min(smin, s);
+        }
+    }
+    for (i = 0, len = tiles.length; i < len; i++) {
+        arr = tiles[i];
+        var t = {
+            x: Number(arr[2]),
+            y: Number(arr[3]),
+            z: Number(arr[4]),
+            v: Number(vers[i]),
+            s: Number(arr[1]),
+            d: Number(arr[0])
+        };
         if (t.d < 0) {
             continue;
         }
@@ -59,16 +98,16 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
             tiles: [],
             tileBounds: []
         };
+        var key = VectorTile.createTileKey(t);
 
         addTile(_rootNodes[ds], t, key);
     }
+    tiles = null;
 
     //options: bounds (in mercator projection)
     this.selectTiles = function(t1, t2, options) {
 
         options = options || {};
-        //options.minLevel = isNaN(options.minLevel) ? 0   : options.minLevel;
-        //options.maxLevel = isNaN(options.maxLevel) ? 1e5 : options.maxLevel;
 
         var t1Val = t1.valueOf() / 1000,
             t2Val = t2.valueOf() / 1000;
@@ -91,8 +130,6 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
 
         var maxLevel = Math.min(periods.length - 1, minLevel + Number(dateIntervalLength > periods[minLevel]));
 
-        // console.log(minLevel, maxLevel);
-
         var getCountOfIntersected = function(tileBounds, bounds) {
             var count = 0;
             for (var t = 0; t < tileBounds.length; t++) {
@@ -107,15 +144,11 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
         // --------------------
         var selectTilesForNode = function(node, t1, t2) {
             if (t1 >= node.t2 || t2 <= node.t1) {
-                // console.log(node, 'out');
                 return {count: 0, tiles: [], nodes: []};
             }
 
             if (node.d === minLevel) {
                 var count = options.bounds ? getCountOfIntersected(node.tileBounds, options.bounds) : node.count;
-
-                // console.log(node, 'minLevel', count);
-
                 return {
                     tiles: node.tiles,
                     count: count,
@@ -127,7 +160,6 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
                 childrenRes = [],
                 ds;
 
-            // console.log(node, 'traversing children');
             for (ds = 0; ds < node.children.length; ds++) {
                 if (node.children[ds]) {
                     childrenRes[ds] = selectTilesForNode(node.children[ds], Math.max(t1, node.t1), Math.min(t2, node.t2));
@@ -138,8 +170,6 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
             }
 
             var intersectCount = options.bounds ? getCountOfIntersected(node.tileBounds, options.bounds) : node.count;
-
-            // console.log(node, childrenCount, intersectCount);
 
             if (node.d > maxLevel || childrenCount < intersectCount) {
                 var resTilesArr = [],
@@ -164,12 +194,12 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
         };
 
         var resTiles = [];
-        var resNodes = [];
         for (var ds = 0; ds < _rootNodes.length; ds++) {
             if (_rootNodes[ds]) {
                 var nodeSelection = selectTilesForNode(_rootNodes[ds], t1Val, t2Val);
-                resTiles = resTiles.concat(nodeSelection.tiles);
-                resNodes = resNodes.concat(nodeSelection.nodes);
+                if (nodeSelection.tiles.length) {
+                    resTiles = resTiles.concat(nodeSelection.tiles);
+                }
             }
         }
 
@@ -178,7 +208,7 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
             resTilesHash[resTiles[t]] = true;
         }
 
-        return {tiles: resTilesHash, nodes: resNodes};
+        return {tiles: resTilesHash};
     };
 
     this.getNode = function(d, s) {
@@ -210,7 +240,7 @@ var TilesTree = function(tiles, periods, zeroUT, smin) {
         return null;
     };
 };
-L.gmx.tilesTree = function(tiles, periods, zeroUT, smin) {
-    return new TilesTree(tiles, periods, zeroUT, smin);
+L.gmx.tilesTree = function(options) {
+    return new TilesTree(options);
 };
 })();

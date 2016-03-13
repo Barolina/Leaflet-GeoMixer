@@ -155,13 +155,13 @@ L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
                     coords: coords,
                     tpx: options.tpx,
                     tpy: options.tpy,
-                    hiddenLines: dataOption.hiddenLines || []
+                    hiddenLines: hiddenLines
                 });
             }
 
             var coordsToCanvas = function(func, flagFill) {
                 coords = pixelsMap.coords;
-                hiddenLines = pixelsMap.hidden;
+                hiddenLines = pixelsMap.hidden || [];
                 dattr.flagPixels = flagPixels;
                 for (j = 0, len = coords.length; j < len; j++) {
                     var coords1 = coords[j];

@@ -339,11 +339,11 @@ var DataManager = L.Class.extend({
         var _this = this,
             putData = function(tile) {
                 var data = tile.data;
-                for (var j = 0, len1 = data.length; j < len1; j++) {
-                    var dataOption = tile.dataOptions[j];
+                for (var i = 0, len = data.length; i < len; i++) {
+                    var dataOption = tile.dataOptions[i];
                     if (!observer.intersects(dataOption.bounds)) { continue; }
 
-                    var it = data[j],
+                    var it = data[i],
                         id = it[0],
                         item = _this.getItem(id);
 
@@ -358,21 +358,15 @@ var DataManager = L.Class.extend({
                         }
                     }
 
-                    if (isFiltered) { continue; }
-
-                    var type = geom.type;
-
-                    //TODO: remove from data manager
-                    if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
-                        tile.calcEdgeLines(j);
+                    if (!isFiltered) {
+                        resItems.push({
+                            id: id,
+                            properties: it,
+                            item: item,
+                            dataOption: dataOption,
+                            tileKey: tile.vectorTileKey
+                        });
                     }
-                    resItems.push({
-                        id: id,
-                        properties: it,
-                        item: item,
-                        dataOption: dataOption,
-                        tileKey: tile.vectorTileKey
-                    });
                 }
             };
         var activeTileKeys =  this._getActiveTileKeys();
@@ -397,10 +391,6 @@ var DataManager = L.Class.extend({
                 geom = it[geomIndex],
                 id = it[0],
                 item = this._items[id];
-            // TODO: old properties null = ''
-            for (var j = 0, len1 = it.length; j < len1; j++) {
-                if (it[j] === null) { it[j] = ''; }
-            }
             if (item) {
                 if (!item.processing) {
                     item.properties = it;
@@ -576,17 +566,19 @@ var DataManager = L.Class.extend({
             members = [];
         for (var key in fromTiles) {
             if (this._tiles[key]) {
-                var tile = this._tiles[key].tile,
-                    objIndex = fromTiles[key],
-                    props = tile.data[objIndex],
-                    dataOption = tile.dataOptions[objIndex],
-                    bbox = dataOption.bounds;
+                var tile = this._tiles[key].tile;
+                if (tile.data) {
+                    var objIndex = fromTiles[key],
+                        props = tile.data[objIndex],
+                        dataOption = tile.dataOptions[objIndex],
+                        bbox = dataOption.bounds;
 
-                members.push({
-                    geo: props[props.length - 1],
-                    width: bbox.max.x - bbox.min.x,
-                    dataOption: dataOption
-                });
+                    members.push({
+                        geo: props[props.length - 1],
+                        width: bbox.max.x - bbox.min.x,
+                        dataOption: dataOption
+                    });
+                }
 
             }
         }
@@ -599,7 +591,7 @@ var DataManager = L.Class.extend({
         var fromTiles = this._items[id] ? this._items[id].options.fromTiles : {},
             geomItems = [];
         for (var key in fromTiles) {
-            if (this._tiles[key]) {
+            if (this._tiles[key] && this._tiles[key].tile.data) {
                 var tileData = this._tiles[key].tile.data,
                     props = tileData[fromTiles[key]];
 
@@ -719,7 +711,7 @@ var DataManager = L.Class.extend({
 
         for (key in newTilesList) {
             if (!oldTilesList[key]) {
-                this._observerTileLoader.addTile(this._tiles[key].tile);
+                this._observerTileLoader.addTile(this._getVectorTile(key, true).tile);
                 checkSubscription(key);
             }
         }
@@ -915,41 +907,9 @@ var DataManager = L.Class.extend({
     },
 
     initTilesTree: function() {
-        var tiles = this.options.TemporalTiles || [],
-            vers = this.options.TemporalVers || [],
-            smin = Number.MAX_VALUE,
-            periods = this.options.TemporalPeriods,
-            maxPeriod = periods[periods.length - 1],
-            newTiles = {};
-
-        var arr = this.options.ZeroDate.split('.'),
-            zn = new Date(
-                (arr.length > 2 ? arr[2] : 2008),
-                (arr.length > 1 ? arr[1] - 1 : 0),
-                (arr.length > 0 ? arr[0] : 1)
-            );
-        this.dateZero = new Date(zn.getTime()  - zn.getTimezoneOffset() * 60000);
-
-        for (var i = 0, len = tiles.length; i < len; i++) {
-            var tileInfo = tiles[i],
-                s = Number(tileInfo[1]),
-                d = Number(tileInfo[0]);
-            this._addVectorTile(newTiles, {
-                x: Number(tileInfo[2]),
-                y: Number(tileInfo[3]),
-                z: Number(tileInfo[4]),
-                v: Number(vers[i]),
-                s: s,
-                d: d,
-                dateZero: this.dateZero
-            });
-            if (d === maxPeriod) {
-                smin = Math.min(smin, s);
-            }
-        }
-        this._tiles = newTiles;
-
-        this._tilesTree = L.gmx.tilesTree(this._tiles, periods, this.dateZero.getTime() / 1000, smin);
+        this._tilesTree = L.gmx.tilesTree(this.options);
+        this.options.TemporalTiles = null;
+        this.dateZero = this._tilesTree.dateZero;
         if (this.processingTile) {
             this._tiles[this.processingTile.vectorTileKey] = {
                 tile: this.processingTile
@@ -957,13 +917,21 @@ var DataManager = L.Class.extend({
         }
     },
 
-    _addVectorTile: function(tilesHash, options) {
-        var tileKey = VectorTile.makeTileKey(options.x, options.y, options.z, options.v, options.s, options.d);
+    _getVectorTile: function(vKey, createFlag) {
+        if (!this._tiles[vKey] && createFlag) {
+            var info = VectorTile.parseTileKey(vKey);
+            info.dateZero = this.dateZero;
+            this._addVectorTile(info);
+        }
+        return this._tiles[vKey];
+    },
 
-        tilesHash[tileKey] = this._tiles[tileKey] || {
-            tile: new VectorTile(this._vectorTileDataProvider, options)
-        };
-        return tileKey;
+    _addVectorTile: function(info) {
+        var tile = new VectorTile(this._vectorTileDataProvider, info),
+            vKey = tile.vectorTileKey;
+
+        this._tiles[vKey] = {tile: tile};
+        return vKey;
     },
 
     _getGeneralizedTileKeys: function(vTilePoint) {
@@ -985,7 +953,7 @@ var DataManager = L.Class.extend({
         return keys;
     },
 
-    initTilesList: function() {
+    initTilesList: function() {         // non temporal layers
         var newActiveTileKeys = {};
         if (this.options.tiles) {
             var arr = this.options.tiles || [],
@@ -995,7 +963,7 @@ var DataManager = L.Class.extend({
                 gKey, gPoint;
 
             for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
-                var tPoint = {
+                var info = {
                     x: Number(arr[i]),
                     y: Number(arr[i + 1]),
                     z: Number(arr[i + 2]),
@@ -1003,9 +971,10 @@ var DataManager = L.Class.extend({
                     s: -1,
                     d: -1
                 };
-                newActiveTileKeys[this._addVectorTile(newTiles, tPoint)] = true;
+
+                newActiveTileKeys[this._addVectorTile(info)] = true;
                 if (generalizedKeys) {
-                    var gKeys = this._getGeneralizedTileKeys(tPoint);
+                    var gKeys = this._getGeneralizedTileKeys(info);
                     for (gKey in gKeys) {
                         gPoint = gKeys[gKey];
                         if (generalizedKeys[gKey]) {
@@ -1021,7 +990,7 @@ var DataManager = L.Class.extend({
                     gPoint = generalizedKeys[gKey];
                     var tileKey = VectorTile.makeTileKey(gPoint.x, gPoint.y, gPoint.z, gPoint.v, -1, -1);
                     if (!newTiles[tileKey]) {
-                        newActiveTileKeys[this._addVectorTile(newTiles, gPoint)] = true;
+                        newActiveTileKeys[this._addVectorTile(gPoint)] = true;
                     }
                 }
             }
