@@ -415,7 +415,7 @@ ScreenVectorTile.prototype = {
     },
 
     _getVisibleItems: function (geoItems) {
-        if (!geoItems.length) {
+        if (geoItems.length < 2) {
             return geoItems;
         }
         if (!gmxAPIutils._tileCanvas) {
