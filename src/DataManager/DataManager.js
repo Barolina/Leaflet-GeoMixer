@@ -663,7 +663,7 @@ var DataManager = L.Class.extend({
 
         var loadingDefs = [];
         for (var key in tileKeys) {
-            var tile = this._tiles[key].tile;
+            var tile = this._getVectorTile(key, true).tile;
 
             if (tile.state !== 'notLoaded') {
                 continue;
@@ -685,7 +685,7 @@ var DataManager = L.Class.extend({
         if (this._tileFilteringHook) {
             var filteredTilesList = {};
             for (var tk in newTilesList) {
-                if (this._tileFilteringHook(this._tiles[tk].tile)) {
+                if (this._tileFilteringHook(this._getVectorTile(tk, true).tile)) {
                     filteredTilesList[tk] = true;
                 }
             }
