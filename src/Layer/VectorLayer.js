@@ -335,7 +335,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         ph.properties.isGeneralized = this.options.isGeneralized;
         gmx.dataManager = new DataManager(ph.properties);
-        ph.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
+        if ('TemporalTiles' in gmx.rawProperties) {
+            ph.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
+        }
         gmx.styleManager = new StyleManager(gmx);
         this.options.minZoom = gmx.styleManager.minZoom;
         this.options.maxZoom = gmx.styleManager.maxZoom;
