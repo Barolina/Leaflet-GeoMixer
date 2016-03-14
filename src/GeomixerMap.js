@@ -40,7 +40,7 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     //load missing layer types
     var loaders = [];
     for (var type in missingLayerTypes) {
-        loaders.push(L.gmx._loadLayerClass(type).then(function (type) {
+        loaders.push(L.gmx._loadLayerClass(type).then(/*eslint-disable no-loop-func */function (type) {/*eslint-enable */
             for (var i = 0; i < missingLayerTypes[type].length; i++) {
                 var l = missingLayerTypes[type][i];
                 _this.addLayer(L.gmx.createLayer(l.info, l.options));

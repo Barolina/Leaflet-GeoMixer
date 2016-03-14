@@ -2489,8 +2489,8 @@ L.extend(L.gmxUtil, {
 
         iframe.style.display = 'none';
         iframe.setAttribute('id', id);
-        iframe.setAttribute('name', id);
-        iframe.src = 'javascript:true';
+        iframe.setAttribute('name', id);    /*eslint-disable no-script-url */
+        iframe.src = 'javascript:true';     /*eslint-enable */
         iframe.callbackName = uniqueId;
 
         var parsedURL = gmxAPIutils.parseUri(url);

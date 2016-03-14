@@ -10,7 +10,9 @@
         regexMath = /(floor\()/g;
 	var Parsers = {						// Парсеры
         functionFromExpression: function(s) {
+/*eslint-disable no-new-func*/
             return new Function(
+/*eslint-enable */
                 'props',
                 'indexes',
                 'return ' +
@@ -286,9 +288,11 @@
                 }
 				if (fieldValue === null) { return false; }
 				if (matchPattern !== null) { return matchPattern(fieldValue);
-				} else if ((op === '=') || (op === '==')) { return (fieldValue == referenceValue);
+/*eslint-disable eqeqeq */
+                } else if ((op === '=') || (op === '==')) { return (fieldValue == referenceValue);
 				} else if ((op === '!=') || (op === '<>')) { return (fieldValue != referenceValue);
-				} else {
+/*eslint-enable */
+                } else {
                     var f1, f2;
 					if (applyParser(referenceValue, numberLiteral).head === referenceValue.length) {
 						f1 = parseFloat(fieldValue);
