@@ -958,7 +958,6 @@ var DataManager = L.Class.extend({
         if (this.options.tiles) {
             var arr = this.options.tiles || [],
                 vers = this.options.tilesVers,
-                newTiles = {},
                 generalizedKeys = this.options.isGeneralized ? {} : null,
                 gKey;
 
