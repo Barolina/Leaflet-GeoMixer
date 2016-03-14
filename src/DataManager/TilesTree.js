@@ -28,7 +28,6 @@ var TilesTree = function(options) {
         if (tile.d === periods[d]) {
             node.count++;
             node.tiles.push(key);
-            node.tileBounds.push(gmxAPIutils.getTileBounds(tile.x, tile.y, tile.z));
             return;
         }
 
@@ -51,8 +50,7 @@ var TilesTree = function(options) {
                 t1: t1,
                 t2: t1 + pdOneDay,
                 count: 0,
-                tiles: [],
-                tileBounds: []
+                tiles: []
             };
         }
 
@@ -95,8 +93,7 @@ var TilesTree = function(options) {
             t1: cs * dmaxOneDay + zeroUT,
             t2: (cs + 1) * dmaxOneDay + zeroUT,
             count: 0,
-            tiles: [],
-            tileBounds: []
+            tiles: []
         };
         var key = VectorTile.createTileKey(t);
 
@@ -145,6 +142,12 @@ var TilesTree = function(options) {
         var selectTilesForNode = function(node, t1, t2) {
             if (t1 >= node.t2 || t2 <= node.t1) {
                 return {count: 0, tiles: [], nodes: []};
+            }
+
+            if (options.bounds && !node.tileBounds) {
+                node.tileBounds = node.tiles.map(function(it) {
+                    return VectorTile.boundsFromTileKey(it);
+                });
             }
 
             if (node.d === minLevel) {
