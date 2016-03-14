@@ -1091,6 +1091,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         L.extend(gmx, L.gmxUtil.getTileAttributes(prop));
         if (gmx.dataManager) {
             gmx.dataManager.setOptions(prop);
+            if ('TemporalTiles' in gmx.rawProperties) {
+                gmx.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
+            }
         }
         if ('ZIndexField' in prop) {
             if (prop.ZIndexField in gmx.tileAttributeIndexes) {

@@ -960,7 +960,7 @@ var DataManager = L.Class.extend({
                 vers = this.options.tilesVers,
                 newTiles = {},
                 generalizedKeys = this.options.isGeneralized ? {} : null,
-                gKey, gPoint;
+                gKey;
 
             for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
                 var info = {
@@ -972,11 +972,11 @@ var DataManager = L.Class.extend({
                     d: -1
                 };
 
-                newActiveTileKeys[this._addVectorTile(info)] = true;
+                newActiveTileKeys[this._getVectorTile(VectorTile.createTileKey(info), true).tile.vectorTileKey] = true;
                 if (generalizedKeys) {
                     var gKeys = this._getGeneralizedTileKeys(info);
                     for (gKey in gKeys) {
-                        gPoint = gKeys[gKey];
+                        var gPoint = gKeys[gKey];
                         if (generalizedKeys[gKey]) {
                             generalizedKeys[gKey].v = Math.max(gPoint.v, generalizedKeys[gKey].v);
                         } else {
@@ -987,14 +987,11 @@ var DataManager = L.Class.extend({
             }
             if (generalizedKeys) {
                 for (gKey in generalizedKeys) {
-                    gPoint = generalizedKeys[gKey];
-                    var tileKey = VectorTile.makeTileKey(gPoint.x, gPoint.y, gPoint.z, gPoint.v, -1, -1);
-                    if (!newTiles[tileKey]) {
-                        newActiveTileKeys[this._addVectorTile(gPoint)] = true;
-                    }
+                    newActiveTileKeys[
+                        this._getVectorTile(VectorTile.createTileKey(generalizedKeys[gKey]), true).tile.vectorTileKey
+                    ] = true;
                 }
             }
-            this._tiles = newTiles;
             if (this.processingTile) {
                 this._tiles[this.processingTile.vectorTileKey] = {
                     tile: this.processingTile

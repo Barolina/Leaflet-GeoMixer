@@ -160,10 +160,10 @@ L.gmx.VectorLayer.include({
                 gmx.geometry = layerDescription.geometry;
             }
             if (layerDescription.properties) {
-                gmx.dataManager.updateVersion(layerDescription);
                 L.extend(gmx.properties, layerDescription.properties);
                 gmx.rawProperties = gmx.properties;
                 this.fire('versionchange');
+                gmx.dataManager.updateVersion(layerDescription);
             }
         }
     }
