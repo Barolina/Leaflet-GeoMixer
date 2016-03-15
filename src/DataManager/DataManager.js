@@ -953,16 +953,17 @@ var DataManager = L.Class.extend({
         return keys;
     },
 
-    initTilesList: function() {         // non temporal layers
+    initTilesList: function() {         // For non temporal layers we create all Vector tiles
         var newActiveTileKeys = {};
         if (this.options.tiles) {
             var arr = this.options.tiles || [],
                 vers = this.options.tilesVers,
                 generalizedKeys = this.options.isGeneralized ? {} : null,
-                gKey;
+                newTiles = {},
+                gKey, tKey, info, tHash;
 
             for (var i = 0, cnt = 0, len = arr.length; i < len; i += 3, cnt++) {
-                var info = {
+                info = {
                     x: Number(arr[i]),
                     y: Number(arr[i + 1]),
                     z: Number(arr[i + 2]),
@@ -971,7 +972,10 @@ var DataManager = L.Class.extend({
                     d: -1
                 };
 
-                newActiveTileKeys[this._getVectorTile(VectorTile.createTileKey(info), true).tile.vectorTileKey] = true;
+                tHash = this._getVectorTile(VectorTile.createTileKey(info), true);
+                tKey = tHash.tile.vectorTileKey;
+                newTiles[tKey] = tHash;
+                newActiveTileKeys[tKey] = true;
                 if (generalizedKeys) {
                     var gKeys = this._getGeneralizedTileKeys(info);
                     for (gKey in gKeys) {
@@ -986,11 +990,16 @@ var DataManager = L.Class.extend({
             }
             if (generalizedKeys) {
                 for (gKey in generalizedKeys) {
-                    newActiveTileKeys[
-                        this._getVectorTile(VectorTile.createTileKey(generalizedKeys[gKey]), true).tile.vectorTileKey
-                    ] = true;
+                    info = generalizedKeys[gKey];
+                    tKey = VectorTile.createTileKey(info);
+                    if (!newTiles[tKey]) {
+                        if (!this._tiles[tKey]) { this._addVectorTile(info); }
+                        newTiles[tKey] = this._tiles[tKey];
+                        newActiveTileKeys[tKey] = true;
+                    }
                 }
             }
+            this._tiles = newTiles;
             if (this.processingTile) {
                 this._tiles[this.processingTile.vectorTileKey] = {
                     tile: this.processingTile
