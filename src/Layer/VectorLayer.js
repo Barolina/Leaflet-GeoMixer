@@ -335,9 +335,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         ph.properties.isGeneralized = this.options.isGeneralized;
         gmx.dataManager = new DataManager(ph.properties);
-        if ('TemporalTiles' in gmx.rawProperties) {
-            ph.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
-        }
+        // if ('TemporalTiles' in gmx.rawProperties) {
+            // ph.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
+        // }
         gmx.styleManager = new StyleManager(gmx);
         this.options.minZoom = gmx.styleManager.minZoom;
         this.options.maxZoom = gmx.styleManager.maxZoom;
@@ -1091,9 +1091,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         L.extend(gmx, L.gmxUtil.getTileAttributes(prop));
         if (gmx.dataManager) {
             gmx.dataManager.setOptions(prop);
-            if ('TemporalTiles' in gmx.rawProperties) {
-                gmx.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
-            }
+            // if ('TemporalTiles' in gmx.rawProperties) {
+                // gmx.properties.TemporalTiles = gmx.rawProperties.TemporalTiles = null;
+            // }
         }
         if ('ZIndexField' in prop) {
             if (prop.ZIndexField in gmx.tileAttributeIndexes) {
