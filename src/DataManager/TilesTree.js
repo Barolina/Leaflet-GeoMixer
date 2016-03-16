@@ -99,7 +99,7 @@ var TilesTree = function(options) {
 
         addTile(_rootNodes[ds], t, key);
     }
-    tiles = null;
+    tiles = vers = null;
 
     //options: bounds (in mercator projection)
     this.selectTiles = function(t1, t2, options) {
