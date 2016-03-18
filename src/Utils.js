@@ -1350,7 +1350,7 @@ var gmxAPIutils = {
             vectorSize = 2;
             p1 = [coords[0], coords[1]];
         }
-            
+
         for (var i = vectorSize, len = coords.length; i < len; i += vectorSize) {
             var p2 = vectorSize === 1 ? coords[i] : [coords[i], coords[i + 1]],
                 xmin = Math.min(p1[0], p2[0]),
@@ -1798,7 +1798,7 @@ var gmxAPIutils = {
             }
             return ret;
         } else if (geom.length) {
-            var latlngs = [];
+            var latlngs = [],
                 vectorSize = typeof geom[0] === 'number' ? 2 : 1;
 
             for (i = 0, len = geom.length; i < len; i += vectorSize) {
