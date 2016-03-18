@@ -173,7 +173,8 @@ var DataManager = L.Class.extend({
         TemporalVers: [],                   // temporal version array
         hostName: 'maps.kosmosnimki.ru',    // default hostName
         sessionKey: '',                     // session key
-        isGeneralized: false                // flag for use generalized tiles
+        isGeneralized: false,               // flag for use generalized tiles
+        isFlatten: false                    // flag for flatten geometry
     },
 
     setOptions: function(options) {
@@ -596,7 +597,7 @@ var DataManager = L.Class.extend({
                 var tileData = this._tiles[key].tile.data,
                     props = tileData[fromTiles[key]];
 
-                geomItems.push(props[props.length - 1]);
+                geomItems.push(gmxAPIutils.getUnFlattenGeo(props[props.length - 1]));
             }
         }
         return geomItems;
@@ -855,11 +856,11 @@ var DataManager = L.Class.extend({
 
     _getProcessingTile: function() {
         if (!this.processingTile) {
-        var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1;
+        var x = -0.5, y = -0.5, z = 0, v = 0, s = -1, d = -1, isFlatten = this.options.isFlatten;
 
             this.processingTile = new VectorTile({load: function(x, y, z, v, s, d, callback) {
                             callback([]);
-            }}, {x: x, y: y, z: z, v: v, s: s, d: d});
+            }}, {x: x, y: y, z: z, v: v, s: s, d: d, isFlatten: isFlatten});
 
             this.addTile(this.processingTile);
         }
@@ -931,6 +932,7 @@ var DataManager = L.Class.extend({
     },
 
     _addVectorTile: function(info) {
+        info.isFlatten = this.options.isFlatten;
         var tile = new VectorTile(this._vectorTileDataProvider, info),
             vKey = tile.vectorTileKey;
 

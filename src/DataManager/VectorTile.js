@@ -19,6 +19,7 @@ var VectorTile = function(dataProvider, options) {
     this.s = options.s || -1;
     this.d = options.d || -1;
     this.isGeneralized = options.isGeneralized;
+    this.isFlatten = options.isFlatten;
     this.bounds = gmxAPIutils.getTileBounds(this.x, this.y, this.z);
     this.gmxTilePoint = {x: this.x, y: this.y, z: this.z, s: this.s, d: this.d};
     this.vectorTileKey = VectorTile.makeTileKey(this.x, this.y, this.z, this.v, this.s, this.d);
@@ -101,7 +102,7 @@ VectorTile.prototype = {
         }
 
         var geo = it[len - 1],
-            needFlatten = false,
+            needFlatten = this.isFlatten,
             type = geo.type,
             isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
             isPolygon = type === 'POLYGON' || type === 'Polygon',

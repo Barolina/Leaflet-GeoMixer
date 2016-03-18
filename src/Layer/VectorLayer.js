@@ -5,6 +5,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         minZoom: 1,
         zIndexOffset: 2000000,
         isGeneralized: false,
+        isFlatten: false,
         useWebGL: false,
         clickable: true
     },
@@ -334,6 +335,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._updateProperties(ph.properties);
 
         ph.properties.isGeneralized = this.options.isGeneralized;
+        ph.properties.isFlatten = this.options.isFlatten;
         gmx.dataManager = new DataManager(ph.properties);
         gmx.styleManager = new StyleManager(gmx);
         this.options.minZoom = gmx.styleManager.minZoom;
@@ -1129,6 +1131,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             }
             if ('isGeneralized' in meta) {    // Set generalization
                 this.options.isGeneralized = meta.isGeneralized.Value !== 'false';
+            }
+            if ('isFlatten' in meta) {        // Set flatten geometry
+                this.options.isFlatten = meta.isFlatten.Value !== 'false';
             }
         }
 
