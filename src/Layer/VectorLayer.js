@@ -892,8 +892,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _zIndexOffsetCheck: function() {
         var gmx = this._gmx;
-        if (gmx.IsRasterCatalog && gmx.properties.fromType !== 'Raster') {
-            var zIndexOffset = this._map._zoom < gmx.minZoomRasters ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
+        if (gmx.properties.fromType !== 'Raster' && (gmx.IsRasterCatalog || gmx.Quicklook)) {
+            var minZoom = Math.max(gmx.IsRasterCatalog ? gmx.minZoomRasters : 0, gmx.Quicklook ? gmx.minZoomQuicklooks : 0);
+            var zIndexOffset = this._map._zoom < minZoom ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
             if (zIndexOffset !== this.options.zIndexOffset) {
                 this.setZIndexOffset(zIndexOffset);
             }
@@ -1149,7 +1150,20 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             }
         }
         if (prop.Quicklook) {
-            var template = gmx.Quicklook = prop.Quicklook;
+            var quicklookParams;
+            
+            //раньше это была просто строка с шаблоном квиклука, а теперь стало JSON'ом
+            if (prop.Quicklook[0] === '{') {
+                quicklookParams = JSON.parse(prop.Quicklook);
+            } else {
+                quicklookParams = {
+                    minZoom: gmx.minZoomRasters,
+                    template: prop.Quicklook
+                }
+            }
+
+            var template = gmx.Quicklook = quicklookParams.template;
+            gmx.minZoomQuicklooks = quicklookParams.minZoom;
             gmx.quicklookBGfunc = function(item) {
                 var url = template,
                     reg = /\[([^\]]+)\]/,
