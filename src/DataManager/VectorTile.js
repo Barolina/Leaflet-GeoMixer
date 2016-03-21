@@ -121,7 +121,7 @@ VectorTile.prototype = {
                     hiddenLines1 = [];
 
                 for (var j = 0, len1 = coords[i].length; j < len1; j++) {
-                    if (needFlatten) {
+                    if (needFlatten && typeof coords[i][j][0] !== 'number') {
                         coords[i][j] = gmxAPIutils.flattenRing(coords[i][j]);
                     }
                     var b = gmxAPIutils.bounds(coords[i][j]);

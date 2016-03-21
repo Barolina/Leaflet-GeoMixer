@@ -227,24 +227,31 @@ var gmxAPIutils = {
     },
 
     getUnFlattenGeo: function(geo) {  // get unFlatten geometry
-        var out = L.extend({}, geo),
-            type = out.type,
+        var type = geo.type,
             isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
-            isPolygon = type === 'POLYGON' || type === 'Polygon',
-            coords = out.coordinates;
+            coords = geo.coordinates,
+            coordsOut = coords;
 
         if (isLikePolygon) {
+            coordsOut = [];
+            var isPolygon = type === 'POLYGON' || type === 'Polygon';
             if (isPolygon) { coords = [coords]; }
             for (var i = 0, len = coords.length; i < len; i++) {
+                var ring = [];
                 for (var j = 0, len1 = coords[i].length; j < len1; j++) {
-                    coords[i][j] = gmxAPIutils.unFlattenRing(coords[i][j]);
+                    ring[j] = gmxAPIutils.unFlattenRing(coords[i][j]);
                 }
+                coordsOut.push(ring);
             }
+            if (isPolygon) { coordsOut = coordsOut[0]; }
         }
-        return out;
+        return {type: type, coordinates: coordsOut};
     },
 
     unFlattenRing: function(arr) {
+        if (typeof arr[0] !== 'number') {
+            return arr;
+        }
         var len = arr.length,
             cnt = 0,
             res = new Array(len / 2);
@@ -274,7 +281,7 @@ var gmxAPIutils = {
     flattenRing: function(arr) {
         var len = arr.length,
             cnt = 0,
-            CurArray = typeof Float32Array === 'function' ? Float64Array : Array,
+            CurArray = typeof Float64Array === 'function' ? Float64Array : Array,
             res = new CurArray(2 * len);
 
         for (var i = 0; i < len; i++) {
