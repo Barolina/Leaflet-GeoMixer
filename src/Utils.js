@@ -668,8 +668,34 @@ var gmxAPIutils = {
     },
     DEFAULT_REPLACEMENT_COLOR: 0xff00ff,
     isIE: function(v) {
-        return RegExp('msie' + (!isNaN(v) ? ('\\s' + v) : ''), 'i').test(navigator.userAgent || '');
+        return v === gmxAPIutils.getIEversion();
     },
+
+    getIEversion: function() {
+        var ua = navigator.userAgent || '',
+            msie = ua.indexOf('MSIE ');
+        if (msie > 0) {
+            // IE 10 or older => return version number
+            return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+        }
+
+        var trident = ua.indexOf('Trident/');
+        if (trident > 0) {
+            // IE 11 => return version number
+            var rv = ua.indexOf('rv:');
+            return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+        }
+
+        var edge = ua.indexOf('Edge/');
+        if (edge > 0) {
+            // Edge (IE 12+) => return version number
+            return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+        }
+
+        // other browser
+        return -1;
+    },
+
     replaceColor: function(img, color, fromData) {
         if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) { return img; }
         var canvas = document.createElement('canvas'),
@@ -2463,6 +2489,7 @@ L.extend(L.gmxUtil, {
     loaderStatus: function () {},
     isIE9: gmxAPIutils.isIE(9),
     isIE10: gmxAPIutils.isIE(10),
+    isIE11: gmxAPIutils.isIE(11),
     requestJSONP: gmxAPIutils.requestJSONP,
     request: gmxAPIutils.request,
     fromServerStyle: gmxAPIutils.fromServerStyle,

@@ -221,6 +221,9 @@ StyleManager.prototype = {
             opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {},
             _this = this;
 
+        if (L.gmxUtil.isIE11 && /\.svg$/.test(url)) {
+            opt = {};   // skip bug in IE11
+        }
         opt.layerID = this.gmx.layerID;
         ++this._needLoadIcons;
         L.gmx.imageLoader.unshift(url, opt).def.then(
