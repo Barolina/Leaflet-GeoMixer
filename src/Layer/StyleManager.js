@@ -232,8 +232,16 @@ StyleManager.prototype = {
                 if (pt.fillIconUrl) {
                     pt.imagePattern = it;
                 } else {
-                    pt.sx = it.width;
-                    pt.sy = it.height;
+                    var w = it.width,
+                        h = it.height;
+                    if (L.gmxUtil.isIE11 && /\.svg$/.test(url)) {   // skip bug in IE11
+                        document.body.appendChild(it);
+                        w = it.offsetWidth;
+                        h = it.offsetHeight;
+                        document.body.removeChild(it);
+                    }
+                    pt.sx = w;
+                    pt.sy = h;
                     pt.image = it;
                     var maxSize = pt.iconAngle ? Math.sqrt(pt.sx * pt.sx + pt.sy * pt.sy) : Math.max(pt.sx, pt.sy);
                     if (!pt.scaleFunction) {
