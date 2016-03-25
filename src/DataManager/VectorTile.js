@@ -107,7 +107,7 @@ VectorTile.prototype = {
             isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
             isPolygon = type === 'POLYGON' || type === 'Polygon',
             coords = geo.coordinates,
-            hiddenLines = null,
+            hiddenLines = [],
             bounds = null,
             boundsArr = [];
 
@@ -135,11 +135,9 @@ VectorTile.prototype = {
                     }
                 }
                 boundsArr.push(arr);
-                if (hiddenLines1.length && hiddenFlag) {
-                    if (!hiddenLines) { hiddenLines = []; }
-                    hiddenLines.push(hiddenLines1);
-                }
+                hiddenLines.push(hiddenLines1);
             }
+            if (!hiddenFlag) { hiddenLines = null; }
             if (isPolygon) { boundsArr = boundsArr[0]; }
         } else if (type === 'POINT' || type === 'Point') {
             bounds = gmxAPIutils.bounds([coords]);
