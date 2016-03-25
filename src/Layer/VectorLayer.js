@@ -754,6 +754,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _zoomEnd: function() {
         this._gmx.zoomstart = false;
+        this.setCurrentZoom(this._map);
         this._zIndexOffsetCheck();
     },
 
@@ -884,12 +885,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _prpZoomData: function() {
-        var gmx = this._gmx,
-            map = this._map;
+        this.setCurrentZoom(this._map);
+        this.repaint();
+    },
+
+    setCurrentZoom: function(map) {
+        var gmx = this._gmx;
         gmx.currentZoom = map._zoom;
         gmx.tileSize = gmxAPIutils.tileSizes[gmx.currentZoom];
         gmx.mInPixel = 256 / gmx.tileSize;
-        this.repaint();
     },
 
     _zIndexOffsetCheck: function() {

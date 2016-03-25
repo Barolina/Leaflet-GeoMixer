@@ -252,7 +252,7 @@
 				token('>'),
 				caseInsensitiveToken('LIKE')
 			])),
-			literal
+            choice([literal, quotedFieldName])
 		]),
 		function(state) {
 			// Linked list contains fieldname, operation, value
@@ -282,21 +282,23 @@
 			}
 
 			return function(props, indexes) {
-				var fieldValue = props[indexes[fieldName]];
-                if (typeof fieldValue === 'boolean' && typeof referenceValue === 'string') {
+				var fieldValue = props[indexes[fieldName]],
+                    rValue = referenceValue;
+                if (referenceValue in indexes) { rValue = props[indexes[rValue]]; }
+                if (typeof fieldValue === 'boolean' && typeof rValue === 'string') {
                     fieldValue = fieldValue ? 'True' : 'False';
                 }
 				if (fieldValue === null) { return false; }
 				if (matchPattern !== null) { return matchPattern(fieldValue);
 /*eslint-disable eqeqeq */
-                } else if ((op === '=') || (op === '==')) { return (fieldValue == referenceValue);
-				} else if ((op === '!=') || (op === '<>')) { return (fieldValue != referenceValue);
+                } else if ((op === '=') || (op === '==')) { return (fieldValue == rValue);
+				} else if ((op === '!=') || (op === '<>')) { return (fieldValue != rValue);
 /*eslint-enable */
                 } else {
                     var f1, f2;
-					if (applyParser(referenceValue, numberLiteral).head === referenceValue.length) {
+					if (!(referenceValue in indexes) && applyParser(rValue, numberLiteral).head === rValue.length) {
 						f1 = parseFloat(fieldValue);
-						f2 = parseFloat(referenceValue);
+						f2 = parseFloat(rValue);
 						if (op === '<') { return (f1 < f2);
 						} else if (op === '>') { return (f1 > f2);
 						} else if (op === '<=') { return (f1 <= f2);
@@ -305,7 +307,7 @@
                         }
 					} else {
 						f1 = fieldValue;
-						f2 = referenceValue;
+						f2 = rValue;
 						if (op === '<') { return (f1 < f2);
 						} else if (op === '>') { return (f1 > f2);
 						} else if (op === '<=') { return (f1 <= f2);
