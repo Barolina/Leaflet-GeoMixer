@@ -1116,14 +1116,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('quicklookPlatform' in meta) {    // тип спутника
                 gmx.quicklookPlatform = meta.quicklookPlatform.Value;
             }
-            if ('quicklookX1' in meta) { gmx.quicklookX1 = meta.quicklookX1.Value; }
-            if ('quicklookY1' in meta) { gmx.quicklookY1 = meta.quicklookY1.Value; }
-            if ('quicklookX2' in meta) { gmx.quicklookX2 = meta.quicklookX2.Value; }
-            if ('quicklookY2' in meta) { gmx.quicklookY2 = meta.quicklookY2.Value; }
-            if ('quicklookX3' in meta) { gmx.quicklookX3 = meta.quicklookX3.Value; }
-            if ('quicklookY3' in meta) { gmx.quicklookY3 = meta.quicklookY3.Value; }
-            if ('quicklookX4' in meta) { gmx.quicklookX4 = meta.quicklookX4.Value; }
-            if ('quicklookY4' in meta) { gmx.quicklookY4 = meta.quicklookY4.Value; }
 
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
@@ -1161,6 +1153,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     template: prop.Quicklook
                 }
             }
+
+            if ('X1' in quicklookParams) { gmx.quicklookX1 = quicklookParams.X1; }
+            if ('Y1' in quicklookParams) { gmx.quicklookY1 = quicklookParams.Y1; }
+            if ('X2' in quicklookParams) { gmx.quicklookX2 = quicklookParams.X2; }
+            if ('Y2' in quicklookParams) { gmx.quicklookY2 = quicklookParams.Y2; }
+            if ('X3' in quicklookParams) { gmx.quicklookX3 = quicklookParams.X3; }
+            if ('Y3' in quicklookParams) { gmx.quicklookY3 = quicklookParams.Y3; }
+            if ('X4' in quicklookParams) { gmx.quicklookX4 = quicklookParams.X4; }
+            if ('Y4' in quicklookParams) { gmx.quicklookY4 = quicklookParams.Y4; }
 
             var template = gmx.Quicklook = quicklookParams.template;
             gmx.minZoomQuicklooks = quicklookParams.minZoom;
