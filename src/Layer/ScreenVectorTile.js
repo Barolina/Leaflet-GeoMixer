@@ -479,6 +479,7 @@ ScreenVectorTile.prototype = {
                 skipRasters = false;
 
             if (gmx.quicklookBGfunc && !gmxAPIutils.getPropItem('GMX_RasterCatalogID', properties, indexes)) {
+                if (gmx.minZoomQuicklooks && this.zoom < gmx.minZoomQuicklooks) { continue; }
                 var platform = gmxAPIutils.getPropItem(gmx.quicklookPlatform, properties, indexes) || gmx.quicklookPlatform || '';
                 if ((platform === 'imageMercator' || platform === 'image') &&
                     !gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx)

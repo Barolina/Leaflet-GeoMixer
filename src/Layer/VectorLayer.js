@@ -899,7 +899,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _zIndexOffsetCheck: function() {
         var gmx = this._gmx;
         if (gmx.properties.fromType !== 'Raster' && (gmx.IsRasterCatalog || gmx.Quicklook)) {
-            var minZoom = Math.max(gmx.IsRasterCatalog ? gmx.minZoomRasters : 0, gmx.Quicklook ? gmx.minZoomQuicklooks : 0);
+            // var minZoom = Math.max(gmx.IsRasterCatalog ? gmx.minZoomRasters : 0, gmx.Quicklook ? gmx.minZoomQuicklooks : 0);
+            var minZoom = Math.min(gmx.minZoomRasters, gmx.minZoomQuicklooks);
             var zIndexOffset = this._map._zoom < minZoom ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
             if (zIndexOffset !== this.options.zIndexOffset) {
                 this.setZIndexOffset(zIndexOffset);
@@ -1086,6 +1087,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.identityField = prop.identityField; // ogc_fid
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters || 1;// мин. zoom для растров
+        gmx.minZoomQuicklooks = gmx.minZoomRasters; // по умолчанию minZoom для квиклуков и КР равны 
 
         var type = prop.type || 'Vector';
         if (prop.Temporal) { type += 'Temporal'; }
@@ -1122,6 +1124,14 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('quicklookPlatform' in meta) {    // тип спутника
                 gmx.quicklookPlatform = meta.quicklookPlatform.Value;
             }
+            if ('quicklookX1' in meta) { gmx.quicklookX1 = meta.quicklookX1.Value; }
+            if ('quicklookY1' in meta) { gmx.quicklookY1 = meta.quicklookY1.Value; }
+            if ('quicklookX2' in meta) { gmx.quicklookX2 = meta.quicklookX2.Value; }
+            if ('quicklookY2' in meta) { gmx.quicklookY2 = meta.quicklookY2.Value; }
+            if ('quicklookX3' in meta) { gmx.quicklookX3 = meta.quicklookX3.Value; }
+            if ('quicklookY3' in meta) { gmx.quicklookY3 = meta.quicklookY3.Value; }
+            if ('quicklookX4' in meta) { gmx.quicklookX4 = meta.quicklookX4.Value; }
+            if ('quicklookY4' in meta) { gmx.quicklookY4 = meta.quicklookY4.Value; }
 
             if ('multiFilters' in meta) {    // проверка всех фильтров для обьектов слоя
                 gmx.multiFilters = meta.multiFilters.Value === '1' ? true : false;
