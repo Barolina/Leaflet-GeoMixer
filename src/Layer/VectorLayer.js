@@ -5,6 +5,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         minZoom: 1,
         zIndexOffset: 2000000,
         isGeneralized: false,
+        isFlatten: false,
         useWebGL: false,
         clickable: true
     },
@@ -334,6 +335,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._updateProperties(ph.properties);
 
         ph.properties.isGeneralized = this.options.isGeneralized;
+        ph.properties.isFlatten = this.options.isFlatten;
         gmx.dataManager = new DataManager(ph.properties);
         gmx.styleManager = new StyleManager(gmx);
         this.options.minZoom = gmx.styleManager.minZoom;
@@ -752,6 +754,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _zoomEnd: function() {
         this._gmx.zoomstart = false;
+        this.setCurrentZoom(this._map);
         this._zIndexOffsetCheck();
     },
 
@@ -882,12 +885,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     _prpZoomData: function() {
-        var gmx = this._gmx,
-            map = this._map;
+        this.setCurrentZoom(this._map);
+        this.repaint();
+    },
+
+    setCurrentZoom: function(map) {
+        var gmx = this._gmx;
         gmx.currentZoom = map._zoom;
         gmx.tileSize = gmxAPIutils.tileSizes[gmx.currentZoom];
         gmx.mInPixel = 256 / gmx.tileSize;
-        this.repaint();
     },
 
     _zIndexOffsetCheck: function() {
@@ -1122,6 +1128,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             }
             if ('isGeneralized' in meta) {    // Set generalization
                 this.options.isGeneralized = meta.isGeneralized.Value !== 'false';
+            }
+            if ('isFlatten' in meta) {        // Set flatten geometry
+                this.options.isFlatten = meta.isFlatten.Value !== 'false';
             }
         }
 

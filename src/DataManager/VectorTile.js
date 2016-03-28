@@ -19,6 +19,7 @@ var VectorTile = function(dataProvider, options) {
     this.s = options.s || -1;
     this.d = options.d || -1;
     this.isGeneralized = options.isGeneralized;
+    this.isFlatten = options.isFlatten;
     this.bounds = gmxAPIutils.getTileBounds(this.x, this.y, this.z);
     this.gmxTilePoint = {x: this.x, y: this.y, z: this.z, s: this.s, d: this.d};
     this.vectorTileKey = VectorTile.makeTileKey(this.x, this.y, this.z, this.v, this.s, this.d);
@@ -101,12 +102,12 @@ VectorTile.prototype = {
         }
 
         var geo = it[len - 1],
-            needFlatten = false,
+            needFlatten = this.isFlatten,
             type = geo.type,
             isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
             isPolygon = type === 'POLYGON' || type === 'Polygon',
             coords = geo.coordinates,
-            hiddenLines = null,
+            hiddenLines = [],
             bounds = null,
             boundsArr = [];
 
@@ -120,7 +121,7 @@ VectorTile.prototype = {
                     hiddenLines1 = [];
 
                 for (var j = 0, len1 = coords[i].length; j < len1; j++) {
-                    if (needFlatten) {
+                    if (needFlatten && typeof coords[i][j][0] !== 'number') {
                         coords[i][j] = gmxAPIutils.flattenRing(coords[i][j]);
                     }
                     var b = gmxAPIutils.bounds(coords[i][j]);
@@ -134,11 +135,9 @@ VectorTile.prototype = {
                     }
                 }
                 boundsArr.push(arr);
-                if (hiddenLines1.length && hiddenFlag) {
-                    if (!hiddenLines) { hiddenLines = []; }
-                    hiddenLines.push(hiddenLines1);
-                }
+                hiddenLines.push(hiddenLines1);
             }
+            if (!hiddenFlag) { hiddenLines = null; }
             if (isPolygon) { boundsArr = boundsArr[0]; }
         } else if (type === 'POINT' || type === 'Point') {
             bounds = gmxAPIutils.bounds([coords]);

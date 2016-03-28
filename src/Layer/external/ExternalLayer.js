@@ -133,6 +133,7 @@ L.gmx.ExternalLayer = L.Class.extend({
             map = this._map,
             isExtLayerOnMap = map.hasLayer(this.externalLayer);
 
+        layer.setCurrentZoom(map);
         if (!this.isExternalVisible(map.getZoom())) {
             if (observer) { observer.deactivate(); }
             if (!layer._map) {

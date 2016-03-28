@@ -226,6 +226,42 @@ var gmxAPIutils = {
         };
     },
 
+    getUnFlattenGeo: function(geo) {  // get unFlatten geometry
+        var type = geo.type,
+            isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
+            coords = geo.coordinates,
+            coordsOut = coords;
+
+        if (isLikePolygon) {
+            coordsOut = [];
+            var isPolygon = type === 'POLYGON' || type === 'Polygon';
+            if (isPolygon) { coords = [coords]; }
+            for (var i = 0, len = coords.length; i < len; i++) {
+                var ring = [];
+                for (var j = 0, len1 = coords[i].length; j < len1; j++) {
+                    ring[j] = gmxAPIutils.unFlattenRing(coords[i][j]);
+                }
+                coordsOut.push(ring);
+            }
+            if (isPolygon) { coordsOut = coordsOut[0]; }
+        }
+        return {type: type, coordinates: coordsOut};
+    },
+
+    unFlattenRing: function(arr) {
+        if (typeof arr[0] !== 'number') {
+            return arr;
+        }
+        var len = arr.length,
+            cnt = 0,
+            res = new Array(len / 2);
+
+        for (var i = 0; i < len; i += 2) {
+            res[cnt++] = [arr[i], arr[i + 1]];
+        }
+        return res;
+    },
+
     geoFlatten: function(geo) {  // get flatten geometry
         var type = geo.type,
             isLikePolygon = type.indexOf('POLYGON') !== -1 || type.indexOf('Polygon') !== -1,
@@ -245,7 +281,7 @@ var gmxAPIutils = {
     flattenRing: function(arr) {
         var len = arr.length,
             cnt = 0,
-            CurArray = typeof Float32Array === 'function' ? Float64Array : Array,
+            CurArray = typeof Float64Array === 'function' ? Float64Array : Array,
             res = new CurArray(2 * len);
 
         for (var i = 0; i < len; i++) {
@@ -632,8 +668,34 @@ var gmxAPIutils = {
     },
     DEFAULT_REPLACEMENT_COLOR: 0xff00ff,
     isIE: function(v) {
-        return RegExp('msie' + (!isNaN(v) ? ('\\s' + v) : ''), 'i').test(navigator.userAgent || '');
+        return v === gmxAPIutils.getIEversion();
     },
+
+    getIEversion: function() {
+        var ua = navigator.userAgent || '',
+            msie = ua.indexOf('MSIE ');
+        if (msie > 0) {
+            // IE 10 or older => return version number
+            return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+        }
+
+        var trident = ua.indexOf('Trident/');
+        if (trident > 0) {
+            // IE 11 => return version number
+            var rv = ua.indexOf('rv:');
+            return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+        }
+
+        var edge = ua.indexOf('Edge/');
+        if (edge > 0) {
+            // Edge (IE 12+) => return version number
+            return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+        }
+
+        // other browser
+        return -1;
+    },
+
     replaceColor: function(img, color, fromData) {
         if (L.gmxUtil.isIE9 || L.gmxUtil.isIE10) { return img; }
         var canvas = document.createElement('canvas'),
@@ -820,21 +882,25 @@ var gmxAPIutils = {
             py = attr.tpy,
             cnt = 0, cntHide = 0,
             lastX = null, lastY = null,
+            vectorSize = typeof coords[0] === 'number' ? 2 : 1,
             pixels = [], hidden = [];
-        for (var i = 0, len = coords.length; i < len; i++) {
+        for (var i = 0, len = coords.length; i < len; i += vectorSize) {
             var lineIsOnEdge = false;
             if (hiddenLines && i === hiddenLines[cntHide]) {
                 lineIsOnEdge = true;
                 cntHide++;
             }
-            var p1 = [coords[i][0] * mInPixel, coords[i][1] * mInPixel];
-            var p2 = [Math.round(p1[0] - px), Math.round(py - p1[1])];
+            var c = vectorSize === 1 ? coords[i] : [coords[i], coords[i + 1]],
+                x1 = c[0] * mInPixel, y1 = c[1] * mInPixel,
+                x2 = Math.round(x1 - px), y2 = Math.round(py - y1);
 
-            if (lastX !== p2[0] || lastY !== p2[1]) {
-                lastX = p2[0]; lastY = p2[1];
-                pixels.push([p1[0], p1[1]]);
-                if (lineIsOnEdge) { hidden.push(cnt); }
-                cnt++;
+            if (lastX !== x2 || lastY !== y2) {
+                lastX = x2; lastY = y2;
+                if (lineIsOnEdge) {
+                    hidden.push(cnt);
+                }
+                pixels[cnt++] = x1;
+                pixels[cnt++] = y1;
             }
         }
         return {coords: pixels, hidden: hidden.length ? hidden : null};
@@ -848,12 +914,14 @@ var gmxAPIutils = {
             px = attr.tpx,
             py = attr.tpy,
             cnt = 0, cntHide = 0,
+            vectorSize = typeof coords[0] === 'number' ? 2 : 1,
             lastX = null, lastY = null;
 
         ctx.beginPath();
-        for (var i = 0, len = coords.length; i < len; i++) {
-            var x = Math.round(coords[i][0] - px),
-                y = Math.round(py - coords[i][1]),
+        for (var i = 0, len = coords.length; i < len; i += vectorSize) {
+            var c = vectorSize === 1 ? coords[i] : [coords[i], coords[i + 1]],
+                x = Math.round(c[0] - px),
+                y = Math.round(py - c[1]),
                 lineIsOnEdge = false;
 
             if (hiddenLines && i === hiddenLines[cntHide]) {
@@ -876,12 +944,19 @@ var gmxAPIutils = {
         var coords = attr.coords,
             px = attr.tpx,
             py = attr.tpy,
+            vectorSize = 1,
             ctx = attr.ctx;
 
         ctx.lineWidth = 0;
-        ctx.moveTo(Math.round(coords[0][0] - px), Math.round(py - coords[0][1]));
-        for (var i = 1, len = coords.length; i < len; i++) {
-            ctx.lineTo(Math.round(coords[i][0] - px), Math.round(py - coords[i][1]));
+        if (typeof coords[0] === 'number') {
+            vectorSize = 2;
+            ctx.moveTo(Math.round(coords[0] - px), Math.round(py - coords[1]));
+        } else {
+            ctx.moveTo(Math.round(coords[0][0] - px), Math.round(py - coords[0][1]));
+        }
+        for (var i = vectorSize, len = coords.length; i < len; i += vectorSize) {
+            var c = vectorSize === 1 ? coords[i] : [coords[i], coords[i + 1]];
+            ctx.lineTo(Math.round(c[0] - px), Math.round(py - c[1]));
         }
     },
 
@@ -1255,10 +1330,16 @@ var gmxAPIutils = {
 
     getHSegmentsInPolygon: function(y, poly) {
         var s = [], i, len, out,
-            p1 = poly[0],
-            isGt1 = y > p1[1];
-        for (i = 1, len = poly.length; i < len; i++) {
-            var p2 = poly[i],
+            vectorSize = 1,
+            p1 = poly[0];
+
+        if (typeof poly[0] === 'number') {
+            vectorSize = 2;
+            p1 = [poly[0], poly[1]];
+        }
+        var isGt1 = y > p1[1];
+        for (i = vectorSize, len = poly.length; i < len; i += vectorSize) {
+            var p2 = vectorSize === 1 ? poly[i] : [poly[i], poly[i + 1]],
                 isGt2 = y > p2[1];
             if (isGt1 !== isGt2) {
                 s.push(p1[0] - (p1[0] - p2[0]) * (p1[1] - y) / (p1[1] - p2[1]));
@@ -1295,12 +1376,19 @@ var gmxAPIutils = {
         var isIn = false,
             x = chkPoint[0],
             y = chkPoint[1],
+            vectorSize = 1,
             p1 = coords[0];
-        for (var i = 1, len = coords.length; i < len; i++) {
-            var p2 = coords[i];
-            var xmin = Math.min(p1[0], p2[0]);
-            var xmax = Math.max(p1[0], p2[0]);
-            var ymax = Math.max(p1[1], p2[1]);
+
+        if (typeof coords[0] === 'number') {
+            vectorSize = 2;
+            p1 = [coords[0], coords[1]];
+        }
+
+        for (var i = vectorSize, len = coords.length; i < len; i += vectorSize) {
+            var p2 = vectorSize === 1 ? coords[i] : [coords[i], coords[i + 1]],
+                xmin = Math.min(p1[0], p2[0]),
+                xmax = Math.max(p1[0], p2[0]),
+                ymax = Math.max(p1[1], p2[1]);
             if (x > xmin && x <= xmax && y <= ymax && p1[0] !== p2[0]) {
                 var xinters = (x - p1[0]) * (p2[1] - p1[1]) / (p2[0] - p1[0]) + p1[1];
                 if (p1[1] === p2[1] || y <= xinters) { isIn = !isIn; }
@@ -1743,14 +1831,17 @@ var gmxAPIutils = {
             }
             return ret;
         } else if (geom.length) {
-            var latlngs = [];
-            gmxAPIutils.forEachPoint(geom, function(p) {
+            var latlngs = [],
+                vectorSize = typeof geom[0] === 'number' ? 2 : 1;
+
+            for (i = 0, len = geom.length; i < len; i += vectorSize) {
+                var p = vectorSize === 1 ? geom[i] : [geom[i], geom[i + 1]];
                 latlngs.push(
                     isMerc ?
                     L.Projection.Mercator.unproject({y: p[1], x: p[0]}) :
                     {lat: p[1], lng: p[0]}
                 );
-            });
+            }
             return gmxAPIutils.getArea(latlngs);
         }
         return 0;
@@ -1883,9 +1974,10 @@ var gmxAPIutils = {
 
     getHidden: function(coords, tb) {  // массив точек на границах тайлов
         var hiddenLines = [],
+            vectorSize = typeof coords[0] === 'number' ? 2 : 1,
             prev = null;
-        for (var i = 0, len = coords.length; i < len; i++) {
-            var p = coords[i];
+        for (var i = 0, len = coords.length; i < len; i += vectorSize) {
+            var p = vectorSize === 1 ? coords[i] : [coords[i], coords[i + 1]];
             if (prev && gmxAPIutils.chkOnEdge(p, prev, tb)) {
                 hiddenLines.push(i);
             }
@@ -2397,6 +2489,7 @@ L.extend(L.gmxUtil, {
     loaderStatus: function () {},
     isIE9: gmxAPIutils.isIE(9),
     isIE10: gmxAPIutils.isIE(10),
+    isIE11: gmxAPIutils.isIE(11),
     requestJSONP: gmxAPIutils.requestJSONP,
     request: gmxAPIutils.request,
     fromServerStyle: gmxAPIutils.fromServerStyle,
