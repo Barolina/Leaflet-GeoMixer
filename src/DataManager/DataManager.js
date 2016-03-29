@@ -266,16 +266,15 @@ var DataManager = L.Class.extend({
 
         this._chkMaxDateInterval();
 
+        var processing = this.options.GeoProcessing;
+        if (processing || this.processingTile) {
+            this._chkProcessing(processing);
+        }
         if (!this._needCheckActiveTiles) {
             return this._activeTileKeys;
         }
 
         this._needCheckActiveTiles = false;
-
-        var processing = this.options.GeoProcessing;
-        if (processing || this.processingTile) {
-            this._chkProcessing(processing);
-        }
 
         if (this._isTemporalLayer) {
             var newTileKeys = {};
