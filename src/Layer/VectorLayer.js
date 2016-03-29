@@ -1183,7 +1183,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('Y4' in quicklookParams) { gmx.quicklookY4 = quicklookParams.Y4; }
 
             var template = gmx.Quicklook = quicklookParams.template;
-            gmx.minZoomQuicklooks = quicklookParams.minZoom;
+            if ('minZoom' in quicklookParams) { gmx.minZoomQuicklooks = quicklookParams.minZoom; }
             gmx.quicklookBGfunc = function(item) {
                 var url = template,
                     reg = /\[([^\]]+)\]/,
