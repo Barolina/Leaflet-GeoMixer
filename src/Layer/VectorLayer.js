@@ -899,7 +899,6 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _zIndexOffsetCheck: function() {
         var gmx = this._gmx;
         if (gmx.properties.fromType !== 'Raster' && (gmx.IsRasterCatalog || gmx.Quicklook)) {
-            // var minZoom = Math.max(gmx.IsRasterCatalog ? gmx.minZoomRasters : 0, gmx.Quicklook ? gmx.minZoomQuicklooks : 0);
             var minZoom = Math.min(gmx.minZoomRasters, gmx.minZoomQuicklooks);
             var zIndexOffset = this._map._zoom < minZoom ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
             if (zIndexOffset !== this.options.zIndexOffset) {
@@ -1087,7 +1086,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.identityField = prop.identityField; // ogc_fid
         gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters || 1;// мин. zoom для растров
-        gmx.minZoomQuicklooks = gmx.minZoomRasters; // по умолчанию minZoom для квиклуков и КР равны 
+        gmx.minZoomQuicklooks = gmx.minZoomRasters; // по умолчанию minZoom для квиклуков и КР равны
 
         var type = prop.type || 'Vector';
         if (prop.Temporal) { type += 'Temporal'; }
@@ -1162,7 +1161,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         }
         if (prop.Quicklook) {
             var quicklookParams;
-            
+
             //раньше это была просто строка с шаблоном квиклука, а теперь стало JSON'ом
             if (prop.Quicklook[0] === '{') {
                 quicklookParams = JSON.parse(prop.Quicklook);
@@ -1170,7 +1169,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                 quicklookParams = {
                     minZoom: gmx.minZoomRasters,
                     template: prop.Quicklook
-                }
+                };
             }
 
             if ('X1' in quicklookParams) { gmx.quicklookX1 = quicklookParams.X1; }

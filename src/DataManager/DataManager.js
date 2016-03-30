@@ -178,10 +178,10 @@ var DataManager = L.Class.extend({
     },
 
     setOptions: function(options) {
-        if (!options.GeoProcessing) {
-            this.options.GeoProcessing = null;
-        } else {
+        this._clearProcessing();
+        if (options.GeoProcessing) {
             this.processingTile = this.addData([]);
+            this._chkProcessing(options.GeoProcessing);
         }
         L.setOptions(this, options);
         this.optionsLink = options;
@@ -265,11 +265,6 @@ var DataManager = L.Class.extend({
     _getActiveTileKeys: function() {
 
         this._chkMaxDateInterval();
-
-        var processing = this.options.GeoProcessing;
-        if (processing || this.processingTile) {
-            this._chkProcessing(processing);
-        }
         if (!this._needCheckActiveTiles) {
             return this._activeTileKeys;
         }
@@ -398,6 +393,8 @@ var DataManager = L.Class.extend({
                     if (item.type.indexOf('MULTI') === -1) {
                         item.type = 'MULTI' + item.type;
                     }
+                } else {
+                    tile.data[i] = item.properties;
                 }
                 delete item.bounds;
                 item.currentFilter = null;
@@ -742,28 +739,30 @@ var DataManager = L.Class.extend({
         return arr;
     },
 
-    _chkProcessing: function(processing) {
-        var _items = this._items,
-            tile = this.processingTile,
-            needProcessingFilter = false,
-            skip = {},
-            id, i, len, it, data;
-
-
-        if (tile) {
-            var vKey = tile.vectorTileKey;
-            data = tile.data || [];
-            for (i = 0, len = data.length; i < len; i++) {
-                id = data[i][0];
+    _clearProcessing: function() {
+        if (this.processingTile) {
+            var _items = this._items,
+                tile = this.processingTile,
+                vKey = tile.vectorTileKey,
+                data = tile.data || [];
+            for (var i = 0, len = data.length; i < len; i++) {
+                var id = data[i][0];
                 if (_items[id]) {
                     var item = _items[id];
-                    item.processing = false;
+                    item.processing = null;
                     item.currentFilter = null;
                     delete item.options.fromTiles[vKey];
                 }
             }
             tile.clear();
         }
+    },
+
+    _chkProcessing: function(processing) {
+        var _items = this._items,
+            needProcessingFilter = false,
+            skip = {},
+            id, i, len, it, data;
 
         if (processing) {
             if (processing.Deleted) {
@@ -805,7 +804,7 @@ var DataManager = L.Class.extend({
             }
 
             if (data.length > 0) {
-                this.processingTile = tile = this.addData(data);
+                this.processingTile = this.addData(data);
             }
         }
         if (needProcessingFilter) {
@@ -815,7 +814,6 @@ var DataManager = L.Class.extend({
         } else {
             this.removeFilter('processingFilter');
         }
-        this.options.GeoProcessing = null;
     },
 
     enableGeneralization: function() {

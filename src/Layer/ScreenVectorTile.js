@@ -13,7 +13,7 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.tpy = 256 * (1 + gmxTilePoint.y);
     this.gmxTilePoint = gmxTilePoint;
 
-    this.showRaster = 
+    this.showRaster =
         (zoom >= this.gmx.minZoomRasters && 'rasterBGfunc' in this.gmx) ||
         (zoom >= this.gmx.minZoomQuicklooks && 'quicklookBGfunc' in this.gmx);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
