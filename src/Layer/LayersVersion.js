@@ -161,6 +161,7 @@ L.gmx.VectorLayer.include({
             }
             if (layerDescription.properties) {
                 L.extend(gmx.properties, layerDescription.properties);
+                gmx.properties.GeoProcessing = layerDescription.properties.GeoProcessing;
                 gmx.rawProperties = gmx.properties;
                 this.fire('versionchange');
                 gmx.dataManager.updateVersion(gmx.rawProperties);
