@@ -64,14 +64,17 @@ var GmxEventsManager = L.Handler.extend({
                 skipNode = false;
             if (ev.originalEvent) {
                 map.gmxMouseDown = L.Browser.webkit ? ev.originalEvent.which : ev.originalEvent.buttons;
-                skipNode = skipNodeName[ev.originalEvent.target.nodeName] && !L.DomUtil.hasClass(ev.originalEvent.target, 'leaflet-tile');
+                var target = ev.originalEvent.target;
+                skipNode = skipNodeName[target.nodeName] && !L.DomUtil.hasClass(target, 'leaflet-tile') && !L.DomUtil.hasClass(target, 'leaflet-popup-tip-container');
             }
             if (map._animatingZoom ||
                 isDrawing() ||
                 skipNode ||
+                (type === 'click' &&  map._skipClick) ||        // from drawing
                 (type === 'mousemove' &&  map.gmxMouseDown)
                 ) {
                 clearLastHover();
+                map._skipClick = false;
                 return;
             }
             if (ev.layerPoint) {
