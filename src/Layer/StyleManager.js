@@ -442,6 +442,19 @@ StyleManager.prototype = {
             } else if (st.iconCircle) {
                 type = 'circle';
                 if (!('iconSize' in st)) { st.iconSize = 4; }
+            } else if (st.iconTriangle) {   // default [0, 10, 5, -10, -5, -10] [TL.x, TL.y, BR.x, BR.y, BL.x, BL.y]
+                type = 'triangle';
+                if (!('iconSize' in st)) {
+                    var temp = [0, 10, 5, -10, -5, -10],
+                        iconSize = 0,
+                        arr = L.Util.isArray(st.iconTriangle) ? st.iconTriangle : temp;
+                    st.iconTriangle = temp.map(function(it, i) {
+                        var z = arr[i] || it;
+                        iconSize = Math.max(iconSize, z);
+                        return z;
+                    });
+                    st.iconSize = 2 * iconSize;
+                }
             } else if (st.fillRadialGradient) {
                 type = 'circle';
                 if (!('iconCenter' in st)) { st.iconCenter = true; }
