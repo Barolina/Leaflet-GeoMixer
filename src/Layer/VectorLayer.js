@@ -1122,6 +1122,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             }
             if ('quicklookPlatform' in meta) {    // тип спутника
                 gmx.quicklookPlatform = meta.quicklookPlatform.Value;
+                if (gmx.quicklookPlatform === 'image') { delete gmx.quicklookPlatform; }
             }
             if ('quicklookX1' in meta) { gmx.quicklookX1 = meta.quicklookX1.Value; }
             if ('quicklookY1' in meta) { gmx.quicklookY1 = meta.quicklookY1.Value; }
