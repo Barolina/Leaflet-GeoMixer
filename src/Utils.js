@@ -350,7 +350,7 @@ var gmxAPIutils = {
             return null;
         }
 
-        if (gmx.quicklookPlatform === 'image') {
+        if (!gmx.quicklookPlatform) {
             var merc = L.Projection.Mercator.project(L.latLng(points.y1, points.x1));
             points.x1 = merc.x; points.y1 = merc.y;
             merc = L.Projection.Mercator.project(L.latLng(points.y2, points.x2));
@@ -1259,7 +1259,7 @@ var gmxAPIutils = {
         }
         return ret;
     },
-
+/*
 	getQuicklookPoints: function(coord) { // получить 4 точки привязки снимка
 		var d1 = Number.MAX_VALUE;
 		var d2 = Number.MAX_VALUE;
@@ -1292,7 +1292,7 @@ var gmxAPIutils = {
 		});
 		return {x1: x1, y1: y1, x2: x2, y2: y2, x3: x3, y3: y3, x4: x4, y4: y4};
 	},
-
+*/
     getItemCenter: function(item, geoItems) {
         var bounds = item.bounds,
             min = bounds.min, max = bounds.max,

@@ -1,6 +1,5 @@
 L.gmx.gmxImageTransform = function(img, hash) {
-    var ready = false,
-        gmx = hash.gmx,
+    var gmx = hash.gmx,
         gmxTilePoint = hash.gmxTilePoint,
         mInPixel = gmx.mInPixel,
         geoItem = hash.geoItem,
@@ -18,12 +17,8 @@ L.gmx.gmxImageTransform = function(img, hash) {
         points.x2 = dataOption.bounds.max.x; points.y2 = dataOption.bounds.max.y;
         points.x3 = dataOption.bounds.max.x; points.y3 = dataOption.bounds.min.y;
         points.x4 = dataOption.bounds.min.x; points.y4 = dataOption.bounds.min.y;
-        ready = true;
-    } else if (quicklookPlatform === 'imageMercator' || quicklookPlatform === 'image') {
-        points = gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx);
-        ready = true;
     } else {
-        points = gmxAPIutils.getQuicklookPoints(coord);
+        points = gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx);
     }
 
     var x1 = mInPixel * points.x1, y1 = mInPixel * points.y1,
@@ -42,36 +37,6 @@ L.gmx.gmxImageTransform = function(img, hash) {
     x4 -= boundsP.min.x; y4 = boundsP.max.y - y4;
 
     var shiftPoints = [[x1, y1], [x2, y2], [x3, y3], [x4, y4]];
-    if (!ready) {
-        var chPoints = function(arr) {
-//Алгоритм натяжения:
-//- вычислить 4 угла (текущий алгоритм)
-//- посчитать длины сторон
-//- если соотношение самой длинной и самой короткой больше, чем 2, тогда северный отрезок из двух коротких - это верхний край квиклука
-//- если соотношение меньше, чем 2, то самая северная вершина - это левый верхний угол изображения
-            var out = [], dist = [],
-                px = arr[3][0],
-                py = arr[3][1];
-            for (var i = 0, len = arr.length; i < len; i++) {
-                var px1 = arr[i][0], py1 = arr[i][1],
-                    sx = px1 - px, sy = py1 - py;
-                dist.push({'d2': Math.sqrt(sx * sx + sy * sy), 'i': i});
-                px = px1; py = py1;
-            }
-            dist = dist.sort(function(a, b) { return a.d2 - b.d2; });
-            out = arr;
-            if (dist[3].d2 / dist[0].d2 > 2) {
-                out = [];
-                var si = arr[dist[0].i][1] < arr[dist[1].i][1] ? dist[0].i : dist[1].i;
-                out.push(arr[(si + 3) % 4]);
-                out.push(arr[(si + 4) % 4]);
-                out.push(arr[(si + 5) % 4]);
-                out.push(arr[(si + 6) % 4]);
-            }
-            return out;
-        };
-        shiftPoints = chPoints(shiftPoints);
-    }
 
     if (!gmx.ProjectiveImage) {
         gmx.ProjectiveImage = (gmx.useWebGL ? L.gmx.projectiveImageWebGL() : null) || L.gmx.projectiveImage();
