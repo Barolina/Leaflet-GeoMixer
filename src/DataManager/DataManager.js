@@ -907,10 +907,11 @@ var DataManager = L.Class.extend({
 
     initTilesTree: function() {
         this._tilesTree = L.gmx.tilesTree(this.options);
-        this.options.TemporalTiles =
-            this.options.TemporalVers =
-            this.optionsLink.TemporalVers =
-            this.optionsLink.TemporalTiles = null;
+        this.options.TemporalTiles = this.options.TemporalVers = null;
+
+        if ('TemporalTiles' in this.optionsLink) {
+            this.optionsLink.TemporalVers = this.optionsLink.TemporalTiles = null;
+        }
         this.dateZero = this._tilesTree.dateZero;
         if (this.processingTile) {
             this._tiles[this.processingTile.vectorTileKey] = {
