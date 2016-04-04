@@ -724,7 +724,7 @@ var gmxAPIutils = {
             }
             var toData = imageData.data;
             for (var i = 0, len = fromData.length; i < len; i += 4) {
-                if (fromData[i] === 0xff
+                if ((fromData[i] === 0xff || fromData[i] === 238)
                     && fromData[i + 1] === 0
                     && fromData[i + 2] === 0xff
                     ) {
