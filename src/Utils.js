@@ -2542,7 +2542,8 @@ L.extend(L.gmxUtil, {
     getPatternIcon: gmxAPIutils.getPatternIcon,
     getCircleLatLngs: gmxAPIutils.getCircleLatLngs,
     normalizeHostname: gmxAPIutils.normalizeHostname,
-    getTileBounds: gmxAPIutils.getTileBounds
+    getTileBounds: gmxAPIutils.getTileBounds,
+    parseTemplate: gmxAPIutils.parseTemplate
 });
 
 (function() {
