@@ -4,7 +4,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         openPopups: [],
         minZoom: 1,
         zIndexOffset: 2000000,
-        isGeneralized: false,
+        isGeneralized: 'isGeneralized' in window ? window.isGeneralized : true,
         isFlatten: false,
         useWebGL: false,
         clickable: true
@@ -524,6 +524,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.shiftXlayer = dx;
         gmx.shiftYlayer = dy;
         this._update();
+        return this;
     },
 
     getPositionOffset: function() {
@@ -536,6 +537,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             this.options.zIndexOffset = offset;
         }
         this._updateZIndex();
+        return this;
     },
 
     repaint: function (zKeys) {
@@ -1142,6 +1144,9 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if ('isFlatten' in meta) {        // Set flatten geometry
                 this.options.isFlatten = meta.isFlatten.Value !== 'false';
             }
+        }
+        if (prop.Temporal) {    // Clear generalization flag for Temporal layers
+            this.options.isGeneralized = false;
         }
 
         if (prop.IsRasterCatalog) {

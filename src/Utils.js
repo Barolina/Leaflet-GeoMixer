@@ -34,6 +34,19 @@ var gmxAPIutils = {
         return hostName;
     },
 
+	getLayerItemFromServer: function(options) {
+        return gmxAPIutils.requestJSONP(
+            options.url || (window.serverBase || 'http://maps.kosmosnimki.ru/') + 'VectorLayer/Search.ashx',
+            {
+                WrapStyle: 'func',
+                geometry: true,
+                layer: options.layerID,
+                query: '[' + options.identityField + ']=' + options.id
+            },
+            options
+        );
+    },
+
     /** Sends JSONP requests
      * @memberof L.gmxUtil
      * @param {String} url - request URL
@@ -55,7 +68,7 @@ var gmxAPIutils = {
         if (callbackParamName) {
             var callbackName = gmxAPIutils.uniqueGlobalName(function(obj) {
                 delete window[callbackName];
-                def.resolve(obj);
+                def.resolve(obj, options);
             });
 
             urlParams[callbackParamName] = callbackName;

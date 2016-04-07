@@ -442,17 +442,16 @@ StyleManager.prototype = {
             } else if (st.iconCircle) {
                 type = 'circle';
                 if (!('iconSize' in st)) { st.iconSize = 4; }
-            } else if (st.iconTriangle) {   // default [0, 10, 5, -10, -5, -10] [TL.x, TL.y, BR.x, BR.y, BL.x, BL.y]
-                type = 'triangle';
+            } else if (st.iconPath) {
+                type = 'iconPath';
+                var iconSize = 0,
+                    arr = L.Util.isArray(st.iconPath) ? st.iconPath : StyleManager.DEFAULT_ICONPATH;
+                st.iconPath = StyleManager.DEFAULT_ICONPATH.map(function(it, i) {
+                    var z = arr[i] || it;
+                    iconSize = Math.max(iconSize, z);
+                    return z;
+                });
                 if (!('iconSize' in st)) {
-                    var temp = [0, 10, 5, -10, -5, -10],
-                        iconSize = 0,
-                        arr = L.Util.isArray(st.iconTriangle) ? st.iconTriangle : temp;
-                    st.iconTriangle = temp.map(function(it, i) {
-                        var z = arr[i] || it;
-                        iconSize = Math.max(iconSize, z);
-                        return z;
-                    });
                     st.iconSize = 2 * iconSize;
                 }
             } else if (st.fillRadialGradient) {
@@ -662,6 +661,7 @@ StyleManager.MAX_STYLE_SIZE = 256;
 //StyleManager.DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8, circle: true}};
 StyleManager.DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8}};
 StyleManager.DEFAULT_KEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'];
+StyleManager.DEFAULT_ICONPATH = [0, 10, 5, -10, -5, -10, 0, 10];  // [TL.x, TL.y, BR.x, BR.y, BL.x, BL.y, TL.x, TL.y]
 
 StyleManager.parsePattern = function(pattern) {
     var common = true,

@@ -410,6 +410,10 @@ var DataManager = L.Class.extend({
                 this._items[id] = item;
             }
             item.options.fromTiles[vectorTileKey] = i;
+            if (tile.isGeneralized) {
+                item.options.isGeneralized = true;
+            }
+
             if (this.options.TemporalColumnName) {
                 var zn = it[this.tileAttributeIndexes[this.options.TemporalColumnName]];
                 item.options.unixTimeStamp = zn * 1000;
@@ -752,7 +756,9 @@ var DataManager = L.Class.extend({
                     item.processing = null;
                     item.currentFilter = null;
                     delete item.options.fromTiles[vKey];
-                }
+                    delete item.fromServerProps;
+                    delete item.geometry;
+               }
             }
             tile.clear();
         }
