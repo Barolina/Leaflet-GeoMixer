@@ -899,7 +899,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _zIndexOffsetCheck: function() {
         var gmx = this._gmx;
         if (gmx.properties.fromType !== 'Raster' && (gmx.IsRasterCatalog || gmx.Quicklook)) {
-            var minZoom = Math.min(gmx.minZoomRasters, gmx.minZoomQuicklooks);
+            var minZoom = gmx.IsRasterCatalog ? gmx.minZoomRasters : gmx.minZoomQuicklooks;
             var zIndexOffset = this._map._zoom < minZoom ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
             if (zIndexOffset !== this.options.zIndexOffset) {
                 this.setZIndexOffset(zIndexOffset);
