@@ -316,7 +316,7 @@ var ProjectiveImage = function() {
 
 		try {
 			divide(0, 0, 1, 1, ptl, ptr, pbl, pbr, limit, attr);
-		} catch(e) {
+		} catch (e) {
 			console.log('Error: ProjectiveImage event:', e);
 			canvas = null;
 		}
