@@ -160,7 +160,8 @@ L.gmx.VectorLayer.include({
             geometry = target.geometry || {},
             offset = target.offset,
             templateBalloon = _popup._initContent || balloonData.templateBalloon || '',
-            skipSummary = target.options.isGeneralized && options.type === 'mouseover',
+            type = options.type,
+            skipSummary = this.options.isGeneralized && (type === 'mouseover' || type === 'mousemove'),
             outItem = {
                 id: gmx.id,
                 latlng: options.latlng,
