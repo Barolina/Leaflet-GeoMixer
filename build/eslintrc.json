@@ -1,21 +1,17 @@
 {
+  "extends": "eslint:recommended",
   "rules": {
+    "no-console": 0,
+    "no-constant-condition": 0,
     "camelcase": 2,
     "quotes": [2, "single"],
     "no-mixed-spaces-and-tabs": [2, "smart-tabs"],
-    "space-before-function-paren": 0,
     "object-curly-spacing": ["error", "never"],
     "keyword-spacing": ["error"],
     "no-lonely-if": 2,
     "comma-style": 2,
-    "no-underscore-dangle": 0,
-    "no-constant-condition": 0,
-    "no-multi-spaces": 0,
-    "no-multi-str": 0,
-    "strict": 0,
-    "key-spacing": 0,
-    "no-console": 0,
-    "no-shadow": 0,
+    "no-extend-native": 2,
+    "no-unused-vars": ["error", { "vars": "all", "args": "after-used" }],
     "no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true }]
   },
   "globals": {
@@ -39,7 +35,9 @@
     "TilesTree": true,
     "gmxMapManager": true,
     "gmxMap": true,
-    "gmxAPIutils": true
+    "gmxAPIutils": true,
+    "Float32Array": true,
+    "Float64Array": true
   },
   "env": {
     "browser": true

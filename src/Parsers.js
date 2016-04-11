@@ -141,7 +141,7 @@
 					state = newState;
 				}
 			}
-			return fail;
+			// return fail;
 		};
 	};
 
