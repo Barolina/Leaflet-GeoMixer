@@ -121,7 +121,7 @@ L.gmx.loadMap = function(mapID, options) {
 
     var def = new L.gmx.Deferred();
 
-    gmxMapManager.getMap(options.hostName, options.apiKey, mapID, options.skipTiles).then(function(mapInfo) {
+    gmxMapManager.getMap(options.hostName, options.apiKey, mapID, options.skipTiles, options.isGeneralized).then(function(mapInfo) {
 /*eslint-disable new-cap */
         var loadedMap = new gmxMap(mapInfo, options);
 /*eslint-enable */

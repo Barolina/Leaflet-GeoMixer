@@ -4,7 +4,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         openPopups: [],
         minZoom: 1,
         zIndexOffset: 2000000,
-        isGeneralized: 'isGeneralized' in window ? window.isGeneralized : true,
+        isGeneralized: true,
         isFlatten: false,
         useWebGL: false,
         clickable: true
