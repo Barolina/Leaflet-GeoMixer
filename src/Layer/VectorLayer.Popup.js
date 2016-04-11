@@ -234,9 +234,11 @@ L.gmx.VectorLayer.include({
         if (!skip) {
             var type = options.type,
                 gmx = options.gmx,
+                balloonData = gmx.balloonData,
+                flag = type === 'click' && balloonData.isSummary && !balloonData.DisableBalloonOnClick,
                 item = gmx.target;
 
-            if (type === 'click' && item.options.isGeneralized && !item.geometry) {
+            if (flag && item.options.isGeneralized && !item.geometry) {
                 var layerProp = gmx.layer.getGmxProperties();
                 gmxAPIutils.getLayerItemFromServer({
                     options: options,

@@ -179,7 +179,8 @@ StyleManager.prototype = {
         return style ? {
                 DisableBalloonOnMouseMove: style.DisableBalloonOnMouseMove || false,
                 DisableBalloonOnClick: style.DisableBalloonOnClick || false,
-                templateBalloon: style.Balloon || null
+                templateBalloon: style.Balloon || null,
+                isSummary: /\[SUMMARY\]/.test(style.Balloon)
             }
             : null
         ;
