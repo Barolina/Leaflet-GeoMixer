@@ -134,7 +134,7 @@ L.gmx.loadMap = function(mapID, options) {
 
                 for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                     layer = loadedMap.layers[l];
-                    if (mapInfo.properties.LayerOrder === 'VectorOnTop') {
+                    if (mapInfo.properties.LayerOrder === 'VectorOnTop' && layer.setZIndexOffset) {
                         layer.setZIndexOffset(DEFAULT_VECTOR_LAYER_ZINDEXOFFSET);
                     }
                     if (options.setZIndex && layer.setZIndex) {
