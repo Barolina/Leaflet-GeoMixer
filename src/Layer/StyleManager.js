@@ -245,7 +245,7 @@ StyleManager.prototype = {
                     pt.sy = h;
                     pt.image = it;
                     var maxSize = pt.iconAngle ? Math.sqrt(pt.sx * pt.sx + pt.sy * pt.sy) : Math.max(pt.sx, pt.sy);
-                    if (!pt.scaleFunction) {
+                    if (!pt.scaleFunction && !pt.rotateFunction) {
                         if (pt.iconScale || pt.iconScale === 1) { maxSize *= pt.iconScale; }
                         pt.common = true;
                     }
