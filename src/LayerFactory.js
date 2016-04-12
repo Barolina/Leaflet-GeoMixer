@@ -1,6 +1,7 @@
 L.gmx = L.gmx || {};
 
 var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
+var DEFAULT_VECTOR_LAYER_ZINDEXOFFSET = 2000000;
 
 //Build in layer classes
 L.gmx._layerClasses = {
@@ -133,6 +134,9 @@ L.gmx.loadMap = function(mapID, options) {
 
                 for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                     layer = loadedMap.layers[l];
+                    if (mapInfo.properties.LayerOrder === 'VectorOnTop') {
+                        layer.setZIndexOffset(DEFAULT_VECTOR_LAYER_ZINDEXOFFSET);
+                    }
                     if (options.setZIndex && layer.setZIndex) {
                         layer.setZIndex(++curZIndex);
                     }
