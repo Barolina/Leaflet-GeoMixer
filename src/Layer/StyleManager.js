@@ -28,7 +28,8 @@ StyleManager.prototype = {
             var style = this._styles[i];
             if (zoom > style.MaxZoom || zoom < style.MinZoom) { continue; }
             var RenderStyle = style.RenderStyle;
-            if (this._needLoadIcons || !RenderStyle || !RenderStyle.common || !('maxSize' in RenderStyle)) {
+            // if (this._needLoadIcons || !RenderStyle || !RenderStyle.common || !('maxSize' in RenderStyle)) {
+            if (this._needLoadIcons || !RenderStyle || !('maxSize' in RenderStyle)) {
                 maxSize = StyleManager.MAX_STYLE_SIZE;
                 break;
             }
@@ -452,9 +453,7 @@ StyleManager.prototype = {
                     iconSize = Math.max(iconSize, z);
                     return z;
                 });
-                if (!('iconSize' in st)) {
-                    st.iconSize = 2 * iconSize;
-                }
+                st.iconSize = 2 * iconSize;
             } else if (st.fillRadialGradient) {
                 type = 'circle';
                 if (!('iconCenter' in st)) { st.iconCenter = true; }
@@ -523,23 +522,23 @@ StyleManager.prototype = {
         if (pt.maxSize) {
             out.maxSize = pt.maxSize;
         }
+        if (pt.iconAngle) {
+            var rotateRes = pt.iconAngle || 0;
+            if (rotateRes && typeof (rotateRes) === 'string') {
+                rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
+            }
+            out.rotate = rotateRes || 0;
+        }
+        if ('iconColor' in pt) {
+            out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
+        }
+        if ('iconScale' in pt) {
+            out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
+        }
         if (type === 'image') {
             out.type = type;
             if (pt.iconUrl) { out.iconUrl = pt.iconUrl; }
             if (pt.image) { out.image = pt.image; }
-            if (pt.iconAngle) {
-                var rotateRes = pt.iconAngle || 0;
-                if (rotateRes && typeof (rotateRes) === 'string') {
-                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
-                }
-                out.rotate = rotateRes || 0;
-            }
-            if ('iconColor' in pt) {
-                out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
-            }
-            if ('iconScale' in pt) {
-                out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
-            }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
                 r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
@@ -582,6 +581,12 @@ StyleManager.prototype = {
             if (pt.fillPattern) {
                 out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt, indexes));
             }
+
+            if (type === 'iconPath') {
+                out.type = type;
+                out.iconPath = pt.iconPath;
+            }
+
             if (itemType === 'POLYGON' || itemType === 'MULTIPOLYGON' || this.gmx.GeometryType === 'polygon') {
                 type = 'polygon';
             }
@@ -614,7 +619,7 @@ StyleManager.prototype = {
             out.iconCenter = pt.iconCenter;
         }
 
-        if (type === 'square' || type === 'polygon' || type === 'circle') {
+        if (type === 'square' || type === 'polygon' || type === 'circle' || type === 'iconPath') {
             out.type = type;
             var fop = pt.fillOpacity,
                 fc = pt.fillColor,
