@@ -18,17 +18,18 @@ var getParams = function(prop) {
 };
 var getRequestParams = function(layer) {
     var hosts = {},
-        prop;
+        prop, hostName;
     if (layer) {
         prop = layer instanceof L.gmx.DataManager ? layer.options : layer._gmx.properties;
-        hosts[prop.hostName] = [getParams(prop)];
+        hostName = prop.hostName || layer._gmx.hostName;
+        hosts[hostName] = [getParams(prop)];
     } else {
         for (var id in layers) {
             var obj = layers[id];
             if (obj.options.chkUpdate) {
                 prop = obj._gmx.properties;
-                var hostName = prop.hostName,
-                    pt = getParams(prop);
+                hostName = prop.hostName || obj._gmx.hostName;
+                var pt = getParams(prop);
                 if (hosts[hostName]) { hosts[hostName].push(pt); }
                 else { hosts[hostName] = [pt]; }
             }
