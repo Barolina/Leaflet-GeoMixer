@@ -259,10 +259,10 @@ L.gmx.VectorLayer.include({
         }
     },
 
-    _openPopup: function (options) {
+    _openPopup: function (options, notSkip) {
         var map = this._map,
             originalEvent = options.originalEvent || {},
-            skip = this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
+            skip = notSkip ? !notSkip : this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
             var type = options.type,
@@ -271,7 +271,7 @@ L.gmx.VectorLayer.include({
                 balloonData = gmx.balloonData || {};
 
             if (type === 'click') {
-                if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
+                if (!notSkip && balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
 
                 if (!('_gmxPopups' in map)) {
                     map._gmxPopups = [];
@@ -301,7 +301,8 @@ L.gmx.VectorLayer.include({
                 }
 
                 this._clearPopup(gmx.id);
-                _popup = new L.Popup(L.extend({}, this._popup.options, {closeOnClick: map.options.maxPopupCount === 1, autoPan: true}));
+                var opt = this._popup ? this._popup.options : {maxWidth: 10000, className: 'gmxPopup', layerId: this._gmx.layerID};
+                _popup = new L.Popup(L.extend({}, opt, {closeOnClick: map.options.maxPopupCount === 1, autoPan: true}));
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {
                     _popup._state = '';
@@ -384,7 +385,7 @@ L.gmx.VectorLayer.include({
                 type: 'click',
                 latlng: latlng,
                 gmx: this.getHoverOption(item)
-            });
+            }, true);
             delete gmx._needPopups[id];
         }
         return this;
