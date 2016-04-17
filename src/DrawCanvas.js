@@ -74,8 +74,7 @@ style
 L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
     var propsArr = geoItem.properties,
         idr = propsArr[0],
-        j = 0,
-        len = 0,
+        i, len, j, len1,
         gmx = options.gmx,
         ctx = options.ctx,
         geom = propsArr[propsArr.length - 1],
@@ -126,8 +125,8 @@ L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
         }
 
         if (geoType === 'MULTIPOINT') {
-            for (j = 0, len = coords.length; j < len; j++) {
-                dattr.coords = coords[j];
+            for (i = 0, len = coords.length; i < len; i++) {
+                dattr.coords = coords[i];
                 utils.pointToCanvas(dattr);
             }
         } else {
@@ -163,13 +162,13 @@ L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
                 coords = pixelsMap.coords;
                 hiddenLines = pixelsMap.hidden || [];
                 dattr.flagPixels = flagPixels;
-                for (j = 0, len = coords.length; j < len; j++) {
-                    var coords1 = coords[j];
-                    var hiddenLines1 = hiddenLines[j] || [];
+                for (i = 0, len = coords.length; i < len; i++) {
+                    var coords1 = coords[i];
+                    var hiddenLines1 = hiddenLines[i] || [];
                     ctx.beginPath();
-                    for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
-                        dattr.coords = coords1[j1];
-                        dattr.hiddenLines = hiddenLines1[j1] || [];
+                    for (j = 0, len1 = coords1.length; j < len1; j++) {
+                        dattr.coords = coords1[j];
+                        dattr.hiddenLines = hiddenLines1[j] || [];
                         func(dattr);
                     }
                     ctx.closePath();
@@ -207,14 +206,19 @@ L.gmxUtil.drawGeoItem = function(geoItem, item, options, currentStyle, style) {
         }
     } else if (geoType === 'LINESTRING' || geoType === 'MULTILINESTRING') {
         coords = geom.coordinates;
-        if (geoType === 'MULTILINESTRING') {
-            for (j = 0, len = coords.length; j < len; j++) {
-                dattr.coords = coords[j];
-                utils.lineToCanvas(dattr);
+        if (geoType === 'LINESTRING') { coords = [coords]; }
+        var size = (item.currentStyle.maxSize || item.currentStyle.lineWidth) / gmx.mInPixel;
+        for (i = 0, len = coords.length; i < len; i++) {
+            var arr = tbounds.clipPolyLine(coords[i], true, size);
+            for (j = 0, len1 = arr.length; j < len1; j++) {
+                dattr.coords = arr[j];
+                var pixels = utils.lineToCanvas(dattr);
+                if (pixels) {
+                    ctx.save();
+                    utils.lineToCanvasAsIcon(pixels, dattr);
+                    ctx.restore();
+                }
             }
-        } else {
-            dattr.coords = coords;
-            utils.lineToCanvas(dattr);
         }
     }
     return true;

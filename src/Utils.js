@@ -35,14 +35,17 @@ var gmxAPIutils = {
     },
 
 	getLayerItemFromServer: function(options) {
-        return gmxAPIutils.requestJSONP(
-            options.url || (window.serverBase || 'http://maps.kosmosnimki.ru/') + 'VectorLayer/Search.ashx',
-            {
+        var query = options.query ? options.query : '[' + options.field + ']=' + options.value,
+            req = {
                 WrapStyle: 'func',
                 geometry: true,
                 layer: options.layerID,
-                query: '[' + options.identityField + ']=' + options.id
-            },
+                query: query
+            };
+        if (options.border) { req.border = options.border; }
+        return gmxAPIutils.requestJSONP(
+            options.url || (window.serverBase || 'http://maps.kosmosnimki.ru/') + 'VectorLayer/Search.ashx',
+            req,
             options
         );
     },
@@ -629,7 +632,7 @@ var gmxAPIutils = {
     toPixels: function(p, tpx, tpy, mInPixel) { // get pixel point
         var px1 = p[0] * mInPixel; 	px1 = (0.5 + px1) << 0;
         var py1 = p[1] * mInPixel;	py1 = (0.5 + py1) << 0;
-        return [px1 - tpx, tpy - py1];
+        return [px1 - tpx, tpy - py1].concat(p.slice(2));
     },
 
     getPixelPoint: function(attr, coords) {
@@ -757,6 +760,23 @@ var gmxAPIutils = {
         return canvas;
     },
 
+    drawIconPath: function(path, attr) { // draw iconPath in canvas
+        if (!L.Util.isArray(path) || path.length < 3 || !attr.ctx) { return; }
+        var trFlag = false,
+            ctx = attr.ctx,
+            rad = attr.radian;
+
+        if (attr.px || attr.py) { ctx.translate(attr.px || 0, attr.py || 0); trFlag = true; }
+        if (!rad && attr.rotateRes) { rad = gmxAPIutils.degRad(attr.rotateRes); }
+        if (rad) { ctx.rotate(rad); trFlag = true; }
+
+        ctx.moveTo(path[0], path[1]);
+        for (var i = 2, len = path.length; i < len; i += 2) {
+            ctx.lineTo(path[i], path[i + 1]);
+        }
+        if (trFlag) { ctx.setTransform(1, 0, 0, 1, 0, 0); }
+    },
+
     pointToCanvas: function(attr) { // Точку в canvas
         var gmx = attr.gmx,
             pointAttr = attr.pointAttr,
@@ -778,6 +798,11 @@ var gmxAPIutils = {
         } else if (style.type === 'circle') {
             px1 += sx / 2;
             py1 += sy / 2;
+        }
+        if (currentStyle.iconPath) {
+            attr.px = px1;
+            attr.py = py1;
+            attr.rotateRes = currentStyle.rotate || 0;
         }
         var image = currentStyle.image || style.image;
         if (image) {
@@ -802,7 +827,9 @@ var gmxAPIutils = {
             if ('opacity' in style) { ctx.globalAlpha = 1; }
         } else if (style.fillColor || currentStyle.fillRadialGradient) {
             ctx.beginPath();
-            if (style.type === 'circle' || currentStyle.fillRadialGradient) {
+            if (currentStyle.iconPath) {
+                gmxAPIutils.drawIconPath(currentStyle.iconPath, attr);
+            } else if (style.type === 'circle' || currentStyle.fillRadialGradient) {
                 var circle = style.iconSize / 2;
                 if (currentStyle.fillRadialGradient) {
                     var rgr = currentStyle.fillRadialGradient;
@@ -822,7 +849,9 @@ var gmxAPIutils = {
         }
         if (currentStyle.strokeStyle) {
             ctx.beginPath();
-            if (style.type === 'circle') {
+            if (currentStyle.iconPath) {
+                gmxAPIutils.drawIconPath(currentStyle.iconPath, attr);
+            } else if (style.type === 'circle') {
                 ctx.arc(px1, py1, style.iconSize / 2, 0, 2 * Math.PI);
             } else {
                 ctx.strokeRect(px1sx, py1sy, sx, sy);
@@ -830,25 +859,59 @@ var gmxAPIutils = {
             ctx.stroke();
         }
     },
+    lineToCanvasAsIcon: function(pixels, attr) {  // add line(as icon) to canvas
+        var len = pixels.length,
+            ctx = attr.ctx,
+            item = attr.item,
+            currentStyle = item.currentStyle || item.parsedStyleKeys,
+            iconPath = currentStyle.iconPath;
+
+        if (len > 0) {
+            if ('getLineDash' in ctx && ctx.getLineDash().length > 0) {
+                ctx.setLineDash([]);
+            }
+            ctx.beginPath();
+            var p, opt;
+            for (var i = 0; i < len; i++) {
+                p = pixels[i];
+                opt = {ctx: ctx, px: p.x, py: p.y, radian: p.radian};
+                gmxAPIutils.drawIconPath(iconPath, opt);
+            }
+            gmxAPIutils.drawIconPath(iconPath, opt);
+            if (currentStyle.strokeStyle) {
+                ctx.stroke();
+            }
+            if (currentStyle.fillStyle) {
+                ctx.fill();
+            }
+        }
+    },
     lineToCanvas: function(attr) {  // Lines in canvas
         var gmx = attr.gmx,
             coords = attr.coords,
-            ctx = attr.ctx;
+            ctx = attr.ctx,
+            item = attr.item,
+            currentStyle = item.currentStyle || item.parsedStyleKeys,
+            pixels = currentStyle.iconPath ? [] : null;
 
         var lastX = null, lastY = null;
         ctx.beginPath();
         for (var i = 0, len = coords.length; i < len; i++) {
-            var p1 = gmxAPIutils.toPixels(coords[i], attr.tpx, attr.tpy, gmx.mInPixel);
-            if (lastX !== p1[0] || lastY !== p1[1]) {
+            var p = gmxAPIutils.toPixels(coords[i], attr.tpx, attr.tpy, gmx.mInPixel),
+                x = p[0],
+                y = p[1];
+            if (lastX !== x || lastY !== y) {
+                if (pixels) { pixels.push({x: x, y: y, radian: p[2]}); }
                 if (i === 0) {
-                    ctx.moveTo(p1[0], p1[1]);
+                    ctx.moveTo(x, y);
                 } else {
-                    ctx.lineTo(p1[0], p1[1]);
+                    ctx.lineTo(x, y);
                 }
-                lastX = p1[0]; lastY = p1[1];
+                lastX = x; lastY = y;
             }
         }
         ctx.stroke();
+        return pixels;
     },
 
     getCoordsPixels: function(attr) {
@@ -1503,13 +1566,11 @@ var gmxAPIutils = {
             isMerc = isMerc === undefined || isMerc;
             latlngs.forEach(function(latlng) {
                 if (L.Util.isArray(latlng)) {
-                    if (latlng.length === 2) {   // From Mercator array
-                        if (isMerc) {
-                            latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
-                        }
-                    } else {
+                    if (L.Util.isArray(latlng[0])) {
                         length += gmxAPIutils.getLength(latlng, isMerc);
                         return length;
+                    } else if (isMerc) {   // From Mercator array
+                        latlng = L.Projection.Mercator.unproject({x: latlng[0], y: latlng[1]});
                     }
                 }
                 if (lng !== false && lat !== false) {
@@ -2414,6 +2475,17 @@ gmxAPIutils.Bounds.prototype = {
             max2 = bounds.max;
         return max2.x === max.x && min2.x === min.x && max2.y === max.y && min2.y === min.y;
     },
+    isNodeIntersect: function (coords) {
+        for (var i = 0, len = coords.length; i < len; i++) {
+            if (this.contains(coords[i])) {
+                return {
+                    num: i,
+                    point: coords[i]
+                };
+            }
+        }
+        return null;
+    },
     clipPolygon: function (coords) { // (coords) -> clip coords
         var min = this.min,
             max = this.max,
@@ -2452,6 +2524,85 @@ gmxAPIutils.Bounds.prototype = {
             cp1 = cp2;
         }
         return outputList;
+    },
+    clipPolyLine: function (coords, angleFlag, delta) { // (coords) -> clip coords
+        delta = delta || 0;
+        var min = this.min,
+            max = this.max,
+            bbox = [min.x - delta, min.y - delta, max.x + delta, max.y + delta],
+            bitCode = function (p) {
+                var code = 0;
+
+                if (p[0] < bbox[0]) code |= 1; // left
+                else if (p[0] > bbox[2]) code |= 2; // right
+
+                if (p[1] < bbox[1]) code |= 4; // bottom
+                else if (p[1] > bbox[3]) code |= 8; // top
+
+                return code;
+            },
+            getAngle = function (a, b) {
+                return Math.PI / 2 + Math.atan2(b[1] - a[1], a[0] - b[0]);
+            },
+            intersect = function (a, b, edge) {
+                return edge & 8 ? [a[0] + (b[0] - a[0]) * (bbox[3] - a[1]) / (b[1] - a[1]), bbox[3]] : // top
+                       edge & 4 ? [a[0] + (b[0] - a[0]) * (bbox[1] - a[1]) / (b[1] - a[1]), bbox[1]] : // bottom
+                       edge & 2 ? [bbox[2], a[1] + (b[1] - a[1]) * (bbox[2] - a[0]) / (b[0] - a[0])] : // right
+                       edge & 1 ? [bbox[0], a[1] + (b[1] - a[1]) * (bbox[0] - a[0]) / (b[0] - a[0])] : // left
+                       null;
+            },
+            result = [],
+            len = coords.length,
+            codeA = bitCode(coords[0], bbox),
+            part = [],
+            i, a, b, c, codeB, lastCode;
+
+        for (i = 1; i < len; i++) {
+            a = coords[i - 1];
+            b = coords[i];
+            codeB = lastCode = bitCode(b, bbox);
+
+            while (true) {
+
+                if (!(codeA | codeB)) { // accept
+                    if (angleFlag) {
+                        a[2] = getAngle(a, b);
+                        c = coords[i + 1];
+                        b[2] = c ? getAngle(b, c) : a[2];
+                    }
+                    part.push(a);
+
+                    if (codeB !== lastCode) { // segment went outside
+                        part.push(b);
+
+                        if (i < len - 1) { // start a new line
+                            result.push(part);
+                            part = [];
+                        }
+                    } else if (i === len - 1) {
+                        part.push(b);
+                    }
+                    break;
+
+                } else if (codeA & codeB) { // trivial reject
+                    break;
+
+                } else if (codeA) { // a outside, intersect with clip edge
+                    a = intersect(a, b, codeA, bbox);
+                    codeA = bitCode(a, bbox);
+
+                } else { // b outside
+                    b = intersect(a, b, codeB, bbox);
+                    codeB = bitCode(b, bbox);
+                }
+            }
+
+            codeA = lastCode;
+        }
+
+        if (part.length) result.push(part);
+
+        return result;
     }
 };
 
@@ -2506,6 +2657,7 @@ L.extend(L.gmxUtil, {
     isIE12: gmxAPIutils.isIE(12),
     requestJSONP: gmxAPIutils.requestJSONP,
     request: gmxAPIutils.request,
+    getLayerItemFromServer: gmxAPIutils.getLayerItemFromServer,
     fromServerStyle: gmxAPIutils.fromServerStyle,
     toServerStyle: gmxAPIutils.toServerStyle,
     getDefaultStyle: gmxAPIutils.getDefaultStyle,

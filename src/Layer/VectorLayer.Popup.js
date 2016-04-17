@@ -164,6 +164,8 @@ L.gmx.VectorLayer.include({
             skipSummary = this.options.isGeneralized && (type === 'mouseover' || type === 'mousemove'),
             outItem = {
                 id: gmx.id,
+                type: type,
+                nodePoint: gmx.nodePoint,
                 latlng: options.latlng,
                 properties: properties,
                 templateBalloon: templateBalloon
@@ -242,9 +244,9 @@ L.gmx.VectorLayer.include({
                 var layerProp = gmx.layer.getGmxProperties();
                 gmxAPIutils.getLayerItemFromServer({
                     options: options,
-                    id: item.id,
                     layerID: layerProp.name,
-                    identityField: layerProp.identityField
+                    value: item.id,
+                    field: layerProp.identityField
                 }).then(function(json, params) {
                     if (json && json.Status === 'ok' && json.Result) {
                         var pArr = json.Result.values[0];

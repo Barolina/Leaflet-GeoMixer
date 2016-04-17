@@ -48,6 +48,7 @@ L.gmx.VectorLayer.include({
                 hiddenLines = dataOption.hiddenLines || [],
                 boundsArr = dataOption.boundsArr,
                 coords = geom.coordinates,
+                nodePoint = null,
                 ph = {
                     point: mercPoint,
                     bounds: bounds,
@@ -70,7 +71,10 @@ L.gmx.VectorLayer.include({
             }
 
             if (chktype === 'LINESTRING') {
-                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) { continue; }
+                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) {
+                    nodePoint = gmxAPIutils.bounds([point]).addBuffer(offset[0] / mInPixel, offset[1] / mInPixel).isNodeIntersect(coords);
+                    if (nodePoint === null) { continue; }
+                }
             } else if (chktype === 'LIKEMULTILINESTRING') {
                 ph.delta = lineWidth / mInPixel;
                 var flag = false;
@@ -88,7 +92,15 @@ L.gmx.VectorLayer.include({
                 ph.delta = lineWidth / mInPixel;
                 ph.hidden = hiddenLines;
                 if (!gmxAPIutils.isPointInLines(ph)) {
-                    continue;
+                    var pBounds = gmxAPIutils.bounds([point]).addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
+                    for (j = 0, len = coords.length; j < len; j++) {
+                        nodePoint = pBounds.isNodeIntersect(coords[j]);
+                        if (nodePoint !== null) {
+                            nodePoint.ring = j;
+                            break;
+                        }
+                    }
+                    if (nodePoint === null) { continue; }
                 }
             } else if (chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
                 var chkPoint = mercPoint;
@@ -127,6 +139,7 @@ L.gmx.VectorLayer.include({
                 properties: item.properties,
                 geometry: geom,
                 bounds: item.bounds,
+                nodePoint: nodePoint,
                 offset: iconAnchor ? offset : null,
                 parsedStyle: parsedStyle
             };
@@ -214,6 +227,7 @@ L.gmx.VectorLayer.include({
 
                     ev.gmx = L.extend(this.getHoverOption(item), {
                         targets: geoItems,
+                        nodePoint: target.nodePoint,
                         prevId: prevId,
                         hoverDiff: item.hoverDiff
                     });
