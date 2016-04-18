@@ -37,14 +37,19 @@ L.gmx._loadLayerClass = function(type) {
                 }
 
                 return loader(type);
+            },
+            function(){
+                //just skip loader errors
             });
         });
 
-        promise.then(function(layerClass) {
+        promise = promise.then(function(layerClass) {
             if (layerClass) {
                 L.gmx._layerClasses[type] = layerClass;
                 return layerClass;
             }
+        }, function(){
+            //just skip loader errors
         });
 
         L.gmx._loadingLayerClasses[type] = promise;
