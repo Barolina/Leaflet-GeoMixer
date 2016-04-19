@@ -22,12 +22,18 @@ L.gmx.VectorLayer.include({
                     iconScale * sx / 2,
                     iconScale * sy / 2
                 ],
-                radius = offset[0],
-                point = mercPoint;
+                point = mercPoint,
+                geom = geoItem[geoItem.length - 1],
+                type = geom.type;
 
-            var objBounds = gmxAPIutils.bounds()
-                .extendBounds(dataOption.bounds)
-                .addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
+            if (type === 'POINT' && parsedStyle.type === 'circle') {
+                offset[0] *= 2;
+                offset[1] *= 2;
+            }
+            var radius = offset[0],
+                objBounds = gmxAPIutils.bounds()
+                    .extendBounds(dataOption.bounds)
+                    .addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
             if (iconAnchor) {
                 offset = [
                     iconAnchor[0] - offset[0],
@@ -40,10 +46,8 @@ L.gmx.VectorLayer.include({
             }
             if (!objBounds.contains(point)) { continue; }
 
-            var geom = geoItem[geoItem.length - 1],
-                fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage || parsedStyle.fillColor,
+            var fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage || parsedStyle.fillColor,
                 marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
-                type = geom.type,
                 chktype = type,
                 hiddenLines = dataOption.hiddenLines || [],
                 boundsArr = dataOption.boundsArr,
