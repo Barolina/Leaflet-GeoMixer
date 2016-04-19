@@ -767,9 +767,8 @@ var gmxAPIutils = {
             rad = attr.radian;
 
         if (attr.px || attr.py) { ctx.translate(attr.px || 0, attr.py || 0); trFlag = true; }
-        if (!rad && attr.rotateRes) { rad = gmxAPIutils.degRad(attr.rotateRes); }
+        if (!rad && attr.rotateRes) { rad = Math.PI + gmxAPIutils.degRad(attr.rotateRes); }
         if (rad) { ctx.rotate(rad); trFlag = true; }
-
         ctx.moveTo(path[0], path[1]);
         for (var i = 2, len = path.length; i < len; i += 2) {
             ctx.lineTo(path[i], path[i + 1]);
@@ -871,13 +870,10 @@ var gmxAPIutils = {
                 ctx.setLineDash([]);
             }
             ctx.beginPath();
-            var p, opt;
-            for (var i = 0; i < len; i++) {
+            for (var i = 0, p; i < len; i++) {
                 p = pixels[i];
-                opt = {ctx: ctx, px: p.x, py: p.y, radian: p.radian};
-                gmxAPIutils.drawIconPath(iconPath, opt);
+                gmxAPIutils.drawIconPath(iconPath, {ctx: ctx, px: p.x, py: p.y, radian: p.radian});
             }
-            gmxAPIutils.drawIconPath(iconPath, opt);
             if (currentStyle.strokeStyle) {
                 ctx.stroke();
             }
@@ -2560,6 +2556,7 @@ gmxAPIutils.Bounds.prototype = {
         for (i = 1; i < len; i++) {
             a = coords[i - 1];
             b = coords[i];
+            if (a[0] === b[0] && a[1] === b[1]) { continue; }
             codeB = lastCode = bitCode(b, bbox);
 
             while (true) {

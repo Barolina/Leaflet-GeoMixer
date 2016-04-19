@@ -21,6 +21,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._drawInProgress = {};
 
         this._anyDrawings = false; //are we drawing something?
+        this.repaintObservers = {};    // external observers like screen
 
         var _this = this;
 
@@ -151,7 +152,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _update: function () {
         if (!this._map ||
-            this.isExternalVisible && this.isExternalVisible(this._map._zoom) // WMS enabled on this.zoom
+            this.isExternalVisible && this.isExternalVisible(this._map._zoom) // External layer enabled on this.zoom
             ) {
             this._clearAllSubscriptions();
             return;
@@ -542,6 +543,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     repaint: function (zKeys) {
         if (this._map) {
+            if (!zKeys) {
+                zKeys = {};
+                for (var key in this._gmx.tileSubscriptions) { zKeys[key] = true; }
+                L.extend(zKeys, this.repaintObservers);
+            }
             this._gmx.dataManager._triggerObservers(zKeys);
         }
     },
@@ -888,7 +894,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     _prpZoomData: function() {
         this.setCurrentZoom(this._map);
-        this.repaint();
+        // this.repaint();
     },
 
     setCurrentZoom: function(map) {
