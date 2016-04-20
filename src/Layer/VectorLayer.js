@@ -320,6 +320,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.properties = ph.properties;
         gmx.geometry = ph.geometry;
 
+        if (gmx.properties._initDone) {    // need delete tiles key
+            delete gmx.properties[gmx.properties.Temporal ? 'TemporalTiles' : 'tiles'];
+        }
+        gmx.properties._initDone = true;
+
         if (!gmx.geometry) {
             var worldSize = gmxAPIutils.tileSizes[1];
             gmx.geometry = {
