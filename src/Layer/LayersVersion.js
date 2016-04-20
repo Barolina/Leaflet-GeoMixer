@@ -39,21 +39,15 @@ var getRequestParams = function(layer) {
 };
 
 var chkVersion = function (layer, callback) {
-    var layerID = null,
-        prop;
-
-    if (layer) {
-        prop = layer instanceof L.gmx.DataManager ? layer.options : layer._gmx.properties;
-        layerID = prop.name;
-    }
     var processResponse = function(res) {
         if (res && res.Status === 'ok' && res.Result) {
             for (var i = 0, len = res.Result.length; i < len; i++) {
-                var item = res.Result[i];
-                prop = item.properties;
-                var id = prop.name,
-                    curLayer = layers[id] || (id === layerID ? layer : null);
-                if (curLayer && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
+                var item = res.Result[i],
+                    id = item.properties.name;
+                for (var key in layers) {
+                    var curLayer = layers[key];
+                    if (curLayer._gmx.properties.name === id && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
+                }
             }
         }
         lastLayersStr = '';
@@ -92,9 +86,10 @@ var chkVersion = function (layer, callback) {
                         }, processResponse);
                     }
                     var timeStamp = Date.now();
-                    hosts[hostName].forEach(function(it) {
-                        if (layers[it.Name]) { layers[it.Name]._gmx._stampVersionRequest = timeStamp; }
-                    });
+                    for (var key in layers) {
+                        var _gmx = layers[key]._gmx;
+                        if (_gmx.hostName === hostName) { _gmx._stampVersionRequest = timeStamp; }
+                    }
                 }
             };
         for (var hostName in hosts) {
@@ -106,23 +101,21 @@ var chkVersion = function (layer, callback) {
 var layersVersion = {
 
     remove: function(layer) {
-        var _gmx = layer._gmx,
-            prop = _gmx.properties;
-
-        delete layers[prop.name];
+        delete layers[layer._leaflet_id];
+        var _gmx = layer._gmx;
         _gmx.dataManager.off('chkLayerUpdate', _gmx._chkVersion);
     },
 
     add: function(layer) {
-        var _gmx = layer._gmx,
-            prop = _gmx.properties;
-
-        if (prop.name in layers) {
+        var id = layer._leaflet_id;
+        if (id in layers) {
             return;
         }
 
+        var _gmx = layer._gmx,
+            prop = _gmx.properties;
         if ('LayerVersion' in prop) {
-            layers[prop.name] = layer;
+            layers[id] = layer;
             _gmx._chkVersion = function () {
                 chkVersion(layer);
             };
