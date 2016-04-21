@@ -24,14 +24,19 @@ var getRequestParams = function(layer) {
         hostName = prop.hostName || layer._gmx.hostName;
         hosts[hostName] = [getParams(prop)];
     } else {
+        var skipItems = {};
         for (var id in layers) {
             var obj = layers[id];
             if (obj.options.chkUpdate) {
                 prop = obj._gmx.properties;
                 hostName = prop.hostName || obj._gmx.hostName;
-                var pt = getParams(prop);
-                if (hosts[hostName]) { hosts[hostName].push(pt); }
-                else { hosts[hostName] = [pt]; }
+                var pt = getParams(prop),
+                    key = pt.Name + pt.Version;
+                if (!skipItems[key]) {
+                    if (hosts[hostName]) { hosts[hostName].push(pt); }
+                    else { hosts[hostName] = [pt]; }
+                }
+                skipItems[key] = true;
             }
         }
     }
