@@ -686,6 +686,9 @@ var gmxAPIutils = {
     isIE: function(v) {
         return v === gmxAPIutils.getIEversion();
     },
+    gtIE: function(v) {
+        return v < gmxAPIutils.getIEversion();
+    },
 
     getIEversion: function() {
         var ua = navigator.userAgent || '',
@@ -2651,7 +2654,7 @@ L.extend(L.gmxUtil, {
     isIE9: gmxAPIutils.isIE(9),
     isIE10: gmxAPIutils.isIE(10),
     isIE11: gmxAPIutils.isIE(11),
-    isIE12: gmxAPIutils.isIE(12),
+    gtIE11: gmxAPIutils.gtIE(11),
     requestJSONP: gmxAPIutils.requestJSONP,
     request: gmxAPIutils.request,
     getLayerItemFromServer: gmxAPIutils.getLayerItemFromServer,
