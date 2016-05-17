@@ -1097,7 +1097,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         gmx.sessionKey = prop.sessionKey = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
         gmx.identityField = prop.identityField; // ogc_fid
-        gmx.GeometryType = prop.GeometryType;   // тип геометрий обьектов в слое
+        gmx.GeometryType = (prop.GeometryType || '').toLowerCase();   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters || 1;// мин. zoom для растров
         gmx.minZoomQuicklooks = gmx.minZoomRasters; // по умолчанию minZoom для квиклуков и КР равны
 
