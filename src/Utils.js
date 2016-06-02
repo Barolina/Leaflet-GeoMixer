@@ -641,7 +641,6 @@ var gmxAPIutils = {
             item = attr.item,
             currentStyle = item.currentStyle || item.parsedStyleKeys || {},
             style = attr.style || {},
-            //iconScale = currentStyle.iconScale || style.iconScale || 1,
             iconScale = currentStyle.iconScale || 1,
             iconCenter = currentStyle.iconCenter || false,
             sx = currentStyle.sx || style.sx || 4,
@@ -651,19 +650,27 @@ var gmxAPIutils = {
             px = attr.tpx,
             py = attr.tpy;
 
-        sx *= iconScale;
-        sy *= iconScale;
-        var px1 = coords[0] * mInPixel - px,
-            py1 = py - coords[1] * mInPixel;
-
         if (!iconCenter && iconAnchor) {
             px1 -= iconAnchor[0];
             py1 -= iconAnchor[1];
         }
+        sx *= iconScale;
+        sy *= iconScale;
+        sx += weight;
+        sy += weight;
 
-        return ((py1 - sy - weight) > 256 || (px1 - sx - weight) > 256 || (px1 + sx + weight) < 0 || (py1 + sy + weight) < 0)
-            ? null
-            : {
+        var py1 = py - coords[1] * mInPixel,
+			px1 = coords[0] * mInPixel - px;
+
+		if (px1 - sx > 256) {
+			px1 = (coords[0] - 2 * gmxAPIutils.worldWidthMerc) * mInPixel - px;
+		} else if (px1 < -sx) {
+			px1 = (coords[0] + 2 * gmxAPIutils.worldWidthMerc) * mInPixel - px;
+		}
+
+        return py1 - sy > 256 || px1 - sx > 256 || px1 + sx < 0 || py1 + sy < 0
+			? null :
+            {
                 sx: sx,
                 sy: sy,
                 px1: (0.5 + px1) << 0,

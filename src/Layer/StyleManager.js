@@ -52,7 +52,7 @@ StyleManager.prototype = {
 
         this._maxStyleSize = this._getMaxStyleSize(this.gmx.currentZoom);
 
-        var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z] / 256; //TODO: check formula
+        var mercSize = 2 * this._maxStyleSize * gmxAPIutils.tileSizes[gmxTilePoint.z]; //TODO: check formula / 256
         return gmxAPIutils.getTileBounds(gmxTilePoint.x, gmxTilePoint.y, gmxTilePoint.z).addBuffer(mercSize);
     },
 

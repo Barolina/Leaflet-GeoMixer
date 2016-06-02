@@ -602,7 +602,7 @@ ScreenVectorTile.prototype = {
                 tpy: this.tpy,
                 ctx: ctx
             };
-        tile.zKey = this.zKey;
+        tile.zKey = tileLink.el._zKey = this.zKey;
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
