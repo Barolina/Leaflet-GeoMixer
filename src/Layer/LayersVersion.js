@@ -10,11 +10,16 @@ var isExistsTiles = function(prop) {
     var tilesKey = prop.Temporal ? 'TemporalTiles' : 'tiles';
     return tilesKey in prop;
 };
-var getParams = function(prop) {
-    return {
+var getParams = function(prop, gmx) {
+    var pt = {
         Name: prop.name,
         Version: isExistsTiles(prop) ? prop.LayerVersion : -1
     };
+    if (gmx) {
+        if (gmx.beginDate) { pt.pBegin = Math.floor(gmx.beginDate.getTime() / 1000); }
+        if (gmx.endDate) { pt.pEnd = Math.floor(gmx.endDate.getTime() / 1000); }
+    }
+    return pt;
 };
 var getRequestParams = function(layer) {
     var hosts = {},
@@ -22,7 +27,7 @@ var getRequestParams = function(layer) {
     if (layer) {
         prop = layer instanceof L.gmx.DataManager ? layer.options : layer._gmx.properties;
         hostName = prop.hostName || layer._gmx.hostName;
-        hosts[hostName] = [getParams(prop)];
+        hosts[hostName] = [getParams(prop, layer._gmx)];
     } else {
         var skipItems = {};
         for (var id in layers) {
@@ -30,7 +35,7 @@ var getRequestParams = function(layer) {
             if (obj.options.chkUpdate) {
                 prop = obj._gmx.properties;
                 hostName = prop.hostName || obj._gmx.hostName;
-                var pt = getParams(prop),
+                var pt = getParams(prop, obj._gmx),
                     key = pt.Name + pt.Version;
                 if (!skipItems[key]) {
                     if (hosts[hostName]) { hosts[hostName].push(pt); }
