@@ -422,6 +422,14 @@ var DataManager = L.Class.extend({
         return len;
     },
 
+    getMaxDateInterval: function() {
+        this._chkMaxDateInterval();
+		return {
+			beginDate: this._beginDate,
+			endDate: this._endDate
+		};
+    },
+
     _chkMaxDateInterval: function() {
         if (this._isTemporalLayer && this._needCheckDateInterval) {
             this._needCheckDateInterval = false;

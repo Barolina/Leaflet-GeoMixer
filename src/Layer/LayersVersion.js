@@ -10,32 +10,40 @@ var isExistsTiles = function(prop) {
     var tilesKey = prop.Temporal ? 'TemporalTiles' : 'tiles';
     return tilesKey in prop;
 };
-var getParams = function(prop, gmx) {
+var getParams = function(prop, dm) {
     var pt = {
         Name: prop.name,
         Version: isExistsTiles(prop) ? prop.LayerVersion : -1
     };
-    if (gmx) {
-        if (gmx.beginDate) { pt.pBegin = Math.floor(gmx.beginDate.getTime() / 1000); }
-        if (gmx.endDate) { pt.pEnd = Math.floor(gmx.endDate.getTime() / 1000); }
+    if (dm) {
+		var maxDateInterval = dm.getMaxDateInterval();
+        if (maxDateInterval.beginDate) { pt.pBegin = Math.floor(maxDateInterval.beginDate.getTime() / 1000); }
+        if (maxDateInterval.endDate) { pt.pEnd = Math.floor(maxDateInterval.endDate.getTime() / 1000); }
     }
     return pt;
 };
 var getRequestParams = function(layer) {
     var hosts = {},
-        prop, hostName;
+        prop, hostName, dm;
     if (layer) {
-        prop = layer instanceof L.gmx.DataManager ? layer.options : layer._gmx.properties;
+        if (layer instanceof L.gmx.DataManager) {
+			dm = layer;
+			prop = dm.options;
+		} else {
+			dm = layer._gmx.dataManager;
+			prop = layer._gmx.properties;
+		}
         hostName = prop.hostName || layer._gmx.hostName;
-        hosts[hostName] = [getParams(prop, layer._gmx)];
+        hosts[hostName] = [getParams(prop, dm)];
     } else {
         var skipItems = {};
         for (var id in layers) {
             var obj = layers[id];
             if (obj.options.chkUpdate) {
+				dm = obj._gmx.dataManager;
                 prop = obj._gmx.properties;
                 hostName = prop.hostName || obj._gmx.hostName;
-                var pt = getParams(prop, obj._gmx),
+                var pt = getParams(prop, dm),
                     key = pt.Name + pt.Version;
                 if (!skipItems[key]) {
                     if (hosts[hostName]) { hosts[hostName].push(pt); }
