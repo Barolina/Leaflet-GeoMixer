@@ -25,10 +25,17 @@ var Observer = L.Class.extend({
             this.setBounds(options.bounds);
         }
 
+		var w = gmxAPIutils.worldWidthMerc,
+			dx;
         if (!this.bbox) {
-            var w = gmxAPIutils.worldWidthMerc;
             this.bbox = gmxAPIutils.bounds([[-w, -w], [w, w]]);
             this.world = true;
+        } else if (this.bbox.max.x > w) {
+			dx = this.bbox.max.x - w;
+            this.bbox1 = gmxAPIutils.bounds([[dx - w, this.bbox.max.y], [-(dx + w), this.bbox.min.y]]);
+        } else if (this.bbox.min.x < -w) {
+			dx = this.bbox.min.x + w;
+            this.bbox1 = gmxAPIutils.bounds([[dx + w, this.bbox.max.y], [w - dx, this.bbox.min.y]]);
         }
 
         if (options.dateInterval) {
