@@ -220,7 +220,7 @@ StyleManager.prototype = {
     _needLoadIcons: 0,
     _getImageSize: function(pt) {     // check image size
         var url = pt.iconUrl || pt.fillIconUrl,
-            opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {},
+            opt = pt.iconAngle || pt.iconScale ? {crossOrigin: 'anonymous'} : {},
             _this = this;
 
         if (L.gmxUtil.isIE11 && /\.svg$/.test(url)) {
