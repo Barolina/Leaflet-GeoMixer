@@ -504,6 +504,12 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if (observer) {
                 observer.setDateInterval(beginDate, endDate);
             }
+			if (window.gmxSkipTiles === 'NotVisible') {
+				gmx.properties.LayerVersion = -1;
+				if (this._map) {
+					L.gmx.layersVersion.now();
+				}
+			}
             this.fire('dateIntervalChanged');
         }
 

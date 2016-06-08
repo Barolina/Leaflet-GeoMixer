@@ -10,31 +10,34 @@ var isExistsTiles = function(prop) {
     var tilesKey = prop.Temporal ? 'TemporalTiles' : 'tiles';
     return tilesKey in prop;
 };
-var getParams = function(prop, dm) {
+var getParams = function(prop, dm, layerDateInterval) {
     var pt = {
         Name: prop.name,
         Version: isExistsTiles(prop) ? prop.LayerVersion : -1
     };
-    if (dm) {
-		var maxDateInterval = dm.getMaxDateInterval();
-        if (maxDateInterval.beginDate) { pt.pBegin = Math.floor(maxDateInterval.beginDate.getTime() / 1000); }
-        if (maxDateInterval.endDate) { pt.pEnd = Math.floor(maxDateInterval.endDate.getTime() / 1000); }
+	if (dm && (prop.UseTiles === false || window.gmxSkipTiles === 'NotVisible')) {
+		var maxDateInterval = dm.getMaxDateInterval(),
+			beginDate = maxDateInterval.beginDate || layerDateInterval.beginDate,
+			endDate = maxDateInterval.endDate || layerDateInterval.endDate;
+        if (beginDate) { pt.dateBegin = Math.floor(beginDate.getTime() / 1000); }
+        if (endDate) { pt.dateEnd = Math.floor(endDate.getTime() / 1000); }
     }
     return pt;
 };
 var getRequestParams = function(layer) {
     var hosts = {},
-        prop, hostName, dm;
+        prop, hostName, dm, layerDateInterval;
     if (layer) {
         if (layer instanceof L.gmx.DataManager) {
 			dm = layer;
 			prop = dm.options;
 		} else {
-			dm = layer._gmx.dataManager;
 			prop = layer._gmx.properties;
+			dm = layer._gmx.dataManager;
+			layerDateInterval = layer._gmx;
 		}
         hostName = prop.hostName || layer._gmx.hostName;
-        hosts[hostName] = [getParams(prop, dm)];
+		hosts[hostName] = [getParams(prop, dm, layerDateInterval)];
     } else {
         var skipItems = {};
         for (var id in layers) {
@@ -42,8 +45,9 @@ var getRequestParams = function(layer) {
             if (obj.options.chkUpdate) {
 				dm = obj._gmx.dataManager;
                 prop = obj._gmx.properties;
+				layerDateInterval = obj._gmx;
                 hostName = prop.hostName || obj._gmx.hostName;
-                var pt = getParams(prop, dm),
+                var pt = getParams(prop, dm, layerDateInterval),
                     key = pt.Name + pt.Version;
                 if (!skipItems[key]) {
                     if (hosts[hostName]) { hosts[hostName].push(pt); }
@@ -141,13 +145,17 @@ var layersVersion = {
 
             layersVersion.start();
             if (!_gmx._stampVersionRequest || _gmx._stampVersionRequest < Date.now() - 19000 || !isExistsTiles(prop)) {
-                if (timeoutID) { clearTimeout(timeoutID); }
-                timeoutID = setTimeout(chkVersion, 0);
+				layersVersion.now();
             }
         }
     },
 
     chkVersion: chkVersion,
+
+    now: function() {
+		if (timeoutID) { clearTimeout(timeoutID); }
+		timeoutID = setTimeout(chkVersion, 0);
+    },
 
     stop: function() {
         if (intervalID) { clearInterval(intervalID); }
