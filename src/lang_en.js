@@ -2,6 +2,8 @@ L.extend(L.gmxLocale, {
     eng: {
         Coordinates : 'Coordinates',
         Length : 'Length',
+        nodeLength : 'From start point',
+        edgeLength : 'Segment length',
         Area : 'Area',
         Perimeter : 'Perimeter',
         units: {

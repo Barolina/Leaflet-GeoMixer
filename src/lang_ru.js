@@ -2,6 +2,8 @@ L.extend(L.gmxLocale, {
     rus: {
         Coordinates : 'Координаты',
         Length : 'Длина',
+        nodeLength : 'Длина от начала',
+        edgeLength : 'Длина сегмента',
         Area : 'Площадь',
         Perimeter : 'Периметр',
         units: {
