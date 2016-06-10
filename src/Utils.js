@@ -790,17 +790,23 @@ var gmxAPIutils = {
         var gmx = attr.gmx,
             pointAttr = attr.pointAttr,
             style = attr.style || {},
+            item = attr.item,
+            currentStyle = item.currentStyle || item.parsedStyleKeys,
+            iconScale = currentStyle.iconScale || 1,
+            image = currentStyle.image;
             sx = pointAttr.sx,
             sy = pointAttr.sy,
             px1 = pointAttr.px1,
-            py1 = pointAttr.py1;
-
-        var item = attr.item,
-            currentStyle = item.currentStyle || item.parsedStyleKeys,
-            iconScale = currentStyle.iconScale || 1,
-            px1sx = px1, py1sy = py1,
+            py1 = pointAttr.py1,
+            px1sx = px1,
+            py1sy = py1,
             ctx = attr.ctx;
 
+        if (currentStyle.type === 'image') {
+            sx = style.sx;
+            sy = style.sy;
+            image = style.image;
+        }
         if (currentStyle.iconCenter) {
             px1sx -= sx / 2;
             py1sy -= sy / 2;
@@ -813,7 +819,6 @@ var gmxAPIutils = {
             attr.py = py1;
             attr.rotateRes = currentStyle.rotate || 0;
         }
-        var image = currentStyle.image || style.image;
         if (image) {
             if ('iconColor' in currentStyle) {
                 image = this.replaceColor(image, currentStyle.iconColor, attr.imageData);

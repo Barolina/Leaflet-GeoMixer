@@ -646,7 +646,7 @@ ScreenVectorTile.prototype = {
                         if (gmx.multiFilters) {
                             for (var j = 0, len1 = item.multiFilters.length; j < len1; j++) {
                                 var it = item.multiFilters[j];
-                                L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? it.parsedStyleHover : it.parsedStyle, style);
+                                L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? it.parsedStyleHover : it.parsedStyle, it.style);
                             }
                         } else {
                             L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
