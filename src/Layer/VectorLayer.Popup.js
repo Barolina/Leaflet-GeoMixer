@@ -103,11 +103,17 @@ L.gmx.VectorLayer.include({
     },
 
     _overPopup: function (options) {
-        if (!this._popup._map) {
+        var _popup = this._popup;
+        if (!_popup._map) {
             this._openPopup(options);
+        } else {
+            this.fire('popupopen', {
+                popup: _popup,
+                gmx: this._setPopupContent(options, _popup)
+            });
         }
-        if (this._popup._state === 'mouseover') {
-            this._popup.setLatLng(options.latlng);
+        if (_popup._state === 'mouseover') {
+            _popup.setLatLng(options.latlng);
         }
     },
 
