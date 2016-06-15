@@ -66,8 +66,10 @@ var chkVersion = function (layer, callback) {
             for (var i = 0, len = res.Result.length; i < len; i++) {
                 var item = res.Result[i],
                     id = item.properties.name;
+				if (layer && layer._gmx.properties.name === id && 'updateVersion' in layer) { layer.updateVersion(item); }
                 for (var key in layers) {
                     var curLayer = layers[key];
+					if (layer && layer === curLayer) { continue; }
                     if (curLayer._gmx.properties.name === id && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
                 }
             }
