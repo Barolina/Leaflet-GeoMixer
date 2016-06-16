@@ -23,7 +23,7 @@ var gmxAPIutils = {
     },
 
     normalizeHostname: function(hostName) {
-        var parsedHost = L.gmxUtil.parseUri(hostName);
+        var parsedHost = L.gmxUtil.parseUri((hostName.substr(0, 4) !== 'http' ? 'http://' : '') + hostName); // Bug in gmxAPIutils.parseUri for 'localhost:8000'
 
         hostName = parsedHost.host + parsedHost.directory;
 
