@@ -27,6 +27,11 @@
             maxZoom: 6
         },
 
+        initialize: function () {
+            L.gmx.ExternalLayer.prototype.initialize.apply(this, arguments);
+            this._markers = [];
+        },
+
         createExternalLayer: function () {
             var mOptions = L.extend({
                 showCoverageOnHover: false,
@@ -188,6 +193,7 @@
                     }
                     arr.push(marker);
                 }
+                this._markers = arr;
                 this.externalLayer.addLayers(arr);
             }
         },
@@ -227,6 +233,9 @@
                     this._clusters.unbindLayer();
                 }
                 this._clusters = new GmxMarkerCluster(options, this);
+                this.getIcons(function (options) {
+                    this._clusters.externalLayer.refreshClusters(this._clusters._markers)
+                }.bind(this));
             }
             return this;
         },
