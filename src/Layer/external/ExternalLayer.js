@@ -51,7 +51,10 @@ L.gmx.ExternalLayer = L.Class.extend({
                 callback: L.bind(this.updateData, this)
             }, opt)
         ).deactivate();
-        this.parentLayer.repaintObservers[this._observer.id] = true;
+
+        this.parentLayer.getIcons(function () {
+            this.parentLayer.repaintObservers[this._observer.id] = true;
+        }.bind(this));
     },
 
     unbindLayer: function () {
