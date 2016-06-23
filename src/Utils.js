@@ -50,6 +50,25 @@ var gmxAPIutils = {
         );
     },
 
+	getCadastreFeatures: function(options) {
+		// example: L.gmxUtil.getCadastreFeatures({latlng: L.latLng(48.350039, 45.152757), callbackParamName: 'callback'});
+        if (options.latlng) {
+			var latlng = options.latlng,
+				req = {
+					WrapStyle: 'func',
+					text: (latlng.lat + ' ' + latlng.lng).replace(/\./g, ','),
+					tolerance: options.tolerance || 0
+				};
+			return gmxAPIutils.requestJSONP(
+				options.url || 'http://pkk5.rosreestr.ru/api/features/',
+				req,
+				options
+			);
+		} else {
+			return null;
+		}
+    },
+
     /** Sends JSONP requests
      * @memberof L.gmxUtil
      * @param {String} url - request URL
@@ -2668,6 +2687,7 @@ L.extend(L.gmxUtil, {
     isIE11: gmxAPIutils.isIE(11),
     gtIE11: gmxAPIutils.gtIE(11),
     requestJSONP: gmxAPIutils.requestJSONP,
+    getCadastreFeatures: gmxAPIutils.getCadastreFeatures,
     request: gmxAPIutils.request,
     getLayerItemFromServer: gmxAPIutils.getLayerItemFromServer,
     fromServerStyle: gmxAPIutils.fromServerStyle,
