@@ -51,10 +51,6 @@ L.gmx.ExternalLayer = L.Class.extend({
                 callback: L.bind(this.updateData, this)
             }, opt)
         ).deactivate();
-
-        this.parentLayer.getIcons(function () {
-            this.parentLayer.repaintObservers[this._observer.id] = true;
-        }.bind(this));
     },
 
     unbindLayer: function () {
@@ -155,7 +151,9 @@ L.gmx.ExternalLayer = L.Class.extend({
             }
             this.setDateInterval();
             if (observer) {
-                observer.activate();
+                layer.getIcons(function () {
+                    observer.activate();
+                }.bind(this));
             }
             layer.disablePopup();
         }

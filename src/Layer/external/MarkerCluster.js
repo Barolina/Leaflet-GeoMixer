@@ -152,8 +152,11 @@
                         marker = null;
                     }
                     if (!marker) {
+                        if (!vectorTileItem.item.parsedStyleKeys) {
+                            vectorTileItem.item.parsedStyleKeys = this.parentLayer.getItemStyle(id);
+                        }
                         var geo = item[item.length - 1],
-                            parsedStyle = vectorTileItem.item.parsedStyleKeys || this.parentLayer.getItemStyle(id),
+                            parsedStyle = vectorTileItem.item.parsedStyleKeys,
                             p = geo.coordinates,
                             latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]}),
                             opt = {
