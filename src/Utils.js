@@ -848,14 +848,28 @@ var gmxAPIutils = {
                 ctx.setTransform(gmx.mInPixel, 0, 0, gmx.mInPixel, -attr.tpx, attr.tpy);
                 ctx.drawImage(image, px1, -py1, sx, sy);
                 ctx.setTransform(gmx.mInPixel, 0, 0, -gmx.mInPixel, -attr.tpx, attr.tpy);
-            } else if (style.rotateRes) {
-                ctx.translate(px1, py1);
-                ctx.rotate(gmxAPIutils.degRad(style.rotateRes));
-                ctx.translate(-px1, -py1);
-                ctx.drawImage(image, px1sx, py1sy, sx, sy);
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
             } else {
-                ctx.drawImage(image, px1sx, py1sy, sx, sy);
+				if (iconScale !== 1) {
+					sx *= iconScale;
+					sy *= iconScale;
+					px1 = pointAttr.px1;
+					py1 = pointAttr.py1;
+					px1sx = px1;
+					py1sy = py1;
+					if (currentStyle.iconCenter) {
+						px1sx -= sx / 2;
+						py1sy -= sy / 2;
+					}
+				}
+				if (style.rotateRes) {
+					ctx.translate(px1, py1);
+					ctx.rotate(gmxAPIutils.degRad(style.rotateRes));
+					ctx.translate(-px1, -py1);
+					ctx.drawImage(image, px1sx, py1sy, sx, sy);
+					ctx.setTransform(1, 0, 0, 1, 0, 0);
+				} else {
+					ctx.drawImage(image, px1sx, py1sy, sx, sy);
+				}
             }
             if ('opacity' in style) { ctx.globalAlpha = 1; }
         } else if (style.fillColor || currentStyle.fillRadialGradient) {
@@ -2707,6 +2721,7 @@ L.extend(L.gmxUtil, {
     formatDegrees: gmxAPIutils.formatDegrees,
     pad2: gmxAPIutils.pad2,
     dec2hex: gmxAPIutils.dec2hex,
+	dec2rgba: gmxAPIutils.dec2rgba,
     trunc: gmxAPIutils.trunc,
     latLonFormatCoordinates: gmxAPIutils.latLonFormatCoordinates,
     latLonFormatCoordinates2: gmxAPIutils.latLonFormatCoordinates2,
