@@ -186,7 +186,15 @@
                                 opt.icon = L.gmxUtil.getSVGIcon(parsedStyle);
                             }
                         }
-                        marker = new L.Marker(latlng, opt);
+                        if (parsedStyle.rotate) {
+                            marker = L.rotatedMarker(latlng, L.extend(opt, {
+                                angle: parsedStyle.rotate
+                            }));
+                        } else {
+                            marker = L.marker(latlng, L.extend(opt, {
+                                angle: parsedStyle.rotate
+                            }));
+                        }
                         this._items[id] = marker;
                     }
                     arr.push(marker);
