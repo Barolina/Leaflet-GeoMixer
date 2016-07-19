@@ -175,8 +175,10 @@ L.gmx.createLayer = function(layerInfo, options) {
 
     if (type in L.gmx._layerClasses) {
         try {
-            layer = new L.gmx._layerClasses[type](options);
-            layer = layer.initFromDescription(layerInfo);
+            layer = new L.gmx._layerClasses[type](L.extend({}, layerInfo, options));
+            if (layer.initFromDescription) {
+                layer = layer.initFromDescription(layerInfo);
+            }
         } catch (e) {
             layer = new L.gmx.DummyLayer(layerInfo.properties);
         }
