@@ -17,5 +17,6 @@
 		"build": "jake",
 		"postinstall": "jake"
 	},
-	"main": "dist/leaflet-geomixer-src.js"
+	"main": "dist/leaflet-geomixer-src.js",
+	"license": "MIT"
 }
