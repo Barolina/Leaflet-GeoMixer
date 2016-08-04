@@ -135,18 +135,19 @@ L.gmx.loadMap = function(mapID, options) {
         loadedMap.layersCreated.then(function() {
             if (options.leafletMap || options.setZIndex) {
                 var curZIndex = 0,
-                    layer;
+                    layer, rawProperties;
 
                 for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                     layer = loadedMap.layers[l];
-                    if (mapInfo.properties.LayerOrder === 'VectorOnTop' && layer.setZIndexOffset && layer._gmx.rawProperties.type !== 'Raster') {
+					rawProperties = layer.getGmxProperties();
+                    if (mapInfo.properties.LayerOrder === 'VectorOnTop' && layer.setZIndexOffset && rawProperties.type !== 'Raster') {
                         layer.setZIndexOffset(DEFAULT_VECTOR_LAYER_ZINDEXOFFSET);
                     }
                     if (options.setZIndex && layer.setZIndex) {
                         layer.setZIndex(++curZIndex);
                     }
 
-                    if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
+                    if (options.leafletMap && rawProperties.visible) {
                         layer.addTo(options.leafletMap);
                     }
                 }
