@@ -165,6 +165,9 @@ L.Map.addInitHook(function () {
     // Check to see if handler has already been initialized.
     if (!this._gmxEventsManager) {
         this._gmxEventsManager = new GmxEventsManager(this);
+		this.isGmxDrawing = function () {
+			return this._gmxEventsManager._drawstart;
+		};
 
         this.on('remove', function () {
             if (this._gmxEventsManager) {
