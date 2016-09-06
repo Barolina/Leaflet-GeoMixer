@@ -234,7 +234,7 @@ L.LabelsLayer = L.Class.extend({
             m1 = L.Projection.Mercator.project(southWest),
             m2 = L.Projection.Mercator.project(northEast);
 
-        this.mInPixel = gmxAPIutils.getPixelScale(_map._zoom);
+        this.mInPixel = gmxAPIutils.getPixelScale(_map.getZoom());
         this._ctxShift = [m1.x * this.mInPixel, m2.y * this.mInPixel];
         for (var id in this._observers) {
             this._observers[id].setBounds({
@@ -249,7 +249,7 @@ L.LabelsLayer = L.Class.extend({
         for (var id in this._observers) {
             var observer = this._observers[id];
             if (!observer.isActive() &&
-                this._styleManagers[id].isVisibleAtZoom(this._map._zoom)
+                this._styleManagers[id].isVisibleAtZoom(this._map.getZoom())
             ) {
                 observer.activate();
             }
@@ -263,7 +263,8 @@ L.LabelsLayer = L.Class.extend({
             mapSize = _map.getSize(),
             _canvas = this._canvas,
             mapTop = _map._getTopLeftPoint(),
-            topLeft = _map.containerPointToLayerPoint([0, mapTop.y < 0 ? -mapTop.y : 0]);
+            offset = map.latLngToContainerPoint(this._map.getBounds().getNorthWest())
+            topLeft = _map.containerPointToLayerPoint([0, mapTop.y < 0 ? -mapTop.y : 0]).add(offset)
 
         _canvas.width = mapSize.x; _canvas.height = mapSize.y;
         L.DomUtil.setPosition(_canvas, topLeft);
