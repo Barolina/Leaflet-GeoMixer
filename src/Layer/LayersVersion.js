@@ -1,6 +1,7 @@
 (function() {
 var delay = 20000,
     layers = {},
+    dataManagersLinks = {},
     script = '/Layer/CheckVersion.ashx',
     intervalID = null,
     timeoutID = null,
@@ -41,11 +42,12 @@ var getRequestParams = function(layer) {
     } else {
         var skipItems = {};
         for (var id in layers) {
-            var obj = layers[id];
-            if (obj.options.chkUpdate) {
-				dm = obj._gmx.dataManager;
-                prop = obj._gmx.properties;
-				layerDateInterval = obj._gmx;
+            var obj = layers[id],
+				isDataManager = obj instanceof L.gmx.DataManager;
+            if (obj.options.chkUpdate || isDataManager) {
+				dm = isDataManager ? obj : obj._gmx.dataManager;
+                prop = isDataManager ? obj.options : obj._gmx.properties;
+				layerDateInterval = isDataManager ? obj : obj._gmx;
                 hostName = prop.hostName || obj._gmx.hostName;
                 var pt = getParams(prop, dm, layerDateInterval),
                     key = pt.Name + pt.Version;
@@ -70,7 +72,10 @@ var chkVersion = function (layer, callback) {
                 for (var key in layers) {
                     var curLayer = layers[key];
 					if (layer && layer === curLayer) { continue; }
-                    if (curLayer._gmx.properties.name === id && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
+                    if (curLayer._gmx && curLayer._gmx.properties.name === id && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
+					else {
+						curLayer.updateVersion(item.properties);
+					}
                 }
             }
         }
@@ -111,8 +116,9 @@ var chkVersion = function (layer, callback) {
                     }
                     var timeStamp = Date.now();
                     for (var key in layers) {
-                        var _gmx = layers[key]._gmx;
-                        if (_gmx.hostName === hostName) { _gmx._stampVersionRequest = timeStamp; }
+                        var it = layers[key];
+                        var options = it._gmx || it.options;
+                        if (options.hostName === hostName) { options._stampVersionRequest = timeStamp; }
                     }
                 }
             };
@@ -124,17 +130,46 @@ var chkVersion = function (layer, callback) {
 
 var layersVersion = {
 
+    addDataManager: function(dataManager) {
+        var id = dataManager.options.name;
+        if (id in layers) {
+            return;
+		}
+		dataManager.on('chkLayerUpdate', chkVersion.bind(dataManager));
+		layers[id] = dataManager;
+    },
+
+    removeDataManager: function(dataManager) {
+        var id = dataManager.options.name;
+        if (id in layers) {
+			dataManager.off('chkLayerUpdate', chkVersion.bind(dataManager));
+			delete layers[id];
+		}
+    },
+
     remove: function(layer) {
         delete layers[layer._leaflet_id];
-        var _gmx = layer._gmx;
-        _gmx.dataManager.off('chkLayerUpdate', _gmx._chkVersion);
+        var _gmx = layer._gmx,
+			pOptions = layer.options.parentOptions;
+		if (pOptions) {
+			var pId = pOptions.name;
+			if (dataManagersLinks[pId]) {
+				delete dataManagersLinks[pId][_gmx.properties.name];
+				if (!Object.keys(dataManagersLinks[pId]).length) {
+					layersVersion.removeDataManager(_gmx.dataManager);
+					delete dataManagersLinks[pId];
+				}
+			}
+		} else {
+			_gmx.dataManager.off('chkLayerUpdate', _gmx._chkVersion);
+		}
     },
 
     add: function(layer) {
         var id = layer._leaflet_id;
         if (id in layers) {
             return;
-        }
+		}
 
         var _gmx = layer._gmx,
             prop = _gmx.properties;
@@ -144,6 +179,13 @@ var layersVersion = {
                 chkVersion(layer);
             };
             _gmx.dataManager.on('chkLayerUpdate', _gmx._chkVersion);
+			var pOptions = layer.options.parentOptions;
+			if (pOptions) {
+				var pId = pOptions.name;
+				layersVersion.addDataManager(_gmx.dataManager);
+				if (!dataManagersLinks[pId]) { dataManagersLinks[pId] = {}; }
+				dataManagersLinks[pId][prop.name] = layer;
+			}
 
             layersVersion.start();
             if (!_gmx._stampVersionRequest || _gmx._stampVersionRequest < Date.now() - 19000 || !isExistsTiles(prop)) {

@@ -6,7 +6,8 @@ var DEFAULT_VECTOR_LAYER_ZINDEXOFFSET = 2000000;
 //Build in layer classes
 L.gmx._layerClasses = {
     'Raster': L.gmx.RasterLayer,
-    'Vector': L.gmx.VectorLayer
+    'Vector': L.gmx.VectorLayer,
+    'VectorView': L.gmx.DummyLayer
 };
 
 L.gmx._loadingLayerClasses = {};
@@ -140,7 +141,7 @@ L.gmx.loadMap = function(mapID, options) {
                 for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                     layer = loadedMap.layers[l];
 					rawProperties = layer.getGmxProperties();
-                    if (mapInfo.properties.LayerOrder === 'VectorOnTop' && layer.setZIndexOffset && rawProperties.type !== 'Raster') {
+					if (mapInfo.properties.LayerOrder === 'VectorOnTop' && layer.setZIndexOffset && rawProperties.type !== 'Raster') {
                         layer.setZIndexOffset(DEFAULT_VECTOR_LAYER_ZINDEXOFFSET);
                     }
                     if (options.setZIndex && layer.setZIndex) {
@@ -174,7 +175,7 @@ L.gmx.createLayer = function(layerInfo, options) {
     var type = layerInfo.properties.ContentID || layerInfo.properties.type || 'Vector',
         layer;
 
-    if (type in L.gmx._layerClasses) {
+		if (type in L.gmx._layerClasses) {
         try {
             layer = new L.gmx._layerClasses[type](options);
             layer = layer.initFromDescription(layerInfo);

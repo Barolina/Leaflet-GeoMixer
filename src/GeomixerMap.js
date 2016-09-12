@@ -4,6 +4,7 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     this.layers = [];
     this.layersByTitle = {};
     this.layersByID = {};
+    this.dataManagers = {};
 
     var _this = this;
 
@@ -13,20 +14,29 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
 
     this.layersCreated = new L.gmx.Deferred();
 
-    var missingLayerTypes = {};
+    var missingLayerTypes = {},
+		dataSources = {};
 
     gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
         var props = layerInfo.properties,
-            layerOptions = L.extend({
+			meta = props.MetaProperties || {},
+			options = {
                 mapID: mapInfo.properties.name,
                 layerID: props.name
-            }, commonLayerOptions);
+            };
 
-        layerInfo.properties.hostName = mapInfo.properties.hostName;
+        props.hostName = mapInfo.properties.hostName;
 
-        var type = layerInfo.properties.ContentID || layerInfo.properties.type;
+        var type = props.ContentID || props.type,
+            layerOptions = L.extend(options, commonLayerOptions);
 
-        if (type in L.gmx._layerClasses) {
+		if ('parentLayer' in meta) {      	// Set parent layer
+			layerOptions.parentLayer = meta.parentLayer.Value || '';
+			dataSources[options.layerID] = {
+                info: layerInfo,
+                options: layerOptions
+            };
+		} else if (type in L.gmx._layerClasses) {
             _this.addLayer(L.gmx.createLayer(layerInfo, layerOptions));
         } else {
             missingLayerTypes[type] = missingLayerTypes[type] || [];
@@ -38,52 +48,124 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     });
 
     //load missing layer types
-    var loaders = [];
+    var loaders = [], it;
     for (var type in missingLayerTypes) {
-        loaders.push(L.gmx._loadLayerClass(type).then(/*eslint-disable no-loop-func */function (type) {/*eslint-enable */
-            for (var i = 0; i < missingLayerTypes[type].length; i++) {
-                var l = missingLayerTypes[type][i];
-                _this.addLayer(L.gmx.createLayer(l.info, l.options));
+		it = missingLayerTypes[type];
+        loaders.push(L.gmx._loadLayerClass(type, it).then(/*eslint-disable no-loop-func */function (/*type*/) {/*eslint-enable */
+            for (var i = 0, len = it.length; i < len; i++) {
+                _this.addLayer(L.gmx.createLayer(it[i].info, it[i].options));
             }
         }.bind(null, type)));
     }
-
+    var hosts = {}, host, id;
+    for (id in dataSources) {
+		it = dataSources[id];
+		var opt = it.options,
+			pId = opt.parentLayer,
+			pLayer = this.layersByID[pId];
+		if (pLayer) {
+			it.options.parentOptions = pLayer.getGmxProperties();
+			it.options.dataManager = this.dataManagers[pId] || new DataManager(it.options.parentOptions);
+			this.dataManagers[pId] = it.options.dataManager;
+            this.addLayer(L.gmx.createLayer(it.info, it.options));
+		} else {
+			host = opt.hostName;
+			if (!hosts[host]) { hosts[host] = {}; }
+			if (!hosts[host][pId]) { hosts[host][pId] = []; }
+			hosts[host][pId].push(id);
+		}
+    }
+    for (host in hosts) {
+		var arr = [],
+			prefix = 'http://' + host;
+		for (id in hosts[host]) {
+			arr.push({Layer: id});
+		}
+        loaders.push(L.gmxUtil.requestJSONP(prefix + '/Layer/GetLayerJson.ashx',
+			{
+				WrapStyle: 'func',
+				Layers: JSON.stringify(arr)
+			},
+			{
+				ids: hosts[host]
+			}
+		).then(function(json, opt) {
+			console.log('sss331', json);
+			if (json && json.Status === 'ok' && json.Result) {
+				json.Result.forEach(function(it) {
+					var dataManager = _this.addDataManager(it),
+						props = it.properties,
+						pId = props.name;
+					if (opt && opt.ids && opt.ids[pId]) {
+						opt.ids[pId].forEach(function(id) {
+							var pt = dataSources[id];
+							pt.options.parentOptions = it.properties;
+							pt.options.dataManager = dataManager;
+							_this.addLayer(L.gmx.createLayer(pt.info, pt.options));
+						});
+					}
+				});
+			} else {
+				console.info('Error: loading ', prefix + '/Layer/GetLayerJson.ashx', json.ErrorInfo);
+				if (opt && opt.ids) {
+					for (var pId in opt.ids) {
+						opt.ids[pId].forEach(function(id) {
+							_this.addLayer(new L.gmx.DummyLayer(dataSources[id].info.properties));
+						});
+					}
+				}
+			}
+		}));
+    }
     L.gmx.Deferred.all.apply(null, loaders).then(this.layersCreated.resolve);
 };
 
-gmxMap.prototype.addLayer = function(layer) {
-    var props = layer.getGmxProperties();
+gmxMap.prototype = {
+	addDataManager: function(it) {
+		var pid = it.properties.name;
+		if (!this.dataManagers[pid]) {
+			this.dataManagers[pid] = new DataManager(it.properties);
+		}
+		return this.dataManagers[pid];
+	},
+	getDataManager: function(id) {
+		return this.dataManagers[id];
+	},
 
-    this.layers.push(layer);
-    this.layersByTitle[props.title] = layer;
-    this.layersByID[props.name] = layer;
+	addLayer: function(layer) {
+		var props = layer.getGmxProperties();
 
-    return this;
-};
+		this.layers.push(layer);
+		this.layersByTitle[props.title] = layer;
+		this.layersByID[props.name] = layer;
 
-gmxMap.prototype.removeLayer = function(layer) {
-    var props = layer.getGmxProperties();
+		return this;
+	},
 
-    for (var i = 0; i < this.layers.length; i++) {
-        if (this.layers[i].getGmxProperties().name === props.name) {
-            this.layers.splice(i, 1);
-            break;
-        }
-    }
+	removeLayer: function(layer) {
+		var props = layer.getGmxProperties();
 
-    delete this.layersByTitle[props.title];
-    delete this.layersByID[props.name];
+		for (var i = 0; i < this.layers.length; i++) {
+			if (this.layers[i].getGmxProperties().name === props.name) {
+				this.layers.splice(i, 1);
+				break;
+			}
+		}
 
-    return this;
-};
+		delete this.layersByTitle[props.title];
+		delete this.layersByID[props.name];
 
-gmxMap.prototype.addLayersToMap = function(leafletMap) {
-    for (var l = this.layers.length - 1; l >= 0; l--) {
-        var layer = this.layers[l];
-        if (layer.getGmxProperties().visible) {
-            leafletMap.addLayer(layer);
-        }
-    }
+		return this;
+	},
 
-    return this;
+	addLayersToMap: function(leafletMap) {
+		for (var l = this.layers.length - 1; l >= 0; l--) {
+			var layer = this.layers[l];
+			if (layer.getGmxProperties().visible) {
+				leafletMap.addLayer(layer);
+			}
+		}
+
+		return this;
+	}
 };

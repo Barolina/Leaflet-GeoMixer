@@ -186,7 +186,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
                     type: 'resend',
                     active: false,
                     bbox: gmx.styleManager.getStyleBounds(gmxTilePoint),
-                    filters: ['clipFilter', 'styleFilter', 'userFilter'],
+                    filters: ['clipFilter', 'userFilter_' + gmx.layerID, 'styleFilter', 'userFilter'],
                     callback: function(data) {
                         myLayer._drawTileAsync(tilePoint, zoom, data).always(done);
                     }
@@ -227,7 +227,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (!isDrawing) {
             for (var key in gmx.tileSubscriptions) {
                 var observer = gmx.dataManager.getObserver(key);
-                if (gmx.dataManager.getObserverLoadingState(observer)) {
+                if (observer && gmx.dataManager.getObserverLoadingState(observer)) {
                     isDrawing = true;
                     break;
                 }
@@ -342,8 +342,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         ph.properties.isGeneralized = this.options.isGeneralized;
         ph.properties.isFlatten = this.options.isFlatten;
-        gmx.dataManager = new DataManager(ph.properties);
-        gmx.styleManager = new StyleManager(gmx);
+
+        gmx.dataManager = this.options.dataManager || new DataManager(ph.properties);
+
+        if (this.options.parentOptions) {
+			if (!ph.properties.styles) { ph.properties.styles = this.options.parentOptions.styles; }
+			gmx.dataManager.on('versionchange', this._onVersionChange, this);
+		}
+
+		gmx.styleManager = new StyleManager(gmx);
         this.options.minZoom = gmx.styleManager.minZoom;
         this.options.maxZoom = gmx.styleManager.maxZoom;
 
@@ -365,9 +372,24 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         if (gmx.clusters) {
             this.bindClusters(JSON.parse(gmx.clusters));
         }
+        if (gmx.filter) {
+            var func = L.gmx.Parsers.parseSQL(gmx.filter.replace(/[\[\]]/g, '"'));
+            if (func) {
+				gmx.dataManager.addFilter('userFilter_' + gmx.layerID, function(item) {
+					return gmx.layerID !== this._gmx.layerID || !func || func(item.properties, gmx.tileAttributeIndexes) ? item.properties : null;
+				}.bind(this));
+            }
+        }
+        if (gmx.dateBegin && gmx.dateEnd) {
+            this.setDateInterval(gmx.dateBegin, gmx.dateEnd);
+        }
 
         this.initPromise.resolve();
         return this;
+    },
+
+    getDataManager: function () {
+		return this._gmx.dataManager;
     },
 
     enableGeneralization: function () {
@@ -467,9 +489,10 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     },
 
     setFilter: function (func) {
-        this._gmx.dataManager.addFilter('userFilter', function(item) {
-            return !func || func(item) ? item.properties : null;
-        });
+        var gmx = this._gmx;
+        gmx.dataManager.addFilter('userFilter', function(item) {
+            return gmx.layerID !== this._gmx.layerID || !func || func(item) ? item.properties : null;
+        }.bind(this));
         return this;
     },
 
@@ -480,6 +503,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
     setDateInterval: function (beginDate, endDate) {
         var gmx = this._gmx;
+
+        if (gmx.dateBegin && gmx.dateEnd) {
+			beginDate = gmx.dateBegin;
+			endDate = gmx.dateEnd;
+		}
 
         //check that something changed
         if (!gmx.beginDate !== !beginDate ||
@@ -727,8 +755,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if (subscription.screenTile) {
                 subscription.screenTile.destructor();
             }
-            gmx.dataManager.getObserver(zKey).deactivate();
-            gmx.dataManager.removeObserver(zKey);
+			var observer = gmx.dataManager.getObserver(zKey);
+            if (observer) { observer.deactivate(); }
             delete gmx.tileSubscriptions[zKey];
             this._removeTile(zKey);
 
@@ -754,7 +782,8 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             if (subscription.screenTile) {
                 subscription.screenTile.destructor();
             }
-            gmx.dataManager.getObserver(zKey).deactivate();
+			var observer = gmx.dataManager.getObserver(zKey);
+            if (observer) { observer.deactivate(); }
             gmx.dataManager.removeObserver(zKey);
             delete gmx.tileSubscriptions[zKey];
             delete this._tiles[zKey];
@@ -1102,6 +1131,11 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             apikeyRequestHost = this.options.apikeyRequestHost || gmx.hostName;
 
         gmx.sessionKey = prop.sessionKey = this.options.sessionKey || gmxSessionManager.getSessionKey(apikeyRequestHost); //should be already received
+
+        if (this.options.parentOptions) {
+			prop = this.options.parentOptions;
+		}
+
         gmx.identityField = prop.identityField; // ogc_fid
         gmx.GeometryType = (prop.GeometryType || '').toLowerCase();   // тип геометрий обьектов в слое
         gmx.minZoomRasters = prop.RCMinZoomForRasters || 1;// мин. zoom для растров
@@ -1131,6 +1165,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
 
         if ('MetaProperties' in gmx.rawProperties) {
             var meta = gmx.rawProperties.MetaProperties;
+            if ('filter' in meta) {  // фильтр слоя
+                gmx.filter = meta.filter.Value || '';
+            }
+            if ('dateBegin' in meta) {  // фильтр для мультивременного слоя
+                gmx.dateBegin = L.gmxUtil.getDateFromStr(meta.dateBegin.Value || '01.01.1980');
+            }
+            if ('dateEnd' in meta) {  // фильтр для мультивременного слоя
+                gmx.dateEnd = L.gmxUtil.getDateFromStr(meta.dateEnd.Value || '01.01.1980');
+            }
             if ('shiftX' in meta || 'shiftY' in meta) {  // сдвиг всего слоя
                 gmx.shiftXlayer = meta.shiftX ? Number(meta.shiftX.Value) : 0;
                 gmx.shiftYlayer = meta.shiftY ? Number(meta.shiftY.Value) : 0;

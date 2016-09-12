@@ -92,7 +92,9 @@ StyleManager.prototype = {
     _chkReady: function() {
         if (this._needLoadIcons < 1) {
             var _this = this;
-            this.gmx.dataManager.addFilter('styleFilter', function(it) { return _this._chkStyleFilter(it); });
+			if (this.gmx.dataManager) {
+				this.gmx.dataManager.addFilter('styleFilter', function(it) { return _this._chkStyleFilter(it); });
+			}
             this.deferred.resolve();
         }
     },

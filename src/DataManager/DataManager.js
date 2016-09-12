@@ -855,6 +855,7 @@ var DataManager = L.Class.extend({
             this.setOptions(options);
         }
         this._resetTilesTree();
+		// this.fire('versionchange');
     },
 
     _getDataKeys: function(data) {

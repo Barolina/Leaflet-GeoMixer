@@ -1420,7 +1420,9 @@ var gmxAPIutils = {
             isPoint = type === 'POINT' || type === 'MULTIPOINT',
             center = isPoint ? [min.x, min.y] : [(min.x + max.x) / 2, (min.y + max.y) / 2];
 
-        if (type === 'POLYGON' || type === 'MULTIPOLYGON') {
+        if (type === 'MULTIPOLYGON') {
+			return center;
+		} else if (type === 'POLYGON') {
             for (var i = 0, len = geoItems.length; i < len; i++) {
                 var it = geoItems[i],
                     geom = it.geo,
@@ -2361,6 +2363,17 @@ var gmxAPIutils = {
         return out;
     },
 
+    getDateFromStr: function(st) {
+		var arr = L.Util.trim(st).split(' ');
+		arr = arr[0].split('.');
+
+        if (arr[2].length === 4) {
+			arr = arr.reverse();
+		}
+		var dt = new Date(arr[0], arr[1] - 1, arr[2]);
+        return dt;
+    },
+
     getUTCdate: function(utime) {
         var dt = new Date(utime * 1000);
 
@@ -2710,6 +2723,7 @@ L.extend(L.gmxUtil, {
     bounds: gmxAPIutils.bounds,
     getGeometryBounds: gmxAPIutils.getGeometryBounds,
     tileSizes: gmxAPIutils.tileSizes,
+    getDateFromStr: gmxAPIutils.getDateFromStr,
     getUTCdate: gmxAPIutils.getUTCdate,
     getUTCtime: gmxAPIutils.getUTCtime,
     getUTCdateTime: gmxAPIutils.getUTCdateTime,

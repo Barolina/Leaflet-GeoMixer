@@ -197,7 +197,7 @@ L.gmx.VectorLayer.include({
                 type: 'resend',
                 bbox: gmxAPIutils.bounds([mercatorPoint]).addBuffer(delta),
                 dateInterval: gmx.layerType === 'VectorTemporal' ? [gmx.beginDate, gmx.endDate] : null,
-                filters: ['clipFilter', 'styleFilter', 'userFilter'],
+                filters: ['clipFilter', 'userFilter_' + gmx.layerID, 'styleFilter', 'userFilter'],
                 active: false //делаем его неактивным, так как потом будем явно выбирать данные
             };
             if (this.options.isGeneralized) {
