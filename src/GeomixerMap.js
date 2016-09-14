@@ -48,16 +48,16 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
     });
 
     //load missing layer types
-    var loaders = [], it;
+    var loaders = [];
     for (var type in missingLayerTypes) {
-		it = missingLayerTypes[type];
-        loaders.push(L.gmx._loadLayerClass(type, it).then(/*eslint-disable no-loop-func */function (/*type*/) {/*eslint-enable */
+        loaders.push(L.gmx._loadLayerClass(type).then(/*eslint-disable no-loop-func */function (type) {/*eslint-enable */
+			var it = missingLayerTypes[type];
             for (var i = 0, len = it.length; i < len; i++) {
                 _this.addLayer(L.gmx.createLayer(it[i].info, it[i].options));
             }
         }.bind(null, type)));
     }
-    var hosts = {}, host, id;
+    var hosts = {}, host, id, it;
     for (id in dataSources) {
 		it = dataSources[id];
 		var opt = it.options,
@@ -90,7 +90,6 @@ var gmxMap = function(mapInfo, commonLayerOptions) {
 				ids: hosts[host]
 			}
 		).then(function(json, opt) {
-			console.log('sss331', json);
 			if (json && json.Status === 'ok' && json.Result) {
 				json.Result.forEach(function(it) {
 					var dataManager = _this.addDataManager(it),
