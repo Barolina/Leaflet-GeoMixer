@@ -2030,9 +2030,9 @@ var gmxAPIutils = {
         if (x > 180) { x -= 360; }
         if (x < -180) { x += 360; }
         if (num % len === 0) {
-            out = gmxAPIutils.formatCoordinates(x, y);
-        } else if (num % len === 1) {
             out = gmxAPIutils.formatCoordinates2(x, y);
+        } else if (num % len === 1) {
+            out = gmxAPIutils.formatCoordinates(x, y);
         } else if (num % len === 2) {
             merc = L.Projection.Mercator.project(new L.LatLng(y, x));
             out = '' + Math.round(merc.x) + ', ' + Math.round(merc.y) + formats[2];
