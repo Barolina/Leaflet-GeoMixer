@@ -37,6 +37,11 @@
     "gmxMapManager": true,
     "gmxMap": true,
     "gmxAPIutils": true,
+    "ArrayBuffer": true,
+    "Symbol": true,
+    "Promise": true,
+    "global": true,
+    "process": true,
     "Float32Array": true,
     "Float64Array": true
   },
