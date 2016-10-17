@@ -297,10 +297,11 @@ if (typeof module !== 'undefined' && module.exports) {
 				};
 			}
 
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var fieldValue = props[indexes[fieldName]],
                     rValue = referenceValue;
                 if (referenceValue in indexes) { rValue = props[indexes[rValue]]; }
+                if (types[fieldName] === 'date' && typeof rValue === 'string') { rValue = L.gmxUtil.getUnixTimeFromStr(rValue); }
                 if (typeof fieldValue === 'boolean' && typeof rValue === 'string') {
                     fieldValue = fieldValue ? 'True' : 'False';
                 }
@@ -312,7 +313,7 @@ if (typeof module !== 'undefined' && module.exports) {
 /*eslint-enable */
                 } else {
                     var f1, f2;
-					if (!(referenceValue in indexes) && applyParser(rValue, numberLiteral).head === rValue.length) {
+					if (!(referenceValue in indexes) && typeof rValue === 'string' && applyParser(rValue, numberLiteral).head === rValue.length) {
 						f1 = parseFloat(fieldValue);
 						f2 = parseFloat(rValue);
 						if (op === '<') { return (f1 < f2);
@@ -376,8 +377,8 @@ if (typeof module !== 'undefined' && module.exports) {
 		function(state) {
 			// Linked list contains only processed inner term.
 			var innerTerm = state.head;
-			return function(props, indexes) {
-				return !innerTerm(props, indexes);
+			return function(props, indexes, types) {
+				return !innerTerm(props, indexes, types);
 			};
 		}
 	);
@@ -397,11 +398,11 @@ if (typeof module !== 'undefined' && module.exports) {
 		function(state) {
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var flag = true;
 				var node = state;
 				while (node != null) {
-					flag = flag && node.head(props, indexes);
+					flag = flag && node.head(props, indexes, types);
 					node = node.tail;
 				}
 				return flag;
@@ -414,11 +415,11 @@ if (typeof module !== 'undefined' && module.exports) {
 		function(state) {
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var flag = false;
 				var node = state;
 				while (node != null) {
-					flag = flag || node.head(props, indexes);
+					flag = flag || node.head(props, indexes, types);
 					node = node.tail;
 				}
 				return flag;
@@ -455,12 +456,12 @@ if (typeof module !== 'undefined' && module.exports) {
 		),
 		function(state)
 		{
-			return function(props, indexes)
+			return function(props, indexes, types)
 			{
 				var pos = state;
 				var term = 0.0;
 				while (pos !== null) {
-					term += pos.head(props, indexes);
+					term += pos.head(props, indexes, types);
 					if (pos.tail === null) {
 						return term;
 					} else {
@@ -477,7 +478,7 @@ if (typeof module !== 'undefined' && module.exports) {
 		action(
 			numberLiteral,
 			function(state) {
-				return function(/*props, indexes*/) {
+				return function(/*props, indexes, types*/) {
 					return parseFloat(state.head);
 				};
 			}
@@ -485,8 +486,8 @@ if (typeof module !== 'undefined' && module.exports) {
 		action(
 			sequence([token('floor('), additiveExpression, token(')')]),
 			function(state) {
-				return function(props, indexes) {
-					var res = state.head(props, indexes);
+				return function(props, indexes, types) {
+					var res = state.head(props, indexes, types);
 					return Math.floor(res);
 				};
 			}
@@ -510,8 +511,8 @@ if (typeof module !== 'undefined' && module.exports) {
 		action(
 			whitespaceSeparatedSequence([token('-'), multiplicativeTerm]),
 			function(state) {
-				return function(props, indexes) {
-					return -state.head(props, indexes);
+				return function(props, indexes, types) {
+					return -state.head(props, indexes, types);
 				};
 			}
 		)
@@ -524,11 +525,11 @@ if (typeof module !== 'undefined' && module.exports) {
 		),
 		function(state)
 		{
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var pos = state;
 				var term = 1.0;
 				while (pos !== null) {
-					term *= pos.head(props, indexes);
+					term *= pos.head(props, indexes, types);
 					if (pos.tail === null) {
 						return term;
 					} else {
@@ -546,8 +547,8 @@ if (typeof module !== 'undefined' && module.exports) {
 		action(
 			whitespaceSeparatedSequence([token('-'), multiplicativeTerm]),
 			function(state) {
-				return function(props, indexes) {
-					return -state.head(props, indexes);
+				return function(props, indexes, types) {
+					return -state.head(props, indexes, types);
 				};
 			}
 		)
@@ -3274,6 +3275,16 @@ var gmxAPIutils = {
         return out;
     },
 
+    getUnixTimeFromStr: function(st) {
+		var arr = L.Util.trim(st).split(' ');
+		arr = arr[0].split('.');
+
+        if (arr[2].length === 4) {
+			arr = arr.reverse();
+		}
+		return Date.UTC(arr[0], arr[1] - 1, arr[2]) / 1000;
+    },
+
     getDateFromStr: function(st) {
 		var arr = L.Util.trim(st).split(' ');
 		arr = arr[0].split('.');
@@ -3635,6 +3646,7 @@ L.extend(L.gmxUtil, {
     getGeometryBounds: gmxAPIutils.getGeometryBounds,
     tileSizes: gmxAPIutils.tileSizes,
     getDateFromStr: gmxAPIutils.getDateFromStr,
+    getUnixTimeFromStr: gmxAPIutils.getUnixTimeFromStr,
     getUTCdate: gmxAPIutils.getUTCdate,
     getUTCtime: gmxAPIutils.getUTCtime,
     getUTCdateTime: gmxAPIutils.getUTCdateTime,
@@ -8901,6 +8913,7 @@ StyleManager.prototype = {
     getCurrentFilters: function(propArray, zoom) {
         var gmx = this.gmx,
             indexes = gmx.tileAttributeIndexes,
+            types = gmx.tileAttributeTypes,
             z = zoom || 1,
             out = [];
 
@@ -8910,7 +8923,7 @@ StyleManager.prototype = {
         for (var i = 0, len = this._styles.length; i < len; i++) {
             var st = this._styles[i];
             if (z > st.MaxZoom || z < st.MinZoom
-                || (st.filterFunction && !st.filterFunction(propArray, indexes))) {
+                || (st.filterFunction && !st.filterFunction(propArray, indexes, types))) {
                 continue;
             }
             out.push(i);
