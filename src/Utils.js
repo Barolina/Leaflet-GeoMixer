@@ -2363,6 +2363,16 @@ var gmxAPIutils = {
         return out;
     },
 
+    getUnixTimeFromStr: function(st) {
+		var arr = L.Util.trim(st).split(' ');
+		arr = arr[0].split('.');
+
+        if (arr[2].length === 4) {
+			arr = arr.reverse();
+		}
+		return Date.UTC(arr[0], arr[1] - 1, arr[2]) / 1000;
+    },
+
     getDateFromStr: function(st) {
 		var arr = L.Util.trim(st).split(' ');
 		arr = arr[0].split('.');
@@ -2724,6 +2734,7 @@ L.extend(L.gmxUtil, {
     getGeometryBounds: gmxAPIutils.getGeometryBounds,
     tileSizes: gmxAPIutils.tileSizes,
     getDateFromStr: gmxAPIutils.getDateFromStr,
+    getUnixTimeFromStr: gmxAPIutils.getUnixTimeFromStr,
     getUTCdate: gmxAPIutils.getUTCdate,
     getUTCtime: gmxAPIutils.getUTCtime,
     getUTCdateTime: gmxAPIutils.getUTCdateTime,

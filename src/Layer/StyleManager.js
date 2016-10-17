@@ -272,6 +272,7 @@ StyleManager.prototype = {
     getCurrentFilters: function(propArray, zoom) {
         var gmx = this.gmx,
             indexes = gmx.tileAttributeIndexes,
+            types = gmx.tileAttributeTypes,
             z = zoom || 1,
             out = [];
 
@@ -281,7 +282,7 @@ StyleManager.prototype = {
         for (var i = 0, len = this._styles.length; i < len; i++) {
             var st = this._styles[i];
             if (z > st.MaxZoom || z < st.MinZoom
-                || (st.filterFunction && !st.filterFunction(propArray, indexes))) {
+                || (st.filterFunction && !st.filterFunction(propArray, indexes, types))) {
                 continue;
             }
             out.push(i);

@@ -281,10 +281,11 @@
 				};
 			}
 
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var fieldValue = props[indexes[fieldName]],
                     rValue = referenceValue;
                 if (referenceValue in indexes) { rValue = props[indexes[rValue]]; }
+                if (types[fieldName] === 'date' && typeof rValue === 'string') { rValue = L.gmxUtil.getUnixTimeFromStr(rValue); }
                 if (typeof fieldValue === 'boolean' && typeof rValue === 'string') {
                     fieldValue = fieldValue ? 'True' : 'False';
                 }
@@ -296,7 +297,7 @@
 /*eslint-enable */
                 } else {
                     var f1, f2;
-					if (!(referenceValue in indexes) && applyParser(rValue, numberLiteral).head === rValue.length) {
+					if (!(referenceValue in indexes) && typeof rValue === 'string' && applyParser(rValue, numberLiteral).head === rValue.length) {
 						f1 = parseFloat(fieldValue);
 						f2 = parseFloat(rValue);
 						if (op === '<') { return (f1 < f2);
@@ -360,8 +361,8 @@
 		function(state) {
 			// Linked list contains only processed inner term.
 			var innerTerm = state.head;
-			return function(props, indexes) {
-				return !innerTerm(props, indexes);
+			return function(props, indexes, types) {
+				return !innerTerm(props, indexes, types);
 			};
 		}
 	);
@@ -381,11 +382,11 @@
 		function(state) {
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var flag = true;
 				var node = state;
 				while (node != null) {
-					flag = flag && node.head(props, indexes);
+					flag = flag && node.head(props, indexes, types);
 					node = node.tail;
 				}
 				return flag;
@@ -398,11 +399,11 @@
 		function(state) {
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var flag = false;
 				var node = state;
 				while (node != null) {
-					flag = flag || node.head(props, indexes);
+					flag = flag || node.head(props, indexes, types);
 					node = node.tail;
 				}
 				return flag;
@@ -439,12 +440,12 @@
 		),
 		function(state)
 		{
-			return function(props, indexes)
+			return function(props, indexes, types)
 			{
 				var pos = state;
 				var term = 0.0;
 				while (pos !== null) {
-					term += pos.head(props, indexes);
+					term += pos.head(props, indexes, types);
 					if (pos.tail === null) {
 						return term;
 					} else {
@@ -461,7 +462,7 @@
 		action(
 			numberLiteral,
 			function(state) {
-				return function(/*props, indexes*/) {
+				return function(/*props, indexes, types*/) {
 					return parseFloat(state.head);
 				};
 			}
@@ -469,8 +470,8 @@
 		action(
 			sequence([token('floor('), additiveExpression, token(')')]),
 			function(state) {
-				return function(props, indexes) {
-					var res = state.head(props, indexes);
+				return function(props, indexes, types) {
+					var res = state.head(props, indexes, types);
 					return Math.floor(res);
 				};
 			}
@@ -494,8 +495,8 @@
 		action(
 			whitespaceSeparatedSequence([token('-'), multiplicativeTerm]),
 			function(state) {
-				return function(props, indexes) {
-					return -state.head(props, indexes);
+				return function(props, indexes, types) {
+					return -state.head(props, indexes, types);
 				};
 			}
 		)
@@ -508,11 +509,11 @@
 		),
 		function(state)
 		{
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var pos = state;
 				var term = 1.0;
 				while (pos !== null) {
-					term *= pos.head(props, indexes);
+					term *= pos.head(props, indexes, types);
 					if (pos.tail === null) {
 						return term;
 					} else {
@@ -530,8 +531,8 @@
 		action(
 			whitespaceSeparatedSequence([token('-'), multiplicativeTerm]),
 			function(state) {
-				return function(props, indexes) {
-					return -state.head(props, indexes);
+				return function(props, indexes, types) {
+					return -state.head(props, indexes, types);
 				};
 			}
 		)
