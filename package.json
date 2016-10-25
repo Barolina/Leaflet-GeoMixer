@@ -3,9 +3,10 @@
 	"version": "0.0.1",
 	"description": "GeoMixer layers visualization as plugin for Leaflet",
 	"dependencies": {
+		"leaflet": "^0.7.7",
 		"uglify-js": "~2.3.6",
 		"jake": "~0.5.16",
-		"eslint": "^0.13.0"
+		"eslint": "^2.7.0"
 	},
 	"repository": {
 		"type": "git",
@@ -16,5 +17,6 @@
 		"build": "jake",
 		"postinstall": "jake"
 	},
-	"main": "dist/leaflet-geomixer-src.js"
+	"main": "dist/leaflet-geomixer-src.js",
+	"license": "MIT"
 }

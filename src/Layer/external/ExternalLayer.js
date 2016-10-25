@@ -58,6 +58,7 @@ L.gmx.ExternalLayer = L.Class.extend({
             .off('add', this._addEvent, this)
             .off('dateIntervalChanged', this.setDateInterval, this);
 
+        if (this._observer) { delete this.parentLayer.repaintObservers[this._observer.id]; }
         var map = this._map || this.parentLayer._map;
         this._onRemove(!map);
         this._removeMapHandlers();
@@ -133,6 +134,7 @@ L.gmx.ExternalLayer = L.Class.extend({
             map = this._map,
             isExtLayerOnMap = map.hasLayer(this.externalLayer);
 
+        layer.setCurrentZoom(map);
         if (!this.isExternalVisible(map.getZoom())) {
             if (observer) { observer.deactivate(); }
             if (!layer._map) {
@@ -149,7 +151,9 @@ L.gmx.ExternalLayer = L.Class.extend({
             }
             this.setDateInterval();
             if (observer) {
-                observer.activate();
+                layer.getIcons(function () {
+                    observer.activate();
+                }.bind(this));
             }
             layer.disablePopup();
         }

@@ -1,3 +1,4 @@
+(function() {
 // ProjectiveImage - projective transform that maps [0,1]x[0,1] onto the given set of points.
 var ProjectiveImage = function() {
 	var cnt = 0,
@@ -315,7 +316,7 @@ var ProjectiveImage = function() {
 
 		try {
 			divide(0, 0, 1, 1, ptl, ptr, pbl, pbr, limit, attr);
-		} catch(e) {
+		} catch (e) {
 			console.log('Error: ProjectiveImage event:', e);
 			canvas = null;
 		}
@@ -329,3 +330,7 @@ var ProjectiveImage = function() {
 		};
 	};
 };
+L.gmx.projectiveImage = function() {
+    return new ProjectiveImage();
+};
+})();

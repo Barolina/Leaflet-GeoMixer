@@ -1,11 +1,13 @@
 L.gmx = L.gmx || {};
 
 var DEFAULT_HOSTNAME = 'maps.kosmosnimki.ru';
+var DEFAULT_VECTOR_LAYER_ZINDEXOFFSET = 2000000;
 
 //Build in layer classes
 L.gmx._layerClasses = {
     'Raster': L.gmx.RasterLayer,
-    'Vector': L.gmx.VectorLayer
+    'Vector': L.gmx.VectorLayer,
+    'VectorView': L.gmx.DummyLayer
 };
 
 L.gmx._loadingLayerClasses = {};
@@ -36,14 +38,19 @@ L.gmx._loadLayerClass = function(type) {
                 }
 
                 return loader(type);
+            },
+            function(){
+                //just skip loader errors
             });
         });
 
-        promise.then(function(layerClass) {
+        promise = promise.then(function(layerClass) {
             if (layerClass) {
                 L.gmx._layerClasses[type] = layerClass;
                 return layerClass;
             }
+        }, function(){
+            //just skip loader errors
         });
 
         L.gmx._loadingLayerClasses[type] = promise;
@@ -121,21 +128,27 @@ L.gmx.loadMap = function(mapID, options) {
 
     var def = new L.gmx.Deferred();
 
-    gmxMapManager.getMap(options.hostName, options.apiKey, mapID, options.skipTiles).then(function(mapInfo) {
+    gmxMapManager.getMap(options.hostName, options.apiKey, mapID, options.skipTiles, options.isGeneralized).then(function(mapInfo) {
+/*eslint-disable new-cap */
         var loadedMap = new gmxMap(mapInfo, options);
+/*eslint-enable */
 
         loadedMap.layersCreated.then(function() {
             if (options.leafletMap || options.setZIndex) {
                 var curZIndex = 0,
-                    layer;
+                    layer, rawProperties;
 
                 for (var l = loadedMap.layers.length - 1; l >= 0; l--) {
                     layer = loadedMap.layers[l];
+					rawProperties = layer.getGmxProperties();
+					if (mapInfo.properties.LayerOrder === 'VectorOnTop' && layer.setZIndexOffset && rawProperties.type !== 'Raster') {
+                        layer.setZIndexOffset(DEFAULT_VECTOR_LAYER_ZINDEXOFFSET);
+                    }
                     if (options.setZIndex && layer.setZIndex) {
                         layer.setZIndex(++curZIndex);
                     }
 
-                    if (options.leafletMap && loadedMap.layers[l]._gmx.properties.visible) {
+                    if (options.leafletMap && rawProperties.visible) {
                         layer.addTo(options.leafletMap);
                     }
                 }
@@ -162,9 +175,13 @@ L.gmx.createLayer = function(layerInfo, options) {
     var type = layerInfo.properties.ContentID || layerInfo.properties.type || 'Vector',
         layer;
 
-    if (type in L.gmx._layerClasses) {
-        layer = new L.gmx._layerClasses[type](options);
-        layer = layer.initFromDescription(layerInfo);
+		if (type in L.gmx._layerClasses) {
+        try {
+            layer = new L.gmx._layerClasses[type](options);
+            layer = layer.initFromDescription(layerInfo);
+        } catch (e) {
+            layer = new L.gmx.DummyLayer(layerInfo.properties);
+        }
     } else {
         layer = new L.gmx.DummyLayer(layerInfo.properties);
     }

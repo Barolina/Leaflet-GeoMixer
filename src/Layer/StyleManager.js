@@ -28,7 +28,8 @@ StyleManager.prototype = {
             var style = this._styles[i];
             if (zoom > style.MaxZoom || zoom < style.MinZoom) { continue; }
             var RenderStyle = style.RenderStyle;
-            if (this._needLoadIcons || !RenderStyle || !RenderStyle.common || !RenderStyle.maxSize) {
+            // if (this._needLoadIcons || !RenderStyle || !RenderStyle.common || !('maxSize' in RenderStyle)) {
+            if (this._needLoadIcons || !RenderStyle || !('maxSize' in RenderStyle)) {
                 maxSize = StyleManager.MAX_STYLE_SIZE;
                 break;
             }
@@ -41,7 +42,7 @@ StyleManager.prototype = {
             }
             maxSize = Math.max(RenderStyle.maxSize + maxShift, maxSize);
         }
-        return maxSize || 256;
+        return maxSize;
     },
 
     getStyleBounds: function(gmxTilePoint) {
@@ -91,7 +92,9 @@ StyleManager.prototype = {
     _chkReady: function() {
         if (this._needLoadIcons < 1) {
             var _this = this;
-            this.gmx.dataManager.addFilter('styleFilter', function(it) { return _this._chkStyleFilter(it); });
+			if (this.gmx.dataManager) {
+				this.gmx.dataManager.addFilter('styleFilter', function(it) { return _this._chkStyleFilter(it); });
+			}
             this.deferred.resolve();
         }
     },
@@ -179,7 +182,8 @@ StyleManager.prototype = {
         return style ? {
                 DisableBalloonOnMouseMove: style.DisableBalloonOnMouseMove || false,
                 DisableBalloonOnClick: style.DisableBalloonOnClick || false,
-                templateBalloon: style.Balloon || null
+                templateBalloon: style.Balloon || null,
+                isSummary: /\[SUMMARY\]/.test(style.Balloon)
             }
             : null
         ;
@@ -218,9 +222,12 @@ StyleManager.prototype = {
     _needLoadIcons: 0,
     _getImageSize: function(pt) {     // check image size
         var url = pt.iconUrl || pt.fillIconUrl,
-            opt = pt.iconAngle || pt.iconAngle ? {crossOrigin: 'anonymous'} : {},
+            opt = pt.iconAngle || pt.iconScale ? {crossOrigin: 'anonymous'} : {},
             _this = this;
 
+        if (L.gmxUtil.isIE11 && /\.svg$/.test(url)) {
+            opt = {};   // skip bug in IE11
+        }
         opt.layerID = this.gmx.layerID;
         ++this._needLoadIcons;
         L.gmx.imageLoader.unshift(url, opt).def.then(
@@ -229,11 +236,19 @@ StyleManager.prototype = {
                 if (pt.fillIconUrl) {
                     pt.imagePattern = it;
                 } else {
-                    pt.sx = it.width;
-                    pt.sy = it.height;
+                    var w = it.width,
+                        h = it.height;
+                    if (L.gmxUtil.isIE11 && /\.svg$/.test(url)) {   // skip bug in IE11
+                        document.body.appendChild(it);
+                        w = it.offsetWidth;
+                        h = it.offsetHeight;
+                        document.body.removeChild(it);
+                    }
+                    pt.sx = w;
+                    pt.sy = h;
                     pt.image = it;
                     var maxSize = pt.iconAngle ? Math.sqrt(pt.sx * pt.sx + pt.sy * pt.sy) : Math.max(pt.sx, pt.sy);
-                    if (!pt.scaleFunction) {
+                    if (!pt.scaleFunction && !pt.rotateFunction) {
                         if (pt.iconScale || pt.iconScale === 1) { maxSize *= pt.iconScale; }
                         pt.common = true;
                     }
@@ -257,6 +272,7 @@ StyleManager.prototype = {
     getCurrentFilters: function(propArray, zoom) {
         var gmx = this.gmx,
             indexes = gmx.tileAttributeIndexes,
+            types = gmx.tileAttributeTypes,
             z = zoom || 1,
             out = [];
 
@@ -266,7 +282,7 @@ StyleManager.prototype = {
         for (var i = 0, len = this._styles.length; i < len; i++) {
             var st = this._styles[i];
             if (z > st.MaxZoom || z < st.MinZoom
-                || (st.filterFunction && !st.filterFunction(propArray, indexes))) {
+                || (st.filterFunction && !st.filterFunction(propArray, indexes, types))) {
                 continue;
             }
             out.push(i);
@@ -329,18 +345,20 @@ StyleManager.prototype = {
             len = Math.max(arr.length, gmx.styles.length);
 
         for (var i = 0; i < len; i++) {
-            var gmxStyle = gmx.styles[i] || arr[i];
-            if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = StyleManager.DEFAULT_STYLE; }
-            if (gmxStyle.HoverStyle === undefined) {
-                var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
-                if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
-                gmxStyle.HoverStyle = hoveredStyle;
-            } else if (gmxStyle.HoverStyle === null) {
-                delete gmxStyle.HoverStyle;
+            if (!this._styles[i]) {
+                var gmxStyle = gmx.styles[i] || arr[i];
+                if (!gmxStyle.RenderStyle) { gmxStyle.RenderStyle = StyleManager.DEFAULT_STYLE; }
+                if (gmxStyle.HoverStyle === undefined) {
+                    var hoveredStyle = JSON.parse(JSON.stringify(gmxStyle.RenderStyle));
+                    if (hoveredStyle.outline) { hoveredStyle.outline.thickness += 1; }
+                    gmxStyle.HoverStyle = hoveredStyle;
+                } else if (gmxStyle.HoverStyle === null) {
+                    delete gmxStyle.HoverStyle;
+                }
+                var pt = this._prepareItem(gmxStyle);
+                this._styles.push(pt);
+                if (this._isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
             }
-            var pt = this._prepareItem(gmxStyle);
-            this._styles.push(pt);
-            if (this._isLabel(pt.RenderStyle)) { gmx.labelsLayer = true; }
         }
         this._checkStyles();
         this._serverStylesParsed = true;
@@ -429,6 +447,16 @@ StyleManager.prototype = {
             } else if (st.iconCircle) {
                 type = 'circle';
                 if (!('iconSize' in st)) { st.iconSize = 4; }
+            } else if (st.iconPath) {
+                type = 'iconPath';
+                var iconSize = 0,
+                    arr = L.Util.isArray(st.iconPath) ? st.iconPath : StyleManager.DEFAULT_ICONPATH;
+                st.iconPath = StyleManager.DEFAULT_ICONPATH.map(function(it, i) {
+                    var z = arr[i] || it;
+                    iconSize = Math.max(iconSize, z);
+                    return z;
+                });
+                st.iconSize = 2 * iconSize;
             } else if (st.fillRadialGradient) {
                 type = 'circle';
                 if (!('iconCenter' in st)) { st.iconCenter = true; }
@@ -497,23 +525,23 @@ StyleManager.prototype = {
         if (pt.maxSize) {
             out.maxSize = pt.maxSize;
         }
+        if (pt.iconAngle) {
+            var rotateRes = pt.iconAngle || 0;
+            if (rotateRes && typeof (rotateRes) === 'string') {
+                rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
+            }
+            out.rotate = rotateRes || 0;
+        }
+        if ('iconColor' in pt) {
+            out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
+        }
+        if ('iconScale' in pt) {
+            out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
+        }
         if (type === 'image') {
             out.type = type;
             if (pt.iconUrl) { out.iconUrl = pt.iconUrl; }
             if (pt.image) { out.image = pt.image; }
-            if (pt.iconAngle) {
-                var rotateRes = pt.iconAngle || 0;
-                if (rotateRes && typeof (rotateRes) === 'string') {
-                    rotateRes = (pt.rotateFunction ? pt.rotateFunction(prop, indexes) : 0);
-                }
-                out.rotate = rotateRes || 0;
-            }
-            if ('iconColor' in pt) {
-                out.iconColor = 'iconColorFunction' in pt ? pt.iconColorFunction(prop, indexes) : pt.iconColor;
-            }
-            if ('iconScale' in pt) {
-                out.iconScale = 'scaleFunction' in pt ? (pt.scaleFunction ? pt.scaleFunction(prop, indexes) : 1) : pt.iconScale;
-            }
         } else if (pt.fillRadialGradient) {
             var rgr = pt.fillRadialGradient,
                 r1 = (rgr.r1Function ? rgr.r1Function(prop, indexes) : rgr.r1),
@@ -556,6 +584,12 @@ StyleManager.prototype = {
             if (pt.fillPattern) {
                 out.canvasPattern = (pt.canvasPattern ? pt.canvasPattern : gmxAPIutils.getPatternIcon(item, pt, indexes));
             }
+
+            if (type === 'iconPath') {
+                out.type = type;
+                out.iconPath = pt.iconPath;
+            }
+
             if (itemType === 'POLYGON' || itemType === 'MULTIPOLYGON' || this.gmx.GeometryType === 'polygon') {
                 type = 'polygon';
             }
@@ -588,7 +622,7 @@ StyleManager.prototype = {
             out.iconCenter = pt.iconCenter;
         }
 
-        if (type === 'square' || type === 'polygon' || type === 'circle') {
+        if (type === 'square' || type === 'polygon' || type === 'circle' || type === 'iconPath') {
             out.type = type;
             var fop = pt.fillOpacity,
                 fc = pt.fillColor,
@@ -636,6 +670,7 @@ StyleManager.MAX_STYLE_SIZE = 256;
 //StyleManager.DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8, circle: true}};
 StyleManager.DEFAULT_STYLE = {outline: {color: 255, thickness: 1}, marker: {size: 8}};
 StyleManager.DEFAULT_KEYS = ['MinZoom', 'MaxZoom', 'Balloon', 'BalloonEnable', 'DisableBalloonOnMouseMove', 'DisableBalloonOnClick'];
+StyleManager.DEFAULT_ICONPATH = [0, 10, 5, -10, -5, -10, 0, 10];  // [TL.x, TL.y, BR.x, BR.y, BL.x, BL.y, TL.x, TL.y]
 
 StyleManager.parsePattern = function(pattern) {
     var common = true,

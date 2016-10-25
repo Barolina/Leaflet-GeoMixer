@@ -22,12 +22,18 @@ L.gmx.VectorLayer.include({
                     iconScale * sx / 2,
                     iconScale * sy / 2
                 ],
-                radius = offset[0],
-                point = mercPoint;
+                point = mercPoint,
+                geom = geoItem[geoItem.length - 1],
+                type = geom.type;
 
-            var objBounds = gmxAPIutils.bounds()
-                .extendBounds(dataOption.bounds)
-                .addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
+            if (type === 'POINT' && parsedStyle.type === 'circle') {
+                offset[0] *= 2;
+                offset[1] *= 2;
+            }
+            var radius = offset[0],
+                objBounds = gmxAPIutils.bounds()
+                    .extendBounds(dataOption.bounds)
+                    .addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
             if (iconAnchor) {
                 offset = [
                     iconAnchor[0] - offset[0],
@@ -40,14 +46,13 @@ L.gmx.VectorLayer.include({
             }
             if (!objBounds.contains(point)) { continue; }
 
-            var geom = geoItem[geoItem.length - 1],
-                fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage || parsedStyle.fillColor,
+            var fill = currentStyle.fillStyle || currentStyle.canvasPattern || parsedStyle.bgImage || parsedStyle.fillColor,
                 marker = parsedStyle && parsedStyle.image ? parsedStyle.image : null,
-                type = geom.type,
                 chktype = type,
-                hiddenLines = dataOption.hiddenLines,
+                hiddenLines = dataOption.hiddenLines || [],
                 boundsArr = dataOption.boundsArr,
                 coords = geom.coordinates,
+                nodePoint = null,
                 ph = {
                     point: mercPoint,
                     bounds: bounds,
@@ -70,13 +75,16 @@ L.gmx.VectorLayer.include({
             }
 
             if (chktype === 'LINESTRING') {
-                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) { continue; }
+                if (!gmxAPIutils.isPointInPolyLine(mercPoint, lineWidth / mInPixel, coords)) {
+                    nodePoint = gmxAPIutils.bounds([point]).addBuffer(offset[0] / mInPixel, offset[1] / mInPixel).isNodeIntersect(coords);
+                    if (nodePoint === null) { continue; }
+                }
             } else if (chktype === 'LIKEMULTILINESTRING') {
                 ph.delta = lineWidth / mInPixel;
                 var flag = false;
                 for (j = 0, len = coords.length; j < len; j++) {
                     ph.coords = coords[j];
-                    ph.hidden = hiddenLines[j];
+                    ph.hidden = hiddenLines ? hiddenLines[j] : null;
                     ph.boundsArr = boundsArr[j];
                     if (gmxAPIutils.isPointInLines(ph)) {
                         flag = true;
@@ -88,7 +96,15 @@ L.gmx.VectorLayer.include({
                 ph.delta = lineWidth / mInPixel;
                 ph.hidden = hiddenLines;
                 if (!gmxAPIutils.isPointInLines(ph)) {
-                    continue;
+                    var pBounds = gmxAPIutils.bounds([point]).addBuffer(offset[0] / mInPixel, offset[1] / mInPixel);
+                    for (j = 0, len = coords.length; j < len; j++) {
+                        nodePoint = pBounds.isNodeIntersect(coords[j]);
+                        if (nodePoint !== null) {
+                            nodePoint.ring = j;
+                            break;
+                        }
+                    }
+                    if (nodePoint === null) { continue; }
                 }
             } else if (chktype === 'MULTIPOLYGON' || chktype === 'POLYGON') {
                 var chkPoint = mercPoint;
@@ -127,6 +143,7 @@ L.gmx.VectorLayer.include({
                 properties: item.properties,
                 geometry: geom,
                 bounds: item.bounds,
+                nodePoint: nodePoint,
                 offset: iconAnchor ? offset : null,
                 parsedStyle: parsedStyle
             };
@@ -180,7 +197,7 @@ L.gmx.VectorLayer.include({
                 type: 'resend',
                 bbox: gmxAPIutils.bounds([mercatorPoint]).addBuffer(delta),
                 dateInterval: gmx.layerType === 'VectorTemporal' ? [gmx.beginDate, gmx.endDate] : null,
-                filters: ['clipFilter', 'styleFilter', 'userFilter'],
+                filters: ['clipFilter', 'userFilter_' + gmx.layerID, 'styleFilter', 'userFilter'],
                 active: false //делаем его неактивным, так как потом будем явно выбирать данные
             };
             if (this.options.isGeneralized) {
@@ -214,6 +231,7 @@ L.gmx.VectorLayer.include({
 
                     ev.gmx = L.extend(this.getHoverOption(item), {
                         targets: geoItems,
+                        nodePoint: target.nodePoint,
                         prevId: prevId,
                         hoverDiff: item.hoverDiff
                     });

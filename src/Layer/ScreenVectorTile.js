@@ -13,7 +13,9 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
     this.tpy = 256 * (1 + gmxTilePoint.y);
     this.gmxTilePoint = gmxTilePoint;
 
-    this.showRaster = 'rasterBGfunc' in this.gmx && (zoom >= this.gmx.minZoomRasters);
+    this.showRaster =
+        (zoom >= this.gmx.minZoomRasters && 'rasterBGfunc' in this.gmx) ||
+        (zoom >= this.gmx.minZoomQuicklooks && 'quicklookBGfunc' in this.gmx);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
     this.rasterRequests = {};   // all cached raster requests
     this._uniqueID = 0;         // draw attempt id
@@ -189,13 +191,14 @@ ScreenVectorTile.prototype = {
             idr = properties[0],
             _this = this,
             gmx = this.gmx,
+            indexes = gmx.tileAttributeIndexes,
             rasters = this.rasters,
             mainRasterLoader = null,
             recursiveLoaders,
-            shiftX = Number(gmx.shiftXfield ? gmx.getPropItem(properties, gmx.shiftXfield) : 0) % this.worldWidthMerc,
-            shiftY = Number(gmx.shiftYfield ? gmx.getPropItem(properties, gmx.shiftYfield) : 0),
+            shiftX = Number(gmx.shiftXfield ? gmxAPIutils.getPropItem(gmx.shiftXfield, properties, indexes) : 0) % this.worldWidthMerc,
+            shiftY = Number(gmx.shiftYfield ? gmxAPIutils.getPropItem(gmx.shiftYfield, properties, indexes) : 0),
             isShift = shiftX || shiftY,
-            urlBG = gmx.getPropItem(properties, 'urlBG'),
+            urlBG = gmxAPIutils.getPropItem('urlBG', properties, indexes),
             url = '',
             itemImageProcessingHook = null,
             isTiles = false,
@@ -204,15 +207,13 @@ ScreenVectorTile.prototype = {
             resCanvas = null,
             imageItem = null;
 
-        if (gmx.IsRasterCatalog) {  // RasterCatalog
-            if (gmx.quicklookBGfunc && !gmx.getPropItem(properties, 'GMX_RasterCatalogID')) {
-                url = gmx.quicklookBGfunc(item);
-                itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
-            } else {
-                isTiles = true;
-            }
+        if (gmx.IsRasterCatalog && (gmx.rawProperties.type === 'Raster' || gmxAPIutils.getPropItem('GMX_RasterCatalogID', properties, indexes))) {
+            isTiles = true;                     // Raster Layer
+        } else if (gmx.quicklookBGfunc) {
+            url = gmx.quicklookBGfunc(item);    // Quicklook
+            itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
         } else if (urlBG) {
-            url = urlBG;
+            url = urlBG;                        // Image urlBG from properties
             itemImageProcessingHook = gmx.imageQuicklookProcessingHook;
         }
         if (isTiles) {
@@ -223,6 +224,7 @@ ScreenVectorTile.prototype = {
                 recursiveLoaders = null;
             });
         } else {
+            url += (url.indexOf('?') === -1 ? '?' : '&') + gmx.sessionKey;  //  for browser cache from another tabs
             var request = this.rasterRequests[url];
             if (!request) {
                 request = L.gmx.imageLoader.push(url, {
@@ -413,17 +415,78 @@ ScreenVectorTile.prototype = {
         return itemRasterPromise;
     },
 
+    _getVisibleItems: function (geoItems) {
+        if (geoItems.length < 2) {
+            return geoItems;
+        }
+        if (!gmxAPIutils._tileCanvas) {
+            gmxAPIutils._tileCanvas = document.createElement('canvas');
+            gmxAPIutils._tileCanvas.width = gmxAPIutils._tileCanvas.height = 256;
+        }
+        var i, len,
+            gmx = this.gmx,
+            dm = gmx.dataManager,
+            canvas = gmxAPIutils._tileCanvas,
+            ctx = canvas.getContext('2d'),
+            dattr = {
+                tbounds: this.tbounds,
+                gmx: gmx,
+                tpx: this.tpx,
+                tpy: this.tpy,
+                ctx: ctx
+            };
+        ctx.clearRect(0, 0, 256, 256);
+        ctx.imageSmoothingEnabled = false;
+        for (i = 0, len = geoItems.length; i < len; i++) {
+            ctx.fillStyle = gmxAPIutils.dec2rgba(i + 1, 1);
+            var geoItem = geoItems[i];
+            L.gmxUtil.drawGeoItem(
+                geoItem,
+                dm.getItem(geoItem.properties[0]),
+                dattr,
+                {fillStyle: ctx.fillStyle}
+            );
+        }
+        var items = {},
+            data = ctx.getImageData(0, 0, 256, 256).data;
+
+        for (i = 0, len = data.length; i < len; i += 4) {
+            if (data[i + 3] === 255) {
+                var color = data[i + 2];
+                if (data[i + 1]) { color += (data[i + 1] << 8); }
+                if (data[i]) { color += (data[i] << 16); }
+                if (color) { items[color] = true; }
+            }
+        }
+        var out = [];
+        for (var num in items) {
+            var it = geoItems[Number(num) - 1];
+            if (it) { out.push(it); }
+        }
+        return out;
+    },
+
     _getNeedRasterItems: function (geoItems) {
         var gmx = this.gmx,
+            indexes = gmx.tileAttributeIndexes,
             tbounds = this.tbounds,
             out = [];
         for (var i = 0, len = geoItems.length; i < len; i++) {
             var geo = geoItems[i],
                 properties = geo.properties,
-                idr = properties[0];
-
-            var dataOption = geo.dataOption || {},
+                idr = properties[0],
+                dataOption = geo.dataOption || {},
                 skipRasters = false;
+
+            if (gmx.quicklookBGfunc && !gmxAPIutils.getPropItem('GMX_RasterCatalogID', properties, indexes)) {
+                if (gmx.minZoomQuicklooks && this.zoom < gmx.minZoomQuicklooks) { continue; }
+                var platform = gmxAPIutils.getPropItem(gmx.quicklookPlatform, properties, indexes) || gmx.quicklookPlatform || '';
+                if ((!platform || platform === 'imageMercator') &&
+                    !gmxAPIutils.getQuicklookPointsFromProperties(properties, gmx)
+                ) {
+                    continue;
+                }
+            }
 
             if (gmx.styleHook) {
                 geo.styleExtend = gmx.styleHook(
@@ -432,16 +495,11 @@ ScreenVectorTile.prototype = {
                 );
                 skipRasters = geo.styleExtend && geo.styleExtend.skipRasters;
             }
-
             if (!skipRasters && tbounds.intersectsWithDelta(dataOption.bounds, -1, -1)) {
-                var geom = properties[properties.length - 1];
-                if (geom.type === 'POLYGON' && !tbounds.clipPolygon(geom.coordinates[0]).length) {
-                    continue;
-                }
                 out.push(geo);
             }
         }
-        return out;
+        return this._getVisibleItems(out);
     },
 
     _getTileRasters: function (geoItems) {   //load all missing rasters for items we are going to render
@@ -544,7 +602,7 @@ ScreenVectorTile.prototype = {
                 tpy: this.tpy,
                 ctx: ctx
             };
-        tile.zKey = this.zKey;
+        tile.zKey = tileLink.el._zKey = this.zKey;
 
         var doDraw = function() {
             ctx.clearRect(0, 0, 256, 256);
@@ -579,10 +637,23 @@ ScreenVectorTile.prototype = {
                 //ctx.save();
                 for (var i = 0, len = geoItems.length; i < len; i++) {
                     var geoItem = geoItems[i],
-                        id = geoItem.id;
-                    L.gmxUtil.drawGeoItem(geoItem, dattr);
-                    if (id in _this.gmx._needPopups && !_this.gmx._needPopups[id]) {
-                        _this.gmx._needPopups[id] = true;
+                        id = geoItem.id,
+                        item = gmx.dataManager.getItem(id);
+                    if (item) {     // skip removed items   (bug with screen tile screenTileDrawPromise.cancel on hover repaint)
+                        var style = gmx.styleManager.getObjStyle(item),
+                            hover = gmx.lastHover && gmx.lastHover.id === geoItem.id && style;
+
+                        if (gmx.multiFilters) {
+                            for (var j = 0, len1 = item.multiFilters.length; j < len1; j++) {
+                                var it = item.multiFilters[j];
+                                L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? it.parsedStyleHover : it.parsedStyle, it.style);
+                            }
+                        } else {
+                            L.gmxUtil.drawGeoItem(geoItem, item, dattr, hover ? item.parsedStyleHover : item.parsedStyleKeys, style);
+                        }
+                        if (id in gmx._needPopups && !gmx._needPopups[id]) {
+                            gmx._needPopups[id] = true;
+                        }
                     }
                 }
                 //ctx.restore();

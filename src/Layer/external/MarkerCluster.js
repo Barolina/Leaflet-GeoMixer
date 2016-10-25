@@ -152,8 +152,11 @@
                         marker = null;
                     }
                     if (!marker) {
+                        if (!vectorTileItem.item.parsedStyleKeys) {
+                            vectorTileItem.item.parsedStyleKeys = this.parentLayer.getItemStyle(id);
+                        }
                         var geo = item[item.length - 1],
-                            parsedStyle = vectorTileItem.item.parsedStyleKeys || this.parentLayer.getItemStyle(id),
+                            parsedStyle = vectorTileItem.item.parsedStyleKeys,
                             p = geo.coordinates,
                             latlng = L.Projection.Mercator.unproject({x: p[0], y: p[1]}),
                             opt = {
@@ -183,7 +186,15 @@
                                 opt.icon = L.gmxUtil.getSVGIcon(parsedStyle);
                             }
                         }
-                        marker = new L.Marker(latlng, opt);
+                        if (parsedStyle.rotate) {
+                            marker = L.rotatedMarker(latlng, L.extend(opt, {
+                                angle: parsedStyle.rotate
+                            }));
+                        } else {
+                            marker = L.marker(latlng, L.extend(opt, {
+                                angle: parsedStyle.rotate
+                            }));
+                        }
                         this._items[id] = marker;
                     }
                     arr.push(marker);

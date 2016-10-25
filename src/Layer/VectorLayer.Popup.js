@@ -16,7 +16,7 @@ L.gmx.VectorLayer.include({
 
         if (!this._popupHandlersAdded) {
             this
-                .on('click', this._openPopup, this)
+                .on('click', this._openClickPopup, this)
                 .on('mousemove', this._movePopup, this)
                 .on('mouseover', this._overPopup, this)
                 .on('mouseout', this._outPopup, this)
@@ -37,7 +37,7 @@ L.gmx.VectorLayer.include({
 		if (this._popup) {
 			this._popup = null;
 			this
-			    .off('click', this._openPopup, this)
+			    .off('click', this._openClickPopup, this)
                 .off('mousemove', this._movePopup, this)
 			    .off('mouseover', this._overPopup, this)
                 .off('mouseout', this._outPopup, this)
@@ -103,11 +103,17 @@ L.gmx.VectorLayer.include({
     },
 
     _overPopup: function (options) {
-        if (!this._popup._map) {
+        var _popup = this._popup;
+        if (!_popup._map) {
             this._openPopup(options);
+        } else {
+            this.fire('popupopen', {
+                popup: _popup,
+                gmx: this._setPopupContent(options, _popup)
+            });
         }
-        if (this._popup._state === 'mouseover') {
-            this._popup.setLatLng(options.latlng);
+        if (_popup._state === 'mouseover') {
+            _popup.setLatLng(options.latlng);
         }
     },
 
@@ -160,8 +166,12 @@ L.gmx.VectorLayer.include({
             geometry = target.geometry || {},
             offset = target.offset,
             templateBalloon = _popup._initContent || balloonData.templateBalloon || '',
+            type = options.type,
+            skipSummary = this.options.isGeneralized && (type === 'mouseover' || type === 'mousemove'),
             outItem = {
                 id: gmx.id,
+                type: type,
+                nodePoint: gmx.nodePoint,
                 latlng: options.latlng,
                 properties: properties,
                 templateBalloon: templateBalloon
@@ -188,11 +198,12 @@ L.gmx.VectorLayer.include({
             });
         } else if (!(templateBalloon instanceof L.Popup)) {
             if (!(templateBalloon instanceof HTMLElement)) {
-                var geometries = null,
+                var geometries,
                     summary = '',
                     unitOptions = this._map ? this._map.options : {};
-                if (!this.options.isGeneralized) {
-                    geometries = gmx.geometries || this._gmx.dataManager.getItemGeometries(gmx.id) || [];
+
+                if (!skipSummary) {
+                    geometries = target.geometry ? [target.geometry] : (gmx.geometries || this._gmx.dataManager.getItemGeometries(gmx.id) || []);
                     outItem.summary = summary = L.gmxUtil.getGeometriesSummary(geometries, unitOptions);
                 }
                 if (this._balloonHook) {
@@ -224,10 +235,42 @@ L.gmx.VectorLayer.include({
         return outItem;
     },
 
-    _openPopup: function (options) {
+    _openClickPopup: function (options) {
+        var originalEvent = options.originalEvent || {},
+            skip = !options.gmx || this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
+
+        if (!skip) {
+            var type = options.type,
+                gmx = options.gmx,
+                balloonData = gmx.balloonData,
+                flag = type === 'click' && balloonData.isSummary && !balloonData.DisableBalloonOnClick,
+                item = gmx.target;
+
+            if (flag && item.options.isGeneralized && !item.geometry) {
+                var layerProp = gmx.layer.getGmxProperties();
+                gmxAPIutils.getLayerItemFromServer({
+                    options: options,
+                    layerID: layerProp.name,
+                    value: item.id,
+                    field: layerProp.identityField
+                }).then(function(json, params) {
+                    if (json && json.Status === 'ok' && json.Result) {
+                        var pArr = json.Result.values[0];
+                        params.options.gmx.target.fromServerProps = pArr;
+                        params.options.gmx.target.geometry = pArr[pArr.length - 1];
+                        this._openPopup(params.options);
+                    }
+                }.bind(this));
+            } else {
+                this._openPopup(options);
+            }
+        }
+    },
+
+    _openPopup: function (options, notSkip) {
         var map = this._map,
             originalEvent = options.originalEvent || {},
-            skip = this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
+            skip = notSkip ? !notSkip : this._popupDisabled || originalEvent.ctrlKey || originalEvent.altKey || originalEvent.shiftKey;
 
         if (!skip) {
             var type = options.type,
@@ -236,7 +279,7 @@ L.gmx.VectorLayer.include({
                 balloonData = gmx.balloonData || {};
 
             if (type === 'click') {
-                if (balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
+                if (!notSkip && balloonData.DisableBalloonOnClick && !this.hasEventListeners('popupopen')) { return; }
 
                 if (!('_gmxPopups' in map)) {
                     map._gmxPopups = [];
@@ -266,7 +309,8 @@ L.gmx.VectorLayer.include({
                 }
 
                 this._clearPopup(gmx.id);
-                _popup = new L.Popup(L.extend({}, this._popup.options, {closeOnClick: map.options.maxPopupCount === 1, autoPan: true}));
+                var opt = this._popup ? this._popup.options : {maxWidth: 10000, className: 'gmxPopup', layerId: this._gmx.layerID};
+                _popup = new L.Popup(L.extend({}, opt, {closeOnClick: map.options.maxPopupCount === 1, autoPan: true}));
             } else if (type === 'mouseover') {
                 if (balloonData.DisableBalloonOnMouseMove) {
                     _popup._state = '';
@@ -349,7 +393,7 @@ L.gmx.VectorLayer.include({
                 type: 'click',
                 latlng: latlng,
                 gmx: this.getHoverOption(item)
-            });
+            }, true);
             delete gmx._needPopups[id];
         }
         return this;

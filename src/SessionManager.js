@@ -2,7 +2,10 @@
 */
 var gmxSessionManager = {
     APIKEY_PARAM: 'key',
-    SCRIPT_REGEXP: /\bleaflet-geomixer(-\w*)?\.js\b/,
+    SCRIPT_REGEXP: [
+		/\bleaflet-geomixer(-\w*)?\.js\b/,
+		/\bgeomixer(-\w*)?\.js\b/
+	],
     _scriptSearched: false,
     _scriptAPIKey: null,
     _searchScriptAPIKey: function() {
@@ -13,22 +16,28 @@ var gmxSessionManager = {
 
         var scripts = document.getElementsByTagName('script');
         for (var i = 0; i < scripts.length; i++) {
-            var src = scripts[i].getAttribute('src');
-            if (this.SCRIPT_REGEXP.exec(src)) {
-                var query = src.split('?')[1];
+            var src = scripts[i].getAttribute('src'),
+				arr = this.SCRIPT_REGEXP;
+			for (var j = 0, len = arr.length; j < len; j++) {
+				if (arr[j].exec(src)) {
+					var query = src.split('?')[1];
 
-                if (query) {
-                    var params = query.split('&');
-                    for (var p = 0; p < params.length; p++) {
-                        var parsedParam = params[p].split('=');
-                        if (parsedParam[0] === _this.APIKEY_PARAM) {
-                            _this._scriptAPIKey = parsedParam[1];
-                            break;
-                        }
-                    }
-                }
-                break;
+					if (query) {
+						var params = query.split('&');
+						for (var p = 0; p < params.length; p++) {
+							var parsedParam = params[p].split('=');
+							if (parsedParam[0] === _this.APIKEY_PARAM) {
+								_this._scriptAPIKey = parsedParam[1];
+								break;
+							}
+						}
+					}
+					break;
+				}
             }
+			if (_this._scriptAPIKey) {
+				break;
+			}
         }
         this._scriptSearched = true;
         return this._scriptAPIKey;

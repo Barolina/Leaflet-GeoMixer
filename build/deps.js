@@ -30,13 +30,15 @@
     "Layer/LabelsLayer.js",
     "Layer/ClipPolygon.js",
     "Layer/ImageTransform.js",
+    "Layer/ProjectiveImageWebGL.js",
     "Layer/ProjectiveImage.js",
-    
+
+    "Layer/external/RotatedMarker.js",
     "Layer/external/ExternalLayer.js",
     "Layer/external/BindWMS.js",
     "Layer/external/HeatMap.js",
     "Layer/external/MarkerCluster.js",
-    
+
     "LayerFactory.js"
 ];
 

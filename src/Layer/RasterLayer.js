@@ -2,6 +2,7 @@
 L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
 {
     options: {
+        isGeneralized: false,
         zIndexOffset: 0
         //clickable: false
     },

@@ -3,10 +3,26 @@
       http://en.wikipedia.org/wiki/Parsing_expression_grammar
    Inspired by Chris Double's parser combinator library in JavaScript:
       http://www.bluishcoder.co.nz/2007/10/javascript-packrat-parser.html
-	+ Добавлены функции: Math.floor, Math.round
+	+ Добавлены функции: Math.floor
 */
 (function() {
-	var Parsers = {};						// Парсеры
+    var regexExpression = /\[(.+?)\]/g,
+        regexMath = /(floor\()/g;
+	var Parsers = {						// Парсеры
+        functionFromExpression: function(s) {
+/*eslint-disable no-new-func*/
+            return new Function(
+/*eslint-enable */
+                'props',
+                'indexes',
+                'return ' +
+                    s
+                     .replace(regexExpression, 'props[indexes["$1"]]')
+                     .replace(regexMath, 'Math.$1')
+                    + ';'
+            );
+        }
+    };
 
 	var makePair = function(t1, t2) {
 		return {head: t1, tail: t2};
@@ -125,7 +141,7 @@
 					state = newState;
 				}
 			}
-			return fail;
+			// return fail;
 		};
 	};
 
@@ -236,7 +252,7 @@
 				token('>'),
 				caseInsensitiveToken('LIKE')
 			])),
-			literal
+            choice([literal, quotedFieldName])
 		]),
 		function(state) {
 			// Linked list contains fieldname, operation, value
@@ -265,20 +281,25 @@
 				};
 			}
 
-			return function(props, indexes) {
-				var fieldValue = props[indexes[fieldName]];
-                if (typeof fieldValue === 'boolean' && typeof referenceValue === 'string') {
+			return function(props, indexes, types) {
+				var fieldValue = props[indexes[fieldName]],
+                    rValue = referenceValue;
+                if (referenceValue in indexes) { rValue = props[indexes[rValue]]; }
+                if (types[fieldName] === 'date' && typeof rValue === 'string') { rValue = L.gmxUtil.getUnixTimeFromStr(rValue); }
+                if (typeof fieldValue === 'boolean' && typeof rValue === 'string') {
                     fieldValue = fieldValue ? 'True' : 'False';
                 }
 				if (fieldValue === null) { return false; }
 				if (matchPattern !== null) { return matchPattern(fieldValue);
-				} else if ((op === '=') || (op === '==')) { return (fieldValue == referenceValue);
-				} else if ((op === '!=') || (op === '<>')) { return (fieldValue != referenceValue);
-				} else {
+/*eslint-disable eqeqeq */
+                } else if ((op === '=') || (op === '==')) { return (fieldValue == rValue);
+				} else if ((op === '!=') || (op === '<>')) { return (fieldValue != rValue);
+/*eslint-enable */
+                } else {
                     var f1, f2;
-					if (applyParser(referenceValue, numberLiteral).head === referenceValue.length) {
+					if (!(referenceValue in indexes) && typeof rValue === 'string' && applyParser(rValue, numberLiteral).head === rValue.length) {
 						f1 = parseFloat(fieldValue);
-						f2 = parseFloat(referenceValue);
+						f2 = parseFloat(rValue);
 						if (op === '<') { return (f1 < f2);
 						} else if (op === '>') { return (f1 > f2);
 						} else if (op === '<=') { return (f1 <= f2);
@@ -287,7 +308,7 @@
                         }
 					} else {
 						f1 = fieldValue;
-						f2 = referenceValue;
+						f2 = rValue;
 						if (op === '<') { return (f1 < f2);
 						} else if (op === '>') { return (f1 > f2);
 						} else if (op === '<=') { return (f1 <= f2);
@@ -340,8 +361,8 @@
 		function(state) {
 			// Linked list contains only processed inner term.
 			var innerTerm = state.head;
-			return function(props, indexes) {
-				return !innerTerm(props, indexes);
+			return function(props, indexes, types) {
+				return !innerTerm(props, indexes, types);
 			};
 		}
 	);
@@ -361,11 +382,11 @@
 		function(state) {
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var flag = true;
 				var node = state;
 				while (node != null) {
-					flag = flag && node.head(props, indexes);
+					flag = flag && node.head(props, indexes, types);
 					node = node.tail;
 				}
 				return flag;
@@ -378,11 +399,11 @@
 		function(state) {
 			// Linked list contains multiple processed inner terms
 			//   (in reverse order).
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var flag = false;
 				var node = state;
 				while (node != null) {
-					flag = flag || node.head(props, indexes);
+					flag = flag || node.head(props, indexes, types);
 					node = node.tail;
 				}
 				return flag;
@@ -419,12 +440,12 @@
 		),
 		function(state)
 		{
-			return function(props, indexes)
+			return function(props, indexes, types)
 			{
 				var pos = state;
 				var term = 0.0;
 				while (pos !== null) {
-					term += pos.head(props, indexes);
+					term += pos.head(props, indexes, types);
 					if (pos.tail === null) {
 						return term;
 					} else {
@@ -441,7 +462,7 @@
 		action(
 			numberLiteral,
 			function(state) {
-				return function(/*props, indexes*/) {
+				return function(/*props, indexes, types*/) {
 					return parseFloat(state.head);
 				};
 			}
@@ -449,8 +470,8 @@
 		action(
 			sequence([token('floor('), additiveExpression, token(')')]),
 			function(state) {
-				return function(props, indexes) {
-					var res = state.head(props, indexes);
+				return function(props, indexes, types) {
+					var res = state.head(props, indexes, types);
 					return Math.floor(res);
 				};
 			}
@@ -474,8 +495,8 @@
 		action(
 			whitespaceSeparatedSequence([token('-'), multiplicativeTerm]),
 			function(state) {
-				return function(props, indexes) {
-					return -state.head(props, indexes);
+				return function(props, indexes, types) {
+					return -state.head(props, indexes, types);
 				};
 			}
 		)
@@ -488,11 +509,11 @@
 		),
 		function(state)
 		{
-			return function(props, indexes) {
+			return function(props, indexes, types) {
 				var pos = state;
 				var term = 1.0;
 				while (pos !== null) {
-					term *= pos.head(props, indexes);
+					term *= pos.head(props, indexes, types);
 					if (pos.tail === null) {
 						return term;
 					} else {
@@ -510,8 +531,8 @@
 		action(
 			whitespaceSeparatedSequence([token('-'), multiplicativeTerm]),
 			function(state) {
-				return function(props, indexes) {
-					return -state.head(props, indexes);
+				return function(props, indexes, types) {
+					return -state.head(props, indexes, types);
 				};
 			}
 		)
@@ -521,6 +542,7 @@
 	Parsers.parseExpression = function(s) {
 		var result = applyParser(s, arithmeticExpression);
         return result.head === s.length ? result.tail.head : null;
+        // return result.head === s.length ? Parsers.functionFromExpression(s) : null;
 	};
 
 	var svgPath = action(

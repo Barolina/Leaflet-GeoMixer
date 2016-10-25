@@ -96,6 +96,8 @@ var clipTileByPolygon = function (dattr) {
                 ctx.beginPath();
                 for (var j1 = 0, len2 = coords1.length; j1 < len2; j1++) {
                     dattr.coords = coords1[j1];
+                    var pixels = gmxAPIutils.getRingPixels(dattr);
+                    dattr.coords = pixels.coords;
                     gmxAPIutils.polygonToCanvasFill(dattr);
                 }
                 ctx.closePath();
