@@ -711,6 +711,11 @@ var DataManager = L.Class.extend({
         if (this.processingTile) {
             newTilesList[this.processingTile.vectorTileKey] = true;
         }
+        if (this._rasterVectorTile) {
+			key = this._rasterVectorTile.vectorTileKey;
+            newTilesList[key] = true;
+			this._tiles[key] = {tile: this._rasterVectorTile};
+		}
 
         var checkSubscription = function(vKey) {
             var observerIds = _this._observerTileLoader.getTileObservers(vKey);

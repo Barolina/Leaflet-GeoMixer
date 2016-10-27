@@ -6149,6 +6149,11 @@ var DataManager = L.Class.extend({
         if (this.processingTile) {
             newTilesList[this.processingTile.vectorTileKey] = true;
         }
+        if (this._rasterVectorTile) {
+			key = this._rasterVectorTile.vectorTileKey;
+            newTilesList[key] = true;
+			this._tiles[key] = {tile: this._rasterVectorTile};
+		}
 
         var checkSubscription = function(vKey) {
             var observerIds = _this._observerTileLoader.getTileObservers(vKey);
@@ -10473,7 +10478,8 @@ L.gmx.RasterLayer = L.gmx.VectorLayer.extend(
             }
 			callback(objects, [bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y]);
 		}};
-		gmx.dataManager.addTile(new VectorTile(vectorDataProvider, {x: -0.5, y: -0.5, z: 0, v: 0, s: -1, d: -1}));
+		gmx.dataManager._rasterVectorTile = new VectorTile(vectorDataProvider, {x: -0.5, y: -0.5, z: 0, v: 0, s: -2, d: -2});
+		gmx.dataManager.addTile(gmx.dataManager._rasterVectorTile);
 
         return this;
     },
