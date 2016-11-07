@@ -130,8 +130,12 @@ L.LabelsLayer = L.Class.extend({
 
             if (!_this._observers[id] && gmx && gmx.labelsLayer && id) {
                 gmx.styleManager.deferred.then(function () {
-                    var observer = addObserver(layer);
-                    if (!gmx.styleManager.isVisibleAtZoom(_this._map._zoom)) {
+                    var observer = addObserver(layer),
+						_zoom = _this._map._zoom;
+                    if (layer.options.isGeneralized) {
+                        observer.targetZoom = _zoom;	//need update to current zoom
+                    }
+                    if (!gmx.styleManager.isVisibleAtZoom(_zoom)) {
                         observer.deactivate();
                     }
                     _this._observers[id] = observer;
@@ -232,12 +236,17 @@ L.LabelsLayer = L.Class.extend({
             southWest = screenBounds.getSouthWest(),
             northEast = screenBounds.getNorthEast(),
             m1 = L.Projection.Mercator.project(southWest),
-            m2 = L.Projection.Mercator.project(northEast);
+            m2 = L.Projection.Mercator.project(northEast),
+			_zoom = _map.getZoom();
 
-        this.mInPixel = gmxAPIutils.getPixelScale(_map.getZoom());
+        this.mInPixel = gmxAPIutils.getPixelScale(_zoom);
         this._ctxShift = [m1.x * this.mInPixel, m2.y * this.mInPixel];
         for (var id in this._observers) {
-            this._observers[id].setBounds({
+			var observer = this._observers[id];
+			if (observer.targetZoom) {
+				observer.targetZoom = _zoom;
+			}
+            observer.setBounds({
                 min: {x: southWest.lng, y: southWest.lat},
                 max: {x: northEast.lng, y: northEast.lat}
             });
