@@ -1,125 +1,127 @@
 //Helper class, that represents layers of single Geomixer's map
 //Creates layers from given map description
-var gmxMap = function(mapInfo, commonLayerOptions) {
-    this.layers = [];
-    this.layersByTitle = {};
-    this.layersByID = {};
-    this.dataManagers = {};
+var gmxMap = L.Class.extend({
+    includes: L.Mixin.Events,
 
-    var _this = this;
+    initialize: function(mapInfo, commonLayerOptions) {
+		this.layers = [];
+		this.layersByTitle = {};
+		this.layersByID = {};
+		this.dataManagers = {};
 
-    this.properties = L.extend({}, mapInfo.properties);
-    this.properties.BaseLayers = this.properties.BaseLayers ? JSON.parse(this.properties.BaseLayers) : [];
-    this.rawTree = mapInfo;
+		var _this = this;
 
-    this.layersCreated = new L.gmx.Deferred();
+		this.properties = L.extend({}, mapInfo.properties);
+		this.properties.BaseLayers = this.properties.BaseLayers ? JSON.parse(this.properties.BaseLayers) : [];
+		this.rawTree = mapInfo;
 
-    var missingLayerTypes = {},
-		dataSources = {};
+		this.layersCreated = new L.gmx.Deferred();
 
-    gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
-        var props = layerInfo.properties,
-			meta = props.MetaProperties || {},
-			options = {
-                mapID: mapInfo.properties.name,
-                layerID: props.name
-            };
+		var missingLayerTypes = {},
+			dataSources = {};
 
-        props.hostName = mapInfo.properties.hostName;
+		gmxMapManager.iterateLayers(mapInfo, function(layerInfo) {
+			var props = layerInfo.properties,
+				meta = props.MetaProperties || {},
+				options = {
+					mapID: mapInfo.properties.name,
+					layerID: props.name
+				};
 
-        var type = props.ContentID || props.type,
-            layerOptions = L.extend(options, commonLayerOptions);
+			props.hostName = mapInfo.properties.hostName;
 
-		if ('parentLayer' in meta) {      	// Set parent layer
-			layerOptions.parentLayer = meta.parentLayer.Value || '';
-			dataSources[options.layerID] = {
-                info: layerInfo,
-                options: layerOptions
-            };
-		} else if (type in L.gmx._layerClasses) {
-            _this.addLayer(L.gmx.createLayer(layerInfo, layerOptions));
-        } else {
-            missingLayerTypes[type] = missingLayerTypes[type] || [];
-            missingLayerTypes[type].push({
-                info: layerInfo,
-                options: layerOptions
-            });
-        }
-    });
+			var type = props.ContentID || props.type,
+				layerOptions = L.extend(options, commonLayerOptions);
 
-    //load missing layer types
-    var loaders = [];
-    for (var type in missingLayerTypes) {
-        loaders.push(L.gmx._loadLayerClass(type).then(/*eslint-disable no-loop-func */function (type) {/*eslint-enable */
-			var it = missingLayerTypes[type];
-            for (var i = 0, len = it.length; i < len; i++) {
-                _this.addLayer(L.gmx.createLayer(it[i].info, it[i].options));
-            }
-        }.bind(null, type)));
-    }
-    var hosts = {}, host, id, it;
-    for (id in dataSources) {
-		it = dataSources[id];
-		var opt = it.options,
-			pId = opt.parentLayer,
-			pLayer = this.layersByID[pId];
-		if (pLayer) {
-			it.options.parentOptions = pLayer.getGmxProperties();
-			it.options.dataManager = this.dataManagers[pId] || new DataManager(it.options.parentOptions);
-			this.dataManagers[pId] = it.options.dataManager;
-            this.addLayer(L.gmx.createLayer(it.info, it.options));
-		} else {
-			host = opt.hostName;
-			if (!hosts[host]) { hosts[host] = {}; }
-			if (!hosts[host][pId]) { hosts[host][pId] = []; }
-			hosts[host][pId].push(id);
-		}
-    }
-    for (host in hosts) {
-		var arr = [],
-			prefix = 'http://' + host;
-		for (id in hosts[host]) {
-			arr.push({Layer: id});
-		}
-        loaders.push(L.gmxUtil.requestJSONP(prefix + '/Layer/GetLayerJson.ashx',
-			{
-				WrapStyle: 'func',
-				Layers: JSON.stringify(arr)
-			},
-			{
-				ids: hosts[host]
-			}
-		).then(function(json, opt) {
-			if (json && json.Status === 'ok' && json.Result) {
-				json.Result.forEach(function(it) {
-					var dataManager = _this.addDataManager(it),
-						props = it.properties,
-						pId = props.name;
-					if (opt && opt.ids && opt.ids[pId]) {
-						opt.ids[pId].forEach(function(id) {
-							var pt = dataSources[id];
-							pt.options.parentOptions = it.properties;
-							pt.options.dataManager = dataManager;
-							_this.addLayer(L.gmx.createLayer(pt.info, pt.options));
-						});
-					}
-				});
+			if ('parentLayer' in meta) {      	// Set parent layer
+				layerOptions.parentLayer = meta.parentLayer.Value || '';
+				dataSources[options.layerID] = {
+					info: layerInfo,
+					options: layerOptions
+				};
+			} else if (type in L.gmx._layerClasses) {
+				_this.addLayer(L.gmx.createLayer(layerInfo, layerOptions));
 			} else {
-				console.info('Error: loading ', prefix + '/Layer/GetLayerJson.ashx', json.ErrorInfo);
-				if (opt && opt.ids) {
-					for (var pId in opt.ids) {
-						opt.ids[pId].forEach(function(id) {
-							_this.addLayer(new L.gmx.DummyLayer(dataSources[id].info.properties));
-						});
+				missingLayerTypes[type] = missingLayerTypes[type] || [];
+				missingLayerTypes[type].push({
+					info: layerInfo,
+					options: layerOptions
+				});
+			}
+		});
+
+		//load missing layer types
+		var loaders = [];
+		for (var type in missingLayerTypes) {
+			loaders.push(L.gmx._loadLayerClass(type).then(/*eslint-disable no-loop-func */function (type) {/*eslint-enable */
+				var it = missingLayerTypes[type];
+				for (var i = 0, len = it.length; i < len; i++) {
+					_this.addLayer(L.gmx.createLayer(it[i].info, it[i].options));
+				}
+			}.bind(null, type)));
+		}
+		var hosts = {}, host, id, it;
+		for (id in dataSources) {
+			it = dataSources[id];
+			var opt = it.options,
+				pId = opt.parentLayer,
+				pLayer = this.layersByID[pId];
+			if (pLayer) {
+				it.options.parentOptions = pLayer.getGmxProperties();
+				it.options.dataManager = this.dataManagers[pId] || new DataManager(it.options.parentOptions);
+				this.dataManagers[pId] = it.options.dataManager;
+				this.addLayer(L.gmx.createLayer(it.info, it.options));
+			} else {
+				host = opt.hostName;
+				if (!hosts[host]) { hosts[host] = {}; }
+				if (!hosts[host][pId]) { hosts[host][pId] = []; }
+				hosts[host][pId].push(id);
+			}
+		}
+		for (host in hosts) {
+			var arr = [],
+				prefix = 'http://' + host;
+			for (id in hosts[host]) {
+				arr.push({Layer: id});
+			}
+			loaders.push(L.gmxUtil.requestJSONP(prefix + '/Layer/GetLayerJson.ashx',
+				{
+					WrapStyle: 'func',
+					Layers: JSON.stringify(arr)
+				},
+				{
+					ids: hosts[host]
+				}
+			).then(function(json, opt) {
+				if (json && json.Status === 'ok' && json.Result) {
+					json.Result.forEach(function(it) {
+						var dataManager = _this.addDataManager(it),
+							props = it.properties,
+							pId = props.name;
+						if (opt && opt.ids && opt.ids[pId]) {
+							opt.ids[pId].forEach(function(id) {
+								var pt = dataSources[id];
+								pt.options.parentOptions = it.properties;
+								pt.options.dataManager = dataManager;
+								_this.addLayer(L.gmx.createLayer(pt.info, pt.options));
+							});
+						}
+					});
+				} else {
+					console.info('Error: loading ', prefix + '/Layer/GetLayerJson.ashx', json.ErrorInfo);
+					if (opt && opt.ids) {
+						for (var pId in opt.ids) {
+							opt.ids[pId].forEach(function(id) {
+								_this.addLayer(new L.gmx.DummyLayer(dataSources[id].info.properties));
+							});
+						}
 					}
 				}
-			}
-		}));
-    }
-    L.gmx.Deferred.all.apply(null, loaders).then(this.layersCreated.resolve);
-};
+			}));
+		}
+		L.gmx.Deferred.all.apply(null, loaders).then(this.layersCreated.resolve);
+	},
 
-gmxMap.prototype = {
 	addDataManager: function(it) {
 		var pid = it.properties.name;
 		if (!this.dataManagers[pid]) {
@@ -137,6 +139,7 @@ gmxMap.prototype = {
 		this.layers.push(layer);
 		this.layersByTitle[props.title] = layer;
 		this.layersByID[props.name] = layer;
+		this.fire('onAddLayer', {layer: layer});
 
 		return this;
 	},
@@ -153,6 +156,7 @@ gmxMap.prototype = {
 
 		delete this.layersByTitle[props.title];
 		delete this.layersByID[props.name];
+		this.fire('onRemoveLayer', {layer: layer});
 
 		return this;
 	},
@@ -167,4 +171,6 @@ gmxMap.prototype = {
 
 		return this;
 	}
-};
+});
+L.gmx = L.gmx || {};
+L.gmx.gmxMap = gmxMap;
