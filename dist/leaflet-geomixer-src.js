@@ -2227,12 +2227,21 @@ var gmxAPIutils = {
 		return ('' + (Math.round(10000000 * x) / 10000000 + 0.00000001)).substring(0, 9);
 	},
 
-	formatDegrees: function(angle) {
+	formatDegrees: function(angle, format) {
 		angle = Math.round(10000000 * angle) / 10000000 + 0.00000001;
-		var a1 = Math.floor(angle);
-		var a2 = Math.floor(60 * (angle - a1));
-		var a3 = gmxAPIutils.toPrecision(3600 * (angle - a1 - a2 / 60), 2);
-		return gmxAPIutils.pad2(a1) + '°' + gmxAPIutils.pad2(a2) + '\'' + gmxAPIutils.pad2(a3) + '"';
+		var a1 = Math.floor(angle),
+			a2 = Math.floor(60 * (angle - a1)),
+			a3 = gmxAPIutils.toPrecision(3600 * (angle - a1 - a2 / 60), 2),
+			st = gmxAPIutils.pad2(a1) + '°';
+
+		if (format ===  undefined ) { format = 2; }
+		if (format > 0) {
+			st += gmxAPIutils.pad2(a2) + '\'';
+		}
+		if (format > 1) {
+			st += gmxAPIutils.pad2(a3) + '"';
+		}
+		return st;
 	},
 
     /** Get point coordinates in string format with degrees
