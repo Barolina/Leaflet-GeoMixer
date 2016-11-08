@@ -4381,7 +4381,7 @@ var gmxMap = L.Class.extend({
 		this.layers.push(layer);
 		this.layersByTitle[props.title] = layer;
 		this.layersByID[props.name] = layer;
-		this.fire('onAddLayer', {layer: layer});
+		this.fire('layeradd', {layer: layer});
 
 		return this;
 	},
@@ -4398,7 +4398,7 @@ var gmxMap = L.Class.extend({
 
 		delete this.layersByTitle[props.title];
 		delete this.layersByID[props.name];
-		this.fire('onRemoveLayer', {layer: layer});
+		this.fire('layerremove', {layer: layer});
 
 		return this;
 	},
