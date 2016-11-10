@@ -6596,7 +6596,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this.on('stylechange', this._onStyleChange, this);
         this.on('versionchange', this._onVersionChange, this);
 
-        this._zIndexOffsetCheck();
+        // this._zIndexOffsetCheck();
         L.gmx.layersVersion.add(this);
         this.fire('add');
     },
@@ -7310,7 +7310,7 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
     _zoomEnd: function() {
         this._gmx.zoomstart = false;
         this.setCurrentZoom(this._map);
-        this._zIndexOffsetCheck();
+        // this._zIndexOffsetCheck();
     },
 
     _moveEnd: function() {
@@ -7451,16 +7451,16 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         gmx.mInPixel = 256 / gmx.tileSize;
     },
 
-    _zIndexOffsetCheck: function() {
-        var gmx = this._gmx;
-        if (gmx.properties.fromType !== 'Raster' && (gmx.IsRasterCatalog || gmx.Quicklook)) {
-            var minZoom = gmx.IsRasterCatalog ? gmx.minZoomRasters : gmx.minZoomQuicklooks;
-            var zIndexOffset = this._map._zoom < minZoom ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
-            if (zIndexOffset !== this.options.zIndexOffset) {
-                this.setZIndexOffset(zIndexOffset);
-            }
-        }
-    },
+    // _zIndexOffsetCheck: function() {
+        // var gmx = this._gmx;
+        // if (gmx.properties.fromType !== 'Raster' && (gmx.IsRasterCatalog || gmx.Quicklook)) {
+            // var minZoom = gmx.IsRasterCatalog ? gmx.minZoomRasters : gmx.minZoomQuicklooks;
+            // var zIndexOffset = this._map._zoom < minZoom ? L.gmx.VectorLayer.prototype.options.zIndexOffset : 0;
+            // if (zIndexOffset !== this.options.zIndexOffset) {
+                // this.setZIndexOffset(zIndexOffset);
+            // }
+        // }
+    // },
 
     _setClearBgBuffer: function (zd) {
         if (this._clearBgBufferTimer) { clearTimeout(this._clearBgBufferTimer); }
