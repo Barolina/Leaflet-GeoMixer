@@ -997,7 +997,7 @@ var gmxAPIutils = {
         var script = document.createElement('script');
         script.setAttribute('charset', 'UTF-8');
         var callbackParamName = 'callbackParamName' in options ? options.callbackParamName : 'CallbackName';
-        var urlParams = L.extend({}, params);
+        var urlParams = L.extend({}, params, L.gmx.gmxMapManager.syncParams);
 
         if (callbackParamName) {
             var callbackName = gmxAPIutils.uniqueGlobalName(function(obj) {
@@ -1074,7 +1074,15 @@ var gmxAPIutils = {
                     }
                 };
             }
-            xhr.send((ph.params ? ph.params : null));
+			var params = null;
+			if (ph.params) {
+				params = ph.params;
+				var syncParams = L.gmx.gmxMapManager.getSyncParams(true);
+				if (syncParams) {
+					params += '&' + syncParams;
+				}
+			}
+            xhr.send(params);
             if (!ph.async && xhr.status === 200) {
                 ph.callback(xhr.responseText);
                 L.gmxUtil.loaderStatus(reqId, true);
@@ -4189,6 +4197,23 @@ var gmxMapManager = {
             }, def.reject);
         }
         return maps[serverHost][mapName].promise;
+    },
+
+	syncParams: {},
+    // установка дополнительных параметров для серверных запросов
+    setSyncParams: function(hash) {
+		this.syncParams = hash;
+    },
+    getSyncParams: function(stringFlag) {
+		var res = this.syncParams;
+		if (stringFlag) {
+			var arr = [];
+			for (var key in res) {
+				arr.push(key + '=' + res[key]);
+			}
+			res = arr.join('&');
+		}
+		return res;
     },
 
     //we will (lazy) create index by layer name to speed up multiple function calls

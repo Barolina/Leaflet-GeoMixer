@@ -32,6 +32,23 @@ var gmxMapManager = {
         return maps[serverHost][mapName].promise;
     },
 
+	syncParams: {},
+    // установка дополнительных параметров для серверных запросов
+    setSyncParams: function(hash) {
+		this.syncParams = hash;
+    },
+    getSyncParams: function(stringFlag) {
+		var res = this.syncParams;
+		if (stringFlag) {
+			var arr = [];
+			for (var key in res) {
+				arr.push(key + '=' + res[key]);
+			}
+			res = arr.join('&');
+		}
+		return res;
+    },
+
     //we will (lazy) create index by layer name to speed up multiple function calls
     findLayerInfo: function(serverHost, mapID, layerID) {
         var hostMaps = this._maps[serverHost],
