@@ -28,8 +28,15 @@ L.gmx.gmxImageTransform = function(img, hash) {
         boundsP = gmxAPIutils.bounds([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]),
         ww = Math.round(boundsP.max.x - boundsP.min.x),
         hh = Math.round(boundsP.max.y - boundsP.min.y),
-        dx = boundsP.min.x - 256 * gmxTilePoint.x,
-        dy = 256 - boundsP.max.y + 256 * gmxTilePoint.y;
+        dy = 256 - boundsP.max.y + 256 * gmxTilePoint.y,
+        itbounds = geoItem.item.bounds,
+        wMerc = gmxAPIutils.worldWidthMerc,
+        tpx = gmxTilePoint.x;
+
+    if (tpx < 0 && itbounds.max.x > wMerc && itbounds.min.x < -wMerc) {	// For points intersects 180 deg
+		tpx += Math.round(wMerc * mInPixel / 128);
+	}
+	var dx = boundsP.min.x - 256 * tpx;
 
     x1 -= boundsP.min.x; y1 = boundsP.max.y - y1;
     x2 -= boundsP.min.x; y2 = boundsP.max.y - y2;
