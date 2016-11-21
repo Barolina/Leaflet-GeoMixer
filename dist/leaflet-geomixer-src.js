@@ -2228,7 +2228,7 @@ var gmxAPIutils = {
     },
 
 	pad2: function(t) {
-		return (t < 10) ? ('0' + t) : ('' + t);
+		return (t >= 0 && t < 10) ? ('0' + t) : ('' + t);
 	},
 
 	trunc: function(x) {
