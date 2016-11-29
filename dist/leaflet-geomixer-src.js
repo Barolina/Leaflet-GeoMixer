@@ -4300,8 +4300,11 @@ var gmxMap = L.Class.extend({
 			var type = props.ContentID || props.type,
 				layerOptions = L.extend(options, commonLayerOptions);
 
-			if ('parentLayer' in meta) {      	// Set parent layer
-				layerOptions.parentLayer = meta.parentLayer.Value || '';
+			if (props.dataSource || 'parentLayer' in meta) {      	// Set dataSource layer
+				layerOptions.parentLayer = props.dataSource || '';
+				if ('parentLayer' in meta) {      	// todo удалить после изменений вов вьювере
+					layerOptions.parentLayer = meta.parentLayer.Value || '';
+				}
 				dataSources[options.layerID] = {
 					info: layerInfo,
 					options: layerOptions
@@ -5277,6 +5280,7 @@ var TilesTree = function(options) {
                 t1: t1,
                 t2: t1 + pdOneDay,
                 count: 0,
+                children: [],
                 tiles: []
             };
         }
@@ -7695,8 +7699,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             // gmx.clusters = prop.clusters;
         // }
 
+        gmx.filter = prop.filter; 	// for dataSource attr
+        gmx.dateBegin = prop.dateBegin;
+        gmx.dateEnd = prop.dateEnd;
+        gmx.dataSource = prop.dataSource;
         if ('MetaProperties' in gmx.rawProperties) {
             var meta = gmx.rawProperties.MetaProperties;
+            if ('parentLayer' in meta) {  // фильтр слоя		// todo удалить после изменений вов вьювере
+                gmx.dataSource = meta.parentLayer.Value || '';
+            }
             if ('filter' in meta) {  // фильтр слоя
                 gmx.filter = meta.filter.Value || '';
             }
@@ -10258,12 +10269,14 @@ var chkVersion = function (layer, callback) {
             for (var i = 0, len = res.Result.length; i < len; i++) {
                 var item = res.Result[i],
                     id = item.properties.name;
+
 				if (layer && layer._gmx.properties.name === id && 'updateVersion' in layer) { layer.updateVersion(item); }
                 for (var key in layers) {
                     var curLayer = layers[key];
 					if (layer && layer === curLayer) { continue; }
-                    if (curLayer._gmx && curLayer._gmx.properties.name === id && 'updateVersion' in curLayer) { curLayer.updateVersion(item); }
-					else {
+                    if (curLayer._gmx && curLayer._gmx.properties.name === id && 'updateVersion' in curLayer) {	// слои
+						curLayer.updateVersion(item);
+					} else if (curLayer instanceof L.gmx.DataManager && curLayer.options.name === id) {	// источники данных
 						curLayer.updateVersion(item.properties);
 					}
                 }
@@ -10418,7 +10431,9 @@ L.gmx.VectorLayer.include({
                 gmx.properties.GeoProcessing = layerDescription.properties.GeoProcessing;
                 gmx.rawProperties = gmx.properties;
                 this.fire('versionchange');
-                gmx.dataManager.updateVersion(gmx.rawProperties);
+				if (!gmx.dataSource) {
+					gmx.dataManager.updateVersion(gmx.rawProperties);
+				}
             }
         }
     }

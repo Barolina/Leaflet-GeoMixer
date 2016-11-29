@@ -33,8 +33,11 @@ var gmxMap = L.Class.extend({
 			var type = props.ContentID || props.type,
 				layerOptions = L.extend(options, commonLayerOptions);
 
-			if ('parentLayer' in meta) {      	// Set parent layer
-				layerOptions.parentLayer = meta.parentLayer.Value || '';
+			if (props.dataSource || 'parentLayer' in meta) {      	// Set dataSource layer
+				layerOptions.parentLayer = props.dataSource || '';
+				if ('parentLayer' in meta) {      	// todo удалить после изменений вов вьювере
+					layerOptions.parentLayer = meta.parentLayer.Value || '';
+				}
 				dataSources[options.layerID] = {
 					info: layerInfo,
 					options: layerOptions

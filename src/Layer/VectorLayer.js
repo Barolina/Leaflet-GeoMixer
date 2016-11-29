@@ -1163,8 +1163,15 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
             // gmx.clusters = prop.clusters;
         // }
 
+        gmx.filter = prop.filter; 	// for dataSource attr
+        gmx.dateBegin = prop.dateBegin;
+        gmx.dateEnd = prop.dateEnd;
+        gmx.dataSource = prop.dataSource;
         if ('MetaProperties' in gmx.rawProperties) {
             var meta = gmx.rawProperties.MetaProperties;
+            if ('parentLayer' in meta) {  // фильтр слоя		// todo удалить после изменений вов вьювере
+                gmx.dataSource = meta.parentLayer.Value || '';
+            }
             if ('filter' in meta) {  // фильтр слоя
                 gmx.filter = meta.filter.Value || '';
             }

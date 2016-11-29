@@ -50,6 +50,7 @@ var TilesTree = function(options) {
                 t1: t1,
                 t2: t1 + pdOneDay,
                 count: 0,
+                children: [],
                 tiles: []
             };
         }
