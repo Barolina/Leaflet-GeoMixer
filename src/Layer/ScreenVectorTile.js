@@ -18,6 +18,7 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
         (zoom >= this.gmx.minZoomQuicklooks && 'quicklookBGfunc' in this.gmx);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
     this.rasterRequests = {};   // all cached raster requests
+    this.itemsView = [];   		// items on screen tile + todo: without not visible
     this._uniqueID = 0;         // draw attempt id
     this.gmx.badTiles = this.gmx.badTiles || {};
 }
@@ -463,6 +464,7 @@ ScreenVectorTile.prototype = {
             var it = geoItems[Number(num) - 1];
             if (it) { out.push(it); }
         }
+		this.itemsView = out;
         return out;
     },
 

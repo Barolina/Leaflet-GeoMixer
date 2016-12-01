@@ -7811,6 +7811,27 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._updateProperties(this._gmx.rawProperties);
     },
 
+    getViewRasters: function() {
+        var gmx = this._gmx,
+			hash = {},
+			out = [];
+
+        for (var zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey],
+				screenTile = subscription.screenTile;
+            if (screenTile) {
+                screenTile.itemsView.forEach(function(it) {
+					hash[it.id] = true;
+				});
+            }
+        }
+        for (var id in hash) {
+			out.push(id);
+		}
+
+        return out;
+    },
+
     getPropItem: function (key, propArr) {
         return gmxAPIutils.getPropItem(key, propArr, this._gmx.tileAttributeIndexes);
     }
@@ -7837,6 +7858,7 @@ function ScreenVectorTile(layer, tilePoint, zoom) {
         (zoom >= this.gmx.minZoomQuicklooks && 'quicklookBGfunc' in this.gmx);
     this.rasters = {}; //combined and processed canvases for each vector item in tile
     this.rasterRequests = {};   // all cached raster requests
+    this.itemsView = [];   		// items on screen tile + todo: without not visible
     this._uniqueID = 0;         // draw attempt id
     this.gmx.badTiles = this.gmx.badTiles || {};
 }
@@ -8282,6 +8304,7 @@ ScreenVectorTile.prototype = {
             var it = geoItems[Number(num) - 1];
             if (it) { out.push(it); }
         }
+		this.itemsView = out;
         return out;
     },
 

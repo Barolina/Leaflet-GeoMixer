@@ -1275,6 +1275,27 @@ L.gmx.VectorLayer = L.TileLayer.Canvas.extend(
         this._updateProperties(this._gmx.rawProperties);
     },
 
+    getViewRasters: function() {
+        var gmx = this._gmx,
+			hash = {},
+			out = [];
+
+        for (var zKey in gmx.tileSubscriptions) {
+            var subscription = gmx.tileSubscriptions[zKey],
+				screenTile = subscription.screenTile;
+            if (screenTile) {
+                screenTile.itemsView.forEach(function(it) {
+					hash[it.id] = true;
+				});
+            }
+        }
+        for (var id in hash) {
+			out.push(id);
+		}
+
+        return out;
+    },
+
     getPropItem: function (key, propArr) {
         return gmxAPIutils.getPropItem(key, propArr, this._gmx.tileAttributeIndexes);
     }
